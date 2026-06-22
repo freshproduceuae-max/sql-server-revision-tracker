@@ -8,15 +8,21 @@ Prepare for:
 - SSIS/ETL Discussions
 - Data Warehouse Discussions
 - Technical Interviews
-- **Azure Engineering** *(added — Cognizant opportunity)*
+- **Azure Engineering** *(added — Cognizant & Data Analyst opportunity)*
 - **Big Data** *(added — Cognizant opportunity)*
-- **Python** *(added — Cognizant opportunity)*
+- **Python / PySpark** *(added — both opportunities)*
+- **Data Profiling & Mapping** *(added — Data Analyst opportunity)*
+- **Data Modelling & Design** *(added — Data Analyst opportunity)*
+- **Data Lineage & Governance** *(added — Data Analyst opportunity)*
+- **Metadata Management** *(added — Data Analyst opportunity)*
 
-**Duration:** 3 Days Intensive Revision + Azure/BigData/Python Extension
+**Duration:** 3 Days Intensive Revision + Azure/BigData/Python/Governance Extension
 
 ---
 
-## Upcoming Interview Opportunity
+## Upcoming Interview Opportunities
+
+### Opportunity 1 — Cognizant
 
 | Field | Detail |
 |---|---|
@@ -26,7 +32,20 @@ Prepare for:
 | Date | 20th June 2026 (Saturday) |
 | Mode | In-Person |
 | Location | Chennai / Hyderabad / Bangalore |
+| Work Mode | Not specified |
 | Contact | Sivasakthi MS — TAG-HR |
+
+### Opportunity 2 — Data / Functional Analyst
+
+| Field | Detail |
+|---|---|
+| Role | Data / Functional Analyst |
+| Experience | 6+ years |
+| Date | This week |
+| Mode | Face to Face |
+| Location | Bengaluru |
+| Work Mode | Work from Office (5 days) |
+| Key Skills | Data Profiling, Data Mapping, Data Modelling, Business & Data Requirements, Metadata, Data Lineage, Governance, SQL, Azure, ADB, ADF, PySpark |
 
 ---
 
@@ -40,9 +59,13 @@ Prepare for:
 | Data Warehousing | 0% |
 | SSIS | 0% |
 | Power BI SQL | 0% |
-| Azure | 0% |
+| Azure (ADF, Synapse, ADB) | 0% |
 | Big Data | 0% |
-| Python | 0% |
+| Python / PySpark | 0% |
+| Data Profiling & Mapping | 0% |
+| Data Modelling & Design | 0% |
+| Data Lineage & Governance | 0% |
+| Metadata Management | 0% |
 | Interview Readiness | 0% |
 
 ---
@@ -64,10 +87,14 @@ Prepare for:
 | SSIS | |
 | Power BI SQL | |
 | Azure (Cloud Fundamentals) | |
-| Azure Data Services | |
+| Azure Data Services (ADF, ADB, Synapse) | |
 | Big Data (Hadoop/Spark) | |
 | Python (Core) | |
 | Python (Data — Pandas/PySpark) | |
+| Data Profiling & Mapping | |
+| Data Modelling & Design | |
+| Data Lineage & Governance | |
+| Metadata Management | |
 
 ---
 
@@ -257,6 +284,37 @@ Prepare for:
 - [ ] Python SQL connectivity (pyodbc / sqlalchemy)
 - **Confidence:** ___ / 5
 
+### Data / Functional Analyst Skills *(Opportunity 2 Focus)*
+
+#### Data Profiling & Mapping
+- [ ] What is data profiling (completeness, uniqueness, validity)
+- [ ] Tools — SQL profiling queries, Azure Data Factory, Excel
+- [ ] Source-to-target mapping documents
+- [ ] Mapping rules and transformation logic
+- **Confidence:** ___ / 5
+
+#### Data Modelling & Design
+- [ ] Conceptual vs Logical vs Physical models
+- [ ] ER diagrams
+- [ ] Normalisation (1NF, 2NF, 3NF)
+- [ ] Dimensional modelling (Star / Snowflake)
+- **Confidence:** ___ / 5
+
+#### Business & Data Requirements Analysis
+- [ ] Stakeholder interviews
+- [ ] BRD / FRD writing
+- [ ] Translating business needs to data requirements
+- [ ] Gap analysis
+- **Confidence:** ___ / 5
+
+#### Metadata, Data Lineage & Governance
+- [ ] Metadata types (technical, business, operational)
+- [ ] Data lineage — end-to-end flow documentation
+- [ ] Data governance frameworks (DAMA)
+- [ ] Data stewardship roles
+- [ ] Data quality rules and monitoring
+- **Confidence:** ___ / 5
+
 ---
 
 ## Interview Readiness
@@ -286,6 +344,17 @@ Prepare for:
 - [ ] Explain Data Lake vs Data Warehouse
 - [ ] Explain Databricks use case
 
+### Data / Functional Analyst Questions *(Opportunity 2)*
+- [ ] Explain Data Profiling — what it is and how you do it
+- [ ] Explain Data Mapping — source to target mapping
+- [ ] Explain Data Lineage — how data flows end to end
+- [ ] Explain Data Governance — roles, policies, stewardship
+- [ ] Explain Metadata — types and management
+- [ ] Explain Data Modelling — conceptual, logical, physical
+- [ ] Explain requirements gathering for data projects
+- [ ] Explain ADF pipeline design
+- [ ] Explain ADB (Azure Databricks) use case
+
 ### Big Data Questions *(Cognizant)*
 - [ ] Explain Spark vs Hadoop
 - [ ] Explain partitioning in Spark
@@ -308,7 +377,10 @@ Prepare for:
 | SSIS | ___ / 100 |
 | Power BI | ___ / 100 |
 | Business Systems Analysis | ___ / 100 |
-| Azure | ___ / 100 |
+| Azure (ADF / ADB / Synapse) | ___ / 100 |
 | Big Data | ___ / 100 |
-| Python | ___ / 100 |
+| Python / PySpark | ___ / 100 |
+| Data Profiling & Mapping | ___ / 100 |
+| Data Modelling & Design | ___ / 100 |
+| Data Lineage & Governance | ___ / 100 |
 | **Overall Interview Readiness** | ___ / 100 |
