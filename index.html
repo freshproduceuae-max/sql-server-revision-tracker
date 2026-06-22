@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interview Prep Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      color: #94a3b8;
+      margin-top: 6px;
+      font-size: 0.9rem;
+    }
+
+    .interviews {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    .interview-card {
+      background: #1e2130;
+      border: 1px solid #2d3452;
+      border-radius: 12px;
+      padding: 14px 20px;
+      min-width: 220px;
+    }
+
+    .interview-card .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+
+    .interview-card .company {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #f8fafc;
+    }
+
+    .interview-card .detail {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .interview-card.urgent {
+      border-color: #f59e0b;
+    }
+
+    .interview-card.urgent .company {
+      color: #fbbf24;
+    }
+
+    /* Overall progress */
+    .overall-bar-wrapper {
+      background: #1e2130;
+      border: 1px solid #2d3452;
+      border-radius: 12px;
+      padding: 20px 24px;
+      max-width: 800px;
+      margin: 0 auto 32px;
+    }
+
+    .overall-bar-wrapper h2 {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .overall-bar-wrapper .pct {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .bar-track {
+      background: #2d3452;
+      border-radius: 99px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      transition: width 0.8s ease;
+    }
+
+    .bar-fill.done { background: linear-gradient(90deg, #10b981, #34d399); }
+    .bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #1e2130;
+      border: 1px solid #2d3452;
+      border-radius: 12px;
+      padding: 16px 18px;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: #4f5b8a; }
+
+    .card.status-done { border-left: 3px solid #10b981; }
+    .card.status-progress { border-left: 3px solid #f59e0b; }
+    .card.status-todo { border-left: 3px solid #334155; }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: #f1f5f9;
+      line-height: 1.4;
+    }
+
+    .card-num {
+      font-size: 0.7rem;
+      color: #475569;
+      margin-bottom: 2px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 99px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .badge.done { background: #064e3b; color: #34d399; }
+    .badge.progress { background: #451a03; color: #fbbf24; }
+    .badge.todo { background: #1e293b; color: #475569; }
+
+    .card-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .topic-tag {
+      font-size: 0.68rem;
+      background: #0f172a;
+      color: #94a3b8;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid #1e293b;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #475569;
+      margin-top: 8px;
+    }
+
+    .confidence {
+      display: flex;
+      gap: 3px;
+    }
+
+    .star { color: #334155; font-size: 0.75rem; }
+    .star.lit { color: #f59e0b; }
+
+    .score-pill {
+      font-size: 0.72rem;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    /* Section headers */
+    .section-label {
+      max-width: 1100px;
+      margin: 24px auto 10px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 48px;
+      color: #334155;
+      font-size: 0.75rem;
+    }
+
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: 1fr; }
+      header h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Interview Prep Tracker</h1>
+  <p>SQL Server · Azure · Data Engineering · Python · BSA</p>
+</header>
+
+<!-- Interview dates -->
+<div class="interviews">
+  <div class="interview-card urgent">
+    <div class="label">Opportunity 1</div>
+    <div class="company">Cognizant</div>
+    <div class="detail">20 Jun 2026 · In-Person · Chennai / Hyd / Blr</div>
+    <div class="detail">Azure · Big Data · Python · 7–15 yrs</div>
+  </div>
+  <div class="interview-card urgent">
+    <div class="label">Opportunity 2</div>
+    <div class="company">Data / Functional Analyst</div>
+    <div class="detail">This week · Face to Face · Bengaluru · WFO</div>
+    <div class="detail">SQL · Azure · ADF · ADB · PySpark · 6+ yrs</div>
+  </div>
+</div>
+
+<!-- Overall progress bar -->
+<div class="overall-bar-wrapper">
+  <h2>Overall Completion</h2>
+  <div class="pct" id="overall-pct">5%</div>
+  <div class="bar-track">
+    <div class="bar-fill" id="overall-bar" style="width: 5%"></div>
+  </div>
+</div>
+
+<!-- Modules grid (JS rendered) -->
+<div id="root"></div>
+
+<footer>Last updated: <span id="updated"></span></footer>
+
+<script>
+const modules = [
+  {
+    id: 1, area: "SQL Core",
+    title: "Ranking & Window Functions",
+    topics: ["ROW_NUMBER","RANK","DENSE_RANK","NTILE","LAG","LEAD","FIRST_VALUE","LAST_VALUE"],
+    status: "progress", confidence: 4, score: "20.5/23", time: "1.5 hrs"
+  },
+  {
+    id: 2, area: "SQL Core",
+    title: "CTE, Temp Tables & Table Variables",
+    topics: ["Basic CTE","Recursive CTE","Multiple CTE","#Temp","##Temp","@TableVar"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 3, area: "SQL Core",
+    title: "Views, Stored Procedures & Functions",
+    topics: ["Create View","Indexed View","SP with Params","Scalar UDF","Table UDF"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 4, area: "SQL Intermediate",
+    title: "Joins, Subqueries & CASE WHEN",
+    topics: ["INNER/LEFT/RIGHT/FULL","CROSS JOIN","SELF JOIN","Correlated Subquery","EXISTS vs IN","CASE WHEN"],
+    status: "todo", confidence: 0, score: null, time: "1.5 hrs"
+  },
+  {
+    id: 5, area: "SQL Advanced",
+    title: "Data Validation SQL",
+    topics: ["Find Duplicates","Find NULLs","Orphaned Records","Reconciliation","Count Checks","Aggregate Validation"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 6, area: "SQL Advanced",
+    title: "Aggregation & Grouping",
+    topics: ["GROUP BY","HAVING","ROLLUP","CUBE","GROUPING SETS","GROUPING()"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 7, area: "Data Warehousing",
+    title: "Data Warehousing Concepts",
+    topics: ["OLTP vs OLAP","Star Schema","Snowflake Schema","Fact Tables","Dimension Tables","SCD Type 1/2/3","ETL vs ELT"],
+    status: "todo", confidence: 0, score: null, time: "1.5 hrs"
+  },
+  {
+    id: 8, area: "SSIS",
+    title: "SSIS — Control Flow",
+    topics: ["Execute SQL Task","Script Task","File System Task","Precedence Constraints","Variables","Error Handling"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 9, area: "SSIS",
+    title: "SSIS — Data Flow & Transformations",
+    topics: ["Lookup","Derived Column","Conditional Split","Merge","Merge Join","Union All","Aggregate"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 10, area: "Power BI",
+    title: "Power BI + DAX",
+    topics: ["Data Model","Relationships","CALCULATE","FILTER","ALL","RELATED","Time Intelligence"],
+    status: "todo", confidence: 0, score: null, time: "1.5 hrs"
+  },
+  {
+    id: 11, area: "Azure",
+    title: "Azure Fundamentals",
+    topics: ["IaaS/PaaS/SaaS","Azure SQL DB","Blob vs ADLS","ADF Overview","Synapse Overview"],
+    status: "todo", confidence: 0, score: null, time: "1.5 hrs"
+  },
+  {
+    id: 12, area: "Azure",
+    title: "Azure Data Engineering",
+    topics: ["ADF Pipelines","Linked Services","Triggers","Azure Databricks","Delta Lake","ADF vs SSIS"],
+    status: "todo", confidence: 0, score: null, time: "1.5 hrs"
+  },
+  {
+    id: 13, area: "Big Data",
+    title: "Big Data & Apache Spark",
+    topics: ["Hadoop / HDFS","YARN","Spark Architecture","RDD vs DataFrame","Partitioning","Hive / HQL"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 14, area: "Python",
+    title: "Python Core",
+    topics: ["Data Types","List Comprehension","Functions","*args/**kwargs","try/except","OOP basics"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 15, area: "Python",
+    title: "Python for Data",
+    topics: ["Pandas","groupby/merge","NumPy","PySpark DataFrames","pyodbc","sqlalchemy"],
+    status: "todo", confidence: 0, score: null, time: "1.5 hrs"
+  },
+  {
+    id: 16, area: "Data & Governance",
+    title: "Data Profiling & Mapping",
+    topics: ["Completeness","Uniqueness","Validity","SQL Profiling","Source-to-Target Mapping","Data Quality Score"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 17, area: "Data & Governance",
+    title: "Data Modelling & Design",
+    topics: ["Conceptual/Logical/Physical","ER Diagrams","1NF/2NF/3NF","Denormalisation","Dimensional Modelling"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 18, area: "Data & Governance",
+    title: "Data Lineage & Governance",
+    topics: ["Data Lineage","DAMA Framework","Data Stewardship","Technical Metadata","Business Metadata","Data Quality Rules"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 19, area: "BSA",
+    title: "Business Systems Analyst",
+    topics: ["BRD","FSD","Gap Analysis","Process Mapping","UAT","SIT"],
+    status: "todo", confidence: 0, score: null, time: "1 hr"
+  },
+  {
+    id: 20, area: "Mock Interview",
+    title: "Full Mock Interview — 40 Questions",
+    topics: ["SQL (5Q)","Data Warehouse (5Q)","SSIS (5Q)","Power BI (5Q)","Azure (5Q)","Python (5Q)","Governance (5Q)","BSA (5Q)"],
+    status: "todo", confidence: 0, score: null, time: "2 hrs"
+  }
+];
+
+// Group by area
+const areas = [...new Set(modules.map(m => m.area))];
+
+function stars(n) {
+  return Array.from({length: 5}, (_, i) =>
+    `<span class="star ${i < n ? 'lit' : ''}">★</span>`
+  ).join('');
+}
+
+function statusLabel(s) {
+  if (s === 'done') return '<span class="badge done">✓ Done</span>';
+  if (s === 'progress') return '<span class="badge progress">⟳ In Progress</span>';
+  return '<span class="badge todo">Not Started</span>';
+}
+
+function renderCard(m) {
+  return `
+    <div class="card status-${m.status}">
+      <div class="card-header">
+        <div>
+          <div class="card-num">Module ${m.id} · ${m.time}</div>
+          <div class="card-title">${m.title}</div>
+        </div>
+        ${statusLabel(m.status)}
+      </div>
+      <div class="card-topics">
+        ${m.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
+      </div>
+      <div class="card-meta">
+        <div class="confidence">${stars(m.confidence)}</div>
+        ${m.score ? `<span class="score-pill">Score: ${m.score}</span>` : '<span></span>'}
+      </div>
+    </div>
+  `;
+}
+
+const root = document.getElementById('root');
+let html = '';
+
+areas.forEach(area => {
+  const areaModules = modules.filter(m => m.area === area);
+  html += `<div class="section-label">${area}</div><div class="grid">`;
+  areaModules.forEach(m => { html += renderCard(m); });
+  html += `</div>`;
+});
+
+root.innerHTML = html;
+
+// Overall progress
+const done = modules.filter(m => m.status === 'done').length;
+const inprog = modules.filter(m => m.status === 'progress').length;
+const pct = Math.round(((done + inprog * 0.5) / modules.length) * 100);
+document.getElementById('overall-pct').textContent = pct + '%';
+const bar = document.getElementById('overall-bar');
+bar.style.width = pct + '%';
+if (pct >= 80) bar.classList.add('done');
+else if (pct >= 40) bar.classList.add('warn');
+
+document.getElementById('updated').textContent = new Date().toLocaleDateString('en-GB', {
+  day: 'numeric', month: 'long', year: 'numeric'
+});
+</script>
+</body>
+</html>
