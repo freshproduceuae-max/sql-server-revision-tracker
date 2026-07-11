@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Machine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+
+    html,body{margin:0;padding:0;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+    *{box-sizing:border-box;}
+    button{font-family:inherit;}
+    @keyframes qm-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+    @keyframes qm-blink{0%,91%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+    @keyframes qm-cheer{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-16px) rotate(-6deg)}50%{transform:translateY(-3px) rotate(5deg)}75%{transform:translateY(-13px) rotate(-3deg)}}
+    @keyframes qm-sadwob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(4px) rotate(2deg)}}
+    @keyframes qm-pop{0%{transform:scale(.7);opacity:0}62%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+    @keyframes qm-fall{0%{transform:translateY(-30px) rotate(0);opacity:1}100%{transform:translateY(102vh) rotate(760deg);opacity:.85}}
+    @keyframes qm-slidein{0%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+    @keyframes qm-slideup{0%{transform:translateY(100%);opacity:.3}100%{transform:translateY(0);opacity:1}}
+    @keyframes qm-pulse{0%,100%{box-shadow:0 0 0 0 rgba(120,200,60,.45)}70%{box-shadow:0 0 0 16px rgba(120,200,60,0)}}
+    @keyframes qm-spin{to{transform:rotate(360deg)}}
+    @keyframes qm-floatup{0%{transform:translateY(6px);opacity:0}18%{opacity:1}100%{transform:translateY(-46px);opacity:0}}
+    @keyframes qm-ring{from{stroke-dashoffset:var(--qm-ringlen)}}
+    @keyframes qm-armwave{0%,100%{transform:rotate(-17deg)}50%{transform:rotate(13deg)}}
+    @keyframes qm-armpump{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(-4deg)}}
+    @keyframes qm-raiseL{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-10deg)}}
+    @keyframes qm-raiseR{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(10deg)}}
+    @keyframes qm-clapL{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(10px) rotate(9deg)}}
+    @keyframes qm-clapR{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(-10px) rotate(-9deg)}}
+    @keyframes qm-armpoint{0%,100%{transform:rotate(0)}50%{transform:rotate(-7deg)}}
+    @keyframes qm-shrug{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes qm-headtilt{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(2deg)}}
+    @keyframes qm-fadein{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+    @keyframes qm-shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    @keyframes qm-floatpip{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    ::-webkit-scrollbar{width:12px;height:12px}
+    ::-webkit-scrollbar-thumb{background:var(--qm-lineStrong);border-radius:999px;border:3px solid transparent;background-clip:content-box}
+    ::-webkit-scrollbar-track{background:transparent}
+  
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// Supabase config — fill in your values or leave blank for local mode
+window.QM_CONFIG = {
+  SUPABASE_URL: '',
+  SUPABASE_ANON_KEY: ''
+};
+</script>
+<script>
+// DCLogic — Claude Design base class adapted for standalone React
+class DCLogic extends React.Component {
+  constructor(props) {
+    super(props);
+    if (this.state === undefined) this.state = {};
+  }
+  render() {
+    const vals = this.renderVals();
+    return vals.app;
+  }
+}
+</script>
+<script>
+
+const h = React.createElement;
+const T = {
+  bg:'var(--qm-bg)', surface:'var(--qm-surface)', surface2:'var(--qm-surface2)',
+  ink:'var(--qm-ink)', inkStrong:'var(--qm-inkStrong)', muted:'var(--qm-muted)',
+  line:'var(--qm-line)', lineStrong:'var(--qm-lineStrong)',
+  primary:'var(--qm-primary)', press:'var(--qm-primaryPress)',
+  accent:'var(--qm-accent)', accentPress:'var(--qm-accentPress)',
+  gold:'var(--qm-gold)', flame:'var(--qm-flame)',
+  red:'var(--qm-red)', redPress:'var(--qm-redPress)',
+  correctBg:'var(--qm-correctBg)', correctInk:'var(--qm-correctInk)',
+  wrongBg:'var(--qm-wrongBg)', wrongInk:'var(--qm-wrongInk)',
+  code:'var(--qm-code)', codeInk:'var(--qm-codeInk)', shadow:'var(--qm-shadow)',
+  mascot:'var(--qm-mascot)', mascotBelly:'var(--qm-mascotBelly)', leaf:'var(--qm-leaf)',
+};
+const SKINS = {
+  grass:{primary:'#58cc02',press:'#4aa802',accent:'#1cb0f6',accentPress:'#1691cf',mascot:'#7ed957',belly:'#c4f09e',leaf:'#58cc02'},
+  sky:  {primary:'#1cb0f6',press:'#1391d3',accent:'#ff9600',accentPress:'#e07c00',mascot:'#5cc7f5',belly:'#bfe8fb',leaf:'#3aa0e0'},
+  berry:{primary:'#a560f0',press:'#8a45d6',accent:'#ff5fa2',accentPress:'#e63f88',mascot:'#c48ff5',belly:'#e9d4ff',leaf:'#ff5fa2'},
+};
+const SCALEMAP = { cozy:0.9, default:1, large:1.15, xl:1.32 };
+const STORE = 'quizmachine.v3';
+const PRAISE=["That's right!","Good job!","Brilliant!","Well done!","Exactly!","Sharp thinking!","Nailed it!","Superb!"];
+const PRAISE_MOOD=['thumbsup','cheer','clap','wink','proud'];
+const OOPS=["Oh no…","Not quite.","Close one!","Hmm — let's review.","Almost there!"];
+const OOPS_MOOD=['oops','sad'];
+const MOTIVATE=["You can do it!","Let's go!","Focus — you've got this.","Show me what you know!"];
+const GREAT=["Outstanding!","Magnificent!","Top marks!","A scholar indeed!"];
+const rand=(a)=>a[Math.floor(Math.random()*a.length)];
+const CFG=(typeof window!=='undefined'&&window.QM_CONFIG)||{};
+const AVATARS=['#58cc02,#3a9e00','#1cb0f6,#1391d3','#a560f0,#8a45d6','#ff9600,#e07c00','#ff5fa2,#e63f88','#ffc800,#e0a800','#14b8a6,#0d9488','#f43f5e,#e11d48','#6366f1,#4338ca','#0ea5e9,#0369a1'];
+const RANKS=['Novice','Apprentice','Scholar','Adept','Expert','Master','Sage','Luminary','Virtuoso','Legend'];
+const GOALS=[{k:'casual',label:'Casual',merit:10,sub:'10 Merit / day'},{k:'regular',label:'Regular',merit:30,sub:'30 Merit / day'},{k:'serious',label:'Serious',merit:50,sub:'50 Merit / day'},{k:'intense',label:'Intense',merit:80,sub:'80 Merit / day'}];
+const BADGES=[
+  {id:'first',name:'First Steps',desc:'Finish your first lesson',ic:'🌱'},
+  {id:'streak3',name:'On a Roll',desc:'Reach a 3-day streak',ic:'🔥'},
+  {id:'streak7',name:'Unstoppable',desc:'Reach a 7-day streak',ic:'⚡'},
+  {id:'merit100',name:'Century',desc:'Earn 100 Merit',ic:'💯'},
+  {id:'merit500',name:'High Achiever',desc:'Earn 500 Merit',ic:'🏆'},
+  {id:'perfect',name:'Flawless',desc:'Score 100% on a lesson',ic:'⭐'},
+  {id:'lessons10',name:'Dedicated',desc:'Complete 10 lessons',ic:'📚'},
+  {id:'course',name:'Graduate',desc:'Complete a whole course',ic:'🎓'},
+  {id:'level5',name:'Ascendant',desc:'Reach level 5',ic:'🚀'},
+  {id:'review',name:'Comeback',desc:'Clear your review queue',ic:'🔁'},
+];
+const PEERS=[
+  {name:'Mateo',av:'#1cb0f6,#1391d3',merit:640},{name:'Aisha',av:'#ff5fa2,#e63f88',merit:520},
+  {name:'Kenji',av:'#a560f0,#8a45d6',merit:410},{name:'Lena',av:'#ffc800,#e0a800',merit:300},
+  {name:'Diego',av:'#14b8a6,#0d9488',merit:220},{name:'Priya',av:'#f43f5e,#e11d48',merit:160},
+  {name:'Omar',av:'#6366f1,#4338ca',merit:90},
+];
+const levelOf=(xp)=>Math.floor((xp||0)/120)+1;
+const levelFloor=(lvl)=>(lvl-1)*120;
+const rankOf=(xp)=>RANKS[Math.min(RANKS.length-1, levelOf(xp)-1)];
+const todayKey=()=>new Date().toISOString().slice(0,10);
+const configured=()=>{ const u=CFG.SUPABASE_URL||''; const k=CFG.SUPABASE_ANON_KEY||''; return /^https?:\/\//.test(u) && k.length>20 && !/YOUR_/.test(u+k); };
+
+class Component extends DCLogic {
+  state = {
+    loading:true, error:null, data:null,
+    auth:{status:'loading', user:null, mode: configured()?'supabase':'local'},
+    authScreen:'login', authBusy:false, authError:null, authInfo:null,
+    screen:'dashboard', quizIndex:null, lessonIndex:null,
+    run:null, learn:null,
+    xp:0, streak:{count:0,last:null,days:[]}, hearts:5,
+    bestByLesson:{}, doneByLesson:{},
+    profile:{ name:'', avatar:AVATARS[0], bio:'', goalKey:'regular', dailyGoal:30, mascotName:'The Professor', reminders:{on:false,time:'19:00'} },
+    answeredByDay:{}, earnedByDay:{}, bookmarks:[], notes:{}, reviewQueue:[], recent:[], badges:[],
+    settings:{ skin:'grass', dark:false, fontScale:'default', sound:true, narration:true, characters:true, reduceMotion:false },
+    settingsOpen:false, sheetLesson:null, dashTab:'home',
+    mascotMood:'idle', mascotLine:null, confetti:[], toast:null, lastResult:null,
+  };
+
+  /* ---------- lifecycle ---------- */
+  componentDidMount(){
+    this.applyTheme();
+    fetch('quizzes.json').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(d=>{ if(!d||!Array.isArray(d.quizzes)) throw new Error('bad data'); this.setState({data:d, loading:false}); })
+      .catch(e=>this.setState({error:e.message, loading:false}));
+    try{ this.aRight = new Audio('assets/Right.wav'); this.aWrong = new Audio('assets/Wrong.wav'); this.aRight.volume=.7; this.aWrong.volume=.7; }catch(e){}
+    this._key = (e)=>this.onKey(e);
+    window.addEventListener('keydown', this._key);
+    this.initAuth();
+  }
+  componentWillUnmount(){ window.removeEventListener('keydown', this._key); this.stopSpeech(); }
+
+  get rm(){ return !!this.state.settings.reduceMotion; }
+
+  /* ================= AUTH ================= */
+  initAuth(){
+    if(this.state.auth.mode==='supabase'){
+      try{
+        this.sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+        this.sb.auth.getSession().then(({data})=>{
+          const u=data && data.session && data.session.user;
+          if(u) this.onAuthed({id:u.id, email:u.email, name:(u.user_metadata&&u.user_metadata.name)||''});
+          else this.setState({auth:{...this.state.auth, status:'out'}});
+        });
+        this.sb.auth.onAuthStateChange((_ev,session)=>{
+          const u=session && session.user;
+          if(u && this.state.auth.status!=='in') this.onAuthed({id:u.id,email:u.email,name:(u.user_metadata&&u.user_metadata.name)||''});
+        });
+        return;
+      }catch(e){ /* fall back to local */ this.setState(st=>({auth:{...st.auth,mode:'local'}})); }
+    }
+    // local mode — restore last session
+    const sess=this.lsGet('quizmachine.session');
+    if(sess && sess.id) this.onAuthed(sess);
+    else this.setState({auth:{status:'out', user:null, mode:'local'}});
+  }
+  lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
+  lsSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  accounts(){ return this.lsGet('quizmachine.accounts')||{}; }
+  hash(s){ let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))>>>0; return ''+h; }
+
+  async signUp(email,password,name){
+    email=(email||'').trim().toLowerCase();
+    if(!/.+@.+\..+/.test(email)) return this.setState({authError:'Enter a valid email.'});
+    if((password||'').length<6) return this.setState({authError:'Password needs 6+ characters.'});
+    this.setState({authBusy:true, authError:null, authInfo:null});
+    if(this.sb){
+      const {data,error}=await this.sb.auth.signUp({email,password,options:{data:{name}}});
+      if(error) return this.setState({authBusy:false, authError:error.message});
+      if(!data.session) return this.setState({authBusy:false, authInfo:'Check your email to confirm, then log in.', authScreen:'login'});
+      return; // onAuthStateChange handles it
+    }
+    const accs=this.accounts();
+    if(accs[email]) return this.setState({authBusy:false, authError:'That email already has an account.'});
+    accs[email]={id:'u_'+this.hash(email), email, pw:this.hash(password), name:name||''};
+    this.lsSet('quizmachine.accounts', accs);
+    this.onAuthed({id:accs[email].id, email, name:name||''});
+  }
+  async signIn(email,password){
+    email=(email||'').trim().toLowerCase();
+    this.setState({authBusy:true, authError:null, authInfo:null});
+    if(this.sb){
+      const {error}=await this.sb.auth.signInWithPassword({email,password});
+      if(error) return this.setState({authBusy:false, authError:error.message});
+      return;
+    }
+    const accs=this.accounts(); const a=accs[email];
+    if(!a || a.pw!==this.hash(password||'')) return this.setState({authBusy:false, authError:'Wrong email or password.'});
+    this.onAuthed({id:a.id, email, name:a.name});
+  }
+  async magicLink(email){
+    email=(email||'').trim().toLowerCase();
+    if(!/.+@.+\..+/.test(email)) return this.setState({authError:'Enter a valid email first.'});
+    this.setState({authBusy:true, authError:null, authInfo:null});
+    if(this.sb){
+      const {error}=await this.sb.auth.signInWithOtp({email});
+      this.setState({authBusy:false, authError:error?error.message:null, authInfo:error?null:'Magic link sent — check your email.'});
+      return;
+    }
+    // local: treat as instant passwordless — find or create
+    const accs=this.accounts(); let a=accs[email];
+    if(!a){ a={id:'u_'+this.hash(email), email, pw:'', name:''}; accs[email]=a; this.lsSet('quizmachine.accounts',accs); }
+    this.setState({authInfo:'(Local mode) signed in via magic link.'});
+    this.onAuthed({id:a.id, email, name:a.name});
+  }
+  async googleSignIn(){
+    this.setState({authError:null});
+    if(this.sb){ await this.sb.auth.signInWithOAuth({provider:'google'}); return; }
+    // local demo: create a sample google account
+    const email='you@gmail.com';
+    const accs=this.accounts(); let a=accs[email];
+    if(!a){ a={id:'u_'+this.hash(email), email, pw:'', name:'Google User'}; accs[email]=a; this.lsSet('quizmachine.accounts',accs); }
+    this.setState({authInfo:'(Local mode) demo Google sign-in.'});
+    this.onAuthed({id:a.id, email, name:a.name});
+  }
+  guest(){
+    const id='guest_'+Math.random().toString(36).slice(2,8);
+    this.onAuthed({id, email:'', name:'', guest:true});
+  }
+  async signOut(){
+    if(this.sb){ try{ await this.sb.auth.signOut(); }catch(e){} }
+    this.lsSet('quizmachine.session', null);
+    this.stopSpeech();
+    this.setState({ auth:{status:'out', user:null, mode:this.state.auth.mode}, authScreen:'login',
+      screen:'dashboard', run:null, learn:null,
+      xp:0, streak:{count:0,last:null,days:[]}, bestByLesson:{}, doneByLesson:{},
+      profile:{ name:'', avatar:AVATARS[0], bio:'', goalKey:'regular', dailyGoal:30, mascotName:'The Professor', reminders:{on:false,time:'19:00'} },
+      answeredByDay:{}, earnedByDay:{}, bookmarks:[], notes:{}, reviewQueue:[], recent:[], badges:[] });
+  }
+  onAuthed(user){
+    this.uid=user.id; this.userEmail=user.email;
+    if(this.state.auth.mode==='local' && !user.guest) this.lsSet('quizmachine.session', user);
+    this.setState({ auth:{status:'in', user, mode:this.state.auth.mode}, authBusy:false, authError:null }, ()=>{
+      this.loadUserRecord(user);
+    });
+  }
+
+  /* ---------- per-user persistence ---------- */
+  userKey(){ return 'quizmachine.u.'+(this.uid||'anon'); }
+  blankRecordFrom(user){
+    return { xp:0, streak:{count:0,last:null,days:[]}, bestByLesson:{}, doneByLesson:{},
+      profile:{ name:user.name||'', avatar:rand(AVATARS), bio:'', goalKey:'regular', dailyGoal:30, mascotName:'The Professor', reminders:{on:false,time:'19:00'}, onboarded:false },
+      answeredByDay:{}, earnedByDay:{}, bookmarks:[], notes:{}, reviewQueue:[], recent:[], badges:[],
+      settings:{ skin:'grass', dark:false, fontScale:'default', sound:true, narration:true, characters:true, reduceMotion:false } };
+  }
+  async loadUserRecord(user){
+    let rec=null;
+    if(this.sb){
+      try{ const {data}=await this.sb.from('player_state').select('data').eq('id',user.id).maybeSingle(); if(data&&data.data) rec=data.data; }catch(e){}
+    }
+    if(!rec) rec=this.lsGet(this.userKey());
+    if(!rec) rec=this.blankRecordFrom(user);
+    this.applyRecord(rec);
+  }
+  applyRecord(rec){
+    const bl=this.blankRecordFrom(this.state.auth.user||{});
+    const profile={...bl.profile, ...(rec.profile||{})};
+    if(!rec.profile && rec.name) profile.name=rec.name; // migrate old
+    if(rec.profile && profile.onboarded===undefined) profile.onboarded=true; // existing users skip onboarding
+    this.setState({
+      xp:rec.xp||0, streak:rec.streak||bl.streak, bestByLesson:rec.bestByLesson||{}, doneByLesson:rec.doneByLesson||{},
+      profile, answeredByDay:rec.answeredByDay||{}, earnedByDay:rec.earnedByDay||{},
+      bookmarks:rec.bookmarks||[], notes:rec.notes||{}, reviewQueue:rec.reviewQueue||[], recent:rec.recent||[], badges:rec.badges||[],
+      settings:{...bl.settings, ...(rec.settings||{})},
+      screen: profile.onboarded? 'dashboard':'onboarding',
+    }, ()=>{ this.applyTheme(); });
+  }
+  currentRecord(){
+    const {xp,streak,bestByLesson,doneByLesson,profile,answeredByDay,earnedByDay,bookmarks,notes,reviewQueue,recent,badges,settings}=this.state;
+    return {xp,streak,bestByLesson,doneByLesson,profile,answeredByDay,earnedByDay,bookmarks,notes,reviewQueue,recent,badges,settings};
+  }
+  persist(){
+    if(this.state.auth.status!=='in') return;
+    const rec=this.currentRecord();
+    this.lsSet(this.userKey(), rec);
+    if(this.sb && this.uid){
+      clearTimeout(this._sbT);
+      this._sbT=setTimeout(()=>{ try{ this.sb.from('player_state').upsert({id:this.uid,email:this.userEmail,data:rec,updated_at:new Date().toISOString()}); }catch(e){} }, 600);
+    }
+  }
+  setProfile(patch){ this.setState(st=>({profile:{...st.profile,...patch}}), ()=>this.persist()); }
+
+  /* ---------- theme ---------- */
+  applyTheme(){
+    const el = this.rootEl || document.documentElement;
+    const s = (this.state && this.state.settings) || { skin:'grass', dark:false, fontScale:'default' };
+    const sk = SKINS[s.skin]||SKINS.grass;
+    const light = {bg:'#f4f8ec',surface:'#ffffff',surface2:'#f2f6ea',ink:'#4b5a44',inkStrong:'#2b3826',muted:'#93a487',line:'#e7ecdb',lineStrong:'#d6dfc4',correctBg:'#d7ffb8',correctInk:'#4a9e00',wrongBg:'#ffe0e1',wrongInk:'#ea2b2b',code:'#12261a',codeInk:'#a8e06a',shadow:'rgba(45,60,40,.10)'};
+    const dark = {bg:'#12181a',surface:'#1b2427',surface2:'#232f31',ink:'#dbe6e0',inkStrong:'#ffffff',muted:'#8598a0',line:'#2b383b',lineStrong:'#3a4a4e',correctBg:'rgba(88,204,2,.16)',correctInk:'#8fe04e',wrongBg:'rgba(255,75,75,.18)',wrongInk:'#ff9090',code:'#0b1113',codeInk:'#9be86a',shadow:'rgba(0,0,0,.45)'};
+    const b = s.dark?dark:light;
+    const set=(k,v)=>{ try{ el.style.setProperty('--qm-'+k, v); }catch(e){} };
+    set('bg',b.bg); set('surface',b.surface); set('surface2',b.surface2); set('ink',b.ink);
+    set('inkStrong',b.inkStrong); set('muted',b.muted); set('line',b.line); set('lineStrong',b.lineStrong);
+    set('correctBg',b.correctBg); set('correctInk',b.correctInk); set('wrongBg',b.wrongBg); set('wrongInk',b.wrongInk);
+    set('code',b.code); set('codeInk',b.codeInk); set('shadow',b.shadow);
+    set('primary',sk.primary); set('primaryPress',sk.press); set('accent',sk.accent); set('accentPress',sk.accentPress);
+    set('mascot',sk.mascot); set('mascotBelly',sk.belly); set('leaf',sk.leaf);
+    set('scale', SCALEMAP[s.fontScale]||1);
+  }
+  changeSetting(patch){
+    this.setState(st=>({settings:{...st.settings,...patch}}), ()=>{ this.applyTheme(); this.persist(); });
+  }
+
+  /* ---------- speech + sound ---------- */
+  speak(text){
+    if(!this.state.settings.narration || !this.state.settings.sound) return;
+    try{
+      const synth = window.speechSynthesis; if(!synth) return;
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(String(text||'').slice(0,600));
+      u.rate=1; u.pitch=1; synth.speak(u);
+    }catch(e){}
+  }
+  stopSpeech(){ try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){} }
+  ding(ok){
+    if(!this.state.settings.sound) return;
+    try{ const a = ok?this.aRight:this.aWrong; if(a){ a.currentTime=0; a.play().catch(()=>{}); } }catch(e){}
+  }
+  toast(msg){ this.setState({toast:msg}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:null}),2200); }
+
+  /* ---------- data helpers ---------- */
+  norm(s){ return String(s==null?'':s).trim().toLowerCase(); }
+  asArr(v){ return Array.isArray(v)?v:(v==null?[]:[v]); }
+  shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  quizStats(q){ const L=q.lessons||[]; return {lessons:L.length, questions:L.reduce((s,l)=>s+((l.questions||[]).length),0), cards:L.reduce((s,l)=>s+((l.lesson_content||[]).length),0)}; }
+  libStats(qs){ return qs.reduce((t,q)=>{const s=this.quizStats(q); t.lessons+=s.lessons;t.questions+=s.questions;t.cards+=s.cards;return t;},{lessons:0,questions:0,cards:0}); }
+  initials(n){ return (n||'?').replace(/[^A-Za-z0-9\u0600-\u06FF]/g,' ').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'Q'; }
+  lkey(qn,ln){ return qn+'||'+ln; }
+  num(n){ return Number(n||0).toLocaleString('en-US'); }
+
+  isCorrect(q, ans){
+    const type=q.type||'multiple_choice';
+    if(type==='multiple_choice'||type==='true_false'){ const c=this.asArr(q.correct_answer).map(x=>this.norm(x)); return ans!=null && c.includes(this.norm(ans)); }
+    if(type==='fill_in_the_blank'){ return this.asArr(q.correct_answer).map(x=>this.norm(x)).includes(this.norm(ans)); }
+    if(type==='short_answer'){ const t=this.norm(ans); const kw=this.asArr(q.correct_answer).map(x=>this.norm(x)).filter(Boolean); if(!kw.length) return t.length>0; return kw.every(k=>t.includes(k)); }
+    if(type==='matching_pairs'){ const key=q.correct_answer||{}; if(!ans||typeof ans!=='object') return false; return Object.keys(key).every(term=>this.norm(ans[term])===this.norm(key[term])); }
+    return false;
+  }
+
+  /* ---------- navigation ---------- */
+  goHome(){ this.stopSpeech(); this.setState({screen:'dashboard', run:null, learn:null, sheetLesson:null, mascotMood:'idle', confetti:[]}); }
+  goCourses(){ this.stopSpeech(); this.setState({screen:'home', run:null, learn:null, sheetLesson:null, mascotMood:'idle', confetti:[]}); }
+  qkey(q){ return this.hash((q&&q.question_text||'')+'|'+this.asArr(q&&q.correct_answer).join(',')); }
+  toggleBookmark(q){ const k=this.qkey(q); this.setState(st=>({bookmarks: st.bookmarks.includes(k)? st.bookmarks.filter(x=>x!==k): st.bookmarks.concat([k])}), ()=>this.persist()); }
+  isBookmarked(q){ return this.state.bookmarks.includes(this.qkey(q)); }
+  setNote(q,txt){ const k=this.qkey(q); this.setState(st=>{ const n={...st.notes}; if(txt&&txt.trim()) n[k]=txt; else delete n[k]; return {notes:n}; }, ()=>this.persist()); }
+  openCourse(i){ this.stopSpeech(); this.setState({screen:'course', quizIndex:i, sheetLesson:null}); }
+  openSheet(li){ this.setState({sheetLesson:li}); }
+  closeSheet(){ this.setState({sheetLesson:null}); }
+
+  startLearn(qi,li){
+    const lesson=this.state.data.quizzes[qi].lessons[li];
+    const cards=(lesson.lesson_content||[]).filter(Boolean);
+    if(!cards.length){ return this.startQuiz(qi,li); }
+    this.setState({screen:'learn', quizIndex:qi, lessonIndex:li, sheetLesson:null, learn:{cards, idx:0}, mascotMood:'think'},()=>{
+      this.narrateCard();
+    });
+  }
+  narrateCard(){ const l=this.state.learn; if(!l) return; const c=l.cards[l.idx]; this.speak(c.title+'. '+c.explanation); }
+  learnNext(){ this.setState(st=>{ const l=st.learn; if(l.idx+1>=l.cards.length){ return {}; } return {learn:{...l, idx:l.idx+1}}; }, ()=>this.narrateCard()); }
+  learnPrev(){ this.setState(st=>{ const l=st.learn; return {learn:{...l, idx:Math.max(0,l.idx-1)}}; }, ()=>this.narrateCard()); }
+  learnLast(){ return this.state.learn && this.state.learn.idx>=this.state.learn.cards.length-1; }
+
+  startQuiz(qi,li,retryList){
+    this.stopSpeech();
+    const lesson=this.state.data.quizzes[qi].lessons[li];
+    const qs=retryList||this.shuffle((lesson.questions||[]).filter(Boolean));
+    this.setState({screen:'quiz', quizIndex:qi, lessonIndex:li, sheetLesson:null, hearts:5, mascotMood:'wave', mascotLine:rand(MOTIVATE),
+      run:{ list:qs, idx:0, answers:[], picked:null, matches:{}, revealed:false, correct:false, isRetry:!!retryList }});
+  }
+
+  /* ---------- quiz actions ---------- */
+  curQ(){ const r=this.state.run; return r?r.list[r.idx]:null; }
+  pick(v){ const r=this.state.run; if(!r||r.revealed) return; this.setState({run:{...r,picked:v}}); }
+  setMatch(term,v){ const r=this.state.run; if(!r||r.revealed) return; this.setState({run:{...r, matches:{...r.matches,[term]:v}}}); }
+  canSubmit(){
+    const r=this.state.run; if(!r) return false; const q=r.list[r.idx]; const type=q.type||'multiple_choice';
+    if(type==='matching_pairs'){ const key=q.correct_answer||{}; const terms=(q.choices&&q.choices.terms)||Object.keys(key); return terms.every(t=>r.matches[t]); }
+    if(type==='multiple_choice'||type==='true_false') return r.picked!=null;
+    return r.picked!=null && String(r.picked).trim().length>0;
+  }
+  submit(){
+    const r=this.state.run; if(!r||r.revealed||!this.canSubmit()) return;
+    const q=r.list[r.idx]; const type=q.type||'multiple_choice';
+    const ans = type==='matching_pairs'? r.matches : r.picked;
+    const correct=this.isCorrect(q,ans);
+    this.ding(correct);
+    const answers=r.answers.concat([{q,ans,correct}]);
+    let hearts=this.state.hearts, xp=this.state.xp;
+    if(correct){ xp+=10; } else { hearts=Math.max(0,hearts-1); }
+    const mood = correct? rand(PRAISE_MOOD) : rand(OOPS_MOOD);
+    const line = correct? rand(PRAISE) : rand(OOPS);
+    const tk=todayKey();
+    const answeredByDay={...this.state.answeredByDay, [tk]:(this.state.answeredByDay[tk]||0)+1};
+    const earnedByDay={...this.state.earnedByDay, [tk]:(this.state.earnedByDay[tk]||0)+(correct?10:0)};
+    const qk=this.qkey(q);
+    let reviewQueue=this.state.reviewQueue.slice();
+    if(correct){ reviewQueue=reviewQueue.filter(x=>x!==qk); } else if(!reviewQueue.includes(qk)){ reviewQueue.push(qk); }
+    this.setState({run:{...r,revealed:true,correct,answers}, hearts, xp, answeredByDay, earnedByDay, reviewQueue, mascotMood:mood, mascotLine:line}, ()=>this.persist());
+    this.speak(line);
+  }
+  next(){
+    const r=this.state.run; if(!r) return;
+    if(r.idx+1>=r.list.length){ return this.finish(); }
+    const ni=r.idx+1; const cheer = ni%5===0;
+    this.setState({run:{...r, idx:ni, picked:null, matches:{}, revealed:false, correct:false}, mascotMood:cheer?'encourage':'idle', mascotLine:cheer?rand(MOTIVATE):null});
+  }
+  finish(){
+    if(this.state.run && this.state.run.custom) return this.finishCustom();
+    const r=this.state.run; const q=this.state.data.quizzes[this.state.quizIndex]; const lesson=q.lessons[this.state.lessonIndex];
+    const total=r.answers.length, right=r.answers.filter(a=>a.correct).length;
+    const pct= total? Math.round(right/total*100):0;
+    const wrong=r.answers.filter(a=>!a.correct).map(a=>a.q);
+    const key=this.lkey(q.quiz_name, lesson.lesson_name);
+    const prevBest=this.state.bestByLesson[key];
+    const newBest = prevBest==null || pct>prevBest;
+    const earned = right*10 + (pct===100?25:0);
+    // streak
+    const today=new Date(); const tk=today.toDateString();
+    const yk=new Date(today.getTime()-86400000).toDateString();
+    let streak={...this.state.streak, days:(this.state.streak.days||[]).slice()};
+    if(streak.last!==tk){ streak.count = streak.last===yk? (streak.count||0)+1 : 1; streak.last=tk; }
+    const isoToday=todayKey();
+    if(!streak.days.includes(isoToday)) streak.days.push(isoToday);
+    const recent=[{course:q.quiz_name, lesson:lesson.lesson_name, pct, ts:Date.now()}].concat(this.state.recent||[]).slice(0,12);
+    const bonus=(pct===100?25:0);
+    const eByDay={...this.state.earnedByDay, [isoToday]:(this.state.earnedByDay[isoToday]||0)+bonus};
+    this.setState(st=>({
+      screen:'results', mascotMood: pct>=90?'celebrate':(wrong.length?(pct>=60?'thumbsup':'encourage'):'proud'),
+      mascotLine: pct>=90? rand(GREAT) : (wrong.length? ('Review the '+wrong.length+' you missed — you can do it!') : 'Great work!'),
+      bestByLesson:{...st.bestByLesson, [key]: newBest?pct:prevBest},
+      doneByLesson: pct>=60? {...st.doneByLesson,[key]:Math.max(pct, st.doneByLesson[key]||0)} : st.doneByLesson,
+      streak, xp: st.xp + bonus, earnedByDay:eByDay, recent,
+      badges: this.computeBadges({xp:st.xp+bonus, streak, doneByLesson:pct>=60?{...st.doneByLesson,[key]:pct}:st.doneByLesson, bestByLesson:{...st.bestByLesson,[key]:newBest?pct:prevBest}, reviewQueue:st.reviewQueue}),
+      lastResult:{total,right,pct,wrong,newBest,earned,isRetry:r.isRetry},
+    }), ()=>{ this.persist(); if(pct>=60) this.burst(); if(pct>=90) this.speak('Outstanding work!'); });
+  }
+  retryWrong(){ const w=this.state.lastResult.wrong; this.startQuiz(this.state.quizIndex,this.state.lessonIndex,this.shuffle(w)); }
+
+  /* ---------- confetti ---------- */
+  burst(){
+    if(this.rm) return;
+    const cols=[T.primary,T.gold,T.accent,T.red,'#ff5fa2','#9be86a'];
+    const pieces=Array.from({length:70},(_,i)=>({id:i, left:Math.random()*100, bg:cols[i%cols.length], delay:(Math.random()*.5).toFixed(2), dur:(2.2+Math.random()*1.6).toFixed(2), rot:Math.floor(Math.random()*360), sz:6+Math.random()*8, round:Math.random()>.6}));
+    this.setState({confetti:pieces});
+    clearTimeout(this._cf); this._cf=setTimeout(()=>this.setState({confetti:[]}),4200);
+  }
+
+  /* ---------- keyboard ---------- */
+  onKey(e){
+    const st=this.state;
+    if(e.key==='Escape'){ if(st.settingsOpen) this.setState({settingsOpen:false}); else if(st.sheetLesson!=null) this.closeSheet(); return; }
+    if(st.screen==='quiz' && st.run){
+      const q=st.run.list[st.run.idx]; const type=q.type||'multiple_choice';
+      if(!st.run.revealed && (type==='multiple_choice'||type==='true_false')){
+        const choices=this.optionList(q); const n=parseInt(e.key,10);
+        if(n>=1 && n<=choices.length){ e.preventDefault(); this.pick(choices[n-1]); return; }
+      }
+      if(e.key==='Enter'){ e.preventDefault(); if(st.run.revealed) this.next(); else if(this.canSubmit()) this.submit(); }
+    } else if(st.screen==='learn' && st.learn){
+      if(e.key==='ArrowRight'){ e.preventDefault(); this.learnLast()? this.startQuiz(st.quizIndex,st.lessonIndex): this.learnNext(); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); this.learnPrev(); }
+      else if(e.key==='r'||e.key==='R'){ this.narrateCard(); }
+      else if(e.key==='Enter'){ e.preventDefault(); this.startQuiz(st.quizIndex,st.lessonIndex); }
+    }
+  }
+  optionList(q){ const type=q.type||'multiple_choice'; const ch=this.asArr(q.choices); return (type==='true_false'&&!ch.length)?['True','False']:ch; }
+
+  /* ================= UI PRIMITIVES ================= */
+  press(pressColor,small){
+    const off = small?'3px':'4px';
+    return {
+      onMouseDown:e=>{ e.currentTarget.style.transform='translateY('+off+')'; e.currentTarget.style.boxShadow='0 0 0 '+pressColor; },
+      onMouseUp:e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; },
+      onMouseLeave:e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; },
+    };
+  }
+  btn(label,onClick,opt={}){
+    const {variant='primary',full=false,disabled=false,small=false,left=null,key}=opt;
+    const map={primary:{bg:T.primary,p:T.press,fg:'#fff'},blue:{bg:T.accent,p:T.accentPress,fg:'#fff'},danger:{bg:T.red,p:T.redPress,fg:'#fff'},gold:{bg:T.gold,p:'#e0a800',fg:'#5a4200'},neutral:{bg:T.surface,p:T.lineStrong,fg:T.ink,border:true}};
+    const v=map[variant]||map.primary; const pressC=(v.border?T.lineStrong:v.p);
+    const ph=disabled?{}:this.press(pressC,small);
+    return h('button',{key,onClick:disabled?null:onClick,disabled, ...ph, style:{
+      display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'8px',
+      width:full?'100%':'auto', padding:small?'9px 16px':'15px 26px',
+      border:v.border?('2px solid '+T.line):'none', borderRadius:'15px',
+      background:disabled?T.line:v.bg, color:disabled?T.muted:v.fg,
+      fontFamily:'Nunito',fontWeight:800, fontSize:small?'13.5px':'16px', lineHeight:1.1,
+      letterSpacing:'.7px', textTransform:'uppercase',
+      boxShadow:disabled?'none':('0 '+(small?'3px':'4px')+' 0 '+pressC),
+      cursor:disabled?'not-allowed':'pointer', transition:'transform .06s, box-shadow .06s, filter .15s', userSelect:'none', whiteSpace:'nowrap',
+    }}, left, h('span',{key:'l'},label));
+  }
+  fs(px){ return 'calc('+px+'px * var(--qm-scale))'; }
+  wrap(children,max){ return h('div',{style:{width:'min('+(max||1080)+'px, calc(100% - 32px))', margin:'0 auto'}}, children); }
+  kicker(text,color){ return h('div',{style:{display:'inline-flex',alignItems:'center',gap:'8px',color:color||T.primary,fontWeight:900,fontSize:'12px',letterSpacing:'1.2px',textTransform:'uppercase'}}, h('span',{key:'d',style:{width:'8px',height:'8px',borderRadius:'50%',background:'currentColor'}}), text); }
+
+  /* ================= MASCOT ================= */
+  // "The Professor" — a distinguished, kindly scholar. Silver Einstein hair,
+  // gold spectacles, bushy moustache, warm smile, bow tie in the theme colour.
+  mascot(mood,size){
+    if(!this.state.settings.characters) return null;
+    const rm=this.rm;
+    let anim;
+    const SHIRT='#fbfcfe', tie=T.primary, tieP=T.press;
+    const c=this.moodCfg(mood); const expr=c[0],la=c[1],ra=c[2]; anim=rm?'none':c[3]; const fx=c[4];
+    const raised = la==='up'||ra==='up'||la==='wave'||ra==='wave'||la==='fist'||ra==='fist';
+    const GOLD='#d4af37', LEG='#232b42', SHOE='#171d2b', JACKET='#2c3550';
+    const fxEls=[];
+    if(fx==='sparkle'){ fxEls.push(h('path',{key:'sp1',d:'M114 42 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8z',fill:GOLD})); fxEls.push(h('circle',{key:'sp2',cx:26,cy:58,r:2.6,fill:GOLD})); fxEls.push(h('circle',{key:'sp3',cx:120,cy:70,r:2,fill:GOLD})); }
+    if(fx==='dots'){ fxEls.push(h('circle',{key:'d1',cx:110,cy:46,r:2.4,fill:'#cfd6e0'})); fxEls.push(h('circle',{key:'d2',cx:118,cy:36,r:3.4,fill:'#cfd6e0'})); fxEls.push(h('circle',{key:'d3',cx:127,cy:25,r:4.6,fill:'#cfd6e0'})); }
+    if(fx==='tear'){ fxEls.push(h('circle',{key:'tr',cx:50,cy:54,r:2.8,fill:T.accent})); }
+    if(fx==='sweat'){ fxEls.push(h('path',{key:'sw',d:'M108 44 q4 6 0 10 q-4 -4 0 -10z',fill:T.accent})); }
+    const stick = fx==='stick'? h('line',{key:'stk',x1:100,y1:44,x2:112,y2:16,stroke:'#8a5a3a',strokeWidth:2.6,strokeLinecap:'round'}) : null;
+    const book = fx==='book'? h('g',{key:'bk'},[h('rect',{x:50,y:116,width:40,height:26,rx:3,fill:'#fbfcfe',stroke:'#2c3550',strokeWidth:2}),h('line',{x1:70,y1:117,x2:70,y2:141,stroke:'#2c3550',strokeWidth:2}),h('line',{x1:55,y1:124,x2:66,y2:124,stroke:'#cfd6e0',strokeWidth:1.6}),h('line',{x1:74,y1:124,x2:85,y2:124,stroke:'#cfd6e0',strokeWidth:1.6}),h('line',{x1:55,y1:131,x2:66,y2:131,stroke:'#cfd6e0',strokeWidth:1.6}),h('line',{x1:74,y1:131,x2:85,y2:131,stroke:'#cfd6e0',strokeWidth:1.6})]) : null;
+    const arms=[h('g',{key:'la',style:this.armStyle(-1,la)},this.mascotArm(-1,la)), h('g',{key:'raa',style:this.armStyle(1,ra)},this.mascotArm(1,ra))];
+    const tiltMoods={wave:1,think:1,idle:1,teach:1,read:1,point:1,proud:1};
+    const headAnim = (!rm && tiltMoods[mood])? 'qm-headtilt 3.4s ease-in-out infinite':'none';
+    const torso=[
+      h('rect',{key:'lg1',x:56,y:150,width:12,height:44,rx:6,fill:LEG}),
+      h('rect',{key:'lg2',x:72,y:150,width:12,height:44,rx:6,fill:LEG}),
+      h('ellipse',{key:'sh1',cx:59,cy:195,rx:10,ry:5,fill:SHOE}),
+      h('ellipse',{key:'sh2',cx:81,cy:195,rx:10,ry:5,fill:SHOE}),
+      h('rect',{key:'neck',x:63,y:70,width:14,height:26,rx:6,fill:'#f5d4ad'}),
+      h('path',{key:'nsh',d:'M63 86 q7 5 14 0 v-16 h-14 z',fill:'#e8bd8f',opacity:.30}),
+      h('path',{key:'jk',d:'M43 100 Q45 91 60 91 L80 91 Q95 91 97 100 L100 150 Q70 159 40 150 Z',fill:JACKET}),
+      h('path',{key:'scv',d:'M60 93 L70 116 L80 93 Z',fill:SHIRT}),
+      h('path',{key:'bt1',d:'M70 100 L58 94 L58 106 Z',fill:tie}),
+      h('path',{key:'bt2',d:'M70 100 L82 94 L82 106 Z',fill:tie}),
+      h('rect',{key:'btk',x:67,y:96.5,width:6,height:7,rx:2,fill:tieP}),
+      h('path',{key:'pk',d:'M85 116 l8 0 -4 6 z',fill:GOLD}),
+      h('circle',{key:'bn1',cx:70,cy:122,r:1.8,fill:'#5a6488'}),
+      h('circle',{key:'bn2',cx:70,cy:134,r:1.8,fill:'#5a6488'}),
+    ];
+    const head=h('g',{key:'head',style:{transformOrigin:'70px 78px',transformBox:'view-box',animation:headAnim}},
+      h('g',{transform:'translate(28 4.6) scale(0.7)'}, this.mascotFace(expr,rm)));
+    // raised arms go over the head; resting arms sit behind it
+    const layers = raised
+      ? [...torso, head, ...arms, book, stick, ...fxEls]
+      : [...torso, ...arms, head, book, stick, ...fxEls];
+    return h('div',{style:{width:size,aspectRatio:'140 / 205',display:'grid',placeItems:'center',flex:'0 0 auto'}},
+      h('div',{style:{width:'100%',height:'100%',animation:anim,transformOrigin:'center bottom'}},
+        h('svg',{viewBox:'0 0 140 210',width:'100%',height:'100%',preserveAspectRatio:'xMidYMid meet'},[
+          h('ellipse',{key:'shadow',cx:70,cy:202,rx:40,ry:6,fill:'rgba(0,0,0,.13)'}),
+          ...layers,
+        ])));
+  }
+  // Head art in 0..120 face-space, keyed by expression.
+  mascotFace(expr,rm){
+    const GOLD='#d4af37',GOLD2='#b8912b',HAIR='#6f4c34',HAIR2='#523827',HSHEEN='#8a6247',FACE='#f5d4ad',FACE2='#e8bd8f',BROW='#5a4130',EYE='#2f3a2c',LIP='#b06d57';
+    let brows;
+    if(expr==='sad') brows=[h('path',{key:'b1',d:'M37 49 q7 3 13 1',stroke:BROW,strokeWidth:5,fill:'none',strokeLinecap:'round'}),h('path',{key:'b2',d:'M70 50 q6 -2 13 -1',stroke:BROW,strokeWidth:5,fill:'none',strokeLinecap:'round'})];
+    else if(expr==='think') brows=[h('path',{key:'b1',d:'M37 50 q7 -1 13 1',stroke:BROW,strokeWidth:5,fill:'none',strokeLinecap:'round'}),h('path',{key:'b2',d:'M69 43 q7 -2 14 1',stroke:BROW,strokeWidth:5,fill:'none',strokeLinecap:'round'})];
+    else if(expr==='surprise') brows=[h('path',{key:'b1',d:'M37 44 q7 -3 13 0',stroke:BROW,strokeWidth:5,fill:'none',strokeLinecap:'round'}),h('path',{key:'b2',d:'M70 44 q7 -3 13 0',stroke:BROW,strokeWidth:5,fill:'none',strokeLinecap:'round'})];
+    else brows=[h('path',{key:'b1',d:'M37 48 q7 -3 13 0',stroke:BROW,strokeWidth:5,fill:'none',strokeLinecap:'round'}),h('path',{key:'b2',d:'M70 48 q7 -3 13 0',stroke:BROW,strokeWidth:5,fill:'none',strokeLinecap:'round'})];
+    let eyes; const blink={animation:rm?'none':'qm-blink 5s infinite',transformOrigin:'center'};
+    if(expr==='grin') eyes=[h('path',{key:'e1',d:'M39 61 q6 -7 12 0',stroke:EYE,strokeWidth:3.4,fill:'none',strokeLinecap:'round'}),h('path',{key:'e2',d:'M69 61 q6 -7 12 0',stroke:EYE,strokeWidth:3.4,fill:'none',strokeLinecap:'round'})];
+    else if(expr==='wink') eyes=[h('circle',{key:'p1',cx:45,cy:61,r:4.1,fill:EYE}),h('circle',{key:'g1',cx:43.6,cy:59.6,r:1.4,fill:'#fff'}),h('path',{key:'e2',d:'M69 61 q6 -7 12 0',stroke:EYE,strokeWidth:3.4,fill:'none',strokeLinecap:'round'})];
+    else if(expr==='surprise') eyes=[h('circle',{key:'w1',cx:45,cy:61,r:5,fill:'#fff',stroke:EYE,strokeWidth:1}),h('circle',{key:'w2',cx:75,cy:61,r:5,fill:'#fff',stroke:EYE,strokeWidth:1}),h('circle',{key:'p1',cx:45,cy:61,r:3,fill:EYE}),h('circle',{key:'p2',cx:75,cy:61,r:3,fill:EYE})];
+    else { const up=expr==='think'?-2:0,dx=expr==='think'?2:0; eyes=[h('g',{key:'eg',style:blink},[h('circle',{key:'p1',cx:45+dx,cy:61+up,r:4.1,fill:EYE}),h('circle',{key:'p2',cx:75+dx,cy:61+up,r:4.1,fill:EYE}),h('circle',{key:'g1',cx:43.6+dx,cy:59.6+up,r:1.4,fill:'#fff'}),h('circle',{key:'g2',cx:73.6+dx,cy:59.6+up,r:1.4,fill:'#fff'})])]; }
+    let mouth;
+    if(expr==='grin') mouth=h('path',{key:'m',d:'M50 90 q10 12 20 0 q-10 6 -20 0 z',fill:'#8a3f33'});
+    else if(expr==='surprise') mouth=h('ellipse',{key:'m',cx:60,cy:92,rx:5,ry:6,fill:'#8a3f33'});
+    else if(expr==='sad') mouth=h('path',{key:'m',d:'M53 91 q7 4 14 0',stroke:LIP,strokeWidth:3,fill:'none',strokeLinecap:'round'});
+    else if(expr==='think') mouth=h('path',{key:'m',d:'M52 91 q8 3 15 -1',stroke:LIP,strokeWidth:3,fill:'none',strokeLinecap:'round'});
+    else mouth=h('path',{key:'m',d:'M51 90 q9 7 18 0',stroke:LIP,strokeWidth:3,fill:'none',strokeLinecap:'round'});
+    return [
+      // hair volume behind the head (sides + back)
+      h('ellipse',{key:'hb',cx:60,cy:45,rx:39,ry:33,fill:HAIR2}),
+      h('ellipse',{key:'er1',cx:26,cy:64,rx:5.5,ry:8,fill:FACE}),
+      h('ellipse',{key:'er2',cx:94,cy:64,rx:5.5,ry:8,fill:FACE}),
+      h('ellipse',{key:'hd',cx:60,cy:62,rx:36,ry:38,fill:FACE}),
+      h('ellipse',{key:'hsh',cx:60,cy:84,rx:23,ry:12,fill:FACE2,opacity:.32}),
+      // neat sideburns
+      h('path',{key:'sbl',d:'M25 51 q-1 13 4 21 q3 -2 4 -7 q-4 -7 -3 -15 z',fill:HAIR}),
+      h('path',{key:'sbr',d:'M95 51 q1 13 -4 21 q-3 -2 -4 -7 q4 -7 3 -15 z',fill:HAIR}),
+      // full head of hair with a young hairline + side part
+      h('path',{key:'hair',d:'M22 55 C21 26 40 13 60 13 C80 13 99 26 98 55 C90 40 80 36 72 38 C66 30 52 30 46 39 C38 37 29 41 22 55 Z',fill:HAIR}),
+      h('path',{key:'hpart',d:'M62 15 C55 22 52 29 55 38',stroke:HAIR2,strokeWidth:2.4,fill:'none',strokeLinecap:'round',opacity:.55}),
+      h('path',{key:'hsn',d:'M39 25 C47 19 58 18 67 21',stroke:HSHEEN,strokeWidth:3,fill:'none',strokeLinecap:'round',opacity:.65}),
+      h('ellipse',{key:'ch1',cx:38,cy:77,rx:6,ry:3.6,fill:'rgba(231,120,90,.30)'}),
+      h('ellipse',{key:'ch2',cx:82,cy:77,rx:6,ry:3.6,fill:'rgba(231,120,90,.30)'}),
+      ...brows, ...eyes,
+      h('circle',{key:'gl1',cx:45,cy:61,r:11.5,fill:'rgba(255,255,255,.16)',stroke:GOLD,strokeWidth:3}),
+      h('circle',{key:'gl2',cx:75,cy:61,r:11.5,fill:'rgba(255,255,255,.16)',stroke:GOLD,strokeWidth:3}),
+      h('path',{key:'brd',d:'M56.5 60 q3.5 -3 7 0',stroke:GOLD,strokeWidth:3,fill:'none',strokeLinecap:'round'}),
+      h('path',{key:'tm1',d:'M33.5 61 q-4 0 -6 3',stroke:GOLD2,strokeWidth:2.4,fill:'none',strokeLinecap:'round'}),
+      h('path',{key:'tm2',d:'M86.5 61 q4 0 6 3',stroke:GOLD2,strokeWidth:2.4,fill:'none',strokeLinecap:'round'}),
+      h('path',{key:'no',d:'M60 67 q-3 5 -1 8 q2 1 4 0',stroke:FACE2,strokeWidth:2.6,fill:'none',strokeLinecap:'round'}),
+      mouth,
+    ];
+  }
+  // One arm (side -1 left / +1 right) in a named pose, body-space coords.
+  mascotArm(side,pose){
+    const FACE='#f1d3b0',FACE2='#e4bd93',JACKET='#2c3550';
+    const sx=70+side*23, sy=92;
+    const M={
+      down:[sx+side*3,150,sx+side*9,120,'flat'], up:[sx+side*7,36,sx+side*17,60,'flat'],
+      wave:[sx+side*17,58,sx+side*19,80,'flat'], thumb:[sx+side*9,112,sx+side*17,126,'thumb'],
+      fist:[sx+side*3,62,sx+side*15,86,'fist'], chin:[66,80,sx+side*6,102,'flat'],
+      hip:[sx-side*5,132,sx+side*11,118,'flat'], point:[sx+side*28,112,sx+side*17,104,'point'],
+      out:[sx+side*26,138,sx+side*17,122,'flat'], cheek:[70+side*25,58,sx+side*15,80,'flat'],
+      clap:[70+side*7,112,sx+side*5,110,'flat'], pointUp:[sx+side*7,44,sx+side*15,68,'flat'],
+      book:[60+side*12,126,sx+side*8,122,'flat'],
+    };
+    const a=M[pose]||M.down; const hx=a[0],hy=a[1],cx=a[2],cy=a[3],type=a[4];
+    const els=[h('path',{key:'sl',d:'M'+sx+' '+sy+' Q'+cx+' '+cy+' '+hx+' '+hy,stroke:JACKET,strokeWidth:13,fill:'none',strokeLinecap:'round'})];
+    els.push(h('circle',{key:'hn',cx:hx,cy:hy,r:type==='fist'?6.8:7,fill:FACE}));
+    if(type==='thumb') els.push(h('rect',{key:'th',x:hx-2.6,y:hy-14,width:5.2,height:11,rx:2.6,fill:FACE}));
+    if(type==='fist') els.push(h('path',{key:'k',d:'M'+(hx-4)+' '+(hy-2)+' h8',stroke:FACE2,strokeWidth:1.6,fill:'none',strokeLinecap:'round'}));
+    if(type==='point') els.push(h('ellipse',{key:'fg',cx:hx+side*5,cy:hy,rx:6,ry:3.4,fill:FACE}));
+    return els;
+  }
+  // CSS animation for an arm group, pivoting at its shoulder joint.
+  armStyle(side,pose){
+    const sx=70+side*23, sy=92;
+    const st={transformOrigin:sx+'px '+sy+'px',transformBox:'view-box'};
+    if(this.rm) return st;
+    const map={
+      wave:'qm-armwave .9s ease-in-out infinite',
+      thumb:'qm-armpump 1s ease-in-out infinite',
+      fist:'qm-armpump .7s ease-in-out infinite',
+      up: side<0?'qm-raiseL 1s ease-in-out infinite':'qm-raiseR 1s ease-in-out infinite',
+      pointUp: side<0?'qm-raiseL 1.6s ease-in-out infinite':'qm-raiseR 1.6s ease-in-out infinite',
+      point:'qm-armpoint 1.5s ease-in-out infinite',
+      out:'qm-shrug 1.4s ease-in-out infinite',
+      cheek:'qm-shrug 1.6s ease-in-out infinite',
+      clap: side<0?'qm-clapL .5s ease-in-out infinite':'qm-clapR .5s ease-in-out infinite',
+    };
+    if(map[pose]) st.animation=map[pose];
+    return st;
+  }
+  // mood -> [faceExpr, leftArmPose, rightArmPose, animation, effect]
+  moodCfg(mood){
+    const B='qm-bob 3.6s ease-in-out infinite', C='qm-cheer 1s ease-in-out infinite', S='qm-sadwob 1.5s ease-in-out infinite';
+    const M={
+      idle:['smile','down','down',B], nod:['smile','down','down',B],
+      wave:['grin','down','wave',B], cheer:['grin','up','up',C,'sparkle'],
+      celebrate:['grin','up','up',C,'sparkle'], thumbsup:['grin','down','thumb',B],
+      clap:['grin','clap','clap',C], point:['smile','hip','point',B],
+      teach:['smile','hip','pointUp',B,'stick'], think:['think','down','chin',B,'dots'],
+      read:['think','book','book',B,'book'], proud:['grin','hip','hip',B],
+      encourage:['grin','down','fist',C], wink:['wink','down','thumb',B],
+      sad:['sad','down','down',S,'tear'], oops:['surprise','cheek','cheek',S,'sweat'],
+      shrug:['surprise','out','out',B],
+    };
+    return M[mood]||M.idle;
+  }
+  speechBubble(text){
+    if(!text) return null;
+    return h('div',{style:{position:'relative',background:T.surface,border:'2px solid '+T.line,borderRadius:'14px',padding:'8px 14px',fontWeight:900,color:T.inkStrong,fontSize:this.fs(14),lineHeight:1.25,boxShadow:'0 4px 0 '+T.lineStrong,width:'120px',textAlign:'center',animation:this.rm?'none':'qm-pop .3s ease'}}, [
+      h('span',{key:'t'}, text),
+      h('div',{key:'tb',style:{position:'absolute',left:'50%',bottom:'-12px',transform:'translateX(-50%)',width:0,height:0,borderLeft:'11px solid transparent',borderRight:'11px solid transparent',borderTop:'12px solid '+T.line}}),
+      h('div',{key:'tf',style:{position:'absolute',left:'50%',bottom:'-8px',transform:'translateX(-50%)',width:0,height:0,borderLeft:'9px solid transparent',borderRight:'9px solid transparent',borderTop:'10px solid '+T.surface}}),
+    ]);
+  }
+  miniMark(){
+    return h('div',{style:{width:'36px',height:'36px',borderRadius:'11px',background:'linear-gradient(150deg, var(--qm-primary), var(--qm-primaryPress))',display:'grid',placeItems:'center',boxShadow:'0 3px 0 var(--qm-primaryPress)',flex:'0 0 auto'}},
+      h('svg',{viewBox:'0 0 120 120',width:'27',height:'27'},[
+        h('ellipse',{key:'h',cx:60,cy:60,rx:40,ry:42,fill:'#fff'}),
+        h('circle',{key:'g1',cx:46,cy:56,r:13,fill:'none',stroke:'#d4af37',strokeWidth:5}),
+        h('circle',{key:'g2',cx:80,cy:56,r:13,fill:'none',stroke:'#d4af37',strokeWidth:5}),
+        h('path',{key:'br',d:'M59 55 q4 -3 8 0',stroke:'#d4af37',strokeWidth:5,fill:'none',strokeLinecap:'round'}),
+        h('path',{key:'ms',d:'M63 82 C56 81 51 85 47 90 C53 92 59 88 63 85 Z',fill:'var(--qm-primaryPress)'}),
+        h('path',{key:'ms2',d:'M63 82 C70 81 75 85 79 90 C73 92 67 88 63 85 Z',fill:'var(--qm-primaryPress)'}),
+      ]));
+  }
+
+  /* ================= SCREENS ================= */
+  renderBody(){
+    if(this.state.loading) return this.centerNote(this.spinner(), 'Loading your courses…');
+    if(this.state.error) return this.centerNote(null,'Could not load quizzes — '+this.state.error);
+    switch(this.state.screen){
+      case 'dashboard': return this.dashboardScreen();
+      case 'home': return this.homeScreen();
+      case 'course': return this.courseScreen();
+      case 'learn': return this.learnScreen();
+      case 'quiz': return this.quizScreen();
+      case 'results': return this.resultsScreen();
+      default: return this.homeScreen();
+    }
+  }
+  spinner(){ return h('div',{style:{width:'46px',height:'46px',borderRadius:'50%',border:'5px solid '+T.line,borderTopColor:T.primary,animation:'qm-spin 1s linear infinite',margin:'0 auto'}}); }
+  centerNote(top,msg){ return h('div',{style:{flex:1,display:'grid',placeItems:'center',padding:'80px 20px'}}, h('div',{style:{textAlign:'center',color:T.muted}}, top, h('p',{style:{marginTop:'16px',fontWeight:700}},msg))); }
+
+  homeScreen(){
+    const qs=this.state.data.quizzes; const totals=this.libStats(qs);
+    const hero=h('section',{style:{display:'grid',gridTemplateColumns:'minmax(0,1.05fr) minmax(300px,.95fr)',gap:'30px',alignItems:'center',padding:'46px 0 20px'}},[
+      h('div',{key:'copy'},[
+        this.kicker('Learn · Hear · Master'),
+        h('h1',{key:'t',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'clamp(46px,7vw,84px)',lineHeight:.95,margin:'14px 0 0',color:T.inkStrong,letterSpacing:'-1.5px'}},'Study smarter, one lesson at a time.'),
+        h('p',{key:'p',style:{margin:'18px 0 0',maxWidth:'520px',color:T.ink,fontSize:this.fs(18),lineHeight:1.6,fontWeight:600}},'Bite-size lessons read aloud, then quick quizzes that adapt to what you miss. Keep your streak, earn Merit, and actually remember it.'),
+        h('div',{key:'a',style:{display:'flex',gap:'12px',flexWrap:'wrap',marginTop:'28px'}},[
+          this.btn('Start learning',()=>this.openCourse(0),{key:'b1'}),
+          this.btn('Browse courses',()=>{ const e=document.getElementById('qm-courses'); if(e) window.scrollTo({top:e.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'}); },{key:'b2',variant:'neutral'}),
+        ]),
+        h('div',{key:'m',style:{display:'flex',gap:'10px',flexWrap:'wrap',marginTop:'30px'}},[
+          this.statChip(qs.length,'courses',T.primary),
+          this.statChip(this.num(totals.lessons),'lessons',T.accent),
+          this.statChip(this.num(totals.questions),'questions',T.gold),
+        ]),
+      ]),
+      h('div',{key:'art',style:{position:'relative',display:'grid',placeItems:'center'}},[
+        h('div',{key:'blob',style:{position:'absolute',width:'86%',aspectRatio:'1',borderRadius:'46% 54% 58% 42%',background:'radial-gradient(circle at 40% 35%, var(--qm-surface), var(--qm-surface2))',boxShadow:'0 30px 70px var(--qm-shadow)'}}),
+        h('div',{key:'pip',style:{position:'relative',width:'min(300px,72%)'}}, this.mascot('wave','100%')),
+        this.floatBadge('+10 Merit','12%','8%',T.gold,'#5a4200'),
+        this.floatBadge('Correct!','72%','2%',T.primary,'#fff'),
+        this.floatBadge('🔥 '+(this.state.streak.count||0),'80%','78%',T.surface,T.flame,true),
+      ]),
+    ]);
+    const courses=h('section',{key:'courses',id:'qm-courses',style:{padding:'26px 0 70px'}},[
+      h('div',{key:'hd',style:{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:'16px',marginBottom:'20px',flexWrap:'wrap'}},[
+        h('div',{key:'l'},[ this.kicker('Course library',T.accent), h('h2',{key:'h',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'clamp(28px,4vw,42px)',margin:'10px 0 0',color:T.inkStrong,letterSpacing:'-.5px'}},'Pick a course to begin') ]),
+        h('div',{key:'c',style:{padding:'9px 15px',borderRadius:'999px',border:'2px solid '+T.line,background:T.surface,fontWeight:800,color:T.muted,fontSize:'14px'}}, qs.length+' available'),
+      ]),
+      h('div',{key:'g',style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:'16px'}}, qs.map((q,i)=>this.courseCard(q,i))),
+    ]);
+    return h('div',{style:{flex:1,animation:this.rm?'none':'qm-slidein .35s ease'}}, this.wrap([hero,courses]));
+  }
+  statChip(v,label,color){ return h('div',{key:label,style:{padding:'14px 18px',borderRadius:'16px',background:T.surface,border:'2px solid '+T.line,minWidth:'92px'}},[ h('div',{key:'v',style:{fontSize:'26px',fontWeight:900,color:color,lineHeight:1}},String(v)), h('div',{key:'l',style:{fontSize:'12px',fontWeight:700,color:T.muted,marginTop:'4px',textTransform:'uppercase',letterSpacing:'.6px'}},label) ]); }
+  floatBadge(txt,top,left,bg,fg,soft){ return h('div',{style:{position:'absolute',top:top,left:left,padding:'8px 13px',borderRadius:'999px',background:bg,color:fg,fontWeight:900,fontSize:'14px',boxShadow:'0 8px 20px var(--qm-shadow)',border:soft?('2px solid '+T.line):'none',animation:this.rm?'none':'qm-floatup 3.2s ease-in-out infinite',whiteSpace:'nowrap'}},txt); }
+
+  courseCard(q,i){
+    const s=this.quizStats(q); const done=q.lessons.filter(l=>this.state.doneByLesson[this.lkey(q.quiz_name,l.lesson_name)]!=null).length;
+    const pctDone= s.lessons? Math.round(done/s.lessons*100):0;
+    const grad=['linear-gradient(150deg,var(--qm-primary),var(--qm-primaryPress))','linear-gradient(150deg,var(--qm-accent),var(--qm-accentPress))','linear-gradient(150deg,var(--qm-gold),#e0a800)'][i%3];
+    return h('button',{key:i,onClick:()=>this.openCourse(i), ...this.press(T.lineStrong), style:{textAlign:'left',padding:'20px',borderRadius:'20px',border:'2px solid '+T.line,background:T.surface,boxShadow:'0 4px 0 '+T.lineStrong,cursor:'pointer',transition:'transform .06s, box-shadow .06s',display:'flex',flexDirection:'column',gap:'14px'}},[
+      h('div',{key:'top',style:{display:'flex',alignItems:'center',gap:'13px'}},[
+        h('div',{key:'ic',style:{width:'52px',height:'52px',borderRadius:'15px',background:grad,color:'#fff',display:'grid',placeItems:'center',fontWeight:900,fontSize:'18px',flex:'0 0 auto',boxShadow:'0 3px 0 rgba(0,0,0,.12)'}}, this.initials(q.quiz_name)),
+        h('div',{key:'nm',style:{minWidth:0}},[
+          h('div',{key:'t',style:{fontWeight:900,fontSize:'17px',color:T.inkStrong,lineHeight:1.25}}, q.quiz_name),
+          h('div',{key:'m',style:{fontSize:'13px',fontWeight:700,color:T.muted,marginTop:'3px'}}, s.lessons+' lessons · '+this.num(s.questions)+' questions'+(s.cards?' · '+s.cards+' cards':'')),
+        ]),
+      ]),
+      h('div',{key:'bar'},[
+        h('div',{key:'tk',style:{height:'12px',borderRadius:'999px',background:T.surface2,overflow:'hidden',border:'1px solid '+T.line}}, h('div',{style:{width:pctDone+'%',height:'100%',background:'linear-gradient(90deg,var(--qm-primary),var(--qm-accent))',borderRadius:'999px',transition:'width .4s'}})),
+        h('div',{key:'lb',style:{fontSize:'12px',fontWeight:800,color:T.muted,marginTop:'6px'}}, done? done+' / '+s.lessons+' lessons started' : 'Not started yet'),
+      ]),
+    ]);
+  }
+
+  courseScreen(){
+    const q=this.state.data.quizzes[this.state.quizIndex]; const lessons=q.lessons||[]; const s=this.quizStats(q);
+    const done=lessons.filter(l=>this.state.doneByLesson[this.lkey(q.quiz_name,l.lesson_name)]!=null).length;
+    const pctDone=s.lessons?Math.round(done/s.lessons*100):0;
+    const header=h('div',{key:'hd',style:{padding:'34px 0 8px'}},[
+      h('button',{key:'bk',onClick:()=>this.goHome(),style:{display:'inline-flex',alignItems:'center',gap:'6px',border:'none',background:'none',color:T.muted,fontWeight:800,cursor:'pointer',fontSize:'14px',padding:'4px 0',marginBottom:'6px'}},'← All courses'),
+      h('h1',{key:'t',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'clamp(30px,4.4vw,50px)',margin:'6px 0 0',color:T.inkStrong,letterSpacing:'-.8px'}}, q.quiz_name),
+      h('p',{key:'p',style:{margin:'10px 0 0',color:T.muted,fontWeight:700,fontSize:'15px'}}, s.lessons+' lessons · '+this.num(s.questions)+' questions'+(s.cards?' · '+s.cards+' narrated cards':'')),
+      h('div',{key:'bar',style:{marginTop:'16px',maxWidth:'440px'}},[
+        h('div',{style:{height:'14px',borderRadius:'999px',background:T.surface2,overflow:'hidden',border:'1px solid '+T.line}}, h('div',{style:{width:pctDone+'%',height:'100%',background:'linear-gradient(90deg,var(--qm-primary),var(--qm-accent))'}})),
+      ]),
+    ]);
+    // serpentine path
+    const offsets=[0,-1,-1.6,-1,0,1,1.6,1];
+    const nodes=lessons.map((l,i)=>{
+      const key=this.lkey(q.quiz_name,l.lesson_name); const best=this.state.bestByLesson[key];
+      const state = best==null?'todo':(best>=90?'crown':'done');
+      const off=offsets[i%offsets.length]*44;
+      const ring = state==='crown'?T.gold : state==='done'?T.primary : T.lineStrong;
+      const bg = state==='todo'? T.surface : (state==='crown'? 'linear-gradient(150deg,var(--qm-gold),#e0a800)':'linear-gradient(150deg,var(--qm-primary),var(--qm-primaryPress))');
+      const isNext = state==='todo' && lessons.slice(0,i).every(x=>this.state.bestByLesson[this.lkey(q.quiz_name,x.lesson_name)]!=null);
+      const icon = state==='crown'
+        ? h('svg',{width:34,height:34,viewBox:'0 0 24 24',fill:'#fff'},h('path',{d:'M3 7l4.5 4L12 5l4.5 6L21 7l-1.6 11H4.6L3 7z'}))
+        : state==='done'
+        ? h('svg',{width:32,height:32,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:3.4,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M20 6L9 17l-5-5'}))
+        : h('span',{style:{fontWeight:900,fontSize:'22px',color:T.muted}}, String(i+1));
+      return h('div',{key:i,style:{display:'flex',flexDirection:'column',alignItems:'center',transform:'translateX('+off+'px)',position:'relative'}},[
+        isNext? h('div',{key:'st',style:{position:'absolute',top:'-26px',background:T.primary,color:'#fff',fontWeight:900,fontSize:'11px',padding:'4px 10px',borderRadius:'999px',letterSpacing:'.5px',boxShadow:'0 3px 0 '+T.press}},'START'):null,
+        h('button',{key:'nd',onClick:()=>this.openSheet(i), ...this.press(ring), style:{width:'78px',height:'70px',borderRadius:'50%',border:'none',background:bg,boxShadow:'0 7px 0 '+ring,cursor:'pointer',display:'grid',placeItems:'center',transition:'transform .06s, box-shadow .06s',animation:(isNext&&!this.rm)?'qm-pulse 2s infinite':'none'}}, icon),
+        h('div',{key:'nm',style:{marginTop:'12px',maxWidth:'160px',textAlign:'center',fontWeight:800,fontSize:'13.5px',color:T.ink,lineHeight:1.25}}, l.lesson_name),
+        best!=null? h('div',{key:'bs',style:{marginTop:'3px',fontSize:'12px',fontWeight:800,color:state==='crown'?'#c79600':T.primary}},'Best '+best+'%'):null,
+      ]);
+    });
+    const path=h('div',{key:'path',style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'30px',padding:'46px 0 80px'}}, nodes);
+    return h('div',{style:{flex:1,animation:this.rm?'none':'qm-slidein .3s ease'}}, this.wrap([header,path],760), this.lessonSheet(q));
+  }
+  lessonSheet(q){
+    const li=this.state.sheetLesson; if(li==null) return null;
+    const l=q.lessons[li]; const nQ=(l.questions||[]).length; const nC=(l.lesson_content||[]).length;
+    const best=this.state.bestByLesson[this.lkey(q.quiz_name,l.lesson_name)];
+    return h('div',{onClick:()=>this.closeSheet(),style:{position:'fixed',inset:0,zIndex:50,background:'rgba(20,26,20,.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}},
+      h('div',{onClick:e=>e.stopPropagation(),style:{width:'min(560px,100%)',background:T.surface,borderRadius:'26px 26px 0 0',padding:'26px 26px 34px',boxShadow:'0 -20px 60px rgba(0,0,0,.3)',animation:this.rm?'none':'qm-slideup .3s ease',maxHeight:'86vh',overflow:'auto'}},[
+        h('div',{key:'g',style:{width:'44px',height:'5px',borderRadius:'999px',background:T.line,margin:'0 auto 18px'}}),
+        h('div',{key:'row',style:{display:'flex',gap:'16px',alignItems:'center'}},[
+          this.mascot(nC?'think':'idle','78px'),
+          h('div',{key:'tx',style:{flex:1,minWidth:0}},[
+            h('div',{key:'k',style:{fontSize:'12px',fontWeight:900,color:T.muted,textTransform:'uppercase',letterSpacing:'1px'}},'Lesson '+(li+1)),
+            h('h3',{key:'t',style:{margin:'4px 0 0',fontWeight:900,fontSize:'22px',color:T.inkStrong,lineHeight:1.2}}, l.lesson_name),
+            h('div',{key:'m',style:{marginTop:'6px',fontWeight:700,color:T.muted,fontSize:'14px'}}, nQ+' questions'+(nC?' · '+nC+' learn cards':'')+(best!=null?' · best '+best+'%':'')),
+          ]),
+        ]),
+        h('div',{key:'ac',style:{display:'flex',flexDirection:'column',gap:'11px',marginTop:'22px'}}, [
+          nC? this.btn('▶  Learn first — narrated cards',()=>this.startLearn(this.state.quizIndex,li),{key:'ln',full:true,variant:'blue'}):null,
+          this.btn(nC?'Skip to the quiz':'Start quiz',()=>this.startQuiz(this.state.quizIndex,li),{key:'qz',full:true}),
+          this.btn('Cancel',()=>this.closeSheet(),{key:'cx',full:true,variant:'neutral'}),
+        ]),
+      ]));
+  }
+
+  learnScreen(){
+    const l=this.state.learn; const c=l.cards[l.idx]; const last=l.idx>=l.cards.length-1;
+    const dots=h('div',{key:'dots',style:{display:'flex',gap:'6px',justifyContent:'center',marginBottom:'22px',flexWrap:'wrap'}}, l.cards.map((_,i)=>h('div',{key:i,style:{width:i===l.idx?'26px':'9px',height:'9px',borderRadius:'999px',background:i===l.idx?T.primary:(i<l.idx?T.mascot:T.line),transition:'all .25s'}})));
+    const card=h('div',{key:'card',style:{background:T.surface,border:'2px solid '+T.line,borderRadius:'24px',boxShadow:'0 8px 0 '+T.lineStrong,padding:'clamp(22px,4vw,40px)',animation:this.rm?'none':'qm-pop .35s ease'}},[
+      h('div',{key:'k',style:{display:'flex',alignItems:'center',gap:'8px',color:T.accent,fontWeight:900,fontSize:'12px',letterSpacing:'1px',textTransform:'uppercase'}}, 'Card '+(l.idx+1)+' of '+l.cards.length,
+        h('button',{key:'sp',onClick:()=>this.narrateCard(),title:'Read aloud (R)',style:{marginLeft:'auto',display:'grid',placeItems:'center',width:'38px',height:'38px',borderRadius:'12px',border:'2px solid '+T.line,background:T.surface2,cursor:'pointer',color:T.accent}}, this.speakerIcon())),
+      h('h2',{key:'t',style:{fontFamily:'Nunito',fontWeight:900,fontSize:this.fs(30),lineHeight:1.15,margin:'12px 0 0',color:T.inkStrong}}, c.title),
+      c.query? h('pre',{key:'q',style:{margin:'20px 0 0',background:T.code,color:T.codeInk,borderRadius:'16px',padding:'18px 20px',overflow:'auto',fontFamily:"'JetBrains Mono',monospace",fontSize:this.fs(14),lineHeight:1.6,whiteSpace:'pre'}}, c.query):null,
+      h('p',{key:'e',style:{margin:'20px 0 0',color:T.ink,fontSize:this.fs(17),lineHeight:1.7,fontWeight:600}}, c.explanation),
+    ]);
+    const nav=h('div',{key:'nav',style:{display:'flex',gap:'12px',marginTop:'24px',alignItems:'center'}},[
+      this.btn('← Back',()=>this.learnPrev(),{key:'p',variant:'neutral',disabled:l.idx===0}),
+      h('div',{key:'sp',style:{flex:1}}),
+      last? this.btn('Take the quiz  →',()=>this.startQuiz(this.state.quizIndex,this.state.lessonIndex),{key:'go'})
+          : this.btn('Next card  →',()=>this.learnNext(),{key:'n'}),
+    ]);
+    const skip=h('div',{key:'skip',style:{textAlign:'center',marginTop:'16px'}}, h('button',{onClick:()=>this.startQuiz(this.state.quizIndex,this.state.lessonIndex),style:{border:'none',background:'none',color:T.muted,fontWeight:800,cursor:'pointer',textDecoration:'underline',fontSize:'14px'}},'Skip to quiz'));
+    const top=h('div',{key:'top',style:{display:'flex',alignItems:'center',gap:'14px',padding:'26px 0 6px'}},[
+      this.mascot('teach','78px'),
+      h('div',{key:'x'},[ this.kicker('Learn mode',T.accent), h('div',{key:'nm',style:{fontWeight:900,fontSize:'18px',color:T.inkStrong,marginTop:'4px'}}, this.state.data.quizzes[this.state.quizIndex].lessons[this.state.lessonIndex].lesson_name) ]),
+    ]);
+    return h('div',{style:{flex:1}}, this.wrap([top,dots,card,nav,skip],720));
+  }
+  speakerIcon(){ return h('svg',{width:20,height:20,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},[h('path',{key:'a',d:'M11 5L6 9H2v6h4l5 4V5z'}),h('path',{key:'b',d:'M15.5 8.5a5 5 0 010 7'}),h('path',{key:'c',d:'M18.5 5.5a9 9 0 010 13'})]); }
+
+  quizScreen(){
+    const r=this.state.run; const q=r.list[r.idx]; const total=r.list.length;
+    const pct=Math.round((r.idx+(r.revealed?1:0))/total*100);
+    const topbar=h('div',{key:'tb',style:{display:'flex',alignItems:'center',gap:'14px',padding:'22px 0 18px'}},[
+      h('button',{key:'x',onClick:()=>{ this.state.run&&this.state.run.custom? this.goHome() : this.openCourse(this.state.quizIndex); },title:'Exit',style:{border:'none',background:'none',fontSize:'26px',color:T.muted,cursor:'pointer',fontWeight:700,lineHeight:1,flex:'0 0 auto'}},'×'),
+      h('div',{key:'bar',style:{flex:1,height:'16px',borderRadius:'999px',background:T.surface2,overflow:'hidden',border:'1px solid '+T.line}}, h('div',{style:{width:pct+'%',height:'100%',background:'linear-gradient(90deg,var(--qm-primary),var(--qm-accent))',borderRadius:'999px',transition:'width .35s',boxShadow:'inset 0 3px 0 rgba(255,255,255,.35)'}})),
+      h('div',{key:'ct',style:{fontWeight:900,color:T.muted,fontSize:'14px',flex:'0 0 auto'}}, (r.idx+1)+'/'+total),
+    ]);
+    const question=h('div',{key:'q',style:{display:'flex',alignItems:'flex-start',gap:'14px',marginBottom:'26px'}},[
+      h('div',{key:'pip',style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'7px',flex:'0 0 auto',width:r.revealed?'96px':'84px'}},[
+        this.state.mascotLine? this.speechBubble(this.state.mascotLine):null,
+        this.mascot(this.state.mascotMood, '100%'),
+      ]),
+      h('div',{key:'qt',style:{flex:1}},[
+        h('div',{key:'k',style:{display:'flex',alignItems:'center',gap:'10px'}},[
+          h('span',{key:'lbl',style:{fontSize:'12px',fontWeight:900,color:T.muted,textTransform:'uppercase',letterSpacing:'1px'}}, this.typeLabel(q.type)+(r.custom?' · '+(r.label||'review'):(r.isRetry?' · retry':''))),
+          h('button',{key:'rd',onClick:()=>this.speak(q.question_text),title:'Read aloud',style:{display:'grid',placeItems:'center',width:'34px',height:'34px',borderRadius:'10px',border:'2px solid '+T.line,background:T.surface,cursor:'pointer',color:T.accent}}, this.speakerIcon()),
+          h('button',{key:'bm',onClick:()=>this.toggleBookmark(q),title:this.isBookmarked(q)?'Remove bookmark':'Bookmark this question',style:{display:'grid',placeItems:'center',width:'34px',height:'34px',borderRadius:'10px',border:'2px solid '+(this.isBookmarked(q)?T.gold:T.line),background:this.isBookmarked(q)?'#fff7db':T.surface,cursor:'pointer',color:this.isBookmarked(q)?'#c79600':T.muted,fontSize:'16px',fontWeight:900}}, this.isBookmarked(q)?'★':'☆'),
+        ]),
+        h('h2',{key:'txt',style:{fontFamily:'Nunito',fontWeight:900,fontSize:this.fs(28),lineHeight:1.2,margin:'10px 0 0',color:T.inkStrong}}, q.question_text),
+      ]),
+    ]);
+    const body=this.questionBody(q,r);
+    const feedback=this.feedbackBar(q,r);
+    return h('div',{style:{flex:1,display:'flex',flexDirection:'column',minHeight:'calc(100vh - 66px)'}}, [
+      h('div',{key:'scroll',style:{flex:1}}, this.wrap([topbar,question,body],720)),
+      feedback,
+    ]);
+  }
+  typeLabel(t){ return {multiple_choice:'Choose one',true_false:'True or false',fill_in_the_blank:'Fill the blank',short_answer:'Short answer',matching_pairs:'Match the pairs'}[t||'multiple_choice']||'Question'; }
+
+  questionBody(q,r){
+    const type=q.type||'multiple_choice';
+    if(type==='multiple_choice'||type==='true_false'){
+      const list=this.optionList(q); const correct=this.asArr(q.correct_answer).map(x=>this.norm(x));
+      return h('div',{style:{display:'grid',gap:'12px'}}, list.map((c,i)=>{
+        const sel=this.norm(r.picked)===this.norm(c);
+        let bd=T.line, bg=T.surface, fg=T.ink, sh=T.lineStrong, badge=null;
+        if(!r.revealed && sel){ bd=T.accent; bg='color-mix(in srgb, var(--qm-accent) 12%, var(--qm-surface))'; sh=T.accent; }
+        if(r.revealed){
+          if(correct.includes(this.norm(c))){ bd=T.primary; bg=T.correctBg; fg=T.correctInk; sh=T.primary; badge='✓'; }
+          else if(sel){ bd=T.red; bg=T.wrongBg; fg=T.wrongInk; sh=T.red; badge='✗'; }
+        }
+        return h('button',{key:i,onClick:()=>this.pick(c), disabled:r.revealed, style:{display:'flex',alignItems:'center',gap:'14px',textAlign:'left',padding:'16px 18px',borderRadius:'16px',border:'2px solid '+bd,background:bg,color:fg,boxShadow:'0 3px 0 '+sh,cursor:r.revealed?'default':'pointer',fontWeight:800,fontSize:this.fs(16),transition:'all .12s'}},[
+          h('span',{key:'n',style:{width:'28px',height:'28px',borderRadius:'9px',border:'2px solid '+(sel||badge?bd:T.lineStrong),display:'grid',placeItems:'center',fontSize:'13px',fontWeight:900,color:sel||badge?bd:T.muted,flex:'0 0 auto'}}, badge||String(i+1)),
+          h('span',{key:'t',style:{flex:1}}, c),
+        ]);
+      }));
+    }
+    if(type==='fill_in_the_blank'||type==='short_answer'){
+      const big=type==='short_answer';
+      return h(big?'textarea':'input',{
+        value:r.picked||'', disabled:r.revealed, autoFocus:true,
+        onChange:e=>this.pick(e.target.value),
+        onKeyDown:e=>{ if(!big && e.key==='Enter'){ e.preventDefault(); if(!r.revealed&&this.canSubmit()) this.submit(); else if(r.revealed) this.next(); } },
+        placeholder: big?'Write your answer…':'Type your answer…',
+        style:{width:'100%',padding:'16px 18px',borderRadius:'16px',border:'2px solid '+(r.revealed?(r.correct?T.primary:T.red):T.line),background:r.revealed?(r.correct?T.correctBg:T.wrongBg):T.surface,color:T.inkStrong,fontFamily:'Nunito',fontWeight:700,fontSize:this.fs(17),minHeight:big?'130px':'auto',resize:'vertical',outline:'none',boxShadow:'0 3px 0 '+T.lineStrong},
+      });
+    }
+    if(type==='matching_pairs'){
+      const key=q.correct_answer||{}; const terms=(q.choices&&q.choices.terms)||Object.keys(key);
+      const defs=(q.choices&&q.choices.definitions)||Object.values(key);
+      if(!this._matchOpts || this._matchKey!==(q.question_text+r.idx)){ this._matchOpts=this.shuffle(defs); this._matchKey=q.question_text+r.idx; }
+      const opts=this._matchOpts;
+      return h('div',{style:{display:'grid',gap:'12px'}}, terms.map((term,i)=>{
+        const val=r.matches[term]||''; let bd=T.line;
+        if(r.revealed) bd = this.norm(val)===this.norm(key[term])?T.primary:T.red;
+        return h('div',{key:i,style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',alignItems:'center'}},[
+          h('div',{key:'t',style:{padding:'15px 16px',borderRadius:'14px',background:T.surface2,border:'2px solid '+T.line,fontWeight:900,color:T.inkStrong,fontSize:this.fs(15)}}, term),
+          h('select',{key:'s',value:val,disabled:r.revealed,onChange:e=>this.setMatch(term,e.target.value),style:{padding:'15px 16px',borderRadius:'14px',border:'2px solid '+bd,background:T.surface,color:T.ink,fontFamily:'Nunito',fontWeight:700,fontSize:this.fs(15),cursor:r.revealed?'default':'pointer',outline:'none'}},
+            [h('option',{key:'d',value:''},'Choose…')].concat(opts.map((d,j)=>h('option',{key:j,value:d},d)))),
+        ]);
+      }));
+    }
+    return h('p',{style:{color:T.muted}}, 'Unsupported question type.');
+  }
+
+  feedbackBar(q,r){
+    const bg = !r.revealed? T.surface : (r.correct? T.correctBg : T.wrongBg);
+    const brd = !r.revealed? T.line : (r.correct? T.primary : T.red);
+    let content;
+    if(!r.revealed){
+      content=h('div',{style:{display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap'}},[
+        h('div',{key:'hint',style:{color:T.muted,fontWeight:700,fontSize:'14px',flex:1,minWidth:'160px'}}, 'Pick your answer, then check. ⌨ 1–4 to pick · Enter to check'),
+        this.btn('Check',()=>this.submit(),{key:'c',disabled:!this.canSubmit()}),
+      ]);
+    } else {
+      const ink = r.correct? T.correctInk : T.wrongInk;
+      const correctVals=this.asArr(q.correct_answer);
+      let ansStr;
+      if((q.type||'')==='matching_pairs') ansStr=Object.entries(q.correct_answer||{}).map(([t,d])=>t+' → '+d).join('  ·  ');
+      else ansStr=correctVals.join(', ');
+      content=h('div',{style:{display:'flex',alignItems:'center',gap:'18px',flexWrap:'wrap'}},[
+        h('div',{key:'i',style:{width:'46px',height:'46px',borderRadius:'50%',background:r.correct?T.primary:T.red,color:'#fff',display:'grid',placeItems:'center',fontSize:'26px',fontWeight:900,flex:'0 0 auto'}}, r.correct?'✓':'✗'),
+        h('div',{key:'t',style:{flex:1,minWidth:'180px'}},[
+          h('div',{key:'h',style:{fontWeight:900,fontSize:'19px',color:ink}}, r.correct?'Nice work!':'Correct answer'),
+          h('div',{key:'a',style:{fontWeight:800,color:ink,marginTop:'2px',fontSize:'15px'}}, r.correct? (q.explanation? q.explanation : 'Keep it up.') : ansStr),
+          (!r.correct && q.explanation)? h('div',{key:'e',style:{fontWeight:600,color:T.ink,marginTop:'6px',fontSize:'14px',lineHeight:1.5,opacity:.85}}, q.explanation):null,
+        ]),
+        this.btn(r.idx+1>=r.list.length?'See results':'Continue', ()=>this.next(), {key:'n', variant:r.correct?'primary':'danger'}),
+      ]);
+    }
+    return h('div',{style:{borderTop:'2px solid '+brd,background:bg,transition:'background .2s',position:'sticky',bottom:0,zIndex:20,boxShadow:'0 -6px 20px var(--qm-shadow)'}}, this.wrap(h('div',{style:{padding:'18px 0'}},content),720));
+  }
+
+  resultsScreen(){
+    const R=this.state.lastResult; const custom=!!R.custom;
+    const q=custom?null:this.state.data.quizzes[this.state.quizIndex]; const lesson=custom?null:q.lessons[this.state.lessonIndex];
+    const head = R.pct>=90?'Outstanding!':R.pct>=70?'Great job!':R.pct>=50?'Good effort!':'Keep practising!';
+    const circ=2*Math.PI*54; const off=circ*(1-R.pct/100);
+    const ring=h('div',{key:'ring',style:{position:'relative',width:'150px',height:'150px',margin:'0 auto'}},[
+      h('svg',{key:'s',width:150,height:150,viewBox:'0 0 130 130',style:{transform:'rotate(-90deg)'}},[
+        h('circle',{key:'bg',cx:65,cy:65,r:54,fill:'none',stroke:T.line,strokeWidth:12}),
+        h('circle',{key:'fg',cx:65,cy:65,r:54,fill:'none',stroke:R.pct>=70?T.primary:R.pct>=50?T.gold:T.red,strokeWidth:12,strokeLinecap:'round',strokeDasharray:circ,strokeDashoffset:off,style:{transition:'stroke-dashoffset 1s ease'}}),
+      ]),
+      h('div',{key:'c',style:{position:'absolute',inset:0,display:'grid',placeItems:'center',flexDirection:'column'}}, h('div',{style:{textAlign:'center'}},[h('div',{key:'p',style:{fontSize:'38px',fontWeight:900,color:T.inkStrong,lineHeight:1}},R.pct+'%'),h('div',{key:'l',style:{fontSize:'13px',fontWeight:800,color:T.muted}},R.right+'/'+R.total)])),
+    ]);
+    const stats=h('div',{key:'st',style:{display:'flex',gap:'12px',justifyContent:'center',flexWrap:'wrap',marginTop:'22px'}},[
+      this.resultStat('+'+R.earned,'Merit earned',T.gold),
+      this.resultStat(this.state.streak.count,'day streak',T.flame),
+      R.newBest? this.resultStat('NEW','best score',T.primary): this.resultStat(R.right+'/'+R.total,'correct',T.accent),
+    ]);
+    const btns=h('div',{key:'b',style:{display:'flex',flexDirection:'column',gap:'11px',marginTop:'26px'}},[
+      R.wrong.length? this.btn('Retry '+R.wrong.length+' missed',()=>this.retryWrong(),{key:'r',full:true,variant:'danger'}):null,
+      custom? this.btn('Back to dashboard',()=>this.goHome(),{key:'a',full:true,variant:R.wrong.length?'neutral':'primary'})
+            : this.btn('Practise again',()=>this.startQuiz(this.state.quizIndex,this.state.lessonIndex),{key:'a',full:true,variant:R.wrong.length?'neutral':'primary'}),
+      custom? null : this.btn('Back to course path',()=>this.openCourse(this.state.quizIndex),{key:'c',full:true,variant:'neutral'}),
+    ]);
+    const card=h('div',{key:'card',style:{maxWidth:'480px',margin:'0 auto',background:T.surface,border:'2px solid '+T.line,borderRadius:'26px',boxShadow:'0 10px 0 '+T.lineStrong,padding:'34px 28px',textAlign:'center',animation:this.rm?'none':'qm-pop .4s ease'}},[
+      this.state.mascotLine? h('div',{key:'sb',style:{display:'flex',justifyContent:'center',marginBottom:'2px'}}, this.speechBubble(this.state.mascotLine)):null,
+      h('div',{key:'pip',style:{width:'132px',margin:'0 auto 6px'}}, this.mascot(this.state.mascotMood,'100%')),
+      h('div',{key:'h',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'30px',color:T.inkStrong}}, head),
+      h('div',{key:'sub',style:{color:T.muted,fontWeight:700,marginTop:'2px',marginBottom:'20px'}}, custom?(R.label||'Review session'):lesson.lesson_name),
+      ring, stats, btns,
+    ]);
+    return h('div',{style:{flex:1,display:'grid',placeItems:'center',padding:'40px 16px 70px'}}, card);
+  }
+  resultStat(v,l,c){ return h('div',{key:l,style:{padding:'12px 16px',borderRadius:'16px',background:T.surface2,minWidth:'86px'}},[h('div',{key:'v',style:{fontSize:'22px',fontWeight:900,color:c,lineHeight:1}},String(v)),h('div',{key:'l',style:{fontSize:'11px',fontWeight:800,color:T.muted,marginTop:'3px',textTransform:'uppercase',letterSpacing:'.5px'}},l)]); }
+
+  /* ================= OVERLAYS ================= */
+  renderOverlays(){
+    return [ this.confettiLayer(), this.settingsDrawer(), this.toastEl() ];
+  }
+  confettiLayer(){
+    if(!this.state.confetti.length) return null;
+    return h('div',{key:'cf',style:{position:'fixed',inset:0,pointerEvents:'none',zIndex:60,overflow:'hidden'}}, this.state.confetti.map(p=>h('div',{key:p.id,style:{position:'absolute',top:'-30px',left:p.left+'%',width:p.sz+'px',height:p.sz+'px',background:p.bg,borderRadius:p.round?'50%':'2px',transform:'rotate('+p.rot+'deg)',animation:'qm-fall '+p.dur+'s '+p.delay+'s ease-in forwards'}})));
+  }
+  toastEl(){
+    if(!this.state.toast) return null;
+    return h('div',{key:'ts',style:{position:'fixed',bottom:'26px',left:'50%',transform:'translateX(-50%)',zIndex:70,background:T.inkStrong,color:'#fff',padding:'13px 22px',borderRadius:'14px',fontWeight:800,boxShadow:'0 12px 30px rgba(0,0,0,.3)',animation:'qm-slidein .25s ease'}}, this.state.toast);
+  }
+  settingsDrawer(){
+    if(!this.state.settingsOpen) return null;
+    const s=this.state.settings;
+    const row=(label,control)=>h('div',{key:label,style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'14px',padding:'14px 0',borderBottom:'1px solid '+T.line}},[h('span',{key:'l',style:{fontWeight:800,color:T.ink,fontSize:'15px'}},label),control]);
+    const toggle=(on,fn)=>h('button',{onClick:fn,style:{width:'54px',height:'32px',borderRadius:'999px',border:'none',background:on?T.primary:T.lineStrong,position:'relative',cursor:'pointer',transition:'background .2s',flex:'0 0 auto'}}, h('span',{style:{position:'absolute',top:'3px',left:on?'25px':'3px',width:'26px',height:'26px',borderRadius:'50%',background:'#fff',transition:'left .2s',boxShadow:'0 2px 5px rgba(0,0,0,.25)'}}));
+    const seg=(opts,cur,fn)=>h('div',{style:{display:'flex',gap:'6px',background:T.surface2,padding:'4px',borderRadius:'12px'}}, opts.map(o=>h('button',{key:o.v,onClick:()=>fn(o.v),style:{border:'none',padding:'7px 12px',borderRadius:'9px',background:cur===o.v?T.surface:'transparent',color:cur===o.v?T.inkStrong:T.muted,fontWeight:800,fontSize:'13px',cursor:'pointer',boxShadow:cur===o.v?'0 2px 0 '+T.lineStrong:'none'}},o.label)));
+    const skinDot=(v,color)=>h('button',{key:v,onClick:()=>this.changeSetting({skin:v}),title:v,style:{width:'36px',height:'36px',borderRadius:'50%',border:s.skin===v?'3px solid '+T.inkStrong:'3px solid '+T.line,background:color,cursor:'pointer',boxShadow:'0 2px 0 rgba(0,0,0,.15)'}});
+    return h('div',{onClick:()=>this.setState({settingsOpen:false}),style:{position:'fixed',inset:0,zIndex:55,background:'rgba(20,26,20,.45)',display:'flex',justifyContent:'flex-end'}},
+      h('div',{onClick:e=>e.stopPropagation(),style:{width:'min(380px,100%)',height:'100%',background:T.surface,padding:'24px',overflow:'auto',boxShadow:'-20px 0 60px rgba(0,0,0,.25)',animation:this.rm?'none':'qm-slidein .25s ease'}},[
+        h('div',{key:'hd',style:{display:'flex',alignItems:'center',marginBottom:'8px'}},[
+          h('h3',{key:'t',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'22px',color:T.inkStrong,margin:0}},'Settings'),
+          h('button',{key:'x',onClick:()=>this.setState({settingsOpen:false}),style:{marginLeft:'auto',border:'none',background:'none',fontSize:'26px',color:T.muted,cursor:'pointer',lineHeight:1}},'×'),
+        ]),
+        h('div',{key:'sec1',style:{fontSize:'12px',fontWeight:900,color:T.muted,textTransform:'uppercase',letterSpacing:'1px',marginTop:'14px'}},'Theme'),
+        row('Colour theme', h('div',{style:{display:'flex',gap:'10px'}},[skinDot('grass',SKINS.grass.primary),skinDot('sky',SKINS.sky.primary),skinDot('berry',SKINS.berry.primary)])),
+        row('Dark mode', toggle(s.dark,()=>this.changeSetting({dark:!s.dark}))),
+        row('Text size', seg([{v:'cozy',label:'S'},{v:'default',label:'M'},{v:'large',label:'L'},{v:'xl',label:'XL'}], s.fontScale, v=>this.changeSetting({fontScale:v}))),
+        h('div',{key:'sec2',style:{fontSize:'12px',fontWeight:900,color:T.muted,textTransform:'uppercase',letterSpacing:'1px',marginTop:'22px'}},'Learning'),
+        row('Sound effects', toggle(s.sound,()=>this.changeSetting({sound:!s.sound}))),
+        row('Read aloud (narration)', toggle(s.narration,()=>{ if(s.narration) this.stopSpeech(); this.changeSetting({narration:!s.narration}); })),
+        row('Show characters', toggle(s.characters,()=>this.changeSetting({characters:!s.characters}))),
+        row('Reduce motion', toggle(s.reduceMotion,()=>this.changeSetting({reduceMotion:!s.reduceMotion}))),
+        h('div',{key:'sec3',style:{fontSize:'12px',fontWeight:900,color:T.muted,textTransform:'uppercase',letterSpacing:'1px',marginTop:'22px'}},'Data'),
+        h('div',{key:'reset',style:{marginTop:'14px'}}, this.btn('Reset all progress',()=>{ if(confirm('Clear Merit, streak, and best scores on this device?')){ try{localStorage.removeItem(STORE);}catch(e){} this.setState({xp:0,streak:{count:0,last:null},bestByLesson:{},doneByLesson:{}}); this.toast('Progress reset'); } },{full:true,variant:'neutral'})),
+        h('p',{key:'note',style:{marginTop:'18px',fontSize:'12px',color:T.muted,lineHeight:1.5,fontWeight:600}},'Progress is stored on this device. Narration uses your browser voice.'),
+      ]));
+  }
+
+  /* ================= AUTH / ONBOARDING / DASHBOARD ================= */
+  renderApp(){
+    const a=this.state.auth;
+    if(a.status==='loading') return this.splashScreen();
+    if(a.status!=='in') return this.authScreen();
+    if(this.state.loading) return this.splashScreen();
+    if(!this.state.profile.onboarded) return this.onboardingScreen();
+    return h('div',{key:'app',style:{display:'flex',flexDirection:'column',minHeight:'100vh'}}, [
+      this.renderChrome(),
+      h('div',{key:'main',style:{flex:1,display:'flex',flexDirection:'column'}}, this.renderBody()),
+      h(React.Fragment,{key:'ov'}, this.renderOverlays()),
+    ]);
+  }
+  splashScreen(){
+    return h('div',{key:'splash',style:{minHeight:'100vh',display:'grid',placeItems:'center',background:T.bg}},
+      h('div',{style:{textAlign:'center'}},[
+        h('div',{key:'p',style:{width:'150px',margin:'0 auto',animation:this.rm?'none':'qm-floatpip 2.4s ease-in-out infinite'}}, this.mascot('idle','100%')),
+        h('div',{key:'s',style:{marginTop:'18px'}}, this.spinner()),
+        h('div',{key:'t',style:{marginTop:'14px',fontWeight:800,color:T.muted}},'Warming up…'),
+      ]));
+  }
+  setF(k,v){ this._f=this._f||{}; this._f[k]=v; }
+  avatarEl(spec,size,opt){
+    opt=opt||{}; const nm=opt.name!=null?opt.name:(this.state.profile.name||this.userEmail||'?');
+    const isImg=typeof spec==='string'&&spec.indexOf('data:')===0;
+    const parts=(spec||AVATARS[0]).split(','); const grad='linear-gradient(145deg,'+parts[0]+','+(parts[1]||parts[0])+')';
+    const st={width:size+'px',height:size+'px',borderRadius:'50%',flex:'0 0 auto',display:'grid',placeItems:'center',color:'#fff',fontWeight:900,fontSize:(size*0.42)+'px',boxShadow:opt.ring?('0 0 0 3px '+opt.ring):'none',overflow:'hidden',...(opt.style||{})};
+    if(isImg){ st.backgroundImage='url('+spec+')'; st.backgroundSize='cover'; st.backgroundPosition='center'; }
+    else st.background=grad;
+    return h('div',{style:st, onClick:opt.onClick}, isImg?null:((nm.trim()[0]||'?').toUpperCase()));
+  }
+  progressRing(pct,size,stroke,color,center){
+    const r=(size-stroke)/2; const c=2*Math.PI*r; const off=c*(1-Math.max(0,Math.min(1,pct/100)));
+    return h('div',{style:{position:'relative',width:size+'px',height:size+'px'}},[
+      h('svg',{key:'s',width:size,height:size,style:{transform:'rotate(-90deg)'}},[
+        h('circle',{key:'b',cx:size/2,cy:size/2,r:r,fill:'none',stroke:T.line,strokeWidth:stroke}),
+        h('circle',{key:'f',cx:size/2,cy:size/2,r:r,fill:'none',stroke:color,strokeWidth:stroke,strokeLinecap:'round',strokeDasharray:c,strokeDashoffset:off,style:{transition:'stroke-dashoffset .8s ease'}}),
+      ]),
+      center?h('div',{key:'c',style:{position:'absolute',inset:0,display:'grid',placeItems:'center'}},center):null,
+    ]);
+  }
+  authInput(ph,type,fkey,extra){
+    return h('input',{type:type,placeholder:ph,defaultValue:'',onChange:e=>this.setF(fkey,e.target.value),
+      onKeyDown:extra&&extra.onEnter?(e=>{if(e.key==='Enter')extra.onEnter();}):null,
+      style:{width:'100%',padding:'14px 16px',borderRadius:'14px',border:'2px solid '+T.line,background:T.surface,color:T.inkStrong,fontFamily:'Nunito',fontWeight:700,fontSize:'15px',outline:'none',boxShadow:'0 2px 0 '+T.lineStrong}});
+  }
+  authScreen(){
+    const mode=this.state.authScreen; const signup=mode==='signup'; const magic=mode==='magic';
+    const tab=(id,label)=>h('button',{key:id,onClick:()=>this.setState({authScreen:id,authError:null,authInfo:null}),style:{flex:1,padding:'11px',border:'none',borderRadius:'11px',background:mode===id?T.surface:'transparent',color:mode===id?T.inkStrong:T.muted,fontWeight:900,fontSize:'15px',cursor:'pointer',boxShadow:mode===id?'0 2px 0 '+T.lineStrong:'none'}},label);
+    const oauth=[];
+    if(CFG.GOOGLE_ENABLED!==false) oauth.push(h('button',{key:'g',onClick:()=>this.googleSignIn(),...this.press(T.lineStrong),style:{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',width:'100%',padding:'13px',borderRadius:'14px',border:'2px solid '+T.line,background:T.surface,color:T.inkStrong,fontWeight:800,fontSize:'15px',cursor:'pointer',boxShadow:'0 3px 0 '+T.lineStrong}},[
+      h('svg',{key:'i',width:18,height:18,viewBox:'0 0 48 48'},[h('path',{key:1,fill:'#FFC107',d:'M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36 16.8 36 11 30.2 11 23S16.8 10 24 10c3.3 0 6.3 1.2 8.6 3.3l5.7-5.7C34.9 4.4 29.7 2 24 2 12.9 2 4 10.9 4 22s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-4z'}),h('path',{key:2,fill:'#FF3D00',d:'M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.3 0 6.3 1.2 8.6 3.3l5.7-5.7C34.9 6.4 29.7 4 24 4 16 4 9.1 8.6 6.3 14.7z'}),h('path',{key:3,fill:'#4CAF50',d:'M24 44c5.2 0 9.9-2 13.5-5.2l-6.2-5.3C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.1-11.3-7.6l-6.5 5C9.1 39.4 16 44 24 44z'}),h('path',{key:4,fill:'#1976D2',d:'M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.3C39.9 41 44 37 44 22c0-1.3-.1-2.7-.4-4z'})]),
+      'Continue with Google']));
+    const cardChildren=[
+      h('div',{key:'tabs',style:{display:'flex',gap:'6px',background:T.surface2,padding:'5px',borderRadius:'14px',marginBottom:'18px'}},[tab('login','Log in'),tab('signup','Sign up')]),
+      signup? h('div',{key:'nm',style:{marginBottom:'10px'}}, this.authInput('Display name','text','name')):null,
+      h('div',{key:'em',style:{marginBottom:'10px'}}, this.authInput('Email','email','email',{onEnter:()=>this.submitAuth()})),
+      magic?null:h('div',{key:'pw',style:{marginBottom:'10px'}}, this.authInput('Password','password','pw',{onEnter:()=>this.submitAuth()})),
+      this.state.authError? h('div',{key:'er',style:{color:T.wrongInk,fontWeight:800,fontSize:'13.5px',margin:'2px 2px 10px'}}, this.state.authError):null,
+      this.state.authInfo? h('div',{key:'in',style:{color:T.correctInk,fontWeight:800,fontSize:'13.5px',margin:'2px 2px 10px'}}, this.state.authInfo):null,
+      this.btn(this.state.authBusy?'Please wait…':(magic?'Send magic link':signup?'Create account':'Log in'), ()=>this.submitAuth(), {key:'pr',full:true,disabled:this.state.authBusy}),
+      h('div',{key:'div',style:{display:'flex',alignItems:'center',gap:'10px',margin:'16px 0',color:T.muted,fontWeight:800,fontSize:'12px'}},[h('div',{key:1,style:{flex:1,height:'2px',background:T.line}}),'OR',h('div',{key:2,style:{flex:1,height:'2px',background:T.line}})]),
+      h('div',{key:'alt',style:{display:'flex',flexDirection:'column',gap:'10px'}},[
+        ...oauth,
+        (CFG.MAGIC_LINK_ENABLED!==false)? h('button',{key:'ml',onClick:()=>{ if(magic){this.magicLink((this._f||{}).email);} else this.setState({authScreen:'magic',authError:null,authInfo:null}); },style:{width:'100%',padding:'13px',borderRadius:'14px',border:'2px solid '+T.line,background:T.surface,color:T.inkStrong,fontWeight:800,fontSize:'15px',cursor:'pointer',boxShadow:'0 3px 0 '+T.lineStrong}}, magic?'Email me the link':'Email me a magic link'):null,
+        h('button',{key:'gu',onClick:()=>this.guest(),style:{width:'100%',padding:'11px',border:'none',background:'none',color:T.muted,fontWeight:800,fontSize:'14px',cursor:'pointer',textDecoration:'underline'}},'Continue as guest'),
+      ]),
+      h('div',{key:'mode',style:{marginTop:'16px',fontSize:'12px',color:T.muted,fontWeight:700,textAlign:'center'}}, this.sb?'Connected to Supabase':'Local mode — accounts saved on this device'),
+    ];
+    return h('div',{key:'auth',style:{minHeight:'100vh',display:'grid',gridTemplateColumns:'1fr',placeItems:'center',padding:'30px 16px',background:'radial-gradient(1000px 460px at 80% -10%, color-mix(in srgb, var(--qm-primary) 14%, transparent), transparent), '+T.bg}},
+      h('div',{style:{display:'flex',gap:'40px',alignItems:'center',width:'min(940px,100%)',justifyContent:'center'}},[
+        h('div',{key:'brand',style:{flex:'1',minWidth:0,display:window.innerWidth<760?'none':'block'}},[
+          h('div',{key:'lg',style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}},[this.miniMark(), h('span',{style:{fontWeight:900,fontSize:'22px',color:T.primary}}, 'Quiz Machine')]),
+          h('h1',{key:'h',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'clamp(30px,4vw,50px)',lineHeight:1,color:T.inkStrong,letterSpacing:'-1px',margin:'8px 0 0'}},'Learn it. Hear it. Master it.'),
+          h('p',{key:'p',style:{color:T.ink,fontWeight:600,fontSize:'16px',lineHeight:1.6,margin:'14px 0 0',maxWidth:'380px'}},'Sign in to keep your streak, Merit and progress — and pick up on any device right where you left off.'),
+          h('div',{key:'pip',style:{width:'220px',marginTop:'10px'}}, this.mascot('wave','100%')),
+        ]),
+        h('div',{key:'card',style:{flex:'0 0 auto',width:'min(400px,100%)',background:T.surface,border:'2px solid '+T.line,borderRadius:'24px',boxShadow:'0 12px 0 '+T.lineStrong,padding:'26px',animation:this.rm?'none':'qm-fadein .4s ease'}}, [
+          h('div',{key:'ttl',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'22px',color:T.inkStrong,marginBottom:'4px'}}, magic?'Passwordless sign-in':signup?'Create your account':'Welcome back'),
+          h('div',{key:'sub',style:{color:T.muted,fontWeight:700,fontSize:'14px',marginBottom:'16px'}}, magic?'We\u2019ll email you a one-tap link.':'Pick up your learning where you left off.'),
+          ...cardChildren,
+        ]),
+      ]));
+  }
+  submitAuth(){
+    const f=this._f||{}; const mode=this.state.authScreen;
+    if(mode==='magic') return this.magicLink(f.email);
+    if(mode==='signup') return this.signUp(f.email,f.pw,f.name);
+    return this.signIn(f.email,f.pw);
+  }
+
+  onboardingScreen(){
+    const p=this.state.profile;
+    const avatarGrid=h('div',{key:'av',style:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'12px'}},
+      AVATARS.map((a,i)=>h('button',{key:i,onClick:()=>this.setProfile({avatar:a}),style:{border:'none',background:'none',cursor:'pointer',padding:0,display:'grid',placeItems:'center',borderRadius:'50%',boxShadow:p.avatar===a?('0 0 0 3px '+T.surface+', 0 0 0 6px '+T.inkStrong):'none'}}, this.avatarEl(a,54,{name:p.name}))));
+    const goals=h('div',{key:'g',style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'10px'}},
+      GOALS.map(g=>h('button',{key:g.k,onClick:()=>this.setProfile({goalKey:g.k,dailyGoal:g.merit}),style:{textAlign:'left',padding:'14px',borderRadius:'14px',border:'2px solid '+(p.goalKey===g.k?T.primary:T.line),background:p.goalKey===g.k?T.correctBg:T.surface,cursor:'pointer',boxShadow:'0 3px 0 '+(p.goalKey===g.k?T.primary:T.lineStrong)}},[
+        h('div',{key:'l',style:{fontWeight:900,color:T.inkStrong,fontSize:'15px'}},g.label),
+        h('div',{key:'s',style:{fontWeight:700,color:T.muted,fontSize:'13px',marginTop:'2px'}},g.sub)])));
+    const courses=this.state.data? this.state.data.quizzes:[];
+    const courseSel=h('select',{key:'cs',value:p.startCourse!=null?p.startCourse:'',onChange:e=>this.setProfile({startCourse:e.target.value===''?null:parseInt(e.target.value,10)}),style:{width:'100%',padding:'13px 14px',borderRadius:'14px',border:'2px solid '+T.line,background:T.surface,color:T.ink,fontFamily:'Nunito',fontWeight:700,fontSize:'15px',outline:'none'}},
+      [h('option',{key:'x',value:''},'Pick a course to start (optional)')].concat(courses.map((q,i)=>h('option',{key:i,value:i},q.quiz_name))));
+    const finish=()=>{ const nm=(p.name||'').trim(); if(!nm) return this.toast('Add a display name to continue'); const start=p.startCourse; this.setProfile({onboarded:true}); this.setState({screen: start!=null?'course':'dashboard', quizIndex: start!=null?start:null},()=>{ this.persist(); }); };
+    return h('div',{key:'onb',style:{minHeight:'100vh',display:'grid',placeItems:'center',padding:'30px 16px',background:T.bg,overflow:'auto'}},
+      h('div',{style:{width:'min(560px,100%)',background:T.surface,border:'2px solid '+T.line,borderRadius:'24px',boxShadow:'0 12px 0 '+T.lineStrong,padding:'28px',animation:this.rm?'none':'qm-fadein .4s ease'}},[
+        h('div',{key:'top',style:{display:'flex',alignItems:'center',gap:'14px',marginBottom:'8px'}},[
+          h('div',{key:'pip',style:{width:'70px'}}, this.mascot('wave','100%')),
+          h('div',{key:'t'},[ this.kicker('Welcome'), h('h2',{key:'h',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'26px',color:T.inkStrong,margin:'6px 0 0'}},'Let\u2019s set you up') ]),
+        ]),
+        h('label',{key:'nl',style:{display:'block',fontWeight:900,color:T.ink,fontSize:'14px',margin:'18px 0 8px'}},'Your display name'),
+        h('input',{key:'ni',value:p.name,autoFocus:true,onChange:e=>this.setProfile({name:e.target.value}),placeholder:'e.g. Priya',style:{width:'100%',padding:'14px 16px',borderRadius:'14px',border:'2px solid '+T.line,background:T.surface,color:T.inkStrong,fontFamily:'Nunito',fontWeight:700,fontSize:'16px',outline:'none',boxShadow:'0 2px 0 '+T.lineStrong}}),
+        h('div',{key:'al',style:{fontWeight:900,color:T.ink,fontSize:'14px',margin:'20px 0 10px'}},'Pick an avatar'),
+        avatarGrid,
+        h('div',{key:'gl',style:{fontWeight:900,color:T.ink,fontSize:'14px',margin:'20px 0 10px'}},'Daily goal'),
+        goals,
+        h('div',{key:'cl',style:{fontWeight:900,color:T.ink,fontSize:'14px',margin:'20px 0 10px'}},'Start with a course'),
+        courseSel,
+        h('div',{key:'fin',style:{marginTop:'24px'}}, this.btn('Start learning  →',finish,{full:true})),
+      ]));
+  }
+
+  /* ---------- badges + review flows ---------- */
+  computeBadges(rec){
+    rec=rec||this.state;
+    const done=Object.keys(rec.doneByLesson||{}).length;
+    const perfect=Object.values(rec.bestByLesson||{}).some(v=>v>=100);
+    const xp=rec.xp||0; const lvl=levelOf(xp); const streak=(rec.streak&&rec.streak.count)||0;
+    const out=[];
+    if(done>=1)out.push('first'); if(streak>=3)out.push('streak3'); if(streak>=7)out.push('streak7');
+    if(xp>=100)out.push('merit100'); if(xp>=500)out.push('merit500'); if(perfect)out.push('perfect');
+    if(done>=10)out.push('lessons10'); if(this.courseCompleted(rec))out.push('course'); if(lvl>=5)out.push('level5');
+    if(done>=1 && (rec.reviewQueue||[]).length===0)out.push('review');
+    return out;
+  }
+  courseCompleted(rec){ if(!this.state.data)return false; return this.state.data.quizzes.some(q=>q.lessons.length && q.lessons.every(l=>(rec.doneByLesson||{})[this.lkey(q.quiz_name,l.lesson_name)]!=null)); }
+  completedCourses(){ if(!this.state.data)return []; return this.state.data.quizzes.filter(q=>q.lessons.length && q.lessons.every(l=>this.state.doneByLesson[this.lkey(q.quiz_name,l.lesson_name)]!=null)); }
+  allQuestions(){ const out=[]; (this.state.data?this.state.data.quizzes:[]).forEach(q=>q.lessons.forEach(l=>(l.questions||[]).forEach(qq=>out.push(qq)))); return out; }
+  questionsByKeys(keys){ const set=new Set(keys); return this.allQuestions().filter(qq=>set.has(this.qkey(qq))); }
+  startReview(){ this.startCustomRun(this.questionsByKeys(this.state.reviewQueue).slice(0,15),'Review session'); }
+  startBookmarksQuiz(){ this.startCustomRun(this.questionsByKeys(this.state.bookmarks).slice(0,15),'Bookmarks'); }
+  startCustomRun(list,label){
+    if(!list||!list.length){ this.toast(label==='Bookmarks'?'No bookmarks yet':'Nothing to review — nice!'); return; }
+    this.stopSpeech();
+    this.setState({screen:'quiz', quizIndex:null, lessonIndex:null, hearts:5, mascotMood:'wave', mascotLine:rand(MOTIVATE),
+      run:{list:this.shuffle(list), idx:0, answers:[], picked:null, matches:{}, revealed:false, correct:false, custom:true, label}});
+  }
+  finishCustom(){
+    const r=this.state.run; const total=r.answers.length, right=r.answers.filter(a=>a.correct).length; const pct=total?Math.round(right/total*100):0; const wrong=r.answers.filter(a=>!a.correct).map(a=>a.q);
+    const tk=todayKey(); const tds=new Date().toDateString(); const yk=new Date(Date.now()-86400000).toDateString();
+    let streak={...this.state.streak,days:(this.state.streak.days||[]).slice()};
+    if(streak.last!==tds){ streak.count=streak.last===yk?(streak.count||0)+1:1; streak.last=tds; }
+    if(!streak.days.includes(tk))streak.days.push(tk);
+    const recent=[{course:r.label||'Review', lesson:total+' questions', pct, ts:Date.now()}].concat(this.state.recent||[]).slice(0,12);
+    this.setState({screen:'results', streak, recent,
+      mascotMood:pct>=80?'celebrate':'thumbsup', mascotLine:pct>=80?rand(GREAT):'Good review!',
+      lastResult:{total,right,pct,wrong,newBest:false,earned:right*10,isRetry:false,custom:true,label:r.label}},
+      ()=>{ this.persist(); if(pct>=60)this.burst(); });
+  }
+
+  /* ---------- header chrome ---------- */
+  navPill(label,screen){ const on=this.state.screen===screen; return h('button',{key:screen,onClick:()=>screen==='dashboard'?this.goHome():this.goCourses(),style:{padding:'8px 15px',borderRadius:'11px',border:'none',background:on?T.surface2:'transparent',color:on?T.inkStrong:T.muted,fontWeight:800,fontSize:'14px',cursor:'pointer'}},label); }
+  renderChrome(){
+    const p=this.state.profile; const inQuiz=this.state.screen==='quiz'||this.state.screen==='learn';
+    const right=[];
+    right.push(h('div',{key:'streak',title:'Day streak',style:{display:'flex',alignItems:'center',gap:'5px',padding:'6px 11px',borderRadius:'999px',background:T.surface2,fontWeight:900,color:T.flame,fontSize:'15px'}},[
+      h('svg',{key:'i',width:17,height:17,viewBox:'0 0 24 24'},h('path',{d:'M12 2c1.2 4.2-3 5.3-3 9.2a3 3 0 006 0c0-1.8-.8-2.9-.8-2.9 2.7 1.8 3.8 4.6 3.8 6.7a6 6 0 11-12 0C6 9.9 11 8.8 12 2z',fill:T.flame})),
+      h('span',{key:'v'}, this.state.streak.count||0)]));
+    right.push(h('div',{key:'merit',title:'Merit · Level '+levelOf(this.state.xp),style:{display:'flex',alignItems:'center',gap:'5px',padding:'6px 11px',borderRadius:'999px',background:T.surface2,fontWeight:900,color:'#c79600',fontSize:'15px'}},[
+      h('svg',{key:'i',width:17,height:17,viewBox:'0 0 24 24'},[h('circle',{key:1,cx:12,cy:9,r:7,fill:T.gold,stroke:'#e0a800',strokeWidth:1}),h('path',{key:2,d:'M12 5.4l1.1 2.4 2.6.3-2 1.8.6 2.6L12 11.6l-2.3 1.3.6-2.6-2-1.8 2.6-.3z',fill:'#fff9e6'})]),
+      h('span',{key:'v'}, this.num(this.state.xp))]));
+    if(inQuiz){ right.push(h('div',{key:'hearts',style:{display:'flex',alignItems:'center',gap:'3px',padding:'5px 8px',borderRadius:'999px',background:T.surface2}}, Array.from({length:5},(_,i)=>h('svg',{key:i,width:17,height:17,viewBox:'0 0 24 24'},h('path',{d:'M12 21.3l-1.4-1.3C5.4 15.4 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.9-8.6 11.5L12 21.3z',fill:i<this.state.hearts?T.red:T.line}))))); }
+    right.push(h('button',{key:'set',onClick:()=>this.setState(st=>({settingsOpen:!st.settingsOpen})),title:'Settings',style:{display:'grid',placeItems:'center',width:'40px',height:'40px',border:'2px solid '+T.line,borderRadius:'12px',background:T.surface,cursor:'pointer',color:T.muted}},
+      h('svg',{width:19,height:19,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},[h('circle',{key:1,cx:12,cy:12,r:3.2}),h('path',{key:2,d:'M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H3a2 2 0 110-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H9a1.6 1.6 0 001-1.5V3a2 2 0 114 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V9a1.6 1.6 0 001.5 1H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z'})])));
+    right.push(h('div',{key:'user',style:{position:'relative'}},[
+      h('button',{key:'b',onClick:()=>this.setState(st=>({userMenu:!st.userMenu})),style:{border:'none',background:'none',cursor:'pointer',padding:0,borderRadius:'50%'}}, this.avatarEl(p.avatar,38,{ring:T.primary})),
+      this.state.userMenu? h('div',{key:'m',style:{position:'absolute',right:0,top:'46px',width:'210px',background:T.surface,border:'2px solid '+T.line,borderRadius:'16px',boxShadow:'0 14px 30px '+T.shadow,padding:'8px',zIndex:60}},[
+        h('div',{key:'hd',style:{padding:'8px 10px',borderBottom:'1px solid '+T.line,marginBottom:'6px'}},[
+          h('div',{key:'n',style:{fontWeight:900,color:T.inkStrong,fontSize:'15px'}}, p.name),
+          h('div',{key:'e',style:{fontWeight:700,color:T.muted,fontSize:'12px'}}, this.userEmail||'Guest · '+rankOf(this.state.xp)),
+        ]),
+        this.menuItem('Dashboard',()=>{this.setState({userMenu:false});this.goHome();}),
+        this.menuItem('My profile',()=>{this.setState({userMenu:false,screen:'dashboard'});setTimeout(()=>{const e=document.getElementById('qm-profile');if(e)window.scrollTo({top:e.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'});},60);}),
+        this.menuItem('Settings',()=>this.setState({userMenu:false,settingsOpen:true})),
+        this.menuItem('Sign out',()=>{this.setState({userMenu:false});this.signOut();},true),
+      ]):null,
+    ]));
+    return h('div',{key:'chrome',style:{position:'sticky',top:0,zIndex:45,display:'flex',alignItems:'center',gap:'10px',padding:'10px 16px',background:T.surface,borderBottom:'2px solid '+T.line,boxShadow:'0 2px 10px '+T.shadow}},[
+      h('div',{key:'brand',onClick:()=>this.goHome(),style:{display:'flex',alignItems:'center',gap:'9px',cursor:'pointer',flex:'0 0 auto'}},[this.miniMark(), h('span',{style:{fontWeight:900,fontSize:'19px',color:T.primary,letterSpacing:'-.5px'}},'Quiz Machine')]),
+      inQuiz?null:h('div',{key:'nav',style:{display:'flex',gap:'4px',marginLeft:'8px'}},[this.navPill('Dashboard','dashboard'),this.navPill('Courses','home')]),
+      h('div',{key:'sp',style:{marginLeft:'auto'}}),
+      h('div',{key:'r',style:{display:'flex',alignItems:'center',gap:'7px'}}, right),
+    ]);
+  }
+  menuItem(label,onClick,danger){ return h('button',{key:label,onClick:onClick,style:{display:'block',width:'100%',textAlign:'left',padding:'9px 10px',border:'none',background:'none',borderRadius:'10px',color:danger?T.red:T.ink,fontWeight:800,fontSize:'14px',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background=T.surface2,onMouseLeave:e=>e.currentTarget.style.background='none'},label); }
+
+  /* ---------- the personalized dashboard ---------- */
+  dashCard(title,body,opt){ opt=opt||{}; return h('div',{key:opt.key,id:opt.id,style:{gridColumn:opt.span?('span '+opt.span):'auto',background:T.surface,border:'2px solid '+T.line,borderRadius:'20px',boxShadow:'0 4px 0 '+T.lineStrong,padding:'18px 18px 18px',display:'flex',flexDirection:'column',...(opt.style||{})}},[
+    title?h('div',{key:'h',style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}},[
+      h('span',{key:'t',style:{fontWeight:900,color:T.inkStrong,fontSize:'15px',letterSpacing:'.2px'}},title),
+      opt.action?h('div',{key:'a',style:{marginLeft:'auto'}},opt.action):null,
+    ]):null,
+    h('div',{key:'b',style:{flex:1}}, body),
+  ]); }
+  greetingText(){ const hClock=new Date().getHours(); const t=hClock<12?'Good morning':hClock<18?'Good afternoon':'Good evening'; return t; }
+  dashboardScreen(){
+    const p=this.state.profile; const xp=this.state.xp; const lvl=levelOf(xp); const inLvl=xp-levelFloor(lvl); const need=levelFloor(lvl+1)-levelFloor(lvl); const lvlPct=Math.round(inLvl/need*100);
+    const today=todayKey(); const earnedToday=this.state.earnedByDay[today]||0; const goalPct=Math.min(100,Math.round(earnedToday/(p.dailyGoal||30)*100));
+    const cards=[];
+    // course stats
+    const courses=this.state.data.quizzes;
+    const startedCourses=courses.map((q,i)=>({q,i,done:q.lessons.filter(l=>this.state.doneByLesson[this.lkey(q.quiz_name,l.lesson_name)]!=null).length})).filter(c=>c.done>0);
+    // 1) HERO greeting
+    const hero=h('div',{key:'hero',style:{gridColumn:'1 / -1',display:'flex',alignItems:'center',gap:'20px',flexWrap:'wrap',background:'linear-gradient(120deg, color-mix(in srgb, var(--qm-primary) 12%, var(--qm-surface)), var(--qm-surface))',border:'2px solid '+T.line,borderRadius:'24px',boxShadow:'0 5px 0 '+T.lineStrong,padding:'22px 24px'}},[
+      this.avatarEl(p.avatar,72,{ring:T.primary}),
+      h('div',{key:'g',style:{flex:1,minWidth:'220px'}},[
+        h('div',{key:'k',style:{fontWeight:800,color:T.muted,fontSize:'13px'}}, this.greetingText()+','),
+        h('div',{key:'n',style:{fontFamily:'Nunito',fontWeight:900,fontSize:'clamp(24px,3.4vw,34px)',color:T.inkStrong,lineHeight:1.05,letterSpacing:'-.5px'}}, p.name+' 👋'),
+        h('div',{key:'r',style:{display:'flex',alignItems:'center',gap:'10px',marginTop:'8px',flexWrap:'wrap'}},[
+          h('span',{key:'lv',style:{fontWeight:900,color:T.primary,fontSize:'14px',background:T.surface2,padding:'4px 10px',borderRadius:'999px'}},'Level '+lvl+' · '+rankOf(xp)),
+          h('div',{key:'bar',style:{flex:1,minWidth:'140px',height:'12px',background:T.surface2,borderRadius:'999px',overflow:'hidden',border:'1px solid '+T.line}}, h('div',{style:{width:lvlPct+'%',height:'100%',background:'linear-gradient(90deg,var(--qm-primary),var(--qm-accent))'}})),
+          h('span',{key:'x',style:{fontWeight:800,color:T.muted,fontSize:'12px'}}, inLvl+'/'+need+' to L'+(lvl+1)),
+        ]),
+      ]),
+      h('div',{key:'pip',style:{width:'92px'}}, this.mascot('proud','100%')),
+    ]);
+    cards.push(hero);
+    // 2) Continue / resume
+    const next=this.nextLesson();
+    cards.push(this.dashCard('Continue learning', next? h('div',{style:{display:'flex',flexDirection:'column',gap:'12px'}},[
+      h('div',{key:'t',style:{fontWeight:900,color:T.inkStrong,fontSize:'17px',lineHeight:1.2}}, next.lesson.lesson_name),
+      h('div',{key:'s',style:{fontWeight:700,color:T.muted,fontSize:'13px'}}, next.q.quiz_name+' · Lesson '+(next.li+1)),
+      this.btn('Resume  →',()=>this.openCourseLesson(next.qi,next.li),{full:true,key:'b'}),
+    ]) : h('div',{style:{color:T.muted,fontWeight:700}},'All caught up — pick a new course!'), {key:'resume',action:h('button',{onClick:()=>this.goCourses(),style:{border:'none',background:'none',color:T.accent,fontWeight:800,cursor:'pointer',fontSize:'13px'}},'Browse')}));
+    // 3) Daily goal ring
+    cards.push(this.dashCard('Daily goal', h('div',{style:{display:'flex',alignItems:'center',gap:'16px'}},[
+      this.progressRing(goalPct,92,11,goalPct>=100?T.primary:T.gold, h('div',{style:{textAlign:'center'}},[h('div',{key:1,style:{fontWeight:900,fontSize:'19px',color:T.inkStrong}},goalPct+'%')])),
+      h('div',{key:'x',style:{flex:1}},[
+        h('div',{key:1,style:{fontWeight:900,color:T.inkStrong,fontSize:'17px'}}, earnedToday+' / '+p.dailyGoal+' Merit'),
+        h('div',{key:2,style:{fontWeight:700,color:T.muted,fontSize:'13px',marginTop:'2px'}}, goalPct>=100?'Goal smashed today! 🎉':'Keep going — you\u2019re close.'),
+        h('div',{key:3,style:{display:'flex',gap:'6px',marginTop:'10px'}}, GOALS.map(g=>h('button',{key:g.k,onClick:()=>this.setProfile({goalKey:g.k,dailyGoal:g.merit}),title:g.sub,style:{padding:'5px 9px',borderRadius:'9px',border:'2px solid '+(p.goalKey===g.k?T.primary:T.line),background:p.goalKey===g.k?T.correctBg:T.surface,color:p.goalKey===g.k?T.correctInk:T.muted,fontWeight:800,fontSize:'12px',cursor:'pointer'}},g.merit))),
+      ]),
+    ]),{key:'goal'}));
+    // 4) Streak + heatmap
+    cards.push(this.dashCard('Streak & activity', this.heatmap(),{key:'heat',action:h('span',{style:{fontWeight:900,color:T.flame,fontSize:'14px'}},'🔥 '+(this.state.streak.count||0)+' days')}));
+    // 5) Weekly activity chart
+    cards.push(this.dashCard('This week', this.weekBars(),{key:'week'}));
+    // 6) Course progress
+    cards.push(this.dashCard('Your courses', startedCourses.length? h('div',{style:{display:'flex',flexDirection:'column',gap:'12px'}}, startedCourses.slice(0,5).map(c=>{
+      const pct=Math.round(c.done/c.q.lessons.length*100);
+      return h('div',{key:c.i,onClick:()=>this.openCourse(c.i),style:{cursor:'pointer'}},[
+        h('div',{key:'r',style:{display:'flex',justifyContent:'space-between',fontWeight:800,fontSize:'13.5px',color:T.ink,marginBottom:'4px'}},[h('span',{key:1,style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},c.q.quiz_name),h('span',{key:2,style:{color:T.muted}},pct+'%')]),
+        h('div',{key:'b',style:{height:'10px',background:T.surface2,borderRadius:'999px',overflow:'hidden',border:'1px solid '+T.line}}, h('div',{style:{width:pct+'%',height:'100%',background:'linear-gradient(90deg,var(--qm-primary),var(--qm-accent))'}})),
+      ]);
+    })): h('div',{style:{color:T.muted,fontWeight:700}},'Start a course to see progress here.'),{key:'courses',action:h('button',{onClick:()=>this.goCourses(),style:{border:'none',background:'none',color:T.accent,fontWeight:800,cursor:'pointer',fontSize:'13px'}},'All')}));
+    // 7) Achievements
+    const earned=this.state.badges&&this.state.badges.length?this.state.badges:this.computeBadges();
+    cards.push(this.dashCard('Achievements', h('div',{style:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'10px'}}, BADGES.map(b=>{
+      const has=earned.includes(b.id);
+      return h('div',{key:b.id,title:b.name+' — '+b.desc,style:{aspectRatio:'1',borderRadius:'14px',display:'grid',placeItems:'center',fontSize:'22px',background:has?T.correctBg:T.surface2,border:'2px solid '+(has?T.primary:T.line),filter:has?'none':'grayscale(1)',opacity:has?1:.5}}, b.ic);
+    })),{key:'badges',action:h('span',{style:{fontWeight:800,color:T.muted,fontSize:'13px'}},earned.length+'/'+BADGES.length)}));
+    // 8) Leaderboard
+    cards.push(this.dashCard('Leaderboard', this.leaderboard(),{key:'lead'}));
+    // 9) Recommendations
+    cards.push(this.dashCard('Recommended for you', this.recommendations(),{key:'reco'}));
+    // 10) Review queue
+    cards.push(this.dashCard('Review queue', h('div',{style:{display:'flex',alignItems:'center',gap:'14px'}},[
+      h('div',{key:'n',style:{fontSize:'34px',fontWeight:900,color:this.state.reviewQueue.length?T.red:T.primary,lineHeight:1}}, this.state.reviewQueue.length),
+      h('div',{key:'x',style:{flex:1}},[
+        h('div',{key:1,style:{fontWeight:800,color:T.ink,fontSize:'13.5px'}}, this.state.reviewQueue.length? 'questions to revisit' : 'nothing to review — great!'),
+        this.state.reviewQueue.length? h('div',{key:2,style:{marginTop:'8px'}}, this.btn('Start review',()=>this.startReview(),{small:true,variant:'danger'})):null,
+      ]),
+    ]),{key:'review'}));
+    // 11) Bookmarks
+    cards.push(this.dashCard('Bookmarks', h('div',{style:{display:'flex',alignItems:'center',gap:'14px'}},[
+      h('div',{key:'n',style:{fontSize:'34px',fontWeight:900,color:T.accent,lineHeight:1}}, this.state.bookmarks.length),
+      h('div',{key:'x',style:{flex:1}},[
+        h('div',{key:1,style:{fontWeight:800,color:T.ink,fontSize:'13.5px'}}, 'saved question'+(this.state.bookmarks.length===1?'':'s')),
+        this.state.bookmarks.length? h('div',{key:2,style:{marginTop:'8px'}}, this.btn('Practise saved',()=>this.startBookmarksQuiz(),{small:true,variant:'blue'})):h('div',{key:2,style:{fontWeight:700,color:T.muted,fontSize:'12px',marginTop:'4px'}},'Tap the ★ on any question.'),
+      ]),
+    ]),{key:'bm'}));
+    // 12) Mastery / accuracy per course
+    cards.push(this.dashCard('Mastery by topic', this.mastery(),{key:'mastery'}));
+    // 13) Recent activity
+    cards.push(this.dashCard('Recent activity', this.state.recent&&this.state.recent.length? h('div',{style:{display:'flex',flexDirection:'column',gap:'9px'}}, this.state.recent.slice(0,6).map((r,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:'10px'}},[
+      h('div',{key:'d',style:{width:'34px',height:'34px',borderRadius:'10px',display:'grid',placeItems:'center',fontWeight:900,fontSize:'12px',color:'#fff',background:r.pct>=80?T.primary:r.pct>=50?T.gold:T.red}}, r.pct+'%'),
+      h('div',{key:'t',style:{flex:1,minWidth:0}},[h('div',{key:1,style:{fontWeight:800,color:T.ink,fontSize:'13.5px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.lesson),h('div',{key:2,style:{fontWeight:700,color:T.muted,fontSize:'12px'}},r.course)]),
+      h('span',{key:'a',style:{fontWeight:700,color:T.muted,fontSize:'11px'}}, this.ago(r.ts)),
+    ]))): h('div',{style:{color:T.muted,fontWeight:700}},'Your finished lessons show up here.'),{key:'recent'}));
+    // 14) Certificates
+    const certs=this.completedCourses();
+    cards.push(this.dashCard('Certificates', certs.length? h('div',{style:{display:'flex',flexDirection:'column',gap:'10px'}}, certs.map((q,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:'10px',padding:'10px 12px',borderRadius:'12px',background:'linear-gradient(120deg,#fff7db,#fff)',border:'2px solid '+T.gold}},[
+      h('span',{key:1,style:{fontSize:'20px'}},'🎓'),h('div',{key:2,style:{flex:1}},[h('div',{key:'a',style:{fontWeight:900,color:'#8a6a00',fontSize:'13.5px'}},q.quiz_name),h('div',{key:'b',style:{fontWeight:700,color:'#b08900',fontSize:'11px'}},'Course complete · '+p.name)]),
+    ]))): h('div',{style:{color:T.muted,fontWeight:700}},'Finish every lesson in a course to earn its certificate.'),{key:'certs'}));
+    // 15) Reminders
+    cards.push(this.dashCard('Study reminder', h('div',{style:{display:'flex',alignItems:'center',gap:'12px'}},[
+      h('div',{key:'x',style:{flex:1}},[
+        h('div',{key:1,style:{fontWeight:800,color:T.ink,fontSize:'14px'}}, p.reminders.on? ('Daily at '+p.reminders.time) : 'Off'),
+        h('div',{key:2,style:{fontWeight:700,color:T.muted,fontSize:'12px',marginTop:'2px'}},'A gentle nudge to keep your streak.'),
+        p.reminders.on? h('input',{key:3,type:'time',value:p.reminders.time,onChange:e=>this.setProfile({reminders:{...p.reminders,time:e.target.value}}),style:{marginTop:'10px',padding:'8px 10px',borderRadius:'10px',border:'2px solid '+T.line,fontFamily:'Nunito',fontWeight:700,color:T.ink,background:T.surface}}):null,
+      ]),
+      this.toggle(p.reminders.on,()=>this.setProfile({reminders:{...p.reminders,on:!p.reminders.on}})),
+    ]),{key:'remind'}));
+    // 16) Mascot companion
+    cards.push(this.dashCard('Your companion', h('div',{style:{display:'flex',alignItems:'center',gap:'14px'}},[
+      h('div',{key:'p',style:{width:'70px'}}, this.mascot('wave','100%')),
+      h('div',{key:'x',style:{flex:1}},[
+        h('div',{key:1,style:{fontWeight:700,color:T.muted,fontSize:'12px'}},'Name your Professor'),
+        h('input',{key:2,value:p.mascotName,onChange:e=>this.setProfile({mascotName:e.target.value}),style:{width:'100%',marginTop:'6px',padding:'10px 12px',borderRadius:'11px',border:'2px solid '+T.line,fontFamily:'Nunito',fontWeight:800,fontSize:'15px',color:T.inkStrong,background:T.surface,outline:'none'}}),
+      ]),
+    ]),{key:'mascot'}));
+    // 17) Theme quick switch
+    cards.push(this.dashCard('Your theme', h('div',{style:{display:'flex',alignItems:'center',gap:'12px',flexWrap:'wrap'}},[
+      h('div',{key:'sk',style:{display:'flex',gap:'10px'}}, ['grass','sky','berry'].map(k=>h('button',{key:k,onClick:()=>this.changeSetting({skin:k}),title:k,style:{width:'34px',height:'34px',borderRadius:'50%',border:this.state.settings.skin===k?'3px solid '+T.inkStrong:'3px solid '+T.line,background:SKINS[k].primary,cursor:'pointer'}}))),
+      h('div',{key:'dk',style:{marginLeft:'auto',display:'flex',alignItems:'center',gap:'8px',fontWeight:800,color:T.ink,fontSize:'13px'}},['Dark',this.toggle(this.state.settings.dark,()=>this.changeSetting({dark:!this.state.settings.dark}))]),
+    ]),{key:'theme'}));
+    // 18) Profile editor
+    cards.push(this.dashCard('Profile', h('div',{style:{display:'flex',flexDirection:'column',gap:'10px'}},[
+      h('div',{key:'row',style:{display:'flex',gap:'12px',alignItems:'center'}},[
+        this.avatarEl(p.avatar,52,{ring:T.line}),
+        h('div',{key:'av',style:{display:'flex',gap:'6px',flexWrap:'wrap',flex:1}}, AVATARS.slice(0,6).map((a,i)=>h('button',{key:i,onClick:()=>this.setProfile({avatar:a}),style:{width:'26px',height:'26px',borderRadius:'50%',border:p.avatar===a?'2px solid '+T.inkStrong:'2px solid '+T.line,background:'linear-gradient(145deg,'+a.split(',')[0]+','+a.split(',')[1]+')',cursor:'pointer'}}))),
+      ]),
+      h('input',{key:'nm',value:p.name,onChange:e=>this.setProfile({name:e.target.value}),placeholder:'Display name',style:{padding:'11px 13px',borderRadius:'11px',border:'2px solid '+T.line,fontFamily:'Nunito',fontWeight:800,fontSize:'14px',color:T.inkStrong,background:T.surface,outline:'none'}}),
+      h('textarea',{key:'bio',value:p.bio,onChange:e=>this.setProfile({bio:e.target.value}),placeholder:'A short bio or your learning goal…',style:{padding:'11px 13px',borderRadius:'11px',border:'2px solid '+T.line,fontFamily:'Nunito',fontWeight:600,fontSize:'13.5px',color:T.ink,background:T.surface,outline:'none',minHeight:'60px',resize:'vertical'}}),
+    ]),{key:'profile',id:'qm-profile'}));
+
+    return h('div',{key:'dash',style:{flex:1,animation:this.rm?'none':'qm-fadein .3s ease'}}, this.wrap(
+      h('div',{style:{padding:'26px 0 70px'}}, h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:'16px',gridAutoRows:'min-content'}}, cards)), 1120));
+  }
+  toggle(on,fn){ return h('button',{onClick:fn,style:{width:'50px',height:'30px',borderRadius:'999px',border:'none',background:on?T.primary:T.lineStrong,position:'relative',cursor:'pointer',flex:'0 0 auto'}}, h('span',{style:{position:'absolute',top:'3px',left:on?'23px':'3px',width:'24px',height:'24px',borderRadius:'50%',background:'#fff',transition:'left .18s',boxShadow:'0 2px 4px rgba(0,0,0,.25)'}})); }
+  ago(ts){ const s=Math.floor((Date.now()-ts)/1000); if(s<60)return 'now'; if(s<3600)return Math.floor(s/60)+'m'; if(s<86400)return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }
+  nextLesson(){ if(!this.state.data)return null; for(const [qi,q] of this.state.data.quizzes.entries()){ for(const [li,l] of q.lessons.entries()){ if(this.state.bestByLesson[this.lkey(q.quiz_name,l.lesson_name)]==null) { if(q.lessons.slice(0,li).every(x=>this.state.bestByLesson[this.lkey(q.quiz_name,x.lesson_name)]!=null) || li===0){} return {qi,li,q,lesson:l}; } } } return null; }
+  openCourseLesson(qi,li){ this.setState({screen:'course', quizIndex:qi},()=>this.openSheet(li)); }
+  heatmap(){
+    const days=[]; const now=new Date();
+    for(let i=34;i>=0;i--){ const d=new Date(now.getTime()-i*86400000); days.push(d.toISOString().slice(0,10)); }
+    const max=Math.max(30,...Object.values(this.state.earnedByDay||{}));
+    const cell=(k)=>{ const v=this.state.earnedByDay[k]||0; const t=v/max; const bg=v===0?T.surface2:('color-mix(in srgb, var(--qm-primary) '+Math.round(25+t*75)+'%, var(--qm-surface))'); return h('div',{key:k,title:k+': '+v+' Merit',style:{width:'100%',aspectRatio:'1',borderRadius:'4px',background:bg,border:'1px solid '+T.line}}); };
+    return h('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'5px'}}, days.map(cell));
+  }
+  weekBars(){
+    const now=new Date(); const labels=['S','M','T','W','T','F','S']; const arr=[];
+    for(let i=6;i>=0;i--){ const d=new Date(now.getTime()-i*86400000); const k=d.toISOString().slice(0,10); arr.push({k,lab:labels[d.getDay()],v:this.state.answeredByDay[k]||0}); }
+    const max=Math.max(5,...arr.map(a=>a.v));
+    return h('div',{style:{display:'flex',alignItems:'flex-end',gap:'8px',height:'110px'}}, arr.map((a,i)=>h('div',{key:i,style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',height:'100%',justifyContent:'flex-end'}},[
+      h('div',{key:'v',style:{fontWeight:800,color:T.muted,fontSize:'11px'}}, a.v||''),
+      h('div',{key:'b',style:{width:'100%',height:Math.max(4,a.v/max*80)+'px',background:a.v?'linear-gradient(180deg,var(--qm-accent),var(--qm-primary))':T.surface2,borderRadius:'6px 6px 0 0',transition:'height .4s'}}),
+      h('div',{key:'l',style:{fontWeight:800,color:T.muted,fontSize:'11px'}}, a.lab),
+    ])));
+  }
+  leaderboard(){
+    const me={name:this.state.profile.name||'You',av:this.state.profile.avatar,merit:this.state.xp,me:true};
+    const rows=PEERS.concat([me]).sort((a,b)=>b.merit-a.merit);
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:'7px'}}, rows.slice(0,7).map((r,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:'10px',padding:'7px 9px',borderRadius:'11px',background:r.me?T.correctBg:'transparent',border:'2px solid '+(r.me?T.primary:'transparent')}},[
+      h('span',{key:'r',style:{width:'20px',fontWeight:900,color:i===0?'#c79600':T.muted,fontSize:'13px'}}, '#'+(i+1)),
+      this.avatarEl(r.av,28,{name:r.name}),
+      h('span',{key:'n',style:{flex:1,fontWeight:800,color:T.ink,fontSize:'13.5px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, r.me?(r.name+' (you)'):r.name),
+      h('span',{key:'m',style:{fontWeight:900,color:'#c79600',fontSize:'13px'}}, this.num(r.merit)),
+    ])));
+  }
+  recommendations(){
+    const recs=[];
+    if(this.state.reviewQueue.length) recs.push({t:'Clear your review queue',s:this.state.reviewQueue.length+' missed questions waiting',fn:()=>this.startReview(),c:T.red});
+    // weak lessons (best < 70)
+    const weak=Object.entries(this.state.bestByLesson).filter(([k,v])=>v<70).slice(0,2);
+    weak.forEach(([k,v])=>{ const nm=k.split('||')[1]; recs.push({t:'Improve: '+nm,s:'Best so far '+v+'% — try again',fn:()=>this.goCourses(),c:T.gold}); });
+    const nl=this.nextLesson(); if(nl) recs.push({t:'Next up: '+nl.lesson.lesson_name,s:nl.q.quiz_name,fn:()=>this.openCourseLesson(nl.qi,nl.li),c:T.primary});
+    if(!recs.length) recs.push({t:'You\u2019re on track!',s:'Explore a new course',fn:()=>this.goCourses(),c:T.primary});
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:'9px'}}, recs.slice(0,3).map((r,i)=>h('button',{key:i,onClick:r.fn,style:{display:'flex',alignItems:'center',gap:'11px',textAlign:'left',padding:'11px 12px',borderRadius:'13px',border:'2px solid '+T.line,background:T.surface,cursor:'pointer'}},[
+      h('span',{key:'d',style:{width:'10px',height:'10px',borderRadius:'50%',background:r.c,flex:'0 0 auto'}}),
+      h('div',{key:'t',style:{flex:1,minWidth:0}},[h('div',{key:1,style:{fontWeight:900,color:T.inkStrong,fontSize:'13.5px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.t),h('div',{key:2,style:{fontWeight:700,color:T.muted,fontSize:'12px'}},r.s)]),
+      h('span',{key:'a',style:{color:T.muted,fontWeight:900}},'→'),
+    ])));
+  }
+  mastery(){
+    const courses=this.state.data.quizzes;
+    const rows=courses.map(q=>{ const keys=q.lessons.map(l=>this.lkey(q.quiz_name,l.lesson_name)).filter(k=>this.state.bestByLesson[k]!=null); if(!keys.length)return null; const avg=Math.round(keys.reduce((s,k)=>s+this.state.bestByLesson[k],0)/keys.length); return {name:q.quiz_name,avg}; }).filter(Boolean).sort((a,b)=>b.avg-a.avg).slice(0,5);
+    if(!rows.length) return h('div',{style:{color:T.muted,fontWeight:700}},'Complete lessons to see your mastery.');
+    return h('div',{style:{display:'flex',flexDirection:'column',gap:'10px'}}, rows.map((r,i)=>h('div',{key:i},[
+      h('div',{key:'r',style:{display:'flex',justifyContent:'space-between',fontWeight:800,fontSize:'13px',color:T.ink,marginBottom:'3px'}},[h('span',{key:1,style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.name),h('span',{key:2,style:{color:r.avg>=80?T.correctInk:r.avg>=50?'#c79600':T.wrongInk}},r.avg+'%')]),
+      h('div',{key:'b',style:{height:'8px',background:T.surface2,borderRadius:'999px',overflow:'hidden'}}, h('div',{style:{width:r.avg+'%',height:'100%',background:r.avg>=80?T.primary:r.avg>=50?T.gold:T.red}})),
+    ])));
+  }
+
+  /* ================= renderVals ================= */
+  renderVals(){
+    const hearts=Array.from({length:5},(_,i)=>({ style:'fill:'+(i<this.state.hearts?T.red:T.line) }));
+    return {
+      rootRef:(el)=>{ if(el){ this.rootEl=el; this.applyTheme(); } },
+      app:this.renderApp(),
+      // legacy hidden-header holes (kept to avoid unresolved-hole warnings)
+      goHome:()=>this.goHome(), brandMark:this.miniMark(),
+      streakCount:this.state.streak.count||0, xpTotal:this.num(this.state.xp),
+      heartSlots:hearts, toggleSettings:()=>this.setState(st=>({settingsOpen:!st.settingsOpen})),
+      body:null, overlays:null,
+    };
+  }
+}
+
+</script>
+<script>
+// Mount the app
+const rootEl = document.getElementById('root');
+const reactRoot = ReactDOM.createRoot(rootEl);
+reactRoot.render(React.createElement(Component, null));
+</script>
+</body>
+</html>
