@@ -511,6 +511,108 @@ const modules = [
       { name: "Data Governance (5Q)", desc: "Lineage, Stewardship, Metadata, DAMA, Data Quality", status: ST.todo, score: null },
       { name: "BSA (5Q)", desc: "BRD vs FSD, UAT vs SIT, Gap Analysis, Requirements gathering", status: ST.todo, score: null },
     ]
+  },
+  {
+    id: 21, area: "Tableau",
+    title: "Tableau — Visualisation & Dashboards",
+    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
+    subtopics: [
+      { name: "Connecting Data", desc: "Live vs Extract connections — Excel, CSV, SQL Server, Tableau Data Source (.tds)", status: ST.todo, score: null },
+      { name: "Dimensions vs Measures", desc: "Blue pills (discrete/categorical) vs green pills (continuous/numeric) — controls axis behaviour", status: ST.todo, score: null },
+      { name: "Calculated Fields", desc: "IF/ELSE, DATEPART(), DATEDIFF(), ZN(), IIF(), STR() — create new fields from existing data", status: ST.todo, score: null },
+      { name: "LOD Expressions", desc: "FIXED: ignores view filters. INCLUDE: adds granularity. EXCLUDE: removes dimension from context.", status: ST.todo, score: null },
+      { name: "Table Calculations", desc: "RUNNING_SUM, WINDOW_AVG, RANK, LOOKUP — computed across partition of the viz, not the database", status: ST.todo, score: null },
+      { name: "Filter Order of Operations", desc: "Extract → Data Source → Context → Dimension → Measure → Table Calc — determines what each filter sees", status: ST.todo, score: null },
+      { name: "Parameters", desc: "User-controlled dynamic inputs — swap measures, set thresholds, drive Top N selections", status: ST.todo, score: null },
+      { name: "Dashboard Actions", desc: "Filter action (cross-filter), Highlight action, URL action, Set action — interactivity between sheets", status: ST.todo, score: null },
+      { name: "Story Points", desc: "Sequence of dashboards/sheets telling a narrative — each point adds a caption and context", status: ST.todo, score: null },
+      { name: "Performance Tips", desc: "Use extracts over live, limit rows, aggregate at source, avoid many table calcs on large data", status: ST.todo, score: null },
+    ]
+  },
+  {
+    id: 22, area: "Advanced SQL",
+    title: "Advanced SQL — Optimisation & Patterns",
+    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
+    subtopics: [
+      { name: "Window Frames", desc: "ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW — controls which rows the function sees", status: ST.todo, score: null },
+      { name: "PIVOT", desc: "Rotate rows to columns — requires aggregate + FOR column IN (...) syntax", status: ST.todo, score: null },
+      { name: "UNPIVOT", desc: "Rotate columns to rows — normalise wide tables back to long format", status: ST.todo, score: null },
+      { name: "Dynamic SQL", desc: "Build SQL as a string and execute with EXEC sp_executesql — parameterise safely to avoid injection", status: ST.todo, score: null },
+      { name: "SARGable Predicates", desc: "Search ARGument ABLE — avoid functions on indexed columns in WHERE (e.g. YEAR(date) kills index seek)", status: ST.todo, score: null },
+      { name: "Execution Plans", desc: "Index Seek (good) vs Scan (warn) vs Key Lookup (fix with covering index) vs Hash Match (memory)", status: ST.todo, score: null },
+      { name: "Covering Index", desc: "Include all columns needed by a query in index — eliminates Key Lookup, fastest reads", status: ST.todo, score: null },
+      { name: "Statistics", desc: "SQL Server estimates row counts using stats histograms — stale stats cause bad plans, UPDATE STATISTICS", status: ST.todo, score: null },
+      { name: "MERGE Statement", desc: "WHEN MATCHED UPDATE / WHEN NOT MATCHED INSERT — upsert in one atomic statement", status: ST.todo, score: null },
+      { name: "TRY/CATCH + Transactions", desc: "BEGIN TRY / BEGIN CATCH / ROLLBACK — wrap DML in transactions with proper error capture", status: ST.todo, score: null },
+    ]
+  },
+  {
+    id: 23, area: "SAS",
+    title: "SAS & Dashboard Development",
+    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
+    subtopics: [
+      { name: "DATA Step", desc: "Row-by-row processing — SET, MERGE, BY, IF/THEN/ELSE, DO loops, RETAIN, OUTPUT", status: ST.todo, score: null },
+      { name: "PROC SQL", desc: "SQL inside SAS — SELECT, JOIN, subqueries. Similar to T-SQL but runs in SAS engine", status: ST.todo, score: null },
+      { name: "PROC FREQ", desc: "Frequency tables — count and % per value. Used for profiling categorical columns.", status: ST.todo, score: null },
+      { name: "PROC MEANS / UNIVARIATE", desc: "Descriptive stats — N, Mean, Min, Max, Std Dev. UNIVARIATE adds distribution analysis.", status: ST.todo, score: null },
+      { name: "Formats & Informats", desc: "FORMAT = display label for values. INFORMAT = how to read raw input. Custom via PROC FORMAT.", status: ST.todo, score: null },
+      { name: "SAS Macro Language", desc: "%LET var=val; %IF / %DO / %MACRO mname / %MEND — parameterise and loop SAS code", status: ST.todo, score: null },
+      { name: "DATA Step MERGE vs PROC SQL JOIN", desc: "MERGE requires sorted datasets + BY statement. SQL JOIN is more flexible and readable.", status: ST.todo, score: null },
+      { name: "Dashboard Design Principles", desc: "Lead with the answer. One metric per tile. Hierarchy: summary → trend → breakdown → detail.", status: ST.todo, score: null },
+      { name: "KPI Layout", desc: "Scorecard (RAG status) → Trend line → Category breakdown → Row-level drill. Traffic light colours only.", status: ST.todo, score: null },
+      { name: "Colour Rules for Dashboards", desc: "Red/Amber/Green for status only. Single hue for quantities. Never rainbow. Max 4–5 colours total.", status: ST.todo, score: null },
+    ]
+  },
+  {
+    id: 24, area: "Support & CSAT",
+    title: "CSAT & Support Metrics",
+    status: ST.todo, confidence: 0, score: null, time: "1 hr",
+    subtopics: [
+      { name: "CSAT", desc: "Customer Satisfaction Score — % rating 4–5 out of 5 on post-interaction survey. Simple, immediate.", status: ST.todo, score: null },
+      { name: "NPS", desc: "Net Promoter Score = % Promoters (9–10) minus % Detractors (0–6). Measures loyalty, not satisfaction.", status: ST.todo, score: null },
+      { name: "CES", desc: "Customer Effort Score — how easy was it to get help? Lower effort = better experience.", status: ST.todo, score: null },
+      { name: "SLA", desc: "Service Level Agreement — contracted response/resolution times. P1 = 1hr response, 4hr fix (example).", status: ST.todo, score: null },
+      { name: "OLA", desc: "Operational Level Agreement — internal team-level SLA. Feeds the customer-facing SLA.", status: ST.todo, score: null },
+      { name: "Ticket Lifecycle", desc: "Open → Assigned → In Progress → Pending Customer → Resolved → Closed. Each state has SLA implications.", status: ST.todo, score: null },
+      { name: "Priority Matrix", desc: "Impact × Urgency = Priority (P1–P4). P1 = high impact + high urgency = immediate response.", status: ST.todo, score: null },
+      { name: "RCA (Root Cause Analysis)", desc: "5 Whys / fishbone diagram / timeline — find the real cause, not just the symptom. Document prevention.", status: ST.todo, score: null },
+      { name: "VOC — Voice of Customer", desc: "Verbatim feedback clustering — group comments into themes to drive service improvement", status: ST.todo, score: null },
+      { name: "Escalation Framework", desc: "L1 → L2 → L3 → Vendor. Each level has criteria, SLA clock rules, and handoff documentation.", status: ST.todo, score: null },
+    ]
+  },
+  {
+    id: 25, area: "Support & CSAT",
+    title: "L2 & L3 Technical Support",
+    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
+    subtopics: [
+      { name: "L1 / L2 / L3 Split", desc: "L1: scripts & resets. L2: config, DB queries, log analysis. L3: root cause, code changes, vendor escalation.", status: ST.todo, score: null },
+      { name: "Triage Methodology", desc: "Reproduce → Isolate → Narrow → Fix → Document. Never skip steps — reproducing is 50% of solving.", status: ST.todo, score: null },
+      { name: "SQL Server Diagnostics", desc: "sp_who2, sys.dm_exec_requests, sys.dm_exec_sessions — find blocking, long-running queries, open connections", status: ST.todo, score: null },
+      { name: "Blocking Chain Analysis", desc: "Find head blocker via sys.dm_os_waiting_tasks. Kill with KILL spid only if business-approved.", status: ST.todo, score: null },
+      { name: "Deadlock Detection", desc: "SQL Server error log (Event 1205), trace flag 1222, Extended Events deadlock graph — identify victim/culprit", status: ST.todo, score: null },
+      { name: "Log Analysis", desc: "SQL Server Error Log (EXEC xp_readerrorlog), Windows Event Viewer, application logs — correlate timestamps", status: ST.todo, score: null },
+      { name: "Performance Issues", desc: "Missing indexes (DMV: dm_db_missing_index), expensive queries (dm_exec_query_stats), tempdb contention", status: ST.todo, score: null },
+      { name: "Escalation to Vendor", desc: "PSS case: steps to reproduce, error messages, logs package, environment details, business impact", status: ST.todo, score: null },
+      { name: "Change Management", desc: "RFC → CAB approval → scheduled window → rollback plan. Never change prod without a rollback.", status: ST.todo, score: null },
+      { name: "Post-Incident Review (PIR)", desc: "What happened → Impact → Timeline → Root cause → Prevention actions. Blameless, fact-based.", status: ST.todo, score: null },
+    ]
+  },
+  {
+    id: 26, area: "Leadership",
+    title: "Team Management & Leadership",
+    status: ST.todo, confidence: 0, score: null, time: "2 hrs",
+    subtopics: [
+      { name: "1:1 Meetings", desc: "Weekly cadence, their agenda not yours. Ask: what's blocking you? what do you need from me?", status: ST.todo, score: null },
+      { name: "Delegation", desc: "Delegate the outcome, not the task. Explain WHY. Set checkpoints. Trust but verify.", status: ST.todo, score: null },
+      { name: "Performance Management", desc: "OKRs set direction. KPIs measure execution. PIP = last resort after coaching + documentation.", status: ST.todo, score: null },
+      { name: "Difficult Conversations", desc: "SBI framework: Situation → Behaviour → Impact. Private first. Factual, not personal. Document.", status: ST.todo, score: null },
+      { name: "Conflict Resolution", desc: "Separate people from problems. Hear both sides privately first. Find shared goal. Facilitate, don't judge.", status: ST.todo, score: null },
+      { name: "Hiring", desc: "Competency-based interviews, structured scoring rubric, culture add (not just fit), diverse panel.", status: ST.todo, score: null },
+      { name: "Coaching vs Managing", desc: "Managing = set direction, remove blockers. Coaching = ask questions, build capability. Both are needed.", status: ST.todo, score: null },
+      { name: "Stakeholder Communication", desc: "Executive summary = 3 bullets max. RAG status. Risks surfaced early. Full detail on request only.", status: ST.todo, score: null },
+      { name: "Burnout Signals", desc: "Quality drop, missed deadlines, withdrawal from team — intervene early with 1:1 conversation, not email.", status: ST.todo, score: null },
+      { name: "Managing Up", desc: "Keep manager informed proactively. Surface risks before they become crises. Bring solutions, not problems.", status: ST.todo, score: null },
+    ]
   }
 ];
 

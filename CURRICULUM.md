@@ -1,5 +1,5 @@
 # Interview Prep Curriculum
-## Complete Study Plan — SQL Server, Azure, Data, Python
+## Complete Study Plan — SQL Server, Azure, Data, Python + Tableau, SAS, CSAT, Leadership
 
 > Each module = Teach → Practice → Quiz → Interview Q&A
 > Target: 60–100% interview coverage across all roles
@@ -30,8 +30,14 @@
 | 18 | Data Lineage & Governance | Lineage, DAMA framework, stewardship, data quality | 1 hr |
 | 19 | Business Systems Analyst | BRD, FSD, Gap Analysis, UAT, SIT, Process Mapping | 1 hr |
 | 20 | Mock Interview — Full Round | 5 questions per area, timed, scored | 2 hrs |
+| 21 | Tableau | Connect, Calculated Fields, LOD Expressions, Dashboards, Filters, Parameters, Story Points | 1.5 hrs |
+| 22 | Advanced SQL | Window frames, PIVOT/UNPIVOT, Dynamic SQL, Query optimisation, Execution plans, Indexing | 1.5 hrs |
+| 23 | SAS & Dashboard Development | SAS Base, PROC SQL, DATA step, SAS Studio, Dashboard design principles, KPI layout | 1.5 hrs |
+| 24 | CSAT & Support Metrics | CSAT/NPS/CES, SLA/OLA, Ticket lifecycle, RCA, VOC, Escalation frameworks | 1 hr |
+| 25 | L2 & L3 Support — Technical | Triage methodology, log analysis, DB diagnostics, performance issues, escalation to vendor | 1.5 hrs |
+| 26 | Team Management & Leadership | 10-year manager mindset, 1:1s, performance reviews, conflict resolution, delegation, hiring, stakeholder comms | 2 hrs |
 
-**Total Estimated Study Time: ~25 hours**
+**Total Estimated Study Time: ~34 hours**
 
 ---
 
@@ -59,6 +65,12 @@
 | 18 — Data Lineage | ⬜ Not Started | | |
 | 19 — BSA | ⬜ Not Started | | |
 | 20 — Mock Interview | ⬜ Not Started | | |
+| 21 — Tableau | ⬜ Not Started | | |
+| 22 — Advanced SQL | ⬜ Not Started | | |
+| 23 — SAS & Dashboards | ⬜ Not Started | | |
+| 24 — CSAT & Support Metrics | ⬜ Not Started | | |
+| 25 — L2 & L3 Support | ⬜ Not Started | | |
+| 26 — Team Management | ⬜ Not Started | | |
 
 ---
 
@@ -439,3 +451,160 @@
 6. Say **"where am I"** — I'll show your progress and scores
 
 > Modules build on each other. Recommended order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19 → 20
+
+---
+
+## MODULE 21 — Tableau
+
+### Key Concepts
+- **Connecting data**: Excel, CSV, SQL Server, live vs extract
+- **Dimensions vs Measures**: blue vs green pills, discrete vs continuous
+- **Calculated Fields**: IF/ELSE, DATEPART(), DATEDIFF(), ZN(), IIF()
+- **LOD Expressions**: FIXED, INCLUDE, EXCLUDE — when to use each
+- **Table calculations**: RUNNING_SUM, WINDOW_AVG, RANK, LOOKUP
+- **Filters order**: Extract → Data Source → Context → Dimension → Measure → Table Calc
+- **Parameters**: dynamic input to calculations and filters
+- **Dashboard actions**: filter actions, URL actions, highlight actions
+- **Story Points**: narrating insights across multiple dashboards
+- **Performance**: extracts over live, reducing rows, aggregation before display
+
+### Top Interview Questions
+1. What is the difference between a FIXED LOD and a table calculation?
+2. How do you create a year-over-year comparison in Tableau?
+3. When would you use a Context Filter?
+4. How do you show Top N customers dynamically using a Parameter?
+5. What is the filter order of operations in Tableau?
+
+---
+
+## MODULE 22 — Advanced SQL
+
+### Key Concepts
+- **Window frames**: ROWS BETWEEN, RANGE BETWEEN, UNBOUNDED PRECEDING/FOLLOWING
+- **PIVOT / UNPIVOT**: rotating rows to columns and back
+- **Dynamic SQL**: EXEC sp_executesql, building SQL strings safely
+- **Query optimisation**: SARGable predicates, avoiding functions on indexed columns
+- **Execution plans**: Clustered Index Scan vs Seek, Key Lookup, Hash Match, Nested Loop
+- **Indexing strategy**: Covering indexes, included columns, composite indexes, fill factor
+- **Statistics**: UPDATE STATISTICS, AUTO_UPDATE_STATISTICS, impact on plans
+- **Partitioning**: partition by range, partition switching for fast deletes
+- **TRY/CATCH + transactions**: XACT_ABORT, SAVE TRANSACTION, error logging
+- **MERGE statement**: upsert pattern, WHEN MATCHED / NOT MATCHED
+
+### Top Interview Questions
+1. What makes a query non-SARGable and how do you fix it?
+2. Explain the difference between a Clustered and Non-Clustered Index.
+3. When would you use MERGE over INSERT/UPDATE separately?
+4. How does PARTITION BY differ from GROUP BY in a window function?
+5. What does a Key Lookup in an execution plan mean and how do you eliminate it?
+
+---
+
+## MODULE 23 — SAS & Dashboard Development
+
+### Key Concepts
+- **SAS Base**: DATA step, SET, MERGE, BY, IF/THEN/ELSE, DO loops, arrays
+- **PROC SQL**: SELECT, JOIN, SUBQUERY — near-identical to T-SQL, runs in SAS engine
+- **PROC FREQ / PROC MEANS / PROC UNIVARIATE**: profiling and descriptive stats
+- **SAS Formats & Informats**: converting raw values, custom formats with PROC FORMAT
+- **Macro language**: %LET, %IF, %DO, %MACRO/%MEND — parameterising code
+- **SAS Studio / Enterprise Guide**: GUI vs code editor, project structure
+- **Dashboard design principles**: single metric per tile, traffic lights, hierarchy of attention
+- **KPI layout**: scorecard → trend → breakdown → detail (drill pattern)
+- **Colour rules**: red/amber/green only for status, avoid rainbow
+- **Storytelling**: lead with the answer, support with data
+
+### Top Interview Questions
+1. What is the difference between a DATA step MERGE and PROC SQL JOIN?
+2. How do you handle duplicate rows in a SAS MERGE?
+3. What is a SAS macro and when would you use one?
+4. How do you profile a dataset quickly in SAS?
+5. What makes a dashboard effective vs cluttered?
+
+---
+
+## MODULE 24 — CSAT & Support Metrics
+
+### Key Concepts
+- **CSAT**: Customer Satisfaction Score — post-interaction survey (1–5 or 1–10), % scoring 4–5
+- **NPS**: Net Promoter Score = % Promoters (9–10) minus % Detractors (0–6)
+- **CES**: Customer Effort Score — how easy was it to resolve? Lower effort = better
+- **SLA**: Service Level Agreement — contracted response/resolution times (e.g. P1 = 1hr response)
+- **OLA**: Operational Level Agreement — internal team SLA, feeds the SLA
+- **Ticket lifecycle**: Open → Assigned → In Progress → Pending → Resolved → Closed
+- **Priority matrix**: Impact × Urgency = Priority (P1/P2/P3/P4)
+- **RCA — Root Cause Analysis**: 5 Whys, fishbone diagram, timeline reconstruction
+- **VOC — Voice of Customer**: verbatim feedback analysis, theme clustering
+- **Escalation framework**: L1 → L2 → L3 → Vendor, with criteria and SLA clock rules
+
+### Top Interview Questions
+1. What is the difference between CSAT and NPS and when do you use each?
+2. How do you calculate SLA compliance rate in SQL?
+3. Walk me through how you would do an RCA on a recurring incident.
+4. How do you handle a situation where SLA is about to breach?
+5. What is the difference between SLA and OLA?
+
+---
+
+## MODULE 25 — L2 & L3 Support — Technical
+
+### Key Concepts
+- **L1 / L2 / L3 split**:
+  - L1: triage, password resets, known fixes, scripts
+  - L2: deeper investigation, config changes, DB queries, log analysis
+  - L3: root cause, code fixes, architecture changes, vendor escalation
+- **Triage methodology**: reproduce → isolate → narrow → fix → document
+- **Log analysis**: SQL Server error logs, Windows Event Viewer, application logs
+- **DB diagnostics**: sp_who2, sys.dm_exec_requests, blocking chains, deadlocks
+- **Performance issues**: missing indexes, long-running queries, tempdb contention
+- **Escalation to vendor**: case documentation, steps to reproduce, logs package
+- **Change management**: RFC, CAB approval, rollback plan, change freeze
+- **Known Error Database (KEDB)**: reusable resolution documentation
+- **Post-Incident Review (PIR)**: what happened, impact, root cause, prevention
+
+### Top Interview Questions
+1. How do you identify a blocking chain in SQL Server?
+2. What is the difference between L2 and L3 support?
+3. Walk me through how you would diagnose a slow SQL query in production.
+4. How do you decide when to escalate vs resolve yourself?
+5. What information do you include in an escalation to a vendor?
+
+---
+
+## MODULE 26 — Team Management & Leadership (10-Year Manager Mindset)
+
+### Key Concepts
+- **1:1 meetings**: weekly cadence, their agenda not yours, coaching not status update
+- **Performance management**: OKRs vs KPIs, mid-year reviews, PIP process, recognition
+- **Delegation**: delegate the outcome, not the task — explain the WHY, set checkpoints
+- **Hiring**: competency-based interviews, structured scoring, culture add vs culture fit
+- **Conflict resolution**: separate people from problems, private first, document if repeated
+- **Stakeholder communication**: executive summary (3 bullets) + detail on request
+- **Difficult conversations**: SBI framework — Situation, Behaviour, Impact
+- **Team health**: psychological safety, blameless post-mortems, celebrating failure-learning
+- **Coaching vs managing**: manager sets direction and removes blockers; coach asks questions
+- **Burnout signals**: quality drop, missed deadlines, withdrawal — intervene early
+- **Managing up**: keep manager informed, surface risks early, bring solutions not problems
+- **Strategic thinking**: connecting team output to business outcomes, quarterly roadmap
+
+### Top Interview Questions
+1. Tell me about a time you had to manage a low performer.
+2. How do you prioritise workload across your team when everything is urgent?
+3. How do you build trust with a new team quickly?
+4. Describe how you handled a conflict between two team members.
+5. How do you keep senior stakeholders informed without overwhelming them?
+
+---
+
+## UPDATED MOCK INTERVIEW — Modules 1–26
+
+### Additional Areas (added to the 40-question round)
+- Tableau (5 Qs)
+- Advanced SQL (5 Qs)
+- SAS & Dashboards (5 Qs)
+- CSAT & Support (5 Qs)
+- L2/L3 Technical Support (5 Qs)
+- Team Management & Leadership (5 Qs)
+
+**Extended Mock: 70 questions — Full multi-role simulation**
+
