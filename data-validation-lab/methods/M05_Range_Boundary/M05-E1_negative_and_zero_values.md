@@ -99,16 +99,26 @@ WHERE Salary <= 0;
 
 ## Explanation
 
-`BETWEEN 0 AND 100` is inclusive on both ends in SQL — equivalent to `>= 0 AND <= 100`.
-For discount, 0% (no discount) and 100% (free) are edge cases that may or may not be
-valid depending on business rules. Be explicit about whether boundary values are allowed.
+### BETWEEN is inclusive — boundary values count
+`BETWEEN 0 AND 100` is equivalent to `>= 0 AND <= 100`. Both endpoints are included.
+For a discount percentage, 0% (no discount applied) and 100% (item is free) sit at
+the boundaries — whether these are valid depends on the business rule. Always clarify
+with stakeholders whether the fences are strict (`> 0`, `< 100`) or relaxed
+(`>= 0`, `<= 100`) before writing the check.
 
-The **gross margin formula** `(SellingPrice - UnitCost) / SellingPrice * 100` gives the
-percentage of the selling price that is profit. A healthy product margin is typically
->30% in retail. Finding products at 0% or below is a critical commercial alert.
+### Gross margin — the commercial health signal
+The gross margin formula `(SellingPrice - UnitCost) / SellingPrice × 100` expresses
+profit as a percentage of the selling price. A healthy retail margin is typically
+above 30%. Anything at 0% means the product is sold at cost with no profit. Anything
+negative means the business loses money on every unit sold. Finding these during
+a data validation check is a critical commercial alert — not just a data quality flag.
 
-**Negative stock** is a sign of either data entry error or a system bug in the
-inventory update logic (e.g., returns processed against the wrong product).
+### Negative stock — two possible causes
+A negative StockQty value is impossible in the physical world and always indicates
+a system problem. The two most common causes are: (1) a return or adjustment was
+processed against the wrong product, decrementing stock that was never held; or
+(2) a timing issue in concurrent warehouse writes where the decrement ran before
+the receipt was recorded. Either way, the validation query surfaces it for investigation.
 
 ---
 

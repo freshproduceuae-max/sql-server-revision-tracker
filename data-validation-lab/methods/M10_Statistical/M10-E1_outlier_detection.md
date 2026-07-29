@@ -133,16 +133,35 @@ ORDER BY MIN(Amount);
 
 ## Explanation
 
-**Z-Score** measures how many standard deviations a value is from the mean.
-`NULLIF(StdDevAmount, 0)` prevents a division-by-zero error if all amounts are identical.
-A Z-Score above 3 (or below -3) marks a value as statistically extreme.
-Limitation: Z-Score is sensitive to the outlier itself — a single extreme value
-inflates the standard deviation, potentially hiding other outliers.
+### Z-Score — how far is this value from normal?
+A Z-Score expresses how many standard deviations a value sits away from the mean.
+The formula is `(value − mean) / standard deviation`. A Z-Score of 0 means the
+value is exactly average. Scores between −2 and +2 cover roughly 95% of a normally
+distributed dataset. Anything outside ±2 is flagged as unusual; outside ±3 is
+considered extreme. `NULLIF(StdDevAmount, 0)` guards against a division-by-zero
+error in the rare case where all amounts are identical and the standard deviation is zero.
 
-**IQR method** is more robust: Q1 is the 25th percentile, Q3 is the 75th.
-IQR = Q3 - Q1 (the middle 50% spread). The fences at Q1 - 1.5×IQR and Q3 + 1.5×IQR
-mark the statistical boundary. Values outside these fences are potential outliers.
-`PERCENTILE_CONT` is a window function that computes a percentile across the whole dataset.
+### The limitation of Z-Score on skewed data
+Z-Score has a weakness: a single extreme outlier inflates both the mean and the
+standard deviation, which can actually make other outliers look less extreme than
+they are. TXN0013 with 99 million pushes the standard deviation so high that a
+transaction of 15,000 might no longer show as unusual. This is why the IQR method
+exists as an alternative.
+
+### IQR — a more robust outlier boundary
+The Interquartile Range (IQR) uses the middle 50% of the data rather than the mean
+and standard deviation. Q1 is the value at the 25th percentile; Q3 is at the 75th.
+IQR = Q3 − Q1. The **lower fence** is `Q1 − 1.5 × IQR`; the **upper fence** is
+`Q3 + 1.5 × IQR`. Any value outside these fences is a statistical outlier. Because
+it is based on percentiles rather than averages, extreme values have almost no effect
+on where the fences sit — making IQR far more reliable on skewed financial data.
+
+### PERCENTILE_CONT — computing percentiles in SQL
+`PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY Amount) OVER ()` calculates the 25th
+percentile across the entire dataset. The `WITHIN GROUP (ORDER BY ...)` clause specifies
+the sort order used to find the percentile position. The `OVER ()` with no partition
+means it applies to the whole result set. This is a window function available in
+SQL Server 2012 and later.
 
 ---
 

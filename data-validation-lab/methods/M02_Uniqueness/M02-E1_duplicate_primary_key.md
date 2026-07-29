@@ -83,16 +83,25 @@ HAVING COUNT(*) > 1;
 
 ## Explanation
 
-`GROUP BY ... HAVING COUNT(*) > 1` is the classic duplicate detection pattern.
-It groups by the natural key (Email here) and returns only groups where more than
-one row exists.
+### The classic duplicate pattern: GROUP BY with HAVING
+`GROUP BY ... HAVING COUNT(*) > 1` groups rows by the natural business key (Email here)
+and filters to only the groups where more than one row shares that key. This is the
+fastest and most readable duplicate detection pattern in SQL — you will use it in
+almost every data quality engagement.
 
-`ROW_NUMBER() OVER (PARTITION BY Email ORDER BY CustomerID)` numbers each duplicate
-group starting from 1. The first row (RowRank = 1) is typically designated the
-"master" record. This is the standard pattern before a deduplication DELETE or MERGE.
+### Ranking duplicates to decide which one to keep
+`ROW_NUMBER() OVER (PARTITION BY Email ORDER BY CustomerID)` assigns a sequential
+number within each group of duplicates, restarting at 1 for each unique Email.
+The row ranked 1 (the lowest CustomerID, meaning earliest created) becomes the
+designated "master" record. All rows with RowRank > 1 are candidates for deletion
+or archiving. This numbered ranking is the standard preparation step before running
+a deduplication DELETE or MERGE operation.
 
-The "full-row duplicate" check in Step 3 catches cases where even the CustomerID differs
-but every other column is identical — common when two ETL jobs load the same source file.
+### Full-row duplicate vs key-only duplicate
+Step 3 checks for rows where every business column is identical, even if the
+surrogate key (CustomerID) is different. This catches re-loaded records where the
+ETL assigned a new ID but the actual content was already in the table — a common
+bug when source files are re-processed without a deduplication guard.
 
 ---
 

@@ -79,17 +79,27 @@ WHERE ABS(
 
 ## Explanation
 
-**Why allow a 0.01 tolerance?** Floating-point arithmetic can introduce tiny rounding
-errors (e.g., 199.99 × 2 might produce 399.9799999 instead of 399.98). Using `ABS(...) > 0.01`
-ignores differences smaller than 1 cent, which are rounding artefacts rather than real errors.
+### Why you need a rounding tolerance
+Floating-point arithmetic inside a database engine can introduce tiny errors —
+for example, `199.99 × 2` might produce `399.9799999` instead of a clean `399.98`.
+These are machine-level precision artefacts, not real data problems. Using
+`ABS(...) > 0.01` ignores any difference smaller than 1 cent, filtering out
+rounding noise while still catching genuine mismatches like the 9.98 discrepancy
+in OrderID 1005.
 
-**Why 100.0 and not 100?** `DiscountPct / 100` in SQL Server with integer columns
-performs integer division, giving 0 for any discount < 100%. Writing `100.0` forces
-decimal division.
+### Integer division trap — why 100.0 matters
+In SQL Server, dividing an integer by an integer performs integer division and
+truncates the decimal. So `DiscountPct / 100` where DiscountPct = 10 gives 0,
+not 0.1. Writing `100.0` (or `CAST(DiscountPct AS DECIMAL(5,2)) / 100.0`) forces
+the engine to use decimal arithmetic and return 0.1. This is one of the most
+common silent bugs in SQL financial calculations.
 
-**`ABS()`** returns the absolute value — it catches both over-statements
-(stored > calculated) and under-statements (stored < calculated) in a single
-WHERE clause.
+### ABS() — catching errors in both directions
+`ABS()` returns the absolute (positive) value of any number. Using it in the WHERE
+clause means you catch both over-statements (stored total is too high) and
+under-statements (stored total is too low) with a single expression, instead of
+writing two separate conditions. The CASE WHEN in the SELECT then labels which
+direction the error went, which matters for understanding the root cause.
 
 ---
 

@@ -81,13 +81,22 @@ FROM Customers WHERE DOB IS NULL;
 
 ## Explanation
 
+### Why `IS NULL` and not `= NULL`
 `IS NULL` is the correct T-SQL check for a missing value. You cannot use `= NULL` because
-NULL is not equal to anything — not even itself. The `UNION ALL` pattern in Part B is the
-standard way to produce a field-level completeness report in one query without repeating
-a full table scan per field.
+NULL is not equal to anything — not even itself. Any comparison involving NULL evaluates
+to UNKNOWN, not TRUE or FALSE, so `WHERE Email = NULL` will never return rows.
 
+### Reading the field-level summary with UNION ALL
+The `UNION ALL` pattern in Part B stacks three separate count queries into one result set.
+This produces a field-level completeness report in a single query without repeating
+a full table scan per field. Each SELECT block counts NULLs for one column; UNION ALL
+appends the rows without removing duplicates (using UNION instead would add overhead and
+could merge identical counts incorrectly).
+
+### Forcing decimal in the percentage
 The percentage calculation uses `COUNT(*) * 100.0` (note the `.0`) to force decimal
-division — integer division in SQL would round everything to 0%.
+division. Without it, SQL Server performs integer division and rounds everything to 0%
+— so 2 NULLs out of 20 rows would show as 0% instead of 10%.
 
 ---
 

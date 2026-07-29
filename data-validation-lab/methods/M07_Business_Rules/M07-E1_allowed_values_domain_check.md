@@ -85,18 +85,28 @@ FROM Orders;
 
 ## Explanation
 
-**Domain validation** confirms that a value belongs to an agreed-upon set.
-This is different from format validation (which checks the shape of a value)
-and range validation (which checks numeric bounds).
+### Domain validation vs format and range validation
+It helps to distinguish three similar-sounding checks. **Format validation** asks:
+"is the shape of this value correct?" (does the email have an @ sign?). **Range
+validation** asks: "is this number within acceptable bounds?" (is quantity > 0?).
+**Domain validation** asks: "does this value appear on the approved list?" (is this
+department one of the five we recognise?). All three are needed; none of them replaces
+the others.
 
-The `NOT IN` list must handle NULL carefully — `NULL NOT IN (...)` evaluates to UNKNOWN,
-not TRUE, so rows with a NULL department would silently pass. Adding `OR Department IS NULL`
-explicitly catches NULLs.
+### The NULL trap inside NOT IN
+`NULL NOT IN ('Sales', 'Technology', ...)` does not return TRUE — it evaluates to
+UNKNOWN, because SQL cannot confirm that NULL is different from any list member.
+This means a row with a NULL department silently passes the NOT IN check without
+being flagged. The fix is explicit: always add `OR Department IS NULL` as a separate
+condition alongside the NOT IN check.
 
-**Reference table approach** (Method B) is preferred in production because:
-- The approved list can be updated without changing the query
-- Multiple tables can reference the same domain
-- Additions to the domain auto-apply to all validation queries
+### Why a reference table beats a hard-coded list
+A hard-coded `NOT IN ('Sales', 'Technology', ...)` list must be updated manually in
+every script that uses it whenever the business adds or renames a department. A
+`DomainValues` reference table externalises the approved list into data. You update
+one table row and every validation query that joins to it automatically reflects the
+change. This is the production-grade approach — it also allows non-technical users
+to maintain the reference data without touching SQL code.
 
 ---
 

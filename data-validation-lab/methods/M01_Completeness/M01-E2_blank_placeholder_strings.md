@@ -68,15 +68,23 @@ WHERE
 
 ## Explanation
 
-`LTRIM(RTRIM(value))` strips leading and trailing whitespace before checking for an
-empty string. Without this, a value like `"   "` (spaces only) would pass an `= ''` check
-on some databases but not others.
+### Stripping whitespace before checking for empty strings
+`LTRIM(RTRIM(value))` removes all leading and trailing spaces before the empty-string
+comparison. Without it, a value stored as `"   "` (three spaces) would silently pass
+an `= ''` check on some systems, because the spaces technically make it non-empty.
+Always trim before comparing to an empty string.
 
-`ISNULL(column, '')` converts a NULL to an empty string before calling LTRIM/RTRIM,
-which lets you chain both checks without a separate `IS NULL` branch.
+### Combining NULL and blank into one check with ISNULL
+`ISNULL(column, '')` converts a NULL to an empty string before calling LTRIM/RTRIM.
+This collapses the NULL case and the blank-string case into a single expression,
+so you can write one WHERE clause instead of chaining `IS NULL OR = ''` every time.
 
-The `IN ('N/A','NA', ...)` list should be agreed with the business — different source
-systems use different placeholder conventions. Build a shared reference list and reuse it.
+### Building a shared placeholder blocklist
+The `IN ('N/A','NA','NONE','UNKNOWN','NULL','TBC','TBD')` list should be agreed with
+the business and data engineering teams. Different source systems have different
+conventions for "I don't know this value." Build a central reference table of blocked
+placeholder strings and reuse it across all validation scripts so the rule is
+maintained in one place.
 
 ---
 

@@ -85,17 +85,25 @@ WHERE NOT EXISTS (SELECT 1 FROM Products p WHERE p.ProductID = o.ProductID);
 
 ## Explanation
 
-The **LEFT JOIN trick** works because a LEFT JOIN returns all rows from the left table
-(Orders) and matches from the right (Customers). Where there is no match, the right-side
-columns are NULL. `WHERE c.CustomerID IS NULL` then filters to only the unmatched rows
-— these are the FK violations.
+### The LEFT JOIN trick — turning a join into a gap finder
+A LEFT JOIN returns every row from the left table (Orders) plus matched columns from
+the right table (Customers). Where no match exists, the right-side columns come back
+as NULL. By adding `WHERE c.CustomerID IS NULL` after the join, you filter down to
+only those unmatched rows — which are precisely the FK violations. This is one of
+the most important patterns in data validation SQL.
 
-**NOT EXISTS** reads more naturally: "give me orders where no customer exists with this
-CustomerID." Both approaches produce the same result; LEFT JOIN is typically faster on
-large tables because it avoids a correlated subquery per row.
+### NOT EXISTS — the readable alternative
+`NOT EXISTS (SELECT 1 FROM Customers WHERE ...)` reads almost like plain English:
+"give me orders where no matching customer exists." Both LEFT JOIN and NOT EXISTS
+produce the same rows. The query optimiser often generates identical execution plans
+for both, but NOT EXISTS can be faster when the FK table is large and well-indexed,
+because it short-circuits as soon as it finds one match.
 
-**Method C** gives a single-number health check suitable for a monitoring dashboard.
-Zero orphans = clean. Any number > 0 = action required.
+### Method C — the dashboard health number
+Method C collapses the detail into a single count per FK relationship. Zero = clean load.
+Any count above zero triggers an investigation. This summary format is what you put on
+a data quality monitoring dashboard so operations teams can see ETL health at a glance
+without reading individual rows.
 
 ---
 

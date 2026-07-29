@@ -83,17 +83,25 @@ WHERE DIFFERENCE(A.FullName, B.FullName) >= 3;  -- 3 or 4 = high similarity
 
 ## Explanation
 
-**SOUNDEX** converts a name to a 4-character phonetic code based on how it sounds.
-"Sarah" and "Sara" both produce `S600` or similar — so SOUNDEX catches spelling
-variations of the same name.
+### How SOUNDEX converts names into phonetic codes
+SOUNDEX converts a string into a 4-character code that represents how it sounds,
+not how it is spelled. The first character is the first letter; the remaining
+three are digits encoding consonant sounds. "Sarah" and "Sara" produce the same
+code because they sound identical when spoken. This makes SOUNDEX powerful for
+catching name typos, nicknames, and transcription errors that exact matching misses.
 
-**DIFFERENCE()** returns a score from 0–4 comparing two SOUNDEX codes.
-A score of 4 means the words sound almost identical. Scores of 3–4 are good
-near-duplicate candidates.
+### Using DIFFERENCE() as a similarity score
+DIFFERENCE() compares two SOUNDEX codes and returns a score from 0 (no similarity)
+to 4 (near-identical sound). A score of 3 or 4 is a strong near-duplicate signal.
+It works best on single words — for full names, apply it to the full FullName string
+or split first and last names and score them separately for more precision.
 
-These are heuristics — they produce candidates, not confirmed duplicates.
-A human or a second rule (same department + same hire date, for example)
-confirms the match.
+### These are candidate flags, not confirmed duplicates
+Both SOUNDEX and DIFFERENCE are heuristics — they surface rows that look similar,
+but a human or a second confirming rule must decide whether two records are truly
+the same person. The standard pattern is: (1) flag candidates with SOUNDEX, then
+(2) narrow by a second attribute like hire date, department, or salary before
+marking as confirmed duplicates.
 
 ---
 

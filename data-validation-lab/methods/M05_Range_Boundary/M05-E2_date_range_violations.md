@@ -102,20 +102,32 @@ WHERE DOB > GETDATE();
 
 ## Explanation
 
-**DATEDIFF(DAY, start, end)** returns the number of day boundaries crossed between
-two dates. A negative result means the end date is before the start date —
-instant proof of an impossible sequence.
+### DATEDIFF — measuring the gap between two dates
+`DATEDIFF(DAY, start, end)` counts the number of day boundaries crossed between the
+start and end dates. A positive result means end is after start (normal). A negative
+result means end is before start — which is impossible for a shipment and flags the
+row as a data entry error. The `DAY` unit can be swapped for `MONTH`, `YEAR`, `HOUR`
+depending on what granularity the check needs.
 
-**Age calculation**: `DATEDIFF(YEAR, DOB, GETDATE())` counts year boundaries crossed,
-not actual elapsed years. A person born on Dec 31 would show as 1 year older on Jan 1.
-The `CASE` adjustment subtracts 1 if the current date has not yet reached the person's
-birthday this year — giving the true completed years of age.
+### Getting someone's true age — why DATEDIFF(YEAR) is not enough
+`DATEDIFF(YEAR, DOB, GETDATE())` counts year boundaries crossed, not actual completed
+years. A person born on 31 December 1990 would show as 1 year older on 1 January 1991,
+even though they are only a few hours old. The `CASE` block in Check 4 corrects this:
+it subtracts 1 if the current date has not yet passed the person's birthday in the
+current year, giving the true number of completed years of age.
 
-**DATEADD(YEAR, -1, GETDATE())** produces the date exactly one year ago. Anything
-with OrderDate before that point is more than 12 months old.
+### DATEADD — stepping forward and backward from a date
+`DATEADD(YEAR, -1, GETDATE())` produces the date exactly one year before today.
+Use positive values to move forward, negative values to move backward. Common patterns:
+`DATEADD(DAY, -7, GETDATE())` for the last 7 days, `DATEADD(MONTH, -1, ...)` for
+the previous month start, `DATEADD(YEAR, -18, GETDATE())` for the 18-years-ago
+threshold in age checks.
 
-**GETDATE()** returns the current date and time. Use `CAST(GETDATE() AS DATE)` to
-strip the time component when comparing date-only columns.
+### GETDATE() vs CAST(GETDATE() AS DATE)
+`GETDATE()` returns both a date and a time component (e.g., `2024-03-20 14:32:17`).
+When comparing against a DATE-only column, the time part can cause unexpected
+mismatches. Wrapping it in `CAST(GETDATE() AS DATE)` strips the time and gives a
+clean date comparison.
 
 ---
 

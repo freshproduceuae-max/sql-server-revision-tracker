@@ -111,17 +111,26 @@ ORDER BY Path;
 
 ## Explanation
 
-The **self-referencing FK check** (Check 1) is a standard NOT EXISTS against the same
-table with a different alias. This is how you validate any hierarchy — org charts,
-product categories, geographic regions.
+### Validating a self-referencing FK with a table alias
+Check 1 runs a NOT EXISTS against the same table using two different aliases (`e` for
+the employee being checked, `m` for the manager being looked up). This is standard
+for any self-referencing hierarchy — org charts, product category trees, geographic
+region rollups. The logic is identical to orphan checking (M03-E1) except both sides
+of the join point to the same table.
 
-The **Recursive CTE** (Check 4) is the standard SQL pattern for walking a hierarchy.
-The anchor member starts at the root (ManagerID IS NULL). The recursive member joins
-each level back to the previous result. SQL Server limits recursion depth to 100 by
-default — you can override with `OPTION (MAXRECURSION 0)`.
+### How a Recursive CTE walks a hierarchy
+The Recursive CTE in Check 4 has two mandatory parts. The **anchor** selects the root
+level — employees with no manager (`ManagerID IS NULL`). The **recursive member** joins
+each new level of employees back to the previous CTE result using `ManagerID = EmployeeID`.
+SQL Server keeps looping until no new rows are added. The `Path` column builds a trail
+like `E010 > E001` so you can read the full chain from any employee back to the top.
+SQL Server's default recursion limit is 100 levels — raise it with `OPTION (MAXRECURSION n)`
+if your hierarchy is deeper.
 
-Circular loops crash a recursive CTE with an infinite loop error — always check for
-circles (Check 3) before running Check 4.
+### Always check for circular loops before recursing
+A circular reference — where A manages B and B manages A — causes the recursive CTE
+to loop forever and throw an error. Check 3 catches circles first with a simple self-join.
+Run Check 1 (ghost managers) and Check 3 (circles) before trusting the output of Check 4.
 
 ---
 

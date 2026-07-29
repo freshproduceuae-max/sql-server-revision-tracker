@@ -98,20 +98,29 @@ FROM Orders;
 
 ## Explanation
 
-**Control total reconciliation** is the most fundamental ETL quality check.
-You compare the source and target on three key metrics:
-1. **Row count** — did we load all rows?
-2. **Sum of a key financial column** — does the money balance?
-3. **Key range** (min/max date) — did we load the right period?
+### The three pillars of a control total reconciliation
+Every ETL reconciliation checks three things. First, **row count**: did the same
+number of records arrive in the target as were sent from the source? A lower count
+means rows were dropped (by a filter, a failed lookup, or an error handler). A higher
+count means rows were duplicated. Second, **financial sum**: does the total revenue
+in the target match the source? Even if row counts match, individual amounts could
+have been corrupted. Third, **date range**: does the min/max date in the target cover
+the expected period? A shifted or truncated range means the wrong period was loaded.
+All three must agree before the data is signed off for reporting.
 
-Any variance triggers an investigation before the data goes to reporting.
+### CONVERT date formatting for readable outputs
+`CONVERT(VARCHAR, date, 103)` formats a date as `DD/MM/YYYY` — the British date
+convention. The style code is the third argument: 101 gives US format `MM/DD/YYYY`,
+120 gives ISO format `YYYY-MM-DD HH:MM:SS`, 112 gives `YYYYMMDD` (useful for
+file-naming). Use the style that matches your audience or output format requirement.
 
-**CONVERT(VARCHAR, date, 103)** formats a date as `DD/MM/YYYY` (British format).
-Style 101 = US `MM/DD/YYYY`, 120 = ISO `YYYY-MM-DD HH:MM:SS`.
-
-In a real ETL pipeline, the source system typically sends a **control file** or
-**header record** with expected counts and sums. Your reconciliation query
-compares the loaded data against those control figures.
+### How control files work in real ETL pipelines
+In a production ETL, the source system does not just send data — it also sends a
+**control file** or **trailer record** containing the expected row count and sum for
+that batch. The ETL loads the data, then queries the loaded table and compares its
+own count and sum to the control figures. If they match, the load is confirmed and
+downstream jobs are released. If they differ by any amount, the load is failed and
+an alert is raised before any report consumer sees the data.
 
 ---
 

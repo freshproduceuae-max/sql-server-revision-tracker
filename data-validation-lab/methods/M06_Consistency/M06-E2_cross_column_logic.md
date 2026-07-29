@@ -97,19 +97,26 @@ WHERE
 
 ## Explanation
 
-**Cross-column validation** cannot be reduced to a single-column rule. It requires
-looking at two or more columns together. The `CASE WHEN` chain in the SELECT evaluates
-conditions in order — the first matching condition defines the label. The WHERE clause
-filters to only rows that violate at least one rule.
+### What makes a cross-column rule different
+A cross-column validation cannot be reduced to a single-column check because
+the problem only appears when you look at two columns together. A ShipDate of
+"2024-01-19" is a perfectly valid date on its own. But paired with an OrderDate of
+"2024-01-22", it becomes impossible. The `CASE WHEN` chain evaluates conditions
+using multiple column references simultaneously — that is what makes it a cross-column
+rule rather than a simple range check.
 
-**Status allowed-value check**: SQL Server enforces this with a CHECK constraint
-(`CHECK (Status IN ('Pending',...))`). But at validation time — before inserting —
-you surface it with the NOT IN pattern.
+### Layering CASE WHEN with WHERE
+The CASE WHEN in the SELECT labels what the problem is; the WHERE clause filters to
+only the rows that have any problem. They work in tandem: the WHERE ensures you are
+only returning rows worth investigating, and the CASE label tells you exactly which
+rule each row broke. Without the label, you would know a row is bad but not why.
 
-**Stock ≤ MinStockLevel** is a business rule, not a data error. The stock number itself
-is valid — it just indicates an operational action is needed. This is the distinction
-between a **data quality issue** (something wrong with the data) and a **business
-alert** (data is correct but signals a problem). Both are found with the same SQL patterns.
+### The difference between a data error and a business alert
+`StockQty <= MinStockLevel` is not a data error — the stock figure itself is accurate.
+It is a **business alert**: the data is correct, but it signals that an operational
+action is needed (raise a purchase order). Both types are found using identical SQL
+patterns, so the CASE label or the column header on the report is what communicates
+to the reader whether they need to fix the data or take a business action.
 
 ---
 

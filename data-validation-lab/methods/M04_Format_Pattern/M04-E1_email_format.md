@@ -90,19 +90,31 @@ ORDER BY RecordCount DESC;
 
 ## Explanation
 
-SQL `LIKE` patterns use `%` as "match any sequence of characters" and `_` as
-"match exactly one character." The chain of CASE WHEN conditions works top-down —
-the first matching condition wins. Order matters: check for NULL first (because
-NULL comparisons always return UNKNOWN, not TRUE or FALSE), then blanks, then
-progressively more specific format rules.
+### How LIKE pattern matching works in T-SQL
+SQL `LIKE` patterns use `%` to mean "any sequence of zero or more characters" and
+`_` to mean "exactly one character." So `'%@%.%'` means: something, then @, then
+something, then a dot, then something — the minimum structure of a valid email address.
+These patterns are not as powerful as regular expressions but cover most common
+format rules without needing CLR extensions.
 
-**Why the `LEN(Email) - LEN(REPLACE(Email,'@','')) > 1` trick works:**
-`REPLACE` removes all @ symbols. If the length after removing @ is less than
-the original by more than 1, there were multiple @ signs.
+### Why CASE WHEN order matters
+The CASE WHEN chain evaluates top-down and stops at the first matching condition.
+This means you must order from broadest to most specific: check for NULL first
+(because any comparison involving NULL returns UNKNOWN, not TRUE, so putting NULL
+last would cause it to fall through every condition silently), then blanks,
+then structural rules. Getting the order wrong causes conditions to never fire.
 
-**Casing normalisation:** `LOWER(Email)` before storing is a best practice.
-An email `ANJALI@EMAIL.COM` is technically valid but leads to lookup mismatches
-when compared case-sensitively.
+### Counting @ symbols without a loop
+The expression `LEN(Email) - LEN(REPLACE(Email, '@', ''))` counts the number of @
+symbols in a string. REPLACE removes every @, then the length difference tells you
+how many were removed. If the difference is greater than 1, there are multiple @
+signs — an immediate format failure.
+
+### Casing normalisation — valid but inconsistent
+An email like `ANJALI@EMAIL.COM` is technically RFC-valid, but storing mixed-case
+emails causes lookup mismatches in systems that compare case-sensitively. The best
+practice is to store all emails as `LOWER(Email)` at the point of data entry or
+during the ETL load, before they reach the main table.
 
 ---
 

@@ -113,17 +113,29 @@ HAVING COUNT(*) > 1;
 
 ## Explanation
 
-**LAG()** returns the value from the previous row within a partition. Here, it returns
-the previous quarter for the same employee and year. Comparing the current vs previous
-quarter number (extracted with RIGHT() and CAST to INT) reveals if a quarter was skipped.
+### LAG() — looking back one row to find a skip
+`LAG(column) OVER (PARTITION BY ... ORDER BY ...)` returns the value from the
+previous row within a defined group. Here it returns the previous quarter for the
+same employee and year. Subtracting the previous quarter number from the current
+quarter number (extracted with `RIGHT(Quarter, 1)` and cast to INT) tells you how
+many quarters apart they are. A difference of 2 or more means at least one quarter
+was skipped — a gap in the coverage sequence.
 
-**Recursive CTE calendar generation** is the standard SQL pattern for creating a date
-series. The anchor selects the start date; each recursive step adds 1 day until
-reaching the end date. `OPTION (MAXRECURSION 1000)` raises the recursion limit
-from the default 100 to handle longer date ranges.
+### Generating a complete date calendar with a Recursive CTE
+The standard SQL pattern for producing a continuous series of dates is a Recursive CTE.
+The **anchor** selects the first date. Each **recursive step** adds one day using
+`DATEADD(DAY, 1, CalDate)` and continues until the end date is reached. Once you have
+this calendar, a LEFT JOIN against the actual data reveals any date with no matching
+transaction — those are your gaps. This pattern works for any sequence: dates, months,
+invoice numbers, sequence IDs.
 
-**Duplicate reference numbers** are a temporal integrity issue — the same event ID
-appearing twice suggests either a reprocessing error or a duplicate payment.
+### Why duplicate reference numbers are a temporal problem
+A reference number is designed to uniquely identify one event at one point in time.
+When the same reference number appears on two rows — especially across two different
+accounts or two different dates — it signals either a reprocessing error (the same
+file was loaded twice) or a duplicate payment. It is classed as a temporal integrity
+issue because the problem involves event identity over time, not just a static value
+constraint.
 
 ---
 
