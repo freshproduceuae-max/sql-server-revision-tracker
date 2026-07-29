@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Reference Schemas — Data Validation Lab{% endblock %}
+{% block breadcrumb %}
+  <a href="/">Home</a>
+  <span style="color:var(--border);margin:0 6px;">/</span>
+  <span style="color:var(--muted);">Reference Schemas</span>
+{% endblock %}
+
+{% block content %}
+<h1>Reference Schemas</h1>
+<p>
+  Six CSV tables with intentional dirty data. Load them into SSMS using
+  <code>BULK INSERT</code> or the Import Flat File wizard, then run the
+  method queries against them.
+</p>
+
+<div style="margin:28px 0;">
+  <a href="/schema/SCHEMA_REFERENCE.md"
+     style="display:inline-block;background:var(--surface2);border:1px solid var(--border);
+            border-radius:8px;padding:12px 20px;text-decoration:none;color:var(--text);
+            font-size:13px;margin-bottom:20px;">
+    📄 Full Schema Reference &amp; Known Issues →
+  </a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+  {% set descriptions = {
+    '01_Customers.csv': 'Customers with NULL emails, duplicate rows, minor customers, and N/A placeholder rows.',
+    '02_Orders.csv': 'Orders with orphan CustomerID, reversed ShipDate, zero quantity, negative price, wrong TotalAmount.',
+    '03_Products.csv': 'Products selling below cost, NULL product name, negative stock quantity.',
+    '04_Employees.csv': 'Employees with negative salary, phantom manager reference, near-duplicate names.',
+    '05_Transactions.csv': 'Transactions with duplicate reference numbers, NULL date, extreme outlier amount.',
+    '06_SalesTargets.csv': 'Sales targets with exact duplicate rows, ghost EmployeeID, negative actual amount.'
+  } %}
+  {% for f in files %}
+  <a href="/schema/{{ f.name }}" class="card">
+    <div class="card-id" style="font-family:monospace;font-size:11px;">{{ f.name }}</div>
+    <div class="card-title" style="font-size:13px;margin-top:6px;">
+      {{ descriptions.get(f.name, '') }}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<div style="margin-top:40px;background:var(--surface);border:1px solid var(--border);
+            border-radius:10px;padding:24px;">
+  <h2 style="margin-top:0;">Loading into SQL Server (SSMS)</h2>
+  <pre><code>-- Replace the path with where you cloned this repo
+BULK INSERT Customers
+FROM 'C:\sql-server-revision-tracker\data-validation-lab\schemas\01_Customers.csv'
+WITH (
+    FIRSTROW       = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR   = '\n',
+    TABLOCK
+);
+
+-- Or use: Right-click database → Tasks → Import Flat File → select CSV</code></pre>
+</div>
+{% endblock %}

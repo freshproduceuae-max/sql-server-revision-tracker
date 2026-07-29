@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} — Schema Viewer{% endblock %}
+{% block breadcrumb %}
+  <a href="/">Home</a>
+  <span style="color:var(--border);margin:0 6px;">/</span>
+  <a href="/schemas">Schemas</a>
+  <span style="color:var(--border);margin:0 6px;">/</span>
+  <span style="color:var(--muted);">{{ name }}</span>
+{% endblock %}
+
+{% block content %}
+<h1>{{ name }}</h1>
+<div class="schema-filename">schemas/{{ name }}</div>
+
+<p style="margin-bottom:20px;color:var(--muted);font-size:13px;">
+  {{ rows|length }} rows · {{ headers|length }} columns
+  — cells highlighted in
+  <span style="color:#dc2626;font-weight:600;">red</span> contain NULL, blank, or suspicious values.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="color:var(--muted);font-size:11px;">#</th>
+        {% for h in headers %}
+        <th>{{ h }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td style="color:var(--muted);font-size:11px;min-width:32px;">{{ loop.index }}</td>
+        {% for h in headers %}
+        {% set val = row[h] %}
+        {% if val == '' or val == None or val == 'N/A' or val == 'NULL' %}
+          <td class="null-cell">{{ val if val else 'NULL' }}</td>
+        {% elif val|float(-999) < 0 and val|float(-999) != -999 %}
+          <td class="issue-cell" style="color:#f97316;">{{ val }}</td>
+        {% elif val in ['99999999999', 'E099', '99'] %}
+          <td class="issue-cell" style="color:#f97316;">{{ val }}</td>
+        {% else %}
+          <td>{{ val }}</td>
+        {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div style="margin-top:40px;">
+  <a href="/schemas" style="font-size:13px;color:var(--accent2);">← Back to all schemas</a>
+</div>
+{% endblock %}

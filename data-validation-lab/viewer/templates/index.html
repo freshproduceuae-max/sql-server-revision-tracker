@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Data Validation Lab — Home{% endblock %}
+{% block breadcrumb %}<a href="/">Data Validation Lab</a>{% endblock %}
+
+{% block content %}
+<h1>Data Validation Lab</h1>
+<p>
+  A question-first SQL learning system. Each method opens with a realistic
+  business scenario, walks through the query, explains every function used,
+  and closes with the interview angle. Six reference tables with intentional
+  dirty data are included so every query returns real results.
+</p>
+
+<div style="display:flex; gap:12px; margin:24px 0; flex-wrap:wrap;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 24px;text-align:center;min-width:100px;">
+    <div style="font-size:28px;font-weight:800;color:var(--accent2);">10</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px;">Categories</div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 24px;text-align:center;min-width:100px;">
+    <div style="font-size:28px;font-weight:800;color:var(--accent2);">15</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px;">Methods</div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 24px;text-align:center;min-width:100px;">
+    <div style="font-size:28px;font-weight:800;color:var(--accent2);">6</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px;">Reference Tables</div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 24px;text-align:center;min-width:100px;">
+    <div style="font-size:28px;font-weight:800;color:var(--accent2);">236</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px;">Validation Types</div>
+  </div>
+</div>
+
+{% set ns = namespace(current_cat="") %}
+{% for m in methods %}
+  {% if m.cat_label != ns.current_cat %}
+    {% if ns.current_cat != "" %}</div>{% endif %}
+    {% set ns.current_cat = m.cat_label %}
+    <div class="cat-section">
+    <div class="cat-header">{{ m.cat_label }}</div>
+    <div class="card-grid">
+  {% endif %}
+
+  <a href="/method/{{ m.cat }}/{{ m.slug }}" class="card">
+    <div class="card-id">{{ m.slug[:6] }}</div>
+    <div class="card-title">{{ m.title | replace(m.slug[:6] + ' — ', '') }}</div>
+    <div class="card-meta">
+      {% if m.severity %}
+      <span class="severity-chip" style="color:{{ m.color }};border-color:{{ m.color }}">
+        {{ m.severity }}
+      </span>
+      {% endif %}
+    </div>
+  </a>
+
+  {% if loop.last %}</div></div>{% endif %}
+{% endfor %}
+
+<div style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);">
+  <h2>Reference Tables</h2>
+  <p>Load these CSVs into SSMS to run the example queries against real data.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th><th>Rows</th><th>Key Issues Embedded</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>01_Customers.csv</code></td><td>20</td>
+          <td>NULL email, duplicate row, minor customers, placeholder "N/A" row</td>
+          <td><a href="/schema/01_Customers.csv">View →</a></td>
+        </tr>
+        <tr>
+          <td><code>02_Orders.csv</code></td><td>20</td>
+          <td>Orphan CustomerID, ShipDate before OrderDate, zero quantity, negative price</td>
+          <td><a href="/schema/02_Orders.csv">View →</a></td>
+        </tr>
+        <tr>
+          <td><code>03_Products.csv</code></td><td>15</td>
+          <td>Selling below cost, NULL product name, negative stock</td>
+          <td><a href="/schema/03_Products.csv">View →</a></td>
+        </tr>
+        <tr>
+          <td><code>04_Employees.csv</code></td><td>18</td>
+          <td>Negative salary, phantom manager, near-duplicate names</td>
+          <td><a href="/schema/04_Employees.csv">View →</a></td>
+        </tr>
+        <tr>
+          <td><code>05_Transactions.csv</code></td><td>20</td>
+          <td>Duplicate reference numbers, NULL date, extreme outlier amount</td>
+          <td><a href="/schema/05_Transactions.csv">View →</a></td>
+        </tr>
+        <tr>
+          <td><code>06_SalesTargets.csv</code></td><td>15</td>
+          <td>Exact duplicate rows, ghost EmployeeID, negative actual amount</td>
+          <td><a href="/schema/06_SalesTargets.csv">View →</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
