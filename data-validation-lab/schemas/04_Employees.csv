@@ -1,0 +1,19 @@
+EmployeeID,FullName,Department,ManagerID,HireDate,Salary,Grade,Email,IsActive
+E001,Sarah Thompson,Sales,E010,2018-03-01,55000,L3,sarah.thompson@corp.com,1
+E002,Rajiv Menon,Technology,E011,2019-07-15,72000,L4,rajiv.menon@corp.com,1
+E003,Lisa Park,HR,E012,2017-01-10,48000,L2,lisa.park@corp.com,1
+E004,James Okafor,Finance,E010,2020-05-20,61000,L3,james.okafor@corp.com,1
+E005,Nadia Costa,Sales,E010,2021-09-01,42000,L2,nadia.costa@corp.com,1
+E006,Wei Zhang,Technology,E011,2016-11-30,88000,L5,wei.zhang@corp.com,1
+E007,Maria Gonzalez,Marketing,E013,2022-02-14,38000,L2,,1
+E008,Tom Harrington,Finance,E010,2015-06-01,95000,L5,tom.harrington@corp.com,0
+E009,Priya Iyer,HR,E012,2023-03-01,35000,L1,priya.iyer@corp.com,1
+E010,Robert Blake,Sales,,2010-04-01,120000,L7,robert.blake@corp.com,1
+E011,Claire Fontaine,Technology,,2012-08-01,135000,L7,claire.fontaine@corp.com,1
+E012,Karen Mills,HR,,2011-01-15,115000,L7,karen.mills@corp.com,1
+E013,Derek Chan,Marketing,,2013-09-01,118000,L6,derek.chan@corp.com,1
+E014,Alex Turner,Technology,E011,2024-01-01,-5000,L1,alex.turner@corp.com,1
+E015,Sara Thompson,Sales,E010,2018-03-01,55000,L3,sarah.thompson@corp.com,1
+E016,Fatima Al-Zahra,Finance,E010,2019-12-01,67000,L4,fatima.alzahra@corp.com,1
+E017,John Smith,Technology,E099,2021-06-15,58000,L3,john.smith@corp.com,1
+E018,Anita Rao,Marketing,E013,2025-03-01,40000,L2,anita.rao@corp.com,1

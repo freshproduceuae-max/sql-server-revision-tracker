@@ -1,0 +1,21 @@
+CustomerID,FirstName,LastName,Email,Phone,DOB,Country,PostalCode,CreatedDate,IsActive
+1,James,Carter,james.carter@email.com,+44-7911-123456,1985-03-12,UK,EC1A 1BB,2021-01-15,1
+2,Priya,Nair,priya.nair@email.com,+91-9876543210,1990-07-22,India,560001,2021-02-10,1
+3,Mohammed,Al-Rashid,,+971-501234567,1978-11-05,UAE,00000,2021-03-01,1
+4,Sara,O'Brien,sara.obrien@email.com,,1995-04-18,Ireland,D02 XY45,2021-03-15,1
+5,Chen,Wei,chen.wei@email.com,+86-13812345678,,China,200000,2021-04-01,1
+6,Anjali,Sharma,ANJALI.SHARMA@EMAIL.COM,+91-9988776655,1988-09-30,India,110001,2021-04-20,1
+7,Tom,Brooks,tom.brooks,+44-7922-654321,1975-12-01,UK,SW1A 2AA,2021-05-05,1
+8,Fatima,Hassan,fatima.hassan@email.com,+971-509876543,2005-06-14,UAE,00000,2021-05-18,1
+9,David,Kim,david.kim@email.com,+82-10-1234-5678,1983-02-28,Korea,06000,2021-06-01,0
+10,Elena,Popescu,elena.popescu@email.com,+40-721-234567,1991-08-19,Romania,010101,2021-06-15,1
+11,James,Carter,james.carter@email.com,+44-7911-123456,1985-03-12,UK,EC1A 1BB,2021-07-01,1
+12,Ravi,Kumar,,+91-9123456789,1987-05-25,India,400001,2021-07-20,1
+13,Anna,Müller,anna.muller@email.com,+49-170-1234567,1993-10-11,Germany,10115,2021-08-01,1
+14,Carlos,Ruiz,carlos.ruiz@email.com,+34-612-345678,,Spain,28001,2021-08-15,1
+15,Lily,Zhang,lily.zhang@email.com,+86-13987654321,2010-03-07,China,100000,2021-09-01,1
+16,N/A,N/A,N/A,N/A,N/A,N/A,N/A,2021-09-10,1
+17,Omar,Farouq,omar.farouq@email.com,+20-100-1234567,1980-01-01,Egypt,11511,2021-10-01,1
+18,Sophie,Dubois,sophie.dubois@email.com,+33-612-345678,1996-12-25,France,75001,2021-10-20,1
+19,Ahmed,Khan,ahmed.khan@email.com,99999999999,1972-04-15,Pakistan,75600,2021-11-01,1
+20,Mei,Lin,mei.lin@email.com,+86-13611223344,1989-07-04,China,310000,2021-11-15,1
