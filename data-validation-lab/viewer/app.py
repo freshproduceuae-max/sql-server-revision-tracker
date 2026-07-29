@@ -1,15 +1,21 @@
-import os
+import io
 import csv
 import re
 from pathlib import Path
 from flask import Flask, render_template, abort
 import markdown as md
 
-app = Flask(__name__)
+# Try to load from embedded data.py (serverless deploy); fall back to filesystem
+try:
+    from data import METHODS, SCHEMAS
+    _USE_DATA_PY = True
+except ImportError:
+    _USE_DATA_PY = False
+    BASE = Path(__file__).parent.parent
+    METHODS_DIR = BASE / "methods"
+    SCHEMAS_DIR = BASE / "schemas"
 
-BASE = Path(__file__).parent.parent
-METHODS_DIR = BASE / "methods"
-SCHEMAS_DIR = BASE / "schemas"
+app = Flask(__name__)
 
 CATEGORY_LABELS = {
     "M01_Completeness": "M01 — Completeness",
@@ -33,25 +39,56 @@ SEVERITY_COLORS = {
 }
 
 
+def _method_text(cat: str, slug: str) -> str | None:
+    key = f"{cat}/{slug}"
+    if _USE_DATA_PY:
+        return METHODS.get(key)
+    path = METHODS_DIR / cat / (slug + ".md")
+    return path.read_text(encoding="utf-8") if path.exists() else None
+
+
+def _schema_text(name: str) -> str | None:
+    if _USE_DATA_PY:
+        return SCHEMAS.get(name)
+    path = SCHEMAS_DIR / name
+    return path.read_text(encoding="utf-8") if path.exists() else None
+
+
+def _list_methods():
+    if _USE_DATA_PY:
+        # key format: "M01_Completeness/M01-E1_slug"
+        items = {}
+        for key in sorted(METHODS.keys()):
+            cat, slug = key.split("/", 1)
+            items.setdefault(cat, []).append(slug)
+        return items
+    result = {}
+    for folder in sorted(METHODS_DIR.iterdir()):
+        if folder.is_dir():
+            result[folder.name] = [f.stem for f in sorted(folder.glob("*.md"))]
+    return result
+
+
+def _list_schemas():
+    if _USE_DATA_PY:
+        return [k for k in sorted(SCHEMAS.keys()) if k.endswith(".csv")]
+    return [f.name for f in sorted(SCHEMAS_DIR.glob("*.csv"))]
+
+
 def get_nav():
     nav = []
-    for folder in sorted(METHODS_DIR.iterdir()):
-        if not folder.is_dir():
-            continue
-        label = CATEGORY_LABELS.get(folder.name, folder.name)
+    for cat_folder, slugs in _list_methods().items():
+        label = CATEGORY_LABELS.get(cat_folder, cat_folder)
         examples = []
-        for f in sorted(folder.glob("*.md")):
-            title = extract_h1(f)
-            examples.append({"slug": f.stem, "cat": folder.name, "title": title})
-        nav.append({"folder": folder.name, "label": label, "examples": examples})
+        for slug in slugs:
+            text = _method_text(cat_folder, slug) or ""
+            title = next(
+                (l[2:].strip() for l in text.splitlines() if l.startswith("# ")),
+                slug
+            )
+            examples.append({"slug": slug, "cat": cat_folder, "title": title})
+        nav.append({"folder": cat_folder, "label": label, "examples": examples})
     return nav
-
-
-def extract_h1(path: Path) -> str:
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.startswith("# "):
-            return line[2:].strip()
-    return path.stem
 
 
 def extract_severity(text: str) -> tuple[str, str]:
@@ -77,8 +114,7 @@ def index():
     all_methods = []
     for cat in nav:
         for ex in cat["examples"]:
-            path = METHODS_DIR / ex["cat"] / (ex["slug"] + ".md")
-            text = path.read_text(encoding="utf-8")
+            text = _method_text(ex["cat"], ex["slug"]) or ""
             severity, color = extract_severity(text)
             all_methods.append({**ex, "severity": severity, "color": color,
                                  "cat_label": cat["label"]})
@@ -87,14 +123,12 @@ def index():
 
 @app.route("/method/<cat>/<slug>")
 def method(cat, slug):
-    path = METHODS_DIR / cat / (slug + ".md")
-    if not path.exists():
+    text = _method_text(cat, slug)
+    if text is None:
         abort(404)
-    text = path.read_text(encoding="utf-8")
     severity, color = extract_severity(text)
     html = render_md(text)
     nav = get_nav()
-    # find prev/next
     flat = [(e["cat"], e["slug"]) for c in nav for e in c["examples"]]
     idx = next((i for i, x in enumerate(flat) if x == (cat, slug)), None)
     prev_link = flat[idx - 1] if idx and idx > 0 else None
@@ -107,23 +141,20 @@ def method(cat, slug):
 
 @app.route("/schema/<name>")
 def schema(name):
-    path = SCHEMAS_DIR / name
-    if not path.exists():
+    text = _schema_text(name)
+    if text is None:
         abort(404)
-    if path.suffix == ".csv":
-        with open(path, encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            headers = reader.fieldnames or []
-            rows = list(reader)
-        ref_path = SCHEMAS_DIR / "SCHEMA_REFERENCE.md"
-        ref_html = ""
-        if ref_path.exists():
-            ref_html = render_md(ref_path.read_text(encoding="utf-8"))
+    if name.endswith(".csv"):
+        reader = csv.DictReader(io.StringIO(text))
+        headers = reader.fieldnames or []
+        rows = list(reader)
+        ref_text = _schema_text("SCHEMA_REFERENCE.md") or ""
+        ref_html = render_md(ref_text) if ref_text else ""
         nav = get_nav()
         return render_template("schema.html", name=name, headers=headers,
                                rows=rows, ref_html=ref_html, nav=nav)
-    elif path.suffix == ".md":
-        html = render_md(path.read_text(encoding="utf-8"))
+    elif name.endswith(".md"):
+        html = render_md(text)
         nav = get_nav()
         return render_template("method.html", html=html, nav=nav,
                                severity="", color="", prev_link=None,
@@ -133,7 +164,7 @@ def schema(name):
 
 @app.route("/schemas")
 def schemas():
-    files = sorted(SCHEMAS_DIR.glob("*.csv"))
+    files = [type("F", (), {"name": n})() for n in _list_schemas()]
     nav = get_nav()
     return render_template("schemas_list.html", files=files, nav=nav)
 
