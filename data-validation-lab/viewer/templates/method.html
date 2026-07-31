@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ cat_label }} — Data Validation Lab{% endblock %}
+{% block breadcrumb %}
+  <a href="/">Home</a>
+  <span style="color:var(--border);margin:0 6px;">/</span>
+  <span style="color:var(--muted);">{{ cat_label }}</span>
+{% endblock %}
+
+{% block content %}
+{% if severity %}
+<span class="severity-chip" style="color:{{ color }};border-color:{{ color }};">
+  {{ severity }}
+</span>
+{% endif %}
+
+<div class="method-body">
+  {{ html | safe }}
+</div>
+
+{% if prev_link or next_link %}
+<div class="pager">
+  {% if prev_link %}
+  <a href="/method/{{ prev_link[0] }}/{{ prev_link[1] }}">
+    <span>← Previous</span>
+    {{ prev_link[1].split('_', 1)[1] | replace('_', ' ') | title if '_' in prev_link[1] else prev_link[1] }}
+  </a>
+  {% endif %}
+  {% if next_link %}
+  <a href="/method/{{ next_link[0] }}/{{ next_link[1] }}" class="next">
+    <span>Next →</span>
+    {{ next_link[1].split('_', 1)[1] | replace('_', ' ') | title if '_' in next_link[1] else next_link[1] }}
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+<style>
+  /* Override heading styles inside the rendered markdown */
+  .method-body h1 { font-size: 22px; border-bottom: 1px solid var(--border);
+                    padding-bottom: 14px; margin-bottom: 28px; }
+  .method-body h2 { font-size: 16px; }
+  .method-body h3 { font-size: 14px; color: var(--accent2); }
+  .method-body table { font-size: 13px; }
+  .method-body blockquote {
+    background: linear-gradient(135deg, rgba(99,102,241,.06), rgba(99,102,241,.02));
+    border-left: 3px solid var(--accent);
+  }
+  .method-body blockquote p { font-size: 14.5px; line-height: 1.65; }
+</style>
+{% endblock %}

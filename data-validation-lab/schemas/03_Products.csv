@@ -1,0 +1,16 @@
+ProductID,ProductName,Category,SubCategory,UnitCost,SellingPrice,StockQty,MinStockLevel,IsActive,SupplierID
+P001,Wireless Mouse,Electronics,Peripherals,22.00,49.99,150,20,1,SUP001
+P002,USB-C Hub,Electronics,Peripherals,85.00,199.99,75,15,1,SUP001
+P003,Standing Desk,Furniture,Office,120.00,299.99,30,5,1,SUP002
+P004,Desk Lamp,Furniture,Lighting,35.00,89.99,60,10,1,SUP002
+P005,Monitor 27",Electronics,Displays,200.00,499.99,25,5,1,SUP003
+P006,Webcam HD,Electronics,Peripherals,30.00,75.00,80,15,1,SUP001
+P007,Laptop Stand,Furniture,Accessories,50.00,125.00,45,10,1,SUP002
+P008,Keyboard Mech,Electronics,Peripherals,90.00,220.00,0,10,1,SUP001
+P009,Headset Pro,Electronics,Audio,110.00,90.00,35,10,1,SUP003
+P010,Office Chair,Furniture,Seating,180.00,180.00,12,3,0,SUP002
+P011,,Electronics,Peripherals,45.00,110.00,50,10,1,SUP001
+P012,Docking Station,Electronics,,95.00,249.99,20,5,1,SUP003
+P013,Mousepad XL,Electronics,Peripherals,8.00,24.99,-5,20,1,SUP001
+P014,Monitor Arm,Furniture,Accessories,55.00,139.99,18,5,1,
+P015,USB Drive 256GB,Electronics,Storage,12.00,0.00,200,30,1,SUP001

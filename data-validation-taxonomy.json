@@ -1,0 +1,396 @@
+{
+  "title": "Data Validation & Cleansing — Complete Taxonomy",
+  "version": "1.0",
+  "total_types": 236,
+  "total_groups": 19,
+  "groups": [
+    {
+      "id": 1,
+      "name": "Completeness",
+      "description": "Is the data there? Checks for missing or absent values.",
+      "count": 12,
+      "types": [
+        { "id": 1,  "name": "NULL Check",                    "description": "Column IS NULL — field has no value at all", "sql_pattern": "WHERE col IS NULL", "severity": "High" },
+        { "id": 2,  "name": "Empty String Check",            "description": "Column = '' — field exists but contains nothing", "sql_pattern": "WHERE col = ''", "severity": "High" },
+        { "id": 3,  "name": "Whitespace-Only Check",         "description": "Field looks populated but contains only spaces", "sql_pattern": "WHERE LTRIM(RTRIM(col)) = ''", "severity": "Medium" },
+        { "id": 4,  "name": "Zero-Length String",            "description": "LEN(col) = 0 — zero characters stored", "sql_pattern": "WHERE LEN(col) = 0", "severity": "Medium" },
+        { "id": 5,  "name": "Mandatory Field Presence",      "description": "Required columns must be populated on every row", "sql_pattern": "WHERE mandatory_col IS NULL", "severity": "High" },
+        { "id": 6,  "name": "Conditional Mandatory",         "description": "If Status = 'Delivered' THEN DeliveryDate must exist", "sql_pattern": "WHERE Status='Delivered' AND DeliveryDate IS NULL", "severity": "High" },
+        { "id": 7,  "name": "At-Least-One Check",            "description": "Phone OR Mobile OR Email — at least one must be populated", "sql_pattern": "WHERE Phone IS NULL AND Mobile IS NULL AND Email IS NULL", "severity": "Medium" },
+        { "id": 8,  "name": "Cross-Field Completeness",      "description": "If Country = 'US' THEN State must be populated", "sql_pattern": "WHERE Country='US' AND State IS NULL", "severity": "Medium" },
+        { "id": 9,  "name": "Partial Record",                "description": "Row exists but only a small fraction of key fields are filled", "sql_pattern": "WHERE (CASE WHEN f1 IS NOT NULL THEN 1 ELSE 0 END + ...) < 3", "severity": "Medium" },
+        { "id": 10, "name": "Header Without Detail",         "description": "Order record exists but has zero OrderLines", "sql_pattern": "WHERE NOT EXISTS (SELECT 1 FROM Lines WHERE Lines.OrderID = Orders.OrderID)", "severity": "High" },
+        { "id": 11, "name": "Detail Without Header",         "description": "OrderLine exists but its parent Order is missing", "sql_pattern": "LEFT JOIN Orders ON Lines.OrderID = Orders.OrderID WHERE Orders.OrderID IS NULL", "severity": "High" },
+        { "id": 12, "name": "Sparse Population Rate",        "description": "Column is only 12% populated — expected 100%", "sql_pattern": "SELECT ROUND(100.0 * COUNT(col) / COUNT(*), 2) AS PctPopulated FROM tbl", "severity": "Low" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Uniqueness & Duplicates",
+      "description": "Is there exactly one record per key? No duplicate entries.",
+      "count": 10,
+      "types": [
+        { "id": 13, "name": "Primary Key Duplicate",         "description": "Same ID appears more than once", "sql_pattern": "GROUP BY ID HAVING COUNT(*) > 1", "severity": "Critical" },
+        { "id": 14, "name": "Composite Key Duplicate",       "description": "Same combination of (CustomerID + ProductID + Date) appears twice", "sql_pattern": "GROUP BY col1, col2, col3 HAVING COUNT(*) > 1", "severity": "Critical" },
+        { "id": 15, "name": "Natural Key Duplicate",         "description": "Same email address for two different CustomerIDs", "sql_pattern": "GROUP BY Email HAVING COUNT(DISTINCT CustomerID) > 1", "severity": "High" },
+        { "id": 16, "name": "Full Row Duplicate",            "description": "Every column in two rows is identical", "sql_pattern": "GROUP BY col1,col2,...,colN HAVING COUNT(*) > 1", "severity": "High" },
+        { "id": 17, "name": "Near-Duplicate (Fuzzy)",        "description": "'John Smith' and 'Jon Smith' — likely same person, different entry", "sql_pattern": "WHERE SOUNDEX(Name1) = SOUNDEX(Name2) AND Name1 <> Name2", "severity": "Medium" },
+        { "id": 18, "name": "Cross-Table Uniqueness",        "description": "Same CustomerID in both Customers and ArchivedCustomers", "sql_pattern": "INTERSECT between two tables on key", "severity": "Medium" },
+        { "id": 19, "name": "Sequence Gap",                  "description": "IDs jump from 100 to 102 — is 101 missing or intentionally deleted?", "sql_pattern": "WHERE ID + 1 NOT IN (SELECT ID FROM tbl)", "severity": "Low" },
+        { "id": 20, "name": "Sequence Duplicate",            "description": "Two records share sequence number 47", "sql_pattern": "GROUP BY SeqNum HAVING COUNT(*) > 1", "severity": "High" },
+        { "id": 21, "name": "Soundex / Phonetic Match",      "description": "Names that sound the same but are spelled differently", "sql_pattern": "WHERE SOUNDEX(col) = SOUNDEX(other_col)", "severity": "Low" },
+        { "id": 22, "name": "Levenshtein Distance Match",    "description": "'ABC Corp' vs 'ABC Corp.' — same entity, different spelling", "sql_pattern": "Custom function or fuzzy match library", "severity": "Low" }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Referential Integrity",
+      "description": "Do all relationships between tables hold? No broken links.",
+      "count": 9,
+      "types": [
+        { "id": 23, "name": "Foreign Key Violation",         "description": "Child row references a ParentID that doesn't exist", "sql_pattern": "LEFT JOIN parent ON child.FK = parent.PK WHERE parent.PK IS NULL", "severity": "Critical" },
+        { "id": 24, "name": "Orphaned Child Record",         "description": "Parent was deleted but child rows still exist", "sql_pattern": "LEFT JOIN parent WHERE parent.PK IS NULL", "severity": "High" },
+        { "id": 25, "name": "Circular Reference",            "description": "A → B → C → A — creates an infinite loop in hierarchy", "sql_pattern": "Recursive CTE to detect cycles", "severity": "Critical" },
+        { "id": 26, "name": "Self-Referential Check",        "description": "ParentID = ChildID on the same row", "sql_pattern": "WHERE ParentID = ChildID", "severity": "High" },
+        { "id": 27, "name": "Cross-Database FK",             "description": "FK references a table in another database or system", "sql_pattern": "LEFT JOIN OtherDB.dbo.Table WHERE key IS NULL", "severity": "High" },
+        { "id": 28, "name": "Soft-Delete FK Violation",      "description": "Parent is flagged IsDeleted=1 but child rows are still active", "sql_pattern": "JOIN parent WHERE parent.IsDeleted=1 AND child.IsActive=1", "severity": "Medium" },
+        { "id": 29, "name": "Future Parent Reference",       "description": "Child row references a ParentID that doesn't exist yet", "sql_pattern": "WHERE child.ParentID NOT IN (SELECT PK FROM parent)", "severity": "High" },
+        { "id": 30, "name": "Lookup / Code Table Violation", "description": "Status = 'PNDG' but valid values are 'PENDING','ACTIVE','CLOSED'", "sql_pattern": "WHERE Status NOT IN (SELECT Code FROM RefCodes)", "severity": "High" },
+        { "id": 31, "name": "Many-to-Many Bridge Integrity", "description": "Junction table row has no match on either side", "sql_pattern": "LEFT JOIN TableA / LEFT JOIN TableB WHERE either IS NULL", "severity": "High" }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Format & Pattern",
+      "description": "Is the data in the right shape, structure, and format?",
+      "count": 32,
+      "types": [
+        { "id": 32, "name": "Email Format",                  "description": "Must contain @ and . in correct positions", "sql_pattern": "WHERE Email NOT LIKE '%@%.%'", "severity": "High" },
+        { "id": 33, "name": "Phone Number Format",           "description": "10 digits, correct separators for country", "sql_pattern": "WHERE Phone NOT LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'", "severity": "Medium" },
+        { "id": 34, "name": "URL Format",                    "description": "Must start with http:// or https://", "sql_pattern": "WHERE URL NOT LIKE 'http%'", "severity": "Medium" },
+        { "id": 35, "name": "IP Address Format (IPv4)",      "description": "Four octets 0–255 separated by dots", "sql_pattern": "WHERE IP NOT LIKE '[0-9]%.[0-9]%.[0-9]%.[0-9]%'", "severity": "Medium" },
+        { "id": 36, "name": "IP Address Format (IPv6)",      "description": "Eight groups of four hex digits", "sql_pattern": "Regex or custom function", "severity": "Low" },
+        { "id": 37, "name": "Credit Card Format",            "description": "16 digits, no spaces, valid issuer prefix", "sql_pattern": "WHERE LEN(REPLACE(CardNum,' ','')) <> 16", "severity": "Critical" },
+        { "id": 38, "name": "Luhn Algorithm Check",          "description": "Mathematical checksum validation on card number", "sql_pattern": "Custom scalar function applying Luhn algorithm", "severity": "Critical" },
+        { "id": 39, "name": "National ID Format (SSN)",      "description": "US SSN = XXX-XX-XXXX pattern", "sql_pattern": "WHERE SSN NOT LIKE '[0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]'", "severity": "High" },
+        { "id": 40, "name": "National ID Format (NIN/UK)",   "description": "UK NIN = AB123456C pattern", "sql_pattern": "WHERE NIN NOT LIKE '[A-Z][A-Z][0-9][0-9][0-9][0-9][0-9][0-9][A-Z]'", "severity": "High" },
+        { "id": 41, "name": "Passport Number Format",        "description": "Country-specific letter+digit pattern", "sql_pattern": "Country-specific LIKE pattern or regex", "severity": "High" },
+        { "id": 42, "name": "Postal / ZIP Code Format",      "description": "5 digits (US), AA9 9AA (UK)", "sql_pattern": "WHERE Postcode NOT LIKE '[A-Z][A-Z][0-9]%' (UK)", "severity": "Medium" },
+        { "id": 43, "name": "IBAN Format",                   "description": "2-letter country code + 2 check digits + BBAN, 15–34 chars", "sql_pattern": "WHERE LEN(IBAN) NOT BETWEEN 15 AND 34 OR IBAN NOT LIKE '[A-Z][A-Z]%'", "severity": "High" },
+        { "id": 44, "name": "BIC / SWIFT Code Format",       "description": "8 or 11 alphanumeric characters", "sql_pattern": "WHERE LEN(BIC) NOT IN (8,11)", "severity": "High" },
+        { "id": 45, "name": "Date Format Consistency",       "description": "All dates in one column should be same format", "sql_pattern": "WHERE ISDATE(DateStr) = 0", "severity": "High" },
+        { "id": 46, "name": "Time Format",                   "description": "HH:MM:SS — valid hours 0-23, minutes/seconds 0-59", "sql_pattern": "WHERE TimeStr NOT LIKE '[0-2][0-9]:[0-5][0-9]:[0-5][0-9]'", "severity": "Medium" },
+        { "id": 47, "name": "DateTime Format (ISO 8601)",    "description": "YYYY-MM-DDTHH:MM:SSZ — international standard", "sql_pattern": "WHERE ISDATE(col) = 0 or regex check", "severity": "Medium" },
+        { "id": 48, "name": "UUID / GUID Format",            "description": "8-4-4-4-12 hex groups pattern", "sql_pattern": "WHERE col NOT LIKE '[0-9A-F]%-%-%-%-%'", "severity": "Low" },
+        { "id": 49, "name": "MAC Address Format",            "description": "Six pairs of hex separated by : or -", "sql_pattern": "WHERE MAC NOT LIKE '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:%'", "severity": "Low" },
+        { "id": 50, "name": "Custom Regex Pattern",          "description": "Field must match a business-defined regular expression", "sql_pattern": "Custom function or LIKE pattern per field", "severity": "Medium" },
+        { "id": 51, "name": "Alphanumeric Only",             "description": "Product code must contain no special characters", "sql_pattern": "WHERE col LIKE '%[^A-Za-z0-9]%'", "severity": "Medium" },
+        { "id": 52, "name": "Numeric Only",                  "description": "Quantity field contains letters or symbols", "sql_pattern": "WHERE ISNUMERIC(col) = 0", "severity": "High" },
+        { "id": 53, "name": "Alpha Only",                    "description": "Name field contains digits or special characters", "sql_pattern": "WHERE col LIKE '%[^A-Za-z ]%'", "severity": "Medium" },
+        { "id": 54, "name": "No Leading Zeros",              "description": "ID '007' — is the leading zero intentional?", "sql_pattern": "WHERE LEFT(col,1) = '0' AND col <> '0'", "severity": "Low" },
+        { "id": 55, "name": "Fixed Length",                  "description": "Account number must be exactly 12 characters", "sql_pattern": "WHERE LEN(AccountNum) <> 12", "severity": "High" },
+        { "id": 56, "name": "Minimum Length",                "description": "Password must be at least 8 characters", "sql_pattern": "WHERE LEN(Password) < 8", "severity": "High" },
+        { "id": 57, "name": "Maximum Length",                "description": "Description must not exceed 255 characters", "sql_pattern": "WHERE LEN(Description) > 255", "severity": "Medium" },
+        { "id": 58, "name": "Case Format",                   "description": "Country code must be UPPER; name must be Title Case", "sql_pattern": "WHERE CountryCode <> UPPER(CountryCode)", "severity": "Low" },
+        { "id": 59, "name": "Encoding / Unicode Check",      "description": "Non-UTF8 or corrupted characters causing display issues", "sql_pattern": "WHERE col LIKE '%[^ -~]%' (ASCII range check)", "severity": "Medium" },
+        { "id": 60, "name": "Control Character Presence",    "description": "Tab, newline, or null byte embedded in a string field", "sql_pattern": "WHERE col LIKE '%'+CHAR(9)+'%' OR col LIKE '%'+CHAR(10)+'%'", "severity": "Medium" },
+        { "id": 61, "name": "HTML Tag in Plain Text",        "description": "<script> or <b> found in a name or notes field", "sql_pattern": "WHERE col LIKE '%<%>%'", "severity": "High" },
+        { "id": 62, "name": "SQL Injection Characters",      "description": "'; DROP TABLE or UNION SELECT found in input", "sql_pattern": "WHERE col LIKE '%'';%' OR col LIKE '%UNION%SELECT%'", "severity": "Critical" },
+        { "id": 63, "name": "BOM (Byte Order Mark)",         "description": "Invisible character at start of file breaking parsing", "sql_pattern": "WHERE LEFT(col,1) = CHAR(239) (UTF-8 BOM)", "severity": "Medium" }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Range & Boundary",
+      "description": "Are values within acceptable numerical, date, or statistical limits?",
+      "count": 21,
+      "types": [
+        { "id": 64, "name": "Minimum Value Check",           "description": "Value is below the allowed minimum", "sql_pattern": "WHERE Amount < 0", "severity": "High" },
+        { "id": 65, "name": "Maximum Value Check",           "description": "Value exceeds the allowed maximum", "sql_pattern": "WHERE Amount > 1000000", "severity": "High" },
+        { "id": 66, "name": "Between Range Check",           "description": "Value must fall within inclusive bounds", "sql_pattern": "WHERE Score NOT BETWEEN 0 AND 100", "severity": "High" },
+        { "id": 67, "name": "Exclusive Range Check",         "description": "Value must be strictly greater/less than boundary", "sql_pattern": "WHERE Age <= 0", "severity": "High" },
+        { "id": 68, "name": "Percentage 0–100",              "description": "Percentage field cannot be negative or over 100", "sql_pattern": "WHERE Pct NOT BETWEEN 0 AND 100", "severity": "High" },
+        { "id": 69, "name": "Latitude Range",                "description": "Latitude must be between -90 and +90", "sql_pattern": "WHERE Latitude NOT BETWEEN -90 AND 90", "severity": "Medium" },
+        { "id": 70, "name": "Longitude Range",               "description": "Longitude must be between -180 and +180", "sql_pattern": "WHERE Longitude NOT BETWEEN -180 AND 180", "severity": "Medium" },
+        { "id": 71, "name": "Age Validity",                  "description": "Age must be between 0 and 120 for a human", "sql_pattern": "WHERE DATEDIFF(YEAR,DOB,GETDATE()) NOT BETWEEN 0 AND 120", "severity": "Medium" },
+        { "id": 72, "name": "Year Validity",                 "description": "Year must be within expected historical/future range", "sql_pattern": "WHERE YEAR(col) NOT BETWEEN 1900 AND 2100", "severity": "Medium" },
+        { "id": 73, "name": "Quantity Positive",             "description": "Quantity on a sale must be greater than zero", "sql_pattern": "WHERE TransType='Sale' AND Qty <= 0", "severity": "High" },
+        { "id": 74, "name": "Price Positive",                "description": "Unit price cannot be negative", "sql_pattern": "WHERE UnitPrice < 0", "severity": "High" },
+        { "id": 75, "name": "Future Date Violation",         "description": "OrderDate is set in the future", "sql_pattern": "WHERE OrderDate > GETDATE()", "severity": "High" },
+        { "id": 76, "name": "Backdated Beyond Limit",        "description": "Record dated more than 7 years in the past", "sql_pattern": "WHERE OrderDate < DATEADD(YEAR,-7,GETDATE())", "severity": "Medium" },
+        { "id": 77, "name": "Statistical Outlier (3-Sigma)", "description": "Value is more than 3 standard deviations from the mean", "sql_pattern": "WHERE Amount > (SELECT AVG(Amount)+3*STDEV(Amount) FROM tbl)", "severity": "Medium" },
+        { "id": 78, "name": "Statistical Outlier (IQR)",     "description": "Value below Q1-1.5*IQR or above Q3+1.5*IQR", "sql_pattern": "Use PERCENTILE_CONT in window function to find Q1/Q3", "severity": "Medium" },
+        { "id": 79, "name": "Z-Score Outlier",               "description": "Z-score > 3 or < -3 indicates extreme deviation", "sql_pattern": "WHERE ABS((col - AVG_val) / STDEV_val) > 3", "severity": "Medium" },
+        { "id": 80, "name": "Ratio Outlier",                 "description": "Return rate is 95% of sales — statistically impossible for normal ops", "sql_pattern": "WHERE ReturnQty * 1.0 / SaleQty > 0.5", "severity": "High" },
+        { "id": 81, "name": "Integer Overflow Risk",         "description": "Value exceeds INT or BIGINT capacity", "sql_pattern": "WHERE col > 2147483647 (INT max)", "severity": "High" },
+        { "id": 82, "name": "Decimal Precision Mismatch",   "description": "Amount has 6 decimal places when only 2 are expected", "sql_pattern": "WHERE col <> ROUND(col, 2)", "severity": "Low" },
+        { "id": 83, "name": "Negative Percentage",           "description": "A -12% discount makes no sense in this context", "sql_pattern": "WHERE DiscountPct < 0", "severity": "High" },
+        { "id": 84, "name": "Zero Division Risk",            "description": "Denominator column contains zero, causing division errors", "sql_pattern": "WHERE Denominator = 0 OR Denominator IS NULL", "severity": "High" }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Consistency",
+      "description": "Does the same fact agree with itself across fields and tables?",
+      "count": 16,
+      "types": [
+        { "id": 85,  "name": "Date Sequence",                 "description": "DeliveryDate must be on or after OrderDate", "sql_pattern": "WHERE DeliveryDate < OrderDate", "severity": "High" },
+        { "id": 86,  "name": "Header-vs-Detail Total",        "description": "Order.TotalAmount does not equal SUM of OrderLines.Amount", "sql_pattern": "HAVING o.TotalAmount <> SUM(ol.Amount)", "severity": "High" },
+        { "id": 87,  "name": "Bidirectional Relationship",    "description": "If A refers to B, B must refer back to A", "sql_pattern": "JOIN both ways and check for asymmetry", "severity": "Medium" },
+        { "id": 88,  "name": "Status-Date Consistency",       "description": "Status='Delivered' but DeliveryDate IS NULL", "sql_pattern": "WHERE Status='Delivered' AND DeliveryDate IS NULL", "severity": "High" },
+        { "id": 89,  "name": "Derived Field Consistency",     "description": "FullName does not equal FirstName + ' ' + LastName", "sql_pattern": "WHERE FullName <> FirstName + ' ' + LastName", "severity": "Medium" },
+        { "id": 90,  "name": "Aggregation Consistency",       "description": "Monthly totals do not sum to the annual total", "sql_pattern": "Compare SUM(monthly) vs annual_total column", "severity": "High" },
+        { "id": 91,  "name": "Currency Consistency",          "description": "Invoice in USD but payment recorded in GBP with no conversion", "sql_pattern": "WHERE InvCurrency <> PayCurrency AND FXRate IS NULL", "severity": "High" },
+        { "id": 92,  "name": "Cross-System Consistency",      "description": "CRM CustomerName != ERP CustomerName for same customer", "sql_pattern": "JOIN on shared key WHERE names differ", "severity": "High" },
+        { "id": 93,  "name": "Version Consistency",           "description": "Version 3 exists but Version 2 is missing for same record", "sql_pattern": "Self-join or LAG to detect missing version numbers", "severity": "Medium" },
+        { "id": 94,  "name": "Category-Subcategory Consistency", "description": "SubCategory does not belong to its parent Category", "sql_pattern": "JOIN ref table WHERE SubCat.ParentCat <> row.Category", "severity": "Medium" },
+        { "id": 95,  "name": "Gender-Title Consistency",      "description": "Title = 'Mr' but Gender = 'Female'", "sql_pattern": "WHERE Title='Mr' AND Gender='Female'", "severity": "Low" },
+        { "id": 96,  "name": "Country-Currency Consistency",  "description": "CountryCode = 'UK' but Currency = 'USD' — unexpected pairing", "sql_pattern": "JOIN country-currency ref WHERE no match", "severity": "Medium" },
+        { "id": 97,  "name": "Country-Postcode Consistency",  "description": "Postcode format doesn't match the country field", "sql_pattern": "WHERE Country='GB' AND Postcode NOT LIKE '[A-Z]%'", "severity": "Medium" },
+        { "id": 98,  "name": "Product-Supplier Consistency",  "description": "Product category doesn't match what this supplier provides", "sql_pattern": "JOIN supplier-category ref WHERE no match", "severity": "Medium" },
+        { "id": 99,  "name": "Approval-Status Consistency",   "description": "Approved=Yes but ApproverID IS NULL", "sql_pattern": "WHERE Approved=1 AND ApproverID IS NULL", "severity": "High" },
+        { "id": 100, "name": "Quantity-Unit Consistency",     "description": "Quantity=500,000 with UoM='Each' when product is sold by tonne", "sql_pattern": "JOIN product-uom ref WHERE UoM not valid for product", "severity": "Medium" }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Business Rules",
+      "description": "Domain-specific logic that the data must satisfy.",
+      "count": 16,
+      "types": [
+        { "id": 101, "name": "One Active Record Per Key",     "description": "Customer has 3 active subscriptions — only 1 allowed", "sql_pattern": "GROUP BY CustomerID HAVING COUNT(*) > 1 WHERE Status='Active'", "severity": "High" },
+        { "id": 102, "name": "Minimum Age Requirement",       "description": "User is 15, product requires age 18+", "sql_pattern": "WHERE DATEDIFF(YEAR,DOB,GETDATE()) < 18", "severity": "Critical" },
+        { "id": 103, "name": "Credit Limit Breach",           "description": "Order total exceeds customer's approved credit limit", "sql_pattern": "WHERE OrderAmount > Customer.CreditLimit", "severity": "High" },
+        { "id": 104, "name": "Inventory Cannot Go Negative",  "description": "Stock on hand = -5 after allocation", "sql_pattern": "WHERE StockOnHand < 0", "severity": "High" },
+        { "id": 105, "name": "Discount Ceiling",              "description": "Discount applied exceeds the item price", "sql_pattern": "WHERE DiscountAmount > UnitPrice * Qty", "severity": "High" },
+        { "id": 106, "name": "No Self-Approval",              "description": "ApproverID must not equal RequesterID", "sql_pattern": "WHERE ApproverID = RequesterID", "severity": "High" },
+        { "id": 107, "name": "No Self-Referencing Hierarchy", "description": "ManagerID must not equal EmployeeID", "sql_pattern": "WHERE ManagerID = EmployeeID", "severity": "High" },
+        { "id": 108, "name": "Sequence / Workflow Order",     "description": "Invoice created before Purchase Order was approved", "sql_pattern": "WHERE InvoiceDate < PO.ApprovalDate", "severity": "High" },
+        { "id": 109, "name": "Territory Assignment Rule",     "description": "Sales rep assigned to a region they are not licensed to cover", "sql_pattern": "LEFT JOIN territory-rep ref WHERE no match", "severity": "Medium" },
+        { "id": 110, "name": "Tenure Validation",             "description": "Employee start date is before the company was founded", "sql_pattern": "WHERE StartDate < '1990-01-01'", "severity": "Medium" },
+        { "id": 111, "name": "Mandatory Approval Threshold",  "description": "Any spend > $10,000 must have a named approver", "sql_pattern": "WHERE Amount > 10000 AND ApproverID IS NULL", "severity": "High" },
+        { "id": 112, "name": "Return Window Violation",       "description": "Return submitted 400 days after purchase — outside 365-day policy", "sql_pattern": "WHERE DATEDIFF(DAY, PurchaseDate, ReturnDate) > 365", "severity": "Medium" },
+        { "id": 113, "name": "Contractual Date Compliance",   "description": "Service start date is before the contract was signed", "sql_pattern": "WHERE ServiceStartDate < Contract.SignedDate", "severity": "High" },
+        { "id": 114, "name": "Regulatory Compliance Check",   "description": "Patient age field required for medical records by regulation", "sql_pattern": "WHERE RecordType='Medical' AND PatientAge IS NULL", "severity": "Critical" },
+        { "id": 115, "name": "Tax Rule Validation",           "description": "VAT applied to a zero-rated product category", "sql_pattern": "JOIN product-tax-class ref WHERE tax applied incorrectly", "severity": "High" },
+        { "id": 116, "name": "Shipping Restriction",          "description": "Hazardous product shipped to a country where it is banned", "sql_pattern": "JOIN hazmat-country ref WHERE ship is restricted", "severity": "Critical" }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Reconciliation",
+      "description": "Does the source match the target after a load or transformation?",
+      "count": 15,
+      "types": [
+        { "id": 117, "name": "Row Count Match",               "description": "Source has 50,000 rows but target has only 49,998", "sql_pattern": "SELECT COUNT(*) FROM Source; SELECT COUNT(*) FROM Target", "severity": "High" },
+        { "id": 118, "name": "SUM Match",                     "description": "Source SUM(Amount) does not equal Target SUM(Amount)", "sql_pattern": "Compare SUM across source and target", "severity": "High" },
+        { "id": 119, "name": "AVG Match",                     "description": "Average order value changed unexpectedly after load", "sql_pattern": "Compare AVG across source and target", "severity": "Medium" },
+        { "id": 120, "name": "MIN / MAX Match",               "description": "Maximum or minimum date changed during transformation", "sql_pattern": "Compare MIN/MAX across source and target", "severity": "Medium" },
+        { "id": 121, "name": "EXCEPT Forward",                "description": "Rows in source that are NOT in target — missing rows", "sql_pattern": "SELECT key FROM Source EXCEPT SELECT key FROM Target", "severity": "High" },
+        { "id": 122, "name": "EXCEPT Reverse",                "description": "Rows in target that are NOT in source — ghost rows", "sql_pattern": "SELECT key FROM Target EXCEPT SELECT key FROM Source", "severity": "High" },
+        { "id": 123, "name": "Column-Level Value Diff",       "description": "Same key, different value between source and target", "sql_pattern": "JOIN on key WHERE source.col <> target.col", "severity": "High" },
+        { "id": 124, "name": "Checksum / Hash Comparison",    "description": "CHECKSUM_AGG differs between source and target", "sql_pattern": "SELECT CHECKSUM_AGG(CHECKSUM(*)) FROM tbl", "severity": "High" },
+        { "id": 125, "name": "Aggregate Totals Comparison",   "description": "Report total doesn't match the database total", "sql_pattern": "Direct DB query vs report metric comparison", "severity": "High" },
+        { "id": 126, "name": "Audit Trail Reconciliation",    "description": "Audit log shows 5 deletes but target has 0 fewer rows", "sql_pattern": "Compare audit log counts vs actual row delta", "severity": "Medium" },
+        { "id": 127, "name": "Pre / Post Load Comparison",    "description": "Snapshot rows before load vs after load — delta analysis", "sql_pattern": "Store pre-count in variable, compare post-load", "severity": "Medium" },
+        { "id": 128, "name": "File-vs-Database Match",        "description": "Flat file had 10,000 rows, only 9,800 were loaded", "sql_pattern": "Compare file line count vs table COUNT(*)", "severity": "High" },
+        { "id": 129, "name": "API-vs-Database Match",         "description": "API returned 200 records but only 150 persisted to DB", "sql_pattern": "Compare API response count vs DB insert count", "severity": "High" },
+        { "id": 130, "name": "Report-vs-Source Match",        "description": "Dashboard shows £4.2M revenue; DB query shows £4.1M", "sql_pattern": "Re-query source with same logic as report calculation", "severity": "High" },
+        { "id": 131, "name": "Cross-Environment Match",       "description": "Production row count does not match UAT for same date range", "sql_pattern": "Compare counts across linked server or exported files", "severity": "Medium" }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Temporal & Timeliness",
+      "description": "Is the data fresh, in the right time order, and without gaps?",
+      "count": 11,
+      "types": [
+        { "id": 132, "name": "Last Load Date Check",          "description": "Table was last loaded 72 hours ago — expected daily", "sql_pattern": "WHERE MAX(LoadDate) < DATEADD(HOUR,-25,GETDATE())", "severity": "High" },
+        { "id": 133, "name": "Data Lag / Latency",            "description": "Real-time feed is 4 hours behind schedule", "sql_pattern": "DATEDIFF(HOUR, MAX(EventTime), GETDATE()) > threshold", "severity": "High" },
+        { "id": 134, "name": "SLA Breach Detection",          "description": "Support ticket open 3 days — SLA requires 4-hour resolution", "sql_pattern": "WHERE Status='Open' AND DATEDIFF(HOUR,CreatedDate,GETDATE()) > 4", "severity": "Critical" },
+        { "id": 135, "name": "Stale Data Detection",          "description": "Reference table not updated in 18 months", "sql_pattern": "WHERE MAX(UpdatedDate) < DATEADD(MONTH,-3,GETDATE())", "severity": "Medium" },
+        { "id": 136, "name": "Time Series Gap",               "description": "No data for Tuesday in a daily feed — missing day", "sql_pattern": "Sequence of expected dates vs actual dates — find missing ones", "severity": "High" },
+        { "id": 137, "name": "Duplicate Load Detection",      "description": "Same file loaded twice — row counts doubled", "sql_pattern": "GROUP BY BatchID HAVING COUNT(*) > expected_count", "severity": "Critical" },
+        { "id": 138, "name": "Out-of-Order Records",          "description": "Event timestamp earlier than the previous event for same session", "sql_pattern": "LAG(EventTime) OVER (PARTITION BY SessionID ORDER BY Seq)", "severity": "Medium" },
+        { "id": 139, "name": "Record Creation Sequence",      "description": "UpdatedDate is earlier than CreatedDate", "sql_pattern": "WHERE UpdatedDate < CreatedDate", "severity": "High" },
+        { "id": 140, "name": "Status Timeline Violation",     "description": "Order went from Pending directly to Delivered, skipping Shipped", "sql_pattern": "Detect missing intermediate status in event log", "severity": "Medium" },
+        { "id": 141, "name": "Future Event in History",       "description": "Event dated 5 years from now appears in a historical dataset", "sql_pattern": "WHERE EventDate > GETDATE() AND DatasetType='Historical'", "severity": "High" },
+        { "id": 142, "name": "Event Sequence Skip",           "description": "Workflow skipped a mandatory step (e.g. no Approval before Payment)", "sql_pattern": "Pivoted event log — check for missing required step per case", "severity": "High" }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Data Type & Storage",
+      "description": "Is data stored in the correct type and within capacity limits?",
+      "count": 10,
+      "types": [
+        { "id": 143, "name": "String Stored as Number",       "description": "Amount column contains 'N/A' or 'TBD' — can't be used numerically", "sql_pattern": "WHERE ISNUMERIC(Amount) = 0", "severity": "High" },
+        { "id": 144, "name": "Number Stored as String",       "description": "'00123' — leading zeros preserved in VARCHAR, lost if cast to INT", "sql_pattern": "Check column data type in INFORMATION_SCHEMA", "severity": "Medium" },
+        { "id": 145, "name": "Date Stored as String",         "description": "'32/13/2024' — invalid date accepted as text", "sql_pattern": "WHERE ISDATE(DateStr) = 0", "severity": "High" },
+        { "id": 146, "name": "Boolean Stored Inconsistently", "description": "Mix of 0/1, Y/N, True/False, Yes/No in same column", "sql_pattern": "WHERE col NOT IN ('0','1','Y','N')", "severity": "Medium" },
+        { "id": 147, "name": "Integer vs Decimal Mismatch",   "description": "Quantity stored as FLOAT — floating point rounding errors", "sql_pattern": "Check INFORMATION_SCHEMA.COLUMNS for data type", "severity": "Medium" },
+        { "id": 148, "name": "Precision / Scale Mismatch",    "description": "DECIMAL(10,2) column receiving values with 4 decimal places", "sql_pattern": "WHERE col <> ROUND(col, 2)", "severity": "Medium" },
+        { "id": 149, "name": "Truncation Detection",          "description": "Name loaded as 'Alexander Hamilto' — column too narrow", "sql_pattern": "WHERE LEN(col) = MAX_COLUMN_LENGTH", "severity": "High" },
+        { "id": 150, "name": "Column Count Mismatch",         "description": "Source file has 18 columns; target table has 20", "sql_pattern": "Compare SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS", "severity": "High" },
+        { "id": 151, "name": "Schema Change Detection",       "description": "New column appeared in source that isn't in target yet", "sql_pattern": "EXCEPT between source and target column lists", "severity": "High" },
+        { "id": 152, "name": "Data Type Widening Needed",     "description": "INT column receiving values > 2,147,483,647", "sql_pattern": "WHERE col > 2147483647", "severity": "High" }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Profiling",
+      "description": "Understand the shape and quality of data before cleansing.",
+      "count": 10,
+      "types": [
+        { "id": 153, "name": "Column Cardinality",            "description": "How many distinct values? 2=likely boolean, 1M=likely a key", "sql_pattern": "SELECT COUNT(DISTINCT col) FROM tbl", "severity": "Info" },
+        { "id": 154, "name": "Value Frequency Distribution",  "description": "Top 10 most common values and their percentage", "sql_pattern": "GROUP BY col ORDER BY COUNT(*) DESC", "severity": "Info" },
+        { "id": 155, "name": "NULL Rate by Column",           "description": "What percentage of each column is NULL", "sql_pattern": "SUM(CASE WHEN col IS NULL THEN 1 ELSE 0 END)*100.0/COUNT(*)", "severity": "Info" },
+        { "id": 156, "name": "Length Distribution",           "description": "What string lengths exist in a column — detect truncation", "sql_pattern": "GROUP BY LEN(col) ORDER BY LEN(col)", "severity": "Info" },
+        { "id": 157, "name": "Pattern Frequency Analysis",    "description": "What % of values match the expected format pattern", "sql_pattern": "SUM(CASE WHEN col LIKE pattern THEN 1 ELSE 0 END)*100.0/COUNT(*)", "severity": "Info" },
+        { "id": 158, "name": "Data Density Over Time",        "description": "Records per day/week/month — is volume consistent", "sql_pattern": "GROUP BY CAST(LoadDate AS DATE) ORDER BY day", "severity": "Info" },
+        { "id": 159, "name": "Numeric Range Profiling",       "description": "Min, Max, Avg, StdDev, and percentiles for numeric columns", "sql_pattern": "SELECT MIN,MAX,AVG,STDEV from column", "severity": "Info" },
+        { "id": 160, "name": "Uniqueness Ratio",              "description": "COUNT(DISTINCT) / COUNT(*) — how unique is this column", "sql_pattern": "COUNT(DISTINCT col)*1.0 / COUNT(*)", "severity": "Info" },
+        { "id": 161, "name": "Cross-Column Correlation",      "description": "Amount and Quantity should move together — check they do", "sql_pattern": "Check correlation or ratio between two numeric columns", "severity": "Info" },
+        { "id": 162, "name": "Column Dependency Check",       "description": "If Status='Cancelled' does CancelDate always populate", "sql_pattern": "WHERE Status='Cancelled' AND CancelDate IS NULL", "severity": "Medium" }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Statistical & Analytical",
+      "description": "Advanced pattern detection using statistical methods.",
+      "count": 8,
+      "types": [
+        { "id": 163, "name": "Mean Shift Detection",          "description": "This month average is 40% higher than 12-month average", "sql_pattern": "Compare AVG(current month) vs AVG(rolling 12 months)", "severity": "High" },
+        { "id": 164, "name": "Variance Anomaly",              "description": "Standard deviation doubled — data distribution changed", "sql_pattern": "Compare STDEV(current) vs STDEV(historical)", "severity": "Medium" },
+        { "id": 165, "name": "Trend Break Detection",         "description": "Sales trended up for 12 months then unexplained drop", "sql_pattern": "Month-over-month delta using LAG — flag large swings", "severity": "Medium" },
+        { "id": 166, "name": "Seasonality Violation",         "description": "No Christmas spike in December retail data — expected uplift missing", "sql_pattern": "Compare same month year-over-year using SAMEPERIODLASTYEAR", "severity": "Medium" },
+        { "id": 167, "name": "Ratio Consistency Check",       "description": "Returns are always 2–5% of sales; this month it jumped to 40%", "sql_pattern": "WHERE ReturnQty*1.0/SaleQty > 0.1", "severity": "High" },
+        { "id": 168, "name": "Benford's Law Check",           "description": "Leading digit distribution test — used in fraud detection", "sql_pattern": "GROUP BY LEFT(CAST(ABS(Amount) AS VARCHAR),1) to get leading digit distribution", "severity": "Medium" },
+        { "id": 169, "name": "Duplicate Transaction Detection", "description": "Same amount + customer + merchant within 60 seconds", "sql_pattern": "Self-join WHERE ABS(DATEDIFF(SECOND,t1.Time,t2.Time)) < 60 AND same key", "severity": "Critical" },
+        { "id": 170, "name": "Round Number Bias",             "description": "90% of amounts end in .00 — suggests systematic manual rounding", "sql_pattern": "WHERE Amount = ROUND(Amount,0) — check % of total", "severity": "Low" }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Hierarchical & Structural",
+      "description": "Integrity of tree structures, parent-child, and graph relationships.",
+      "count": 6,
+      "types": [
+        { "id": 171, "name": "Circular Hierarchy",            "description": "Node A → B → C → A — creates an infinite loop", "sql_pattern": "Recursive CTE with cycle detection", "severity": "Critical" },
+        { "id": 172, "name": "Maximum Depth Limit",           "description": "Org chart has 15 levels — business rule says max 8", "sql_pattern": "Recursive CTE counting depth — flag where depth > limit", "severity": "Medium" },
+        { "id": 173, "name": "Root Node Exists",              "description": "Every tree must have exactly one root (ParentID IS NULL)", "sql_pattern": "SELECT COUNT(*) FROM tbl WHERE ParentID IS NULL — expect 1", "severity": "High" },
+        { "id": 174, "name": "Orphaned Hierarchy Node",       "description": "Node has a ParentID that doesn't exist in the same table", "sql_pattern": "LEFT JOIN self WHERE ParentID IS NOT NULL AND parent row IS NULL", "severity": "High" },
+        { "id": 175, "name": "Leaf Node Validation",          "description": "Leaf nodes must not have IsGroup=True", "sql_pattern": "WHERE IsGroup=1 AND NodeID NOT IN (SELECT ParentID FROM tbl WHERE ParentID IS NOT NULL)", "severity": "Medium" },
+        { "id": 176, "name": "Multiple Roots",                "description": "Two rows with ParentID IS NULL — only one expected", "sql_pattern": "SELECT COUNT(*) FROM tbl WHERE ParentID IS NULL HAVING COUNT(*) > 1", "severity": "High" }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Data Warehouse & SCD",
+      "description": "Validation specific to dimensional models and slowly changing dimensions.",
+      "count": 9,
+      "types": [
+        { "id": 177, "name": "SCD2 Date Range Overlap",       "description": "Same business key has two rows with overlapping effective dates", "sql_pattern": "Self-join on key WHERE a.EffectiveFrom < b.EffectiveTo AND a.EffectiveTo > b.EffectiveFrom", "severity": "Critical" },
+        { "id": 178, "name": "SCD2 Date Range Gap",           "description": "Gap exists between one row's ExpiryDate and next row's StartDate", "sql_pattern": "Lead/Lag to find cases where ExpiryDate <> next row EffectiveFrom", "severity": "High" },
+        { "id": 179, "name": "SCD2 Current Flag Uniqueness",  "description": "Two rows with IsCurrent=1 for the same business key", "sql_pattern": "GROUP BY BusinessKey WHERE IsCurrent=1 HAVING COUNT(*) > 1", "severity": "Critical" },
+        { "id": 180, "name": "Surrogate Key Integrity",       "description": "Surrogate key in fact table doesn't exist in any dimension", "sql_pattern": "LEFT JOIN dim WHERE dim.SK IS NULL", "severity": "Critical" },
+        { "id": 181, "name": "Fact-to-Dimension Resolution",  "description": "Every FK in the fact table resolves to exactly one dimension row", "sql_pattern": "COUNT(dim.SK) <> 1 for any fact FK", "severity": "Critical" },
+        { "id": 182, "name": "Grain Violation",               "description": "Two rows in a fact table for what should be one unique grain", "sql_pattern": "GROUP BY all grain columns HAVING COUNT(*) > 1", "severity": "High" },
+        { "id": 183, "name": "Degenerate Dimension Check",    "description": "Invoice number in fact table duplicated unexpectedly", "sql_pattern": "GROUP BY InvoiceNum HAVING COUNT(*) > expected", "severity": "Medium" },
+        { "id": 184, "name": "Late-Arriving Fact",            "description": "Fact record dated before the dimension row's effective start date", "sql_pattern": "WHERE fact.Date < dim.EffectiveFrom", "severity": "High" },
+        { "id": 185, "name": "Early-Arriving Dimension",      "description": "Dimension row updated before the source system event that triggered it", "sql_pattern": "WHERE dim.EffectiveFrom < source.EventDate", "severity": "Medium" }
+      ]
+    },
+    {
+      "id": 15,
+      "name": "ETL & Load Process",
+      "description": "Validation of the pipeline itself, not just the data it moves.",
+      "count": 10,
+      "types": [
+        { "id": 186, "name": "Pre-Load Row Count",            "description": "Count source rows before loading — sets baseline for comparison", "sql_pattern": "SELECT COUNT(*) FROM Source.Table into a log table", "severity": "High" },
+        { "id": 187, "name": "Post-Load Row Count",           "description": "Count target rows after loading — must match source count", "sql_pattern": "SELECT COUNT(*) FROM Target.Table — compare to pre-load baseline", "severity": "High" },
+        { "id": 188, "name": "Rejected Record Count",         "description": "How many rows were rejected by the load? Should be zero", "sql_pattern": "SELECT COUNT(*) FROM ETL_Error_Log WHERE LoadDate = today", "severity": "High" },
+        { "id": 189, "name": "Transform Error Log Check",     "description": "Any SSIS/ADF errors written to error table?", "sql_pattern": "SELECT * FROM ETL_Errors WHERE Resolved = 0", "severity": "High" },
+        { "id": 190, "name": "Load Duration Anomaly",         "description": "Job ran in 3 seconds — expected 20 minutes — likely loaded nothing", "sql_pattern": "WHERE ExecutionDuration < expected_minimum_seconds", "severity": "High" },
+        { "id": 191, "name": "Watermark / Bookmark Validation", "description": "High-water mark incremented correctly — no rows missed or reloaded", "sql_pattern": "Compare last watermark vs MAX(source.UpdatedDate)", "severity": "High" },
+        { "id": 192, "name": "Duplicate Load Detection",      "description": "Same file loaded twice — row count doubled", "sql_pattern": "GROUP BY SourceFile, LoadDate HAVING COUNT(*) > 1", "severity": "Critical" },
+        { "id": 193, "name": "Delta Load Completeness",       "description": "Changed records captured — nothing missed since last watermark", "sql_pattern": "Compare source delta count vs target delta count", "severity": "High" },
+        { "id": 194, "name": "Full vs Incremental Mismatch",  "description": "Full load has fewer rows than history suggests it should", "sql_pattern": "Compare full load count vs running total of incremental loads", "severity": "High" },
+        { "id": 195, "name": "Unexpected New Code Values",    "description": "New ProductCategory arrived that isn't in the reference table", "sql_pattern": "WHERE col NOT IN (SELECT Code FROM RefTable)", "severity": "Medium" }
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Geospatial",
+      "description": "Validation specific to location, coordinates, and address data.",
+      "count": 6,
+      "types": [
+        { "id": 196, "name": "Valid Lat-Lng Pair",            "description": "Both Latitude AND Longitude must be present together", "sql_pattern": "WHERE (Lat IS NULL) <> (Lng IS NULL)", "severity": "Medium" },
+        { "id": 197, "name": "Coordinates in Ocean",          "description": "A point meant to be a store is in the middle of the sea", "sql_pattern": "Geospatial intersection check against land polygon", "severity": "Medium" },
+        { "id": 198, "name": "Coordinates Outside Country",   "description": "Address says UK but coordinates plot in Australia", "sql_pattern": "Geospatial intersection check between point and country boundary", "severity": "High" },
+        { "id": 199, "name": "Postcode-City Mismatch",        "description": "Postcode SW1A 2AA listed with City = Manchester", "sql_pattern": "JOIN postcode-city reference table WHERE city does not match", "severity": "Medium" },
+        { "id": 200, "name": "Address Geocoding Failure",     "description": "Address could not be geocoded — likely invalid or fictional", "sql_pattern": "WHERE GeocodingStatus = 'Failed' OR (Lat IS NULL AND Lng IS NULL)", "severity": "Medium" },
+        { "id": 201, "name": "Coordinate Precision",          "description": "Lat/Lng stored to 0 decimal places — not useful for any location work", "sql_pattern": "WHERE Latitude = ROUND(Latitude, 0)", "severity": "Low" }
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Security & Compliance",
+      "description": "Sensitive data, privacy regulations, and security policy enforcement.",
+      "count": 8,
+      "types": [
+        { "id": 202, "name": "PII in Non-Secure Column",      "description": "Full name or DOB stored in an unprotected free-text comments field", "sql_pattern": "Scan comments/notes columns for known PII patterns", "severity": "Critical" },
+        { "id": 203, "name": "Credit Card in Plain Text",     "description": "CardNumber stored unencrypted in the database", "sql_pattern": "WHERE LEN(REPLACE(CardNum,' ',''))=16 AND ISNUMERIC(REPLACE(CardNum,' ',''))=1", "severity": "Critical" },
+        { "id": 204, "name": "Password in Plain Text",        "description": "Password column contains readable text instead of a hash", "sql_pattern": "WHERE LEN(Password) < 60 (bcrypt hashes are always 60+ chars)", "severity": "Critical" },
+        { "id": 205, "name": "Sensitive Data Classification", "description": "Email, DOB, NI number not tagged as PII in the data catalogue", "sql_pattern": "Purview scan — compare classified columns vs expected PII fields", "severity": "High" },
+        { "id": 206, "name": "GDPR Consent Flag Missing",     "description": "Marketing contact record has no ConsentDate or consent is null", "sql_pattern": "WHERE MarketingList=1 AND ConsentDate IS NULL", "severity": "Critical" },
+        { "id": 207, "name": "Retention Policy Violation",    "description": "Records older than 7 years that should have been deleted per policy", "sql_pattern": "WHERE CreatedDate < DATEADD(YEAR,-7,GETDATE())", "severity": "High" },
+        { "id": 208, "name": "Masked Data Integrity",         "description": "Masked email still reveals the real domain (****@gmail.com)", "sql_pattern": "WHERE MaskedEmail LIKE '%@%' AND MaskedEmail NOT LIKE '****@****'", "severity": "High" },
+        { "id": 209, "name": "Data Sharing Violation",        "description": "Customer data in reporting DB that wasn't within consent scope", "sql_pattern": "Compare data in report layer vs consent flags in source", "severity": "Critical" }
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Cross-System & Integration",
+      "description": "Data consistency across multiple systems, APIs, and environments.",
+      "count": 8,
+      "types": [
+        { "id": 210, "name": "ERP vs Data Warehouse",         "description": "ERP shows 500 orders today; data warehouse shows 497", "sql_pattern": "Compare counts/sums via linked server or exported extract", "severity": "High" },
+        { "id": 211, "name": "CRM vs Marketing Database",     "description": "Lead count in CRM does not match email marketing platform", "sql_pattern": "API call or export comparison of record counts", "severity": "Medium" },
+        { "id": 212, "name": "Flat File vs Database",         "description": "CSV had 10,000 rows; only 9,800 loaded to the database", "sql_pattern": "Compare file line count vs COUNT(*) in target table", "severity": "High" },
+        { "id": 213, "name": "API Response vs Persisted",     "description": "API returned 200 records; only 150 exist in the database", "sql_pattern": "Log API response count; compare vs inserted row count", "severity": "High" },
+        { "id": 214, "name": "Report vs Database Source",     "description": "Dashboard shows £4.2M; direct DB query shows £4.1M", "sql_pattern": "Re-run report query directly against DB to find discrepancy", "severity": "High" },
+        { "id": 215, "name": "Prod vs UAT Parity",            "description": "Schema or data mismatch between production and test environment", "sql_pattern": "EXCEPT on schema objects or row counts between environments", "severity": "Medium" },
+        { "id": 216, "name": "Data Contract Validation",      "description": "Upstream team changed a field type or removed a column without notice", "sql_pattern": "Compare INFORMATION_SCHEMA.COLUMNS between expected and actual", "severity": "High" },
+        { "id": 217, "name": "Schema Registry Check",         "description": "Kafka/Avro message doesn't match the registered schema version", "sql_pattern": "Schema registry API comparison", "severity": "High" }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Cleansing Operations",
+      "description": "The actual fix operations applied after validation identifies issues.",
+      "count": 19,
+      "types": [
+        { "id": 218, "name": "Strip Whitespace",              "description": "Remove leading and trailing spaces from string fields", "sql_pattern": "UPDATE tbl SET col = LTRIM(RTRIM(col))", "severity": "Fix" },
+        { "id": 219, "name": "Standardise Case",              "description": "LOWER for emails, UPPER for codes, Title Case for names", "sql_pattern": "UPDATE tbl SET Email = LOWER(Email)", "severity": "Fix" },
+        { "id": 220, "name": "Remove Special Characters",     "description": "Strip dashes, spaces, brackets from phone numbers", "sql_pattern": "UPDATE tbl SET Phone = REPLACE(REPLACE(Phone,'-',''),' ','')", "severity": "Fix" },
+        { "id": 221, "name": "Replace Empty with NULL",       "description": "Convert empty strings to proper NULL values", "sql_pattern": "UPDATE tbl SET col = NULL WHERE LTRIM(RTRIM(col)) = ''", "severity": "Fix" },
+        { "id": 222, "name": "Replace NULL with Default",     "description": "Fill NULLs with a business-defined default value", "sql_pattern": "UPDATE tbl SET Region = 'Unknown' WHERE Region IS NULL", "severity": "Fix" },
+        { "id": 223, "name": "Date String to DATE Type",      "description": "Parse date strings into proper DATE columns", "sql_pattern": "UPDATE tbl SET OrderDate = CONVERT(DATE, DateStr, 103)", "severity": "Fix" },
+        { "id": 224, "name": "Remove Currency Symbols",       "description": "Strip $, £, commas from amount fields before numeric conversion", "sql_pattern": "UPDATE tbl SET Amount = REPLACE(REPLACE(Amount,'$',''),',','')", "severity": "Fix" },
+        { "id": 225, "name": "Parse First / Last Name",       "description": "Split FullName into FirstName and LastName columns", "sql_pattern": "SET FirstName = LEFT(FullName, CHARINDEX(' ',FullName)-1)", "severity": "Fix" },
+        { "id": 226, "name": "Standardise Phone Format",      "description": "Strip to digits only then reformat to consistent pattern", "sql_pattern": "REPLACE multiple characters then LEFT/RIGHT to reformat", "severity": "Fix" },
+        { "id": 227, "name": "Standardise Address",           "description": "Apply Title Case, expand abbreviations (St → Street)", "sql_pattern": "REPLACE + INITCAP pattern or custom function", "severity": "Fix" },
+        { "id": 228, "name": "Fix Character Encoding",        "description": "Replace garbled characters from encoding mismatch", "sql_pattern": "REPLACE(col, CHAR(146), '''') for common encoding issues", "severity": "Fix" },
+        { "id": 229, "name": "Correct Known Bad Values",      "description": "Fix specific misspellings in categorical columns", "sql_pattern": "UPDATE tbl SET Category='Electronics' WHERE Category='Electrnics'", "severity": "Fix" },
+        { "id": 230, "name": "Impute Missing Values",         "description": "Fill NULL with column average, median, or most frequent value", "sql_pattern": "UPDATE tbl SET Score = (SELECT AVG(Score) FROM tbl) WHERE Score IS NULL", "severity": "Fix" },
+        { "id": 231, "name": "Merge Duplicate Records",       "description": "Survivorship rules — keep most complete, most recent record", "sql_pattern": "ROW_NUMBER() OVER (PARTITION BY key ORDER BY UpdatedDate DESC) — delete rn > 1", "severity": "Fix" },
+        { "id": 232, "name": "Split Combined Fields",         "description": "Split '123 Main St, London' into Street and City columns", "sql_pattern": "LEFT/SUBSTRING with CHARINDEX to locate the delimiter", "severity": "Fix" },
+        { "id": 233, "name": "Resolve Fuzzy Duplicates",      "description": "Match 'ABC Ltd' and 'ABC Limited' to the same entity", "sql_pattern": "SOUNDEX or Levenshtein distance function + manual review", "severity": "Fix" },
+        { "id": 234, "name": "Normalise Units of Measure",    "description": "Convert all weights to KG, all distances to KM", "sql_pattern": "CASE WHEN UoM='LB' THEN Weight*0.453592 ELSE Weight END", "severity": "Fix" },
+        { "id": 235, "name": "Standardise Boolean Values",    "description": "Convert Y/N, True/False, 1/0 to a single agreed standard", "sql_pattern": "CASE WHEN col IN ('Y','Yes','True','1') THEN 1 ELSE 0 END", "severity": "Fix" },
+        { "id": 236, "name": "Apply Business Rule Correction", "description": "Set Status='Closed' where CloseDate is populated but Status is wrong", "sql_pattern": "UPDATE tbl SET Status='Closed' WHERE CloseDate IS NOT NULL AND Status <> 'Closed'", "severity": "Fix" }
+      ]
+    }
+  ]
+}

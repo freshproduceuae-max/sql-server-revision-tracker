@@ -15,8 +15,14 @@ Prepare for:
 - **Data Modelling & Design** *(added — Data Analyst opportunity)*
 - **Data Lineage & Governance** *(added — Data Analyst opportunity)*
 - **Metadata Management** *(added — Data Analyst opportunity)*
+- **Tableau** *(added — preferred candidate profile)*
+- **Advanced SQL** *(added — preferred candidate profile)*
+- **SAS & Dashboard Development** *(added — preferred candidate profile)*
+- **CSAT & Support Metrics** *(added — preferred candidate profile)*
+- **L2 & L3 Technical Support** *(added — preferred candidate profile)*
+- **Team Management & Leadership** *(added — preferred candidate profile, emulate 10-year manager)*
 
-**Duration:** 3 Days Intensive Revision + Azure/BigData/Python/Governance Extension
+**Duration:** Intensive Multi-Week Revision — 26 Modules, ~34 Hours Total
 
 ---
 
