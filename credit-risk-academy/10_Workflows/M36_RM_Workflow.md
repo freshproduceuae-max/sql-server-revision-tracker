@@ -495,3 +495,6 @@ Portfolio credit loss attribution by RM is run at least annually by the finance 
 - **S&P Global Market Intelligence:** Credit training resources and case studies for commercial and corporate banking practitioners.
 - **"Credit Risk Management" by Joetta Colquitt (McGraw-Hill):** Comprehensive textbook covering commercial credit risk fundamentals.
 - **"The Essentials of Risk Management" by Michel Crouhy, Dan Galai, Robert Mark:** Covers quantitative and qualitative credit risk management in institutional banking.
+- **CFA Institute, "Credit Analysis for Corporate Bonds":** The investment-side perspective on corporate credit analysis is directly transferable to the RM's assessment of borrower creditworthiness.
+- **UK Finance, "Corporate Banking Market Study":** Industry data on the UK corporate banking market, including relationship model structures, switching behaviour, and product penetration rates.
+- **Risk Management Association (RMA), "Commercial Lending School":** The gold standard US commercial lending training programme, widely referenced in UK training programmes for its structured approach to the RM role.
