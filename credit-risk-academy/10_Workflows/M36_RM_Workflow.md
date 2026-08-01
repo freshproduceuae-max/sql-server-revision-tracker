@@ -473,6 +473,16 @@ An RM covers a property investment company whose primary income is lease rentals
 - Can you identify five early warning indicators from a client's financial statements?
 - Can you explain structural subordination and why it matters for holdco borrowers?
 
+## Additional Note: RM Accountability for Credit Losses
+
+A well-governed bank ties a portion of the RM's variable compensation to the credit performance of their portfolio. This is not punitive — it is alignment of incentives. An RM who receives 100% of their bonus from revenue-generation metrics and 0% from credit quality metrics has an incentive to maximise origination volume without regard to quality. Conversely, an RM who faces clawback or bonus reduction on credits that default within a defined lookback period (typically 3 years post-origination) is incentivised to exercise proper credit judgment at the time of origination.
+
+Under the Senior Managers and Certification Regime (SMCR), Material Risk Takers in RM roles are subject to variable compensation deferral, malus, and clawback. Malus allows the bank to reduce unvested deferred compensation if subsequent events — including credit losses — reveal that the original decision was based on incomplete or inaccurate information, or was made in breach of credit policy. Clawback applies to already-vested compensation in cases of material misconduct or significant risk management failure.
+
+The RM's credit accountability is also documented through the credit approval process. The RM signs the credit request form, asserting that the information provided is accurate and complete to the best of their knowledge. This creates a formal record of the RM's advocacy and their attestation of factual accuracy. In litigation or regulatory proceedings, this document can be used to establish what the RM knew and represented at the time of approval.
+
+Portfolio credit loss attribution by RM is run at least annually by the finance function. Each credit loss (write-off, specific provision charge) is attributed to the originating RM and their current coverage RM. This attribution is reviewed by senior management as part of RM performance assessments and is one input into calibrating delegated authority levels — an RM with a history of above-average credit losses may have their authority reduced or may be required to obtain a second credit sign-off on all new money transactions.
+
 ## 15. Source Material
 
 - **LMA (Loan Market Association):** https://www.lma.eu.com — standard loan documentation, guidance notes, and educational resources for corporate banking practitioners.
