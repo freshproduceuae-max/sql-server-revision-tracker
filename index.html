@@ -1,722 +1,589 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interview Prep Tracker</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<title>Credit Risk Academy</title>
+<style>
+:root {
+  --bg:#F7F9FA; --surface:#FFFFFF; --border:#E5E5E5;
+  --text-hi:#202124; --text-mid:#6B6B6B; --text-lo:#8A8A8A; --text-body:#3C3C3C;
+  --chip-bg:#F0F0F0; --chip-fg:#575757;
+  --node-locked-bg:#E5E5E5; --node-locked-sh:#C9C9C9; --node-locked-txt:#B9B9B9;
+  --caption-locked:#BEBEBE; --track-bg:#E5E5E5;
+  --code-bg:#F3F4F6; --code-border:#E5E7EB; --code-fg:#1F2937;
+  --blockquote-border:#E5E5E5;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0F1117; --surface:#1C2130; --border:#2D3348;
+  --text-hi:#F0F2F5; --text-mid:#B8C0CC; --text-lo:#7A8494; --text-body:#CDD4DF;
+  --chip-bg:#262D3D; --chip-fg:#B8C0CC;
+  --node-locked-bg:#2D3348; --node-locked-sh:#1E2534; --node-locked-txt:#4A5568;
+  --caption-locked:#4A5568; --track-bg:#2D3348;
+  --code-bg:#161B27; --code-border:#2D3348; --code-fg:#E2E8F0;
+  --blockquote-border:#2D3348;
+}}
+:root[data-theme="light"]{
+  --bg:#F7F9FA; --surface:#FFFFFF; --border:#E5E5E5;
+  --text-hi:#202124; --text-mid:#6B6B6B; --text-lo:#8A8A8A; --text-body:#3C3C3C;
+  --chip-bg:#F0F0F0; --chip-fg:#575757;
+  --node-locked-bg:#E5E5E5; --node-locked-sh:#C9C9C9; --node-locked-txt:#B9B9B9;
+  --caption-locked:#BEBEBE; --track-bg:#E5E5E5;
+  --code-bg:#F3F4F6; --code-border:#E5E7EB; --code-fg:#1F2937;
+  --blockquote-border:#E5E5E5;
+}
+:root[data-theme="dark"]{
+  --bg:#0F1117; --surface:#1C2130; --border:#2D3348;
+  --text-hi:#F0F2F5; --text-mid:#B8C0CC; --text-lo:#7A8494; --text-body:#CDD4DF;
+  --chip-bg:#262D3D; --chip-fg:#B8C0CC;
+  --node-locked-bg:#2D3348; --node-locked-sh:#1E2534; --node-locked-txt:#4A5568;
+  --caption-locked:#4A5568; --track-bg:#2D3348;
+  --code-bg:#161B27; --code-border:#2D3348; --code-fg:#E2E8F0;
+  --blockquote-border:#2D3348;
+}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
-      min-height: 100vh;
-      padding: 24px 16px;
-    }
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;background:var(--bg);font-family:'Nunito',system-ui,sans-serif;color:var(--text-body);min-height:100vh;padding-bottom:80px;}
+button{font-family:inherit;cursor:pointer;}
+::selection{background:#DDF4C7;}
 
-    header { text-align: center; margin-bottom: 28px; }
-    header h1 { font-size: 1.8rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
-    header p { color: #94a3b8; margin-top: 6px; font-size: 0.88rem; }
+@keyframes crPulse{
+  0%,100%{box-shadow:0 6px 0 var(--node-shadow,#46A302),0 0 0 0 rgba(88,204,2,.35);}
+  50%{box-shadow:0 6px 0 var(--node-shadow,#46A302),0 0 0 10px rgba(88,204,2,0);}
+}
+@keyframes crPop{from{transform:scale(.84);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-    /* Interview cards */
-    .interviews {
-      display: flex; gap: 12px; justify-content: center;
-      flex-wrap: wrap; margin-bottom: 28px;
-    }
-    .interview-card {
-      background: #1e2130; border: 1px solid #2d3452;
-      border-radius: 12px; padding: 14px 20px; min-width: 220px;
-    }
-    .interview-card.urgent { border-color: #f59e0b; }
-    .interview-card .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 3px; }
-    .interview-card .company { font-weight: 700; font-size: 0.98rem; color: #fbbf24; }
-    .interview-card .detail { font-size: 0.78rem; color: #94a3b8; margin-top: 3px; }
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:14px 28px;gap:16px;}
+.topbar-logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:34px;height:34px;border-radius:10px;background:#58CC02;box-shadow:0 3px 0 #46A302;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;flex-shrink:0;}
+.logo-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:19px;color:var(--text-hi);letter-spacing:.2px;}
+.topbar-stats{display:flex;align-items:center;gap:22px;}
+.stat{display:flex;align-items:center;gap:8px;}
+.stat-pip{width:16px;height:16px;border-radius:50%;flex-shrink:0;}
+.stat-gem{width:16px;height:16px;border-radius:4px;transform:rotate(45deg);flex-shrink:0;}
+.stat-val{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:var(--text-hi);font-variant-numeric:tabular-nums;}
+.stat-lbl{font-size:12px;color:var(--text-lo);font-weight:700;}
 
-    /* Overall bar */
-    .overall-bar-wrapper {
-      background: #1e2130; border: 1px solid #2d3452;
-      border-radius: 12px; padding: 20px 24px;
-      max-width: 820px; margin: 0 auto 32px;
-    }
-    .overall-bar-wrapper h2 { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    .overall-bar-wrapper .pct { font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
-    .bar-track { background: #2d3452; border-radius: 99px; height: 10px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.8s ease; }
-    .bar-fill.done { background: linear-gradient(90deg, #10b981, #34d399); }
-    .bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+/* ── Hero ── */
+.hero{max-width:720px;margin:0 auto;padding:32px 20px 8px;}
+.hero h1{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:30px;color:var(--text-hi);text-wrap:balance;margin:0;}
+.hero-sub{font-size:15px;color:var(--text-mid);margin-top:6px;font-weight:600;text-wrap:pretty;line-height:1.5;}
+.progress-card{margin-top:20px;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:16px 18px;}
+.progress-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.progress-lbl{font-weight:800;font-size:13px;color:var(--text-hi);}
+.progress-cnt{font-weight:800;font-size:13px;color:#58CC02;font-variant-numeric:tabular-nums;}
+.progress-track{height:14px;border-radius:8px;background:var(--track-bg);overflow:hidden;}
+.progress-fill{height:100%;border-radius:8px;background:#58CC02;transition:width .4s ease;}
+.framework{margin-top:24px;}
+.framework-lbl{font-weight:800;font-size:13px;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{background:var(--chip-bg);color:var(--chip-fg);font-weight:700;font-size:12.5px;padding:7px 12px;border-radius:20px;}
 
-    /* Area stats row */
-    .area-stats {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      max-width: 820px; margin: 0 auto 8px;
-    }
-    .area-pill {
-      font-size: 0.72rem; padding: 4px 10px;
-      border-radius: 99px; border: 1px solid #2d3452;
-      color: #94a3b8; background: #1e2130;
-    }
-    .area-pill span { color: #fff; font-weight: 600; }
+/* ── Path ── */
+.path{max-width:720px;margin:36px auto 0;padding:0 20px;}
+.unit{margin-bottom:44px;}
+.unit-banner{border-radius:16px;padding:16px 20px;margin-bottom:34px;color:#fff;}
+.unit-kicker{font-size:12px;font-weight:800;opacity:.85;text-transform:uppercase;letter-spacing:.6px;}
+.unit-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:20px;margin-top:2px;}
+.unit-done{font-size:12.5px;font-weight:700;opacity:.9;margin-top:4px;font-variant-numeric:tabular-nums;}
+.nodes{display:flex;flex-direction:column;align-items:center;gap:26px;}
+.node-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.node-btn{border:none;display:flex;align-items:center;justify-content:center;padding:0;}
+.node-btn:hover{filter:brightness(1.07);}
+.node-btn:focus-visible{outline:3px solid #58CC02;outline-offset:3px;}
+.node-caption{font-size:11.5px;font-weight:700;max-width:120px;text-align:center;text-wrap:pretty;}
 
-    /* Section label */
-    .section-label {
-      max-width: 1100px; margin: 28px auto 10px;
-      font-size: 0.72rem; text-transform: uppercase;
-      letter-spacing: 1.5px; color: #475569; font-weight: 600;
-    }
+/* ── Modal overlay ── */
+.overlay{position:fixed;inset:0;background:rgba(32,33,36,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
 
-    /* Module grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 12px; max-width: 1100px; margin: 0 auto;
-    }
+/* ── Summary card (first view) ── */
+.modal-card{background:var(--surface);border-radius:20px;max-width:460px;width:100%;max-height:86vh;overflow-y:auto;animation:crPop .18s ease-out;}
+.modal-hd{padding:22px 24px;border-radius:20px 20px 0 0;position:relative;}
+.modal-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.25);color:#fff;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:rgba(255,255,255,.4);}
+.modal-kicker{font-size:12px;font-weight:800;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.6px;}
+.modal-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:22px;color:#fff;margin-top:4px;text-wrap:pretty;}
+.modal-badges{display:flex;gap:8px;margin-top:10px;}
+.badge{background:rgba(255,255,255,.25);color:#fff;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:14px;}
+.modal-bd{padding:22px 24px 26px;}
+.modal-desc{font-size:14.5px;line-height:1.55;color:var(--text-mid);font-weight:600;margin:0 0 18px;text-wrap:pretty;}
+.in-lesson-lbl{font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.modal-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.modal-chip{background:var(--chip-bg);color:var(--chip-fg);font-size:12px;font-weight:700;padding:5px 10px;border-radius:12px;}
+.action-btn{width:100%;padding:15px;border:none;border-radius:14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;cursor:pointer;margin-top:4px;}
+.action-btn:hover{filter:brightness(1.06);}
+.action-btn.undone{background:var(--chip-bg)!important;color:var(--text-lo)!important;box-shadow:none!important;}
+.open-lesson-btn{width:100%;padding:13px;border:2px solid var(--border);border-radius:14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;cursor:pointer;margin-top:10px;background:transparent;color:var(--text-hi);display:flex;align-items:center;justify-content:center;gap:8px;}
+.open-lesson-btn:hover{background:var(--chip-bg);}
 
-    /* Module card */
-    .card {
-      background: #1e2130; border: 1px solid #2d3452;
-      border-radius: 12px; overflow: hidden;
-      transition: border-color 0.2s;
-    }
-    .card:hover { border-color: #4f5b8a; }
-    .card.status-done { border-left: 3px solid #10b981; }
-    .card.status-progress { border-left: 3px solid #f59e0b; }
-    .card.status-todo { border-left: 3px solid #334155; }
+/* ── Full lesson reader ── */
+.reader{background:var(--surface);border-radius:20px;max-width:860px;width:100%;max-height:90vh;display:flex;flex-direction:column;animation:crPop .18s ease-out;}
+.reader-hd{padding:18px 24px;border-radius:20px 20px 0 0;position:relative;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.reader-back{background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.reader-back:hover{background:rgba(255,255,255,.35);}
+.reader-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;color:#fff;flex:1;text-wrap:pretty;}
+.reader-close{background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:15px;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.reader-close:hover{background:rgba(255,255,255,.4);}
+.reader-body{overflow-y:auto;padding:28px 32px 36px;flex:1;}
 
-    .card-header {
-      padding: 14px 16px 12px;
-      cursor: pointer;
-      display: flex; justify-content: space-between; align-items: flex-start;
-      user-select: none;
-    }
-    .card-header:hover { background: #252a3d; }
+/* ── Markdown styles ── */
+.md h1,.md h2,.md h3,.md h4{font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--text-hi);margin:1.6em 0 .5em;line-height:1.25;}
+.md h1{font-size:24px;margin-top:.5em;}
+.md h2{font-size:20px;border-bottom:2px solid var(--border);padding-bottom:8px;}
+.md h3{font-size:16px;}
+.md h4{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lo);}
+.md p{margin:.6em 0 1em;line-height:1.65;font-size:14.5px;}
+.md ul,.md ol{padding-left:22px;margin:.5em 0 1em;}
+.md li{margin:.3em 0;line-height:1.6;font-size:14.5px;}
+.md code{font-family:'Courier New',monospace;font-size:13px;background:var(--code-bg);color:var(--code-fg);padding:2px 6px;border-radius:5px;border:1px solid var(--code-border);}
+.md pre{background:var(--code-bg);border:1px solid var(--code-border);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:1em 0;}
+.md pre code{background:none;border:none;padding:0;font-size:13px;line-height:1.6;}
+.md blockquote{border-left:4px solid var(--blockquote-border);margin:1em 0;padding:.5em 1em;color:var(--text-mid);}
+.md table{width:100%;border-collapse:collapse;margin:1em 0;font-size:13.5px;}
+.md th{background:var(--chip-bg);color:var(--text-hi);font-weight:800;padding:8px 12px;text-align:left;border:1px solid var(--border);}
+.md td{padding:7px 12px;border:1px solid var(--border);line-height:1.5;}
+.md tr:nth-child(even) td{background:var(--bg);}
+.md hr{border:none;border-top:2px solid var(--border);margin:2em 0;}
+.md strong{font-weight:800;color:var(--text-hi);}
+.md a{color:#1CB0F6;text-decoration:none;}
+.md a:hover{text-decoration:underline;}
 
-    .card-left { flex: 1; }
-    .card-num { font-size: 0.68rem; color: #475569; margin-bottom: 3px; }
-    .card-title { font-weight: 600; font-size: 0.9rem; color: #f1f5f9; line-height: 1.35; }
+.reader-footer{padding:16px 24px;border-top:2px solid var(--border);display:flex;gap:10px;flex-shrink:0;}
+.reader-complete{flex:1;padding:13px;border:none;border-radius:14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;cursor:pointer;}
+.reader-complete:hover{filter:brightness(1.06);}
+.reader-complete.undone{background:var(--chip-bg)!important;color:var(--text-lo)!important;box-shadow:none!important;}
 
-    .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; margin-left: 10px; flex-shrink: 0; }
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;color:var(--text-mid);font-weight:700;}
+.spinner{width:36px;height:36px;border:4px solid var(--border);border-top-color:#58CC02;border-radius:50%;animation:spin .8s linear infinite;}
 
-    .badge {
-      font-size: 0.68rem; font-weight: 600;
-      padding: 2px 8px; border-radius: 99px;
-    }
-    .badge.done { background: #064e3b; color: #34d399; }
-    .badge.progress { background: #451a03; color: #fbbf24; }
-    .badge.todo { background: #1e293b; color: #475569; }
+@media(max-width:480px){
+  .topbar{padding:12px 16px;} .logo-name{font-size:16px;}
+  .hero{padding:24px 16px 8px;} .hero h1{font-size:24px;}
+  .path{padding:0 12px;} .reader-body{padding:20px 18px 28px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .modal-card,.reader{animation:none;}
+  *,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important;}
+}
+</style>
 
-    .chevron { font-size: 0.75rem; color: #475569; transition: transform 0.2s; }
-    .card.open .chevron { transform: rotate(180deg); }
-
-    .card-meta-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px 12px; gap: 8px;
-    }
-    .confidence { display: flex; gap: 2px; }
-    .star { color: #334155; font-size: 0.72rem; }
-    .star.lit { color: #f59e0b; }
-    .score-pill { font-size: 0.72rem; color: #10b981; font-weight: 600; }
-    .time-tag { font-size: 0.68rem; color: #475569; }
-
-    /* Sub-topic drawer */
-    .subtopic-drawer {
-      display: none;
-      border-top: 1px solid #2d3452;
-      overflow: hidden;
-    }
-    .card.open .subtopic-drawer { display: block; }
-
-    .subtopic-table {
-      width: 100%; border-collapse: collapse;
-      font-size: 0.75rem;
-    }
-    .subtopic-table thead tr {
-      background: #141824;
-    }
-    .subtopic-table thead th {
-      padding: 7px 12px; text-align: left;
-      color: #475569; font-weight: 600;
-      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.8px;
-      border-bottom: 1px solid #2d3452;
-    }
-    .subtopic-table tbody tr {
-      border-bottom: 1px solid #1a2035;
-      transition: background 0.15s;
-    }
-    .subtopic-table tbody tr:last-child { border-bottom: none; }
-    .subtopic-table tbody tr:hover { background: #1a2035; }
-    .subtopic-table td { padding: 8px 12px; vertical-align: top; }
-
-    .st-name { font-weight: 600; color: #e2e8f0; white-space: nowrap; }
-    .st-desc { color: #64748b; line-height: 1.4; }
-    .st-status { white-space: nowrap; }
-    .st-score { white-space: nowrap; color: #10b981; font-weight: 600; }
-
-    .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
-    .dot.done { background: #10b981; }
-    .dot.progress { background: #f59e0b; }
-    .dot.todo { background: #334155; }
-
-    footer { text-align: center; margin-top: 48px; color: #334155; font-size: 0.72rem; }
-
-    @media (max-width: 600px) {
-      .grid { grid-template-columns: 1fr; }
-      header h1 { font-size: 1.4rem; }
-    }
-  </style>
-</head>
-<body>
-
-<header>
-  <h1>Interview Prep Tracker</h1>
-  <p>SQL Server · Azure · Data Engineering · Python · BSA</p>
-</header>
-
-<div class="interviews">
-  <div class="interview-card urgent">
-    <div class="label">Opportunity 1 — Cognizant</div>
-    <div class="company">Azure Engineer / Big Data / Python</div>
-    <div class="detail">20 Jun 2026 · In-Person · Chennai / Hyd / Blr</div>
-    <div class="detail">Experience: 7–15 yrs</div>
-  </div>
-  <div class="interview-card urgent">
-    <div class="label">Opportunity 2 — Data / Functional Analyst</div>
-    <div class="company">Bengaluru · Face to Face · WFO</div>
-    <div class="detail">SQL · Azure · ADF · ADB · PySpark · Governance</div>
-    <div class="detail">Experience: 6+ yrs</div>
-  </div>
-</div>
-
-<div class="overall-bar-wrapper">
-  <h2>Overall Completion</h2>
-  <div class="pct" id="overall-pct">—</div>
-  <div class="bar-track"><div class="bar-fill" id="overall-bar" style="width:0%"></div></div>
-  <div id="area-stats" class="area-stats" style="margin-top:14px;"></div>
-</div>
-
-<div id="root"></div>
-
-<footer>Last updated: <span id="updated"></span> · Click any module card to expand sub-topics</footer>
+<div id="app"></div>
 
 <script>
-const ST = { done: 'done', progress: 'progress', todo: 'todo' };
+const PALETTE=[
+  {base:'#58CC02',dark:'#46A302'},{base:'#1CB0F6',dark:'#1899D6'},
+  {base:'#CE82FF',dark:'#A568CC'},{base:'#FF9600',dark:'#E68200'},
+  {base:'#FF4B4B',dark:'#E63E3E'},{base:'#2DD4BF',dark:'#22A896'},
+  {base:'#FFC800',dark:'#E6B400'},{base:'#7C4DFF',dark:'#6039CC'}
+];
+const OFFSETS=[0,70,110,70,0,-70,-110,-70];
+const FRAMEWORK_CHIPS=['Business Purpose','Accounting Concepts','Financial Concepts','Statistical Concepts','Regulatory Framework','Data Required','Analyst Workflow','Excel','SQL','Python','Interview Questions','Common Mistakes','Case Studies','Reinforcement','Source Material'];
+const LESSON_CHIPS=['Business Purpose','Excel','SQL','Python','Interview Prep','Common Mistakes','Source Material'];
 
-const modules = [
-  {
-    id: 1, area: "SQL Core",
-    title: "Ranking & Window Functions",
-    status: ST.progress, confidence: 4, score: "20.5/23", time: "1.5 hrs",
-    subtopics: [
-      { name: "ROW_NUMBER()", desc: "Assigns unique sequential number per partition — no ties ever", status: ST.done, score: "5/5" },
-      { name: "RANK()", desc: "Same rank for ties, skips the next rank number after a tie", status: ST.done, score: "4/5" },
-      { name: "DENSE_RANK()", desc: "Same rank for ties, no gaps after ties", status: ST.done, score: "3/5" },
-      { name: "NTILE(n)", desc: "Splits rows into n equal buckets; extra rows go to earlier buckets", status: ST.done, score: "5/5" },
-      { name: "LAG()", desc: "Returns value from a previous row within the partition", status: ST.done, score: "5/5" },
-      { name: "LEAD()", desc: "Returns value from the next row within the partition", status: ST.done, score: "5/5" },
-      { name: "FIRST_VALUE()", desc: "Returns the first value in the window frame", status: ST.done, score: "5/5" },
-      { name: "LAST_VALUE()", desc: "Returns last value — requires ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING", status: ST.done, score: "5/5" },
-      { name: "OVER() clause", desc: "PARTITION BY resets rank per group; ORDER BY determines sort for ranking", status: ST.done, score: "5/5" },
-      { name: "Subquery filter pattern", desc: "Wrap ranked query in subquery and filter WHERE rn = 1 to get top per group", status: ST.done, score: "5/5" },
-    ]
-  },
-  {
-    id: 2, area: "SQL Core",
-    title: "CTE, Temp Tables & Table Variables",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Basic CTE", desc: "WITH cte AS (...) SELECT — named temporary result set, readable & reusable in one query", status: ST.todo, score: null },
-      { name: "Multiple CTEs", desc: "Chain multiple CTEs with commas — WITH cte1 AS (...), cte2 AS (...)", status: ST.todo, score: null },
-      { name: "Recursive CTE", desc: "CTE that references itself — anchor member UNION ALL recursive member. Used for hierarchies.", status: ST.todo, score: null },
-      { name: "Local Temp Table (#)", desc: "CREATE TABLE #temp — visible only in current session and child procs. Auto-dropped on session end.", status: ST.todo, score: null },
-      { name: "Global Temp Table (##)", desc: "CREATE TABLE ##temp — visible to all sessions. Dropped when last session using it closes.", status: ST.todo, score: null },
-      { name: "Table Variable (@)", desc: "DECLARE @t TABLE (...) — scope is batch only, no transaction rollback, faster for small sets", status: ST.todo, score: null },
-      { name: "CTE vs Subquery", desc: "CTE is more readable and reusable in same query; subquery is inline and can be repeated", status: ST.todo, score: null },
-      { name: "Temp Table vs Table Variable", desc: "Temp table has stats, can be indexed, survives stored proc scope. Table variable does not.", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 3, area: "SQL Core",
-    title: "Views, Stored Procedures & Functions",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Create View", desc: "CREATE VIEW vw_name AS SELECT ... — virtual table based on a query", status: ST.todo, score: null },
-      { name: "Alter / Drop View", desc: "ALTER VIEW replaces definition; DROP VIEW removes it", status: ST.todo, score: null },
-      { name: "Indexed View", desc: "Materialised view with unique clustered index — improves read performance for heavy aggregations", status: ST.todo, score: null },
-      { name: "Stored Procedure", desc: "CREATE PROC — compiled T-SQL block, accepts parameters, can return result sets or output values", status: ST.todo, score: null },
-      { name: "Input / Output Parameters", desc: "@Param datatype, @OutParam datatype OUTPUT — pass values in and out of a stored procedure", status: ST.todo, score: null },
-      { name: "Scalar Function", desc: "Returns a single value — used in SELECT, WHERE. Slower than inline TVF for large datasets.", status: ST.todo, score: null },
-      { name: "Inline Table-Valued Function", desc: "Returns a table — single SELECT statement. Treated like a parameterised view, very efficient.", status: ST.todo, score: null },
-      { name: "SP vs Function", desc: "Functions cannot modify data or call SPs. SPs can modify data, use transactions, return multiple sets.", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 4, area: "SQL Intermediate",
-    title: "Joins, Subqueries & CASE WHEN",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "INNER JOIN", desc: "Returns rows where match exists in both tables", status: ST.todo, score: null },
-      { name: "LEFT JOIN", desc: "All rows from left table, NULL for non-matching right rows", status: ST.todo, score: null },
-      { name: "RIGHT JOIN", desc: "All rows from right table, NULL for non-matching left rows", status: ST.todo, score: null },
-      { name: "FULL OUTER JOIN", desc: "All rows from both tables, NULLs where no match", status: ST.todo, score: null },
-      { name: "CROSS JOIN", desc: "Cartesian product — every row from left × every row from right", status: ST.todo, score: null },
-      { name: "SELF JOIN", desc: "Join a table to itself — used for hierarchies, manager-employee relationships", status: ST.todo, score: null },
-      { name: "Correlated Subquery", desc: "Inner query references outer query — runs once per outer row. Slower but powerful.", status: ST.todo, score: null },
-      { name: "EXISTS vs IN", desc: "EXISTS stops at first match (faster for large sets); IN evaluates full list", status: ST.todo, score: null },
-      { name: "CASE WHEN (Simple)", desc: "CASE col WHEN val1 THEN ... WHEN val2 THEN ... ELSE ... END", status: ST.todo, score: null },
-      { name: "CASE WHEN (Searched)", desc: "CASE WHEN condition1 THEN ... WHEN condition2 THEN ... END — more flexible", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 5, area: "SQL Advanced",
-    title: "Data Validation SQL",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Find Duplicates", desc: "GROUP BY + HAVING COUNT(*) > 1 to find duplicate rows on key columns", status: ST.todo, score: null },
-      { name: "Find NULLs", desc: "WHERE col IS NULL — use ISNULL() / COALESCE() to handle or replace NULLs", status: ST.todo, score: null },
-      { name: "Orphaned Records", desc: "LEFT JOIN source to reference + WHERE ref.id IS NULL — finds unmatched child records", status: ST.todo, score: null },
-      { name: "Missing Records", desc: "EXCEPT or LEFT JOIN pattern to find rows in source not in target", status: ST.todo, score: null },
-      { name: "Record Count Check", desc: "Compare COUNT(*) between source and target to validate load completeness", status: ST.todo, score: null },
-      { name: "Aggregate Validation", desc: "Compare SUM/AVG/MIN/MAX between source and target — catches transformation errors", status: ST.todo, score: null },
-      { name: "Data Reconciliation", desc: "Full row-by-row EXCEPT comparison or CHECKSUM_AGG to confirm data matches", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 6, area: "SQL Advanced",
-    title: "Aggregation & Grouping",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "GROUP BY", desc: "Collapses rows into groups — all non-aggregated SELECT columns must appear here", status: ST.todo, score: null },
-      { name: "HAVING", desc: "Filters after aggregation (WHERE filters before). Use for conditions on aggregates.", status: ST.todo, score: null },
-      { name: "ROLLUP", desc: "Adds subtotal rows per group and a grand total row at the end", status: ST.todo, score: null },
-      { name: "CUBE", desc: "Adds subtotals for all combinations of grouping columns", status: ST.todo, score: null },
-      { name: "GROUPING SETS", desc: "Define custom grouping combinations explicitly — flexible alternative to ROLLUP/CUBE", status: ST.todo, score: null },
-      { name: "GROUPING()", desc: "Returns 1 if column is part of a summary/total row, 0 if it's a detail row", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 7, area: "Data Warehousing",
-    title: "Data Warehousing Concepts",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "OLTP vs OLAP", desc: "OLTP = transactional, normalised, row-level ops. OLAP = analytical, denormalised, aggregations.", status: ST.todo, score: null },
-      { name: "Fact Table", desc: "Contains measurable business events (sales, transactions) with FK to dimensions and numeric measures", status: ST.todo, score: null },
-      { name: "Dimension Table", desc: "Descriptive context for facts — Customer, Product, Date, Location", status: ST.todo, score: null },
-      { name: "Star Schema", desc: "Fact table at centre, dimension tables directly connected — simple, fast query performance", status: ST.todo, score: null },
-      { name: "Snowflake Schema", desc: "Dimensions normalised into sub-dimensions — saves space but adds join complexity", status: ST.todo, score: null },
-      { name: "SCD Type 1", desc: "Overwrite old value — no history kept. Simple, used when history doesn't matter.", status: ST.todo, score: null },
-      { name: "SCD Type 2", desc: "New row per change with effective dates / IsCurrent flag — full history preserved", status: ST.todo, score: null },
-      { name: "SCD Type 3", desc: "Add previous value column — only keeps one previous state, limited history", status: ST.todo, score: null },
-      { name: "ETL vs ELT", desc: "ETL transforms before loading (SSIS). ELT loads raw then transforms in warehouse (ADF/Databricks).", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 8, area: "SSIS",
-    title: "SSIS — Control Flow",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Control Flow Overview", desc: "Orchestrates the order of execution — containers and tasks connected by precedence constraints", status: ST.todo, score: null },
-      { name: "Execute SQL Task", desc: "Runs T-SQL statements — used for truncating tables, inserting logs, calling SPs", status: ST.todo, score: null },
-      { name: "Script Task", desc: "Custom C# / VB.NET logic — used for file operations, API calls, complex conditions", status: ST.todo, score: null },
-      { name: "File System Task", desc: "Copy, move, delete, rename files and directories on the file system", status: ST.todo, score: null },
-      { name: "Foreach Loop Container", desc: "Iterates over files, rows, or ADO recordsets — useful for processing multiple files", status: ST.todo, score: null },
-      { name: "Precedence Constraints", desc: "Connect tasks with Success / Failure / Completion logic — controls flow paths", status: ST.todo, score: null },
-      { name: "SSIS Variables", desc: "Package-level or container-level variables — store dynamic values, pass between tasks", status: ST.todo, score: null },
-      { name: "Error Handling", desc: "Event handlers (OnError, OnTaskFailed) — redirect failures, log errors, send alerts", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 9, area: "SSIS",
-    title: "SSIS — Data Flow & Transformations",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Data Flow Overview", desc: "Pipeline of Source → Transformations → Destination inside a Data Flow Task", status: ST.todo, score: null },
-      { name: "OLE DB Source", desc: "Reads from SQL Server tables, views, or inline SQL queries", status: ST.todo, score: null },
-      { name: "Flat File Source", desc: "Reads CSV / delimited / fixed-width files", status: ST.todo, score: null },
-      { name: "Lookup Transformation", desc: "Joins stream to a reference dataset — Full Cache (load all), Partial Cache, No Cache modes", status: ST.todo, score: null },
-      { name: "Derived Column", desc: "Creates new columns or replaces existing ones using expressions — like a calculated column", status: ST.todo, score: null },
-      { name: "Conditional Split", desc: "Routes rows to different outputs based on conditions — like a CASE WHEN for routing", status: ST.todo, score: null },
-      { name: "Merge vs Merge Join", desc: "Merge: combines two SORTED streams (union). Merge Join: joins two SORTED streams (like SQL JOIN).", status: ST.todo, score: null },
-      { name: "Union All", desc: "Combines multiple inputs into one output — no sorting required, no duplicate removal", status: ST.todo, score: null },
-      { name: "Aggregate Transformation", desc: "Performs GROUP BY, SUM, COUNT, AVG in the data flow before writing to destination", status: ST.todo, score: null },
-      { name: "OLE DB Destination", desc: "Writes to SQL Server — Fast Load mode for bulk insert performance", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 10, area: "Power BI",
-    title: "Power BI + DAX",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "Data Model", desc: "Tables, columns, relationships — the backbone of every Power BI report", status: ST.todo, score: null },
-      { name: "Relationships", desc: "One-to-Many most common — cardinality, cross-filter direction, active vs inactive", status: ST.todo, score: null },
-      { name: "Measure vs Calc Column", desc: "Measure = aggregates at query time (no storage). Calc Column = row by row at refresh (stored).", status: ST.todo, score: null },
-      { name: "CALCULATE()", desc: "Evaluates expression in a modified filter context — the most important DAX function", status: ST.todo, score: null },
-      { name: "FILTER()", desc: "Returns a table filtered by a condition — often used inside CALCULATE", status: ST.todo, score: null },
-      { name: "ALL()", desc: "Removes filters from a column or table — used for % of total calculations", status: ST.todo, score: null },
-      { name: "ALLEXCEPT()", desc: "Removes all filters except specified columns — useful for conditional totals", status: ST.todo, score: null },
-      { name: "RELATED()", desc: "Fetches a value from a related table (many-to-one direction) — used in calc columns", status: ST.todo, score: null },
-      { name: "SAMEPERIODLASTYEAR()", desc: "Time intelligence — compares current period to same period last year", status: ST.todo, score: null },
-      { name: "DATESYTD()", desc: "Returns dates from start of year to current date — used for YTD calculations", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 11, area: "Azure",
-    title: "Azure Fundamentals",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "IaaS", desc: "Infrastructure as a Service — VMs, networking, storage. You manage OS and above.", status: ST.todo, score: null },
-      { name: "PaaS", desc: "Platform as a Service — managed runtime. Azure SQL DB, App Service. You manage app + data.", status: ST.todo, score: null },
-      { name: "SaaS", desc: "Software as a Service — fully managed apps. Power BI, M365. You just use it.", status: ST.todo, score: null },
-      { name: "Azure SQL Database", desc: "Fully managed PaaS SQL Server — no patching, built-in HA, scales independently", status: ST.todo, score: null },
-      { name: "SQL Server on VM", desc: "IaaS — full SQL Server on Azure VM. More control, you manage OS and SQL patching.", status: ST.todo, score: null },
-      { name: "Azure Blob Storage", desc: "Object storage for unstructured data — images, files, backups. Flat namespace.", status: ST.todo, score: null },
-      { name: "Azure Data Lake Gen2", desc: "Blob + hierarchical namespace (folders) — optimised for big data analytics workloads", status: ST.todo, score: null },
-      { name: "Azure Data Factory", desc: "Cloud ETL/ELT orchestration — pipelines, copy activities, data movement at scale", status: ST.todo, score: null },
-      { name: "Azure Synapse Analytics", desc: "Unified analytics platform — SQL pools, Spark pools, pipelines, Power BI integration", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 12, area: "Azure",
-    title: "Azure Data Engineering",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "ADF Pipeline", desc: "Container of activities — Copy, Data Flow, Execute SP, Web, Wait, ForEach, If Condition", status: ST.todo, score: null },
-      { name: "Linked Service", desc: "Connection string / credential to external resource — DB, storage, REST API", status: ST.todo, score: null },
-      { name: "Dataset", desc: "Named pointer to data within a Linked Service — table, file, folder", status: ST.todo, score: null },
-      { name: "Copy Activity", desc: "Moves data source → sink. Supports 90+ connectors. Core activity in most pipelines.", status: ST.todo, score: null },
-      { name: "ADF Triggers", desc: "Schedule trigger, Tumbling Window trigger, Storage Event trigger — when to run pipelines", status: ST.todo, score: null },
-      { name: "Azure Databricks (ADB)", desc: "Managed Apache Spark — notebooks, clusters, jobs. Used for big data transformation and ML.", status: ST.todo, score: null },
-      { name: "Delta Lake", desc: "Open table format on ADLS — ACID transactions, time travel (versioning), schema enforcement", status: ST.todo, score: null },
-      { name: "ADF vs SSIS", desc: "ADF = cloud-native, serverless, 90+ connectors. SSIS = on-prem, rich transforms, complex logic.", status: ST.todo, score: null },
-      { name: "Medallion Architecture", desc: "Bronze (raw) → Silver (cleaned) → Gold (aggregated/business-ready) — common Lakehouse pattern", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 13, area: "Big Data",
-    title: "Big Data & Apache Spark",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Hadoop Ecosystem", desc: "HDFS (storage) + YARN (resource manager) + MapReduce (compute) — original big data stack", status: ST.todo, score: null },
-      { name: "HDFS", desc: "Distributed file system — splits files into 128MB blocks across nodes, replicates 3x for fault tolerance", status: ST.todo, score: null },
-      { name: "Spark Architecture", desc: "Driver (orchestrates) + Executors (compute) + DAG Scheduler — in-memory processing, faster than MR", status: ST.todo, score: null },
-      { name: "RDD", desc: "Resilient Distributed Dataset — low-level, immutable, partitioned collection. Foundation of Spark.", status: ST.todo, score: null },
-      { name: "DataFrame", desc: "Higher-level abstraction over RDD with schema — SQL-like API, optimised by Catalyst", status: ST.todo, score: null },
-      { name: "Transformations vs Actions", desc: "Transformations (lazy) = filter, map, join. Actions (trigger execution) = count, show, write.", status: ST.todo, score: null },
-      { name: "Partitioning", desc: "Splits data across nodes — good partitioning avoids shuffles and speeds up joins", status: ST.todo, score: null },
-      { name: "Hive / HQL", desc: "SQL-like interface over Hadoop — stores metadata in metastore, translates queries to MapReduce/Spark", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 14, area: "Python",
-    title: "Python Core",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Data Types", desc: "int, float, str, bool, list, tuple, dict, set — mutable vs immutable", status: ST.todo, score: null },
-      { name: "List Comprehension", desc: "[x*2 for x in list if x > 0] — compact, readable alternative to for loops", status: ST.todo, score: null },
-      { name: "Functions", desc: "def func(param, default=val): — positional, keyword, default arguments", status: ST.todo, score: null },
-      { name: "*args / **kwargs", desc: "*args = variable positional args (tuple). **kwargs = variable keyword args (dict).", status: ST.todo, score: null },
-      { name: "try / except / finally", desc: "try: risky code. except ExceptionType: handle. finally: always runs (cleanup).", status: ST.todo, score: null },
-      { name: "OOP Basics", desc: "class MyClass: __init__(self, ...) — encapsulation, inheritance, polymorphism", status: ST.todo, score: null },
-      { name: "List vs Tuple vs Set", desc: "List: ordered, mutable. Tuple: ordered, immutable. Set: unordered, unique, no duplicates.", status: ST.todo, score: null },
-      { name: "Dict Operations", desc: "dict.get(), dict.items(), dict.keys(), dict.values(), dict comprehension", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 15, area: "Python",
-    title: "Python for Data",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "Pandas — Read Data", desc: "pd.read_csv(), read_excel(), read_sql() — load data into DataFrame", status: ST.todo, score: null },
-      { name: "Pandas — Explore", desc: "df.head(), df.info(), df.describe(), df.shape, df.dtypes", status: ST.todo, score: null },
-      { name: "Pandas — Filter & Select", desc: "df[df['col'] > val], df.loc[], df.iloc[], df[['col1','col2']]", status: ST.todo, score: null },
-      { name: "Pandas — groupby", desc: "df.groupby('col').agg({'val': 'sum'}) — split-apply-combine pattern", status: ST.todo, score: null },
-      { name: "Pandas — merge/join", desc: "pd.merge(df1, df2, on='key', how='left') — equivalent to SQL JOINs", status: ST.todo, score: null },
-      { name: "Pandas — Handle NULLs", desc: "df.fillna(0), df.dropna(), df.isnull().sum() — find and fill missing values", status: ST.todo, score: null },
-      { name: "PySpark — SparkSession", desc: "SparkSession.builder.appName('name').getOrCreate() — entry point to Spark", status: ST.todo, score: null },
-      { name: "PySpark — DataFrames", desc: "spark.read.csv(), df.filter(), df.groupBy().agg(), df.join(), df.write.parquet()", status: ST.todo, score: null },
-      { name: "pyodbc / sqlalchemy", desc: "Connect Python to SQL Server — execute queries, load results to DataFrame", status: ST.todo, score: null },
-      { name: "NumPy Basics", desc: "np.array(), vectorised operations, np.mean/sum/std — foundation for Pandas", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 16, area: "Data & Governance",
-    title: "Data Profiling & Mapping",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Completeness", desc: "% of non-null values in a column — is the data fully populated?", status: ST.todo, score: null },
-      { name: "Uniqueness", desc: "Are there duplicates? COUNT DISTINCT vs COUNT — detect duplicate keys", status: ST.todo, score: null },
-      { name: "Validity", desc: "Does data match expected format / range / values? (dates, codes, positive numbers)", status: ST.todo, score: null },
-      { name: "Consistency", desc: "Same entity has matching values across systems — Customer name same in CRM and DW?", status: ST.todo, score: null },
-      { name: "SQL Profiling Queries", desc: "COUNT, COUNT DISTINCT, MIN, MAX, AVG, GROUP BY on every column to understand data shape", status: ST.todo, score: null },
-      { name: "Source-to-Target Mapping", desc: "Document: source table/col → transformation rule → target table/col. The spec for ETL builds.", status: ST.todo, score: null },
-      { name: "Transformation Rules", desc: "UPPER(), TRIM(), COALESCE(), CAST(), date formatting — documented in mapping doc", status: ST.todo, score: null },
-      { name: "Data Quality Scoring", desc: "Score each dimension 0–100%, aggregate to overall DQ score — used to flag bad data loads", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 17, area: "Data & Governance",
-    title: "Data Modelling & Design",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Conceptual Model", desc: "High-level entities and relationships — no technical detail. For business stakeholders.", status: ST.todo, score: null },
-      { name: "Logical Model", desc: "Entities, attributes, PKs, FKs, data types — tech detail, no physical implementation.", status: ST.todo, score: null },
-      { name: "Physical Model", desc: "Actual database objects — tables, indexes, constraints, partitioning, storage.", status: ST.todo, score: null },
-      { name: "1NF", desc: "Atomic values only, no repeating groups, each row unique", status: ST.todo, score: null },
-      { name: "2NF", desc: "1NF + no partial dependencies — non-key columns depend on the whole PK", status: ST.todo, score: null },
-      { name: "3NF", desc: "2NF + no transitive dependencies — non-key columns depend only on PK, not each other", status: ST.todo, score: null },
-      { name: "Denormalisation", desc: "Intentionally introduce redundancy for read performance — common in DW and reporting layers", status: ST.todo, score: null },
-      { name: "ER Diagrams", desc: "Entity-Relationship diagrams — boxes (entities), lines (relationships), crow's foot notation", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 18, area: "Data & Governance",
-    title: "Data Lineage & Governance",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "Data Lineage", desc: "Tracks data from source to consumption — which systems, transforms, and tables it passed through", status: ST.todo, score: null },
-      { name: "DAMA Framework", desc: "11 knowledge areas including Data Quality, Metadata, Master Data, Security, Architecture", status: ST.todo, score: null },
-      { name: "Data Steward", desc: "Business role responsible for data quality, definitions, and governance in a domain", status: ST.todo, score: null },
-      { name: "Data Owner", desc: "Accountable for data in a domain — approves access, sets policies", status: ST.todo, score: null },
-      { name: "Technical Metadata", desc: "Schema, column names, data types, table sizes, indexes — stored in system catalogues", status: ST.todo, score: null },
-      { name: "Business Metadata", desc: "Business definitions, glossary terms, KPI definitions, ownership — stored in data catalogues", status: ST.todo, score: null },
-      { name: "Data Quality Rules", desc: "Defined checks: not null, referential integrity, range checks, pattern matching — enforced in pipeline", status: ST.todo, score: null },
-      { name: "Data Catalogue", desc: "Central inventory of data assets with metadata, lineage, and governance info — e.g. Microsoft Purview", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 19, area: "BSA",
-    title: "Business Systems Analyst",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "BRD", desc: "Business Requirements Document — what the business needs, written in business language, no tech detail", status: ST.todo, score: null },
-      { name: "FSD", desc: "Functional Specification Document — how the system will meet requirements, technical detail", status: ST.todo, score: null },
-      { name: "Gap Analysis", desc: "AS-IS (current state) vs TO-BE (future state) — identifies what needs to change", status: ST.todo, score: null },
-      { name: "Process Mapping", desc: "Swimlane diagrams / BPMN — visualises who does what, when, and in what sequence", status: ST.todo, score: null },
-      { name: "UAT", desc: "User Acceptance Testing — business users test against acceptance criteria before go-live", status: ST.todo, score: null },
-      { name: "SIT", desc: "System Integration Testing — technical team tests end-to-end system flows before UAT", status: ST.todo, score: null },
-      { name: "Requirements Elicitation", desc: "Workshops, interviews, surveys, observation — techniques to gather requirements from stakeholders", status: ST.todo, score: null },
-      { name: "Data Requirements", desc: "Translating business needs into data: what data is needed, from where, in what format, at what frequency", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 20, area: "Mock Interview",
-    title: "Full Mock Interview — 40 Questions",
-    status: ST.todo, confidence: 0, score: null, time: "2 hrs",
-    subtopics: [
-      { name: "SQL Round (5Q)", desc: "Ranking, CTEs, JOINs, Window Functions, Data Validation", status: ST.todo, score: null },
-      { name: "Data Warehouse (5Q)", desc: "OLTP/OLAP, SCD types, Star vs Snowflake, ETL vs ELT", status: ST.todo, score: null },
-      { name: "SSIS (5Q)", desc: "Control Flow, Data Flow, Lookup, Transformations, Error Handling", status: ST.todo, score: null },
-      { name: "Power BI / DAX (5Q)", desc: "Measures, CALCULATE, ALL, Relationships, Time Intelligence", status: ST.todo, score: null },
-      { name: "Azure (5Q)", desc: "ADF, ADB, Delta Lake, Synapse, Blob vs ADLS", status: ST.todo, score: null },
-      { name: "Python / PySpark (5Q)", desc: "Pandas, groupby, PySpark DataFrames, error handling, SQL connectivity", status: ST.todo, score: null },
-      { name: "Data Governance (5Q)", desc: "Lineage, Stewardship, Metadata, DAMA, Data Quality", status: ST.todo, score: null },
-      { name: "BSA (5Q)", desc: "BRD vs FSD, UAT vs SIT, Gap Analysis, Requirements gathering", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 21, area: "Tableau",
-    title: "Tableau — Visualisation & Dashboards",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "Connecting Data", desc: "Live vs Extract connections — Excel, CSV, SQL Server, Tableau Data Source (.tds)", status: ST.todo, score: null },
-      { name: "Dimensions vs Measures", desc: "Blue pills (discrete/categorical) vs green pills (continuous/numeric) — controls axis behaviour", status: ST.todo, score: null },
-      { name: "Calculated Fields", desc: "IF/ELSE, DATEPART(), DATEDIFF(), ZN(), IIF(), STR() — create new fields from existing data", status: ST.todo, score: null },
-      { name: "LOD Expressions", desc: "FIXED: ignores view filters. INCLUDE: adds granularity. EXCLUDE: removes dimension from context.", status: ST.todo, score: null },
-      { name: "Table Calculations", desc: "RUNNING_SUM, WINDOW_AVG, RANK, LOOKUP — computed across partition of the viz, not the database", status: ST.todo, score: null },
-      { name: "Filter Order of Operations", desc: "Extract → Data Source → Context → Dimension → Measure → Table Calc — determines what each filter sees", status: ST.todo, score: null },
-      { name: "Parameters", desc: "User-controlled dynamic inputs — swap measures, set thresholds, drive Top N selections", status: ST.todo, score: null },
-      { name: "Dashboard Actions", desc: "Filter action (cross-filter), Highlight action, URL action, Set action — interactivity between sheets", status: ST.todo, score: null },
-      { name: "Story Points", desc: "Sequence of dashboards/sheets telling a narrative — each point adds a caption and context", status: ST.todo, score: null },
-      { name: "Performance Tips", desc: "Use extracts over live, limit rows, aggregate at source, avoid many table calcs on large data", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 22, area: "Advanced SQL",
-    title: "Advanced SQL — Optimisation & Patterns",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "Window Frames", desc: "ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW — controls which rows the function sees", status: ST.todo, score: null },
-      { name: "PIVOT", desc: "Rotate rows to columns — requires aggregate + FOR column IN (...) syntax", status: ST.todo, score: null },
-      { name: "UNPIVOT", desc: "Rotate columns to rows — normalise wide tables back to long format", status: ST.todo, score: null },
-      { name: "Dynamic SQL", desc: "Build SQL as a string and execute with EXEC sp_executesql — parameterise safely to avoid injection", status: ST.todo, score: null },
-      { name: "SARGable Predicates", desc: "Search ARGument ABLE — avoid functions on indexed columns in WHERE (e.g. YEAR(date) kills index seek)", status: ST.todo, score: null },
-      { name: "Execution Plans", desc: "Index Seek (good) vs Scan (warn) vs Key Lookup (fix with covering index) vs Hash Match (memory)", status: ST.todo, score: null },
-      { name: "Covering Index", desc: "Include all columns needed by a query in index — eliminates Key Lookup, fastest reads", status: ST.todo, score: null },
-      { name: "Statistics", desc: "SQL Server estimates row counts using stats histograms — stale stats cause bad plans, UPDATE STATISTICS", status: ST.todo, score: null },
-      { name: "MERGE Statement", desc: "WHEN MATCHED UPDATE / WHEN NOT MATCHED INSERT — upsert in one atomic statement", status: ST.todo, score: null },
-      { name: "TRY/CATCH + Transactions", desc: "BEGIN TRY / BEGIN CATCH / ROLLBACK — wrap DML in transactions with proper error capture", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 23, area: "SAS",
-    title: "SAS & Dashboard Development",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "DATA Step", desc: "Row-by-row processing — SET, MERGE, BY, IF/THEN/ELSE, DO loops, RETAIN, OUTPUT", status: ST.todo, score: null },
-      { name: "PROC SQL", desc: "SQL inside SAS — SELECT, JOIN, subqueries. Similar to T-SQL but runs in SAS engine", status: ST.todo, score: null },
-      { name: "PROC FREQ", desc: "Frequency tables — count and % per value. Used for profiling categorical columns.", status: ST.todo, score: null },
-      { name: "PROC MEANS / UNIVARIATE", desc: "Descriptive stats — N, Mean, Min, Max, Std Dev. UNIVARIATE adds distribution analysis.", status: ST.todo, score: null },
-      { name: "Formats & Informats", desc: "FORMAT = display label for values. INFORMAT = how to read raw input. Custom via PROC FORMAT.", status: ST.todo, score: null },
-      { name: "SAS Macro Language", desc: "%LET var=val; %IF / %DO / %MACRO mname / %MEND — parameterise and loop SAS code", status: ST.todo, score: null },
-      { name: "DATA Step MERGE vs PROC SQL JOIN", desc: "MERGE requires sorted datasets + BY statement. SQL JOIN is more flexible and readable.", status: ST.todo, score: null },
-      { name: "Dashboard Design Principles", desc: "Lead with the answer. One metric per tile. Hierarchy: summary → trend → breakdown → detail.", status: ST.todo, score: null },
-      { name: "KPI Layout", desc: "Scorecard (RAG status) → Trend line → Category breakdown → Row-level drill. Traffic light colours only.", status: ST.todo, score: null },
-      { name: "Colour Rules for Dashboards", desc: "Red/Amber/Green for status only. Single hue for quantities. Never rainbow. Max 4–5 colours total.", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 24, area: "Support & CSAT",
-    title: "CSAT & Support Metrics",
-    status: ST.todo, confidence: 0, score: null, time: "1 hr",
-    subtopics: [
-      { name: "CSAT", desc: "Customer Satisfaction Score — % rating 4–5 out of 5 on post-interaction survey. Simple, immediate.", status: ST.todo, score: null },
-      { name: "NPS", desc: "Net Promoter Score = % Promoters (9–10) minus % Detractors (0–6). Measures loyalty, not satisfaction.", status: ST.todo, score: null },
-      { name: "CES", desc: "Customer Effort Score — how easy was it to get help? Lower effort = better experience.", status: ST.todo, score: null },
-      { name: "SLA", desc: "Service Level Agreement — contracted response/resolution times. P1 = 1hr response, 4hr fix (example).", status: ST.todo, score: null },
-      { name: "OLA", desc: "Operational Level Agreement — internal team-level SLA. Feeds the customer-facing SLA.", status: ST.todo, score: null },
-      { name: "Ticket Lifecycle", desc: "Open → Assigned → In Progress → Pending Customer → Resolved → Closed. Each state has SLA implications.", status: ST.todo, score: null },
-      { name: "Priority Matrix", desc: "Impact × Urgency = Priority (P1–P4). P1 = high impact + high urgency = immediate response.", status: ST.todo, score: null },
-      { name: "RCA (Root Cause Analysis)", desc: "5 Whys / fishbone diagram / timeline — find the real cause, not just the symptom. Document prevention.", status: ST.todo, score: null },
-      { name: "VOC — Voice of Customer", desc: "Verbatim feedback clustering — group comments into themes to drive service improvement", status: ST.todo, score: null },
-      { name: "Escalation Framework", desc: "L1 → L2 → L3 → Vendor. Each level has criteria, SLA clock rules, and handoff documentation.", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 25, area: "Support & CSAT",
-    title: "L2 & L3 Technical Support",
-    status: ST.todo, confidence: 0, score: null, time: "1.5 hrs",
-    subtopics: [
-      { name: "L1 / L2 / L3 Split", desc: "L1: scripts & resets. L2: config, DB queries, log analysis. L3: root cause, code changes, vendor escalation.", status: ST.todo, score: null },
-      { name: "Triage Methodology", desc: "Reproduce → Isolate → Narrow → Fix → Document. Never skip steps — reproducing is 50% of solving.", status: ST.todo, score: null },
-      { name: "SQL Server Diagnostics", desc: "sp_who2, sys.dm_exec_requests, sys.dm_exec_sessions — find blocking, long-running queries, open connections", status: ST.todo, score: null },
-      { name: "Blocking Chain Analysis", desc: "Find head blocker via sys.dm_os_waiting_tasks. Kill with KILL spid only if business-approved.", status: ST.todo, score: null },
-      { name: "Deadlock Detection", desc: "SQL Server error log (Event 1205), trace flag 1222, Extended Events deadlock graph — identify victim/culprit", status: ST.todo, score: null },
-      { name: "Log Analysis", desc: "SQL Server Error Log (EXEC xp_readerrorlog), Windows Event Viewer, application logs — correlate timestamps", status: ST.todo, score: null },
-      { name: "Performance Issues", desc: "Missing indexes (DMV: dm_db_missing_index), expensive queries (dm_exec_query_stats), tempdb contention", status: ST.todo, score: null },
-      { name: "Escalation to Vendor", desc: "PSS case: steps to reproduce, error messages, logs package, environment details, business impact", status: ST.todo, score: null },
-      { name: "Change Management", desc: "RFC → CAB approval → scheduled window → rollback plan. Never change prod without a rollback.", status: ST.todo, score: null },
-      { name: "Post-Incident Review (PIR)", desc: "What happened → Impact → Timeline → Root cause → Prevention actions. Blameless, fact-based.", status: ST.todo, score: null },
-    ]
-  },
-  {
-    id: 26, area: "Leadership",
-    title: "Team Management & Leadership",
-    status: ST.todo, confidence: 0, score: null, time: "2 hrs",
-    subtopics: [
-      { name: "1:1 Meetings", desc: "Weekly cadence, their agenda not yours. Ask: what's blocking you? what do you need from me?", status: ST.todo, score: null },
-      { name: "Delegation", desc: "Delegate the outcome, not the task. Explain WHY. Set checkpoints. Trust but verify.", status: ST.todo, score: null },
-      { name: "Performance Management", desc: "OKRs set direction. KPIs measure execution. PIP = last resort after coaching + documentation.", status: ST.todo, score: null },
-      { name: "Difficult Conversations", desc: "SBI framework: Situation → Behaviour → Impact. Private first. Factual, not personal. Document.", status: ST.todo, score: null },
-      { name: "Conflict Resolution", desc: "Separate people from problems. Hear both sides privately first. Find shared goal. Facilitate, don't judge.", status: ST.todo, score: null },
-      { name: "Hiring", desc: "Competency-based interviews, structured scoring rubric, culture add (not just fit), diverse panel.", status: ST.todo, score: null },
-      { name: "Coaching vs Managing", desc: "Managing = set direction, remove blockers. Coaching = ask questions, build capability. Both are needed.", status: ST.todo, score: null },
-      { name: "Stakeholder Communication", desc: "Executive summary = 3 bullets max. RAG status. Risks surfaced early. Full detail on request only.", status: ST.todo, score: null },
-      { name: "Burnout Signals", desc: "Quality drop, missed deadlines, withdrawal from team — intervene early with 1:1 conversation, not email.", status: ST.todo, score: null },
-      { name: "Managing Up", desc: "Keep manager informed proactively. Surface risks before they become crises. Bring solutions, not problems.", status: ST.todo, score: null },
-    ]
-  }
+const CONTENT_URLS={
+  'M01':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/00_Foundations/M01_Commercial_Lending_Overview.md',
+  'M02':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/00_Foundations/M02_KYC_and_Onboarding.md',
+  'M03':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/01_Financial_Analysis/M03_Financial_Statement_Analysis.md',
+  'M04':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/01_Financial_Analysis/M04_Cash_Flow_Analysis.md',
+  'M05':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/01_Financial_Analysis/M05_Ratio_Analysis.md',
+  'M06':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/02_Business_Risk/M06_Industry_Analysis.md',
+  'M07':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/02_Business_Risk/M07_Business_Risk_Assessment.md',
+  'M08':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/02_Business_Risk/M08_Management_Assessment.md',
+  'M09':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/03_Credit_Decision/M09_Credit_Memo.md',
+  'M10':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/03_Credit_Decision/M10_Facility_Structuring.md',
+  'M11':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/03_Credit_Decision/M11_Security_Collateral.md',
+  'M12':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/03_Credit_Decision/M12_Covenants.md',
+  'M13':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/03_Credit_Decision/M13_Internal_Risk_Ratings.md',
+  'M14':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/04_Regulatory_Frameworks/M14_Basel_II.md',
+  'M15':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/04_Regulatory_Frameworks/M15_Basel_III.md',
+  'M16':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/04_Regulatory_Frameworks/M16_IFRS9_ECL.md',
+  'M17':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/05_Credit_Risk_Models/M17_PD.md',
+  'M18':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/05_Credit_Risk_Models/M18_LGD.md',
+  'M19':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/05_Credit_Risk_Models/M19_EAD.md',
+  'M20':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/05_Credit_Risk_Models/M20_CCF.md',
+  'M21':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/05_Credit_Risk_Models/M21_Credit_Scoring.md',
+  'M22':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/06_Statistical_Modelling/M22_Statistical_Foundations.md',
+  'M23':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/06_Statistical_Modelling/M23_Logistic_Regression.md',
+  'M24':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/06_Statistical_Modelling/M24_ML_Credit_Risk.md',
+  'M25':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/07_Model_Lifecycle/M25_Model_Development.md',
+  'M26':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/07_Model_Lifecycle/M26_Model_Validation.md',
+  'M27':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/07_Model_Lifecycle/M27_Backtesting.md',
+  'M28':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/07_Model_Lifecycle/M28_Benchmarking.md',
+  'M29':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/07_Model_Lifecycle/M29_Sensitivity_Analysis.md',
+  'M30':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/08_Portfolio_Risk/M30_Stress_Testing.md',
+  'M31':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/08_Portfolio_Risk/M31_Portfolio_Risk.md',
+  'M32':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/08_Portfolio_Risk/M32_Regulatory_Capital.md',
+  'M33':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/09_Governance/M33_Governance_Committees.md',
+  'M34':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/09_Governance/M34_Internal_Audit.md',
+  'M35':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/09_Governance/M35_Regulatory_Examinations.md',
+  'M36':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/10_Workflows/M36_RM_Workflow.md',
+  'M37':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/10_Workflows/M37_CA_Workflow.md',
+  'M38':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/10_Workflows/M38_CM_Decisions.md',
+  'M39':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/10_Workflows/M39_Risk_Reviews.md',
+  'M40':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/11_Documentation/M40_Legal_Docs.md',
+  'M41':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/11_Documentation/M41_Facility_Offer_Letters.md',
+  'M42':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/11_Documentation/M42_Loan_Booking.md',
+  'M43':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/12_Monitoring_Recovery/M43_Ongoing_Monitoring.md',
+  'M44':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/12_Monitoring_Recovery/M44_Covenant_Tracking.md',
+  'M45':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/12_Monitoring_Recovery/M45_EWI.md',
+  'M46':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/12_Monitoring_Recovery/M46_Restructuring.md',
+  'M47':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/12_Monitoring_Recovery/M47_Recovery.md',
+  'CS01':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/case-studies/CS01_Steel_Fabricator.md',
+  'CS02':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/case-studies/CS02_Commercial_Developer.md',
+  'CS03':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/case-studies/CS03_Retail_Chain.md',
+  'CS04':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/case-studies/CS04_Construction_Contractor.md',
+  'CS05':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/case-studies/CS05_Private_Hospital.md',
+  'CS06':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/case-studies/CS06_Oil_Gas.md',
+  'CS07':'https://raw.githubusercontent.com/freshproduceuae-max/sql-server-revision-tracker/main/credit-risk-academy/case-studies/CS07_Leveraged_Buyout.md',
+};
+
+const UNIT_DEFS=[
+  {name:'Foundations',modules:[
+    {code:'M01',title:'Commercial Lending Overview',desc:'How banks make money on loans, RAROC, and the end-to-end lending lifecycle from origination to exit.'},
+    {code:'M02',title:'KYC and Onboarding',desc:'Client due diligence, UBO identification, EDD triggers and know-your-customer regulatory requirements.'}
+  ]},
+  {name:'Financial Analysis',modules:[
+    {code:'M03',title:'Financial Statement Analysis',desc:'Reading the P&L, balance sheet and notes like a lender — spreading, normalising and reconciling three statements.'},
+    {code:'M04',title:'Cash Flow Analysis',desc:'Operating, investing and financing cash flows, the EBITDA-to-DSCR waterfall, and debt service capacity.'},
+    {code:'M05',title:'Ratio Analysis',desc:'Leverage, liquidity, profitability and coverage ratios that underpin credit decisions and covenant design.'}
+  ]},
+  {name:'Business Risk',modules:[
+    {code:'M06',title:'Industry Analysis',desc:"Sector cyclicality, Porter's Five Forces through a credit lens, and the systematic vs idiosyncratic risk split."},
+    {code:'M07',title:'Business Risk Assessment',desc:'Customer concentration, contract quality, supply chain resilience and ESG transition risk as credit factors.'},
+    {code:'M08',title:'Management Assessment',desc:'Judging management quality, governance, related-party transactions and succession risk.'}
+  ],caseStudy:{id:'CS01',title:'Steel Fabricator',sector:'Manufacturing',complexity:'Beginner',desc:'A progressive worked credit story applying M01–M08 to a mid-market Midlands steel fabricator.'}},
+  {name:'Credit Decision',modules:[
+    {code:'M09',title:'Credit Memo Preparation',desc:'Structuring the credit paper: executive summary, risk factors, financial analysis and recommended structure.'},
+    {code:'M10',title:'Facility Structuring',desc:'Term loans, revolving credit facilities, tenor, amortisation and repayment waterfall design.'},
+    {code:'M11',title:'Security and Collateral',desc:'Fixed and floating charges, guarantees, legal charges, LTV and the LPA receiver mechanism.'},
+    {code:'M12',title:'Covenants',desc:'Financial, information and negative covenants — headroom, testing periods, cure rights and the waiver process.'},
+    {code:'M13',title:'Internal Risk Ratings',desc:'How banks grade borrowers — scorecards, the PD mapping, IRB grade structure and rating philosophy.'}
+  ],caseStudy:{id:'CS02',title:'Commercial Developer',sector:'Real Estate',complexity:'Intermediate',desc:'A commercial real-estate credit story: development appraisal, LTV structuring and GDV stress tests.'}},
+  {name:'Regulatory Frameworks',modules:[
+    {code:'M14',title:'Basel II',desc:'The original three-pillar capital framework: SA risk weights, FIRB/AIRB, the corporate IRB formula and EL shortfall.'},
+    {code:'M15',title:'Basel III',desc:'Post-crisis reforms: CET1 stack, capital buffers, LCR, NSFR, leverage ratio and the 72.5% output floor.'},
+    {code:'M16',title:'IFRS 9 and Expected Credit Loss',desc:'Stage 1/2/3 classification, SICR triggers, PiT PD, 12-month vs lifetime ECL and macro scenario blending.'}
+  ]},
+  {name:'Credit Risk Models',modules:[
+    {code:'M17',title:'Probability of Default (PD)',desc:'TTC vs PiT PD, the Basel default definition, migration matrices, Merton distance-to-default and calibration.'},
+    {code:'M18',title:'Loss Given Default (LGD)',desc:'Economic LGD, workout cash flows, downturn LGD, collateral stress and the EIR discounting method.'},
+    {code:'M19',title:'Exposure at Default (EAD)',desc:'Amortising term loan EAD, RCF EAD with CCF, IFRS 9 lifetime EAD projection for Stage 2 revolvers.'},
+    {code:'M20',title:'Credit Conversion Factors (CCF)',desc:'SA CCF tables (pre- and post-CRR3), IRB bank-estimated CCF, draw-down behaviour and traffic-light backtesting.'},
+    {code:'M21',title:'Credit Scoring Models',desc:'Altman Z-Score, WoE/IV binning, logistic regression scorecard, PDO scaling, AUC/Gini/KS and PSI monitoring.'}
+  ],caseStudy:{id:'CS03',title:'Multi-Site Retail Chain',sector:'Retail',complexity:'Intermediate',desc:'A retail credit story applying PD modelling, LGD collateral analysis and EAD drawdown projections.'}},
+  {name:'Statistical Modelling',modules:[
+    {code:'M22',title:'Statistical Foundations for Credit',desc:'Bernoulli, Beta and Vasicek distributions; WoE/IV; OLS assumptions; Ridge/Lasso; hypothesis testing for risk models.'},
+    {code:'M23',title:'Logistic Regression for PD',desc:'Logit link, MLE estimation, odds ratios, AUC/Gini/KS/Brier, Hosmer-Lemeshow, TTC calibration and scorecard points.'},
+    {code:'M24',title:'Machine Learning for Credit Risk',desc:'Gradient boosting, TreeSHAP explainability, SMOTE, Cox survival PD term structures, EU AI Act and SR 11-7 obligations.'}
+  ]},
+  {name:'Model Lifecycle',modules:[
+    {code:'M25',title:'Model Development',desc:'Reference dataset construction, WoE/IV pipeline, logistic regression, calibration, documentation and SR 11-7 compliance.'},
+    {code:'M26',title:'Model Validation',desc:'Three-pillar independent challenge: discriminatory power, calibration, PSI/CSI stability, findings classification and model risk rating.'},
+    {code:'M27',title:'Backtesting',desc:'PD/LGD/EAD backtests, Basel traffic light (Annex 10a), Jeffreys intervals, the LDP problem and workout data challenges.'},
+    {code:'M28',title:'Benchmarking',desc:"Moody's/S&P DR tables, URD LGD benchmarks, Pillar 3 peer comparison, challenger models and the CRR Article 78 exercise."},
+    {code:'M29',title:'Sensitivity Analysis',desc:'Single/multi-factor IRB formula grids, Monte Carlo parameter uncertainty, tornado charts and IFRS 7 ECL scenario weighting.'}
+  ],caseStudy:{id:'CS04',title:'Construction Contractor',sector:'Construction',complexity:'Advanced',desc:'A construction-sector case applying model sensitivity analysis and backtesting to a volatile, project-based borrower.'}},
+  {name:'Portfolio Risk',modules:[
+    {code:'M30',title:'Stress Testing',desc:'ACS, EBA/ECB scenarios, ICAAP satellite models, macro-to-PD mapping, reverse stress testing and management actions.'},
+    {code:'M31',title:'Portfolio Risk Management',desc:'Vasicek single-factor, CreditMetrics, EL/UL/Credit VaR, Monte Carlo simulation and concentration limits under CRR.'},
+    {code:'M32',title:'Regulatory Capital',desc:'Full Basel IRB formula with all adjustments, output floor phase-in, RORWA optimisation and Pillar 2 add-ons.'}
+  ]},
+  {name:'Governance',modules:[
+    {code:'M33',title:'Governance Committees',desc:'Credit Committee, GCRC, MRC, ALCO — mandates, delegated authority, three lines of defence and SMCR obligations.'},
+    {code:'M34',title:'Internal Audit Expectations',desc:'Credit file completeness testing, PD backtesting audit, ECL overlay governance and model risk audit methodology.'},
+    {code:'M35',title:'Regulatory Examinations',desc:'SREP, TRIM, PRA SS1/23 deep dives — preparing model documentation and responding to findings.'}
+  ]},
+  {name:'Workflows',modules:[
+    {code:'M36',title:'Relationship Manager Workflow',desc:'Pipeline management, initial screening, covenant breaches, annual reviews and the RM-as-first-line obligation.'},
+    {code:'M37',title:'Credit Analyst Workflow',desc:'Day-to-day analysis: spreading, memo drafting, covenant modelling, Q&A with management and committee pack preparation.'},
+    {code:'M38',title:'Credit Manager Decision-Making',desc:'Five-Cs framework, sanctioning delegations, conditions precedent, counterproposals and escalation to senior committee.'},
+    {code:'M39',title:'Risk Management Reviews',desc:'Portfolio-level reviews: concentration monitoring, vintage analysis, EWI dashboards and second-line credit risk oversight.'}
+  ],caseStudy:{id:'CS05',title:'Private Hospital Group',sector:'Healthcare',complexity:'Advanced',desc:'A healthcare credit story running the full RM → analyst → credit committee workflow.'}},
+  {name:'Documentation',modules:[
+    {code:'M40',title:'Legal Documentation',desc:'LMA facility agreements, representations, undertakings, events of default, MAC clauses and charge registration.'},
+    {code:'M41',title:'Facility Offer Letters',desc:'Term sheet structure, conditions precedent, material adverse change wording and drawdown mechanics.'},
+    {code:'M42',title:'Loan Booking and Operations',desc:'Getting a facility onto the books: system setup, accruals, EIR calculation, IFRS 9 staging flags and ops handover.'}
+  ]},
+  {name:'Monitoring & Recovery',modules:[
+    {code:'M43',title:'Ongoing Monitoring',desc:'Annual review cycle, utilisation monitoring, IFRS 9 staging triggers, EWI dashboards and Companies House integration.'},
+    {code:'M44',title:'Covenant Tracking',desc:'Headroom calculation, waiver process, frozen GAAP clauses, forbearance classification and IFRS 9 modification accounting.'},
+    {code:'M45',title:'Early Warning Indicators',desc:'Financial, behavioural and market EWI signals, watch-list classification, OLEM grading and ML-based alert scoring.'},
+    {code:'M46',title:'Restructuring',desc:'IBR, viability assessment, debt capacity modelling, scenario provisioning and CIGA 2020 restructuring plan mechanics.'},
+    {code:'M47',title:'Recovery',desc:'Fixed-charge to unsecured waterfall, LPA receiver, pre-pack administration, write-off policy and LGD backtesting on workout data.'}
+  ],caseStudy:[
+    {id:'CS06',title:'Upstream Oil & Gas',sector:'Energy',complexity:'Expert',desc:'A reserve-based lending credit story: RBL borrowing base construction, NPV price deck, draw-stop triggers.'},
+    {id:'CS07',title:'Leveraged Buyout',sector:'PE-backed acquisition',complexity:'Expert',desc:'The capstone case — a full PE-backed LBO model: sources/uses, debt waterfall, five-year DSCR projections and exit IRR.'}
+  ]}
 ];
 
-// ── Render ──────────────────────────────────────────────
-const areas = [...new Set(modules.map(m => m.area))];
+/* ── State ── */
+let S={completed:{},streak:1,modalId:null,view:'card',mdContent:null,mdLoading:false};
+const mdCache={};
 
-function stars(n) {
-  return Array.from({length:5},(_,i)=>`<span class="star ${i<n?'lit':''}">★</span>`).join('');
+function loadState(){
+  try{
+    const sv=JSON.parse(localStorage.getItem('crAcademy_v1')||'{}');
+    const completed=sv.completed||{};
+    const today=new Date().toDateString();
+    let streak=sv.streak||1;
+    if(sv.lastDate&&sv.lastDate!==today){
+      const diff=Math.round((new Date(today)-new Date(sv.lastDate))/86400000);
+      streak=diff===1?streak+1:1;
+    }else if(!sv.lastDate){streak=1;}
+    localStorage.setItem('crAcademy_v1',JSON.stringify({completed,streak,lastDate:today}));
+    S.completed=completed;S.streak=streak;
+  }catch(e){}
+}
+function saveCompleted(c){
+  try{
+    const sv=JSON.parse(localStorage.getItem('crAcademy_v1')||'{}');
+    localStorage.setItem('crAcademy_v1',JSON.stringify({...sv,completed:c}));
+  }catch(e){}
 }
 
-function statusBadge(s) {
-  if(s==='done') return '<span class="badge done">✓ Done</span>';
-  if(s==='progress') return '<span class="badge progress">⟳ In Progress</span>';
-  return '<span class="badge todo">Not Started</span>';
+/* ── Markdown parser ── */
+function mdToHtml(md){
+  let h=md
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    // fenced code blocks
+    .replace(/```(\w*)\n([\s\S]*?)```/g,(_,lang,code)=>`<pre><code class="lang-${lang}">${code.trimEnd()}</code></pre>`)
+    // inline code
+    .replace(/`([^`\n]+)`/g,'<code>$1</code>')
+    // headings
+    .replace(/^#### (.+)$/gm,'<h4>$1</h4>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    // hr
+    .replace(/^---+$/gm,'<hr>')
+    // blockquote
+    .replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>')
+    // bold/italic
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  // tables
+  h=h.replace(/(\|.+\|\n\|[-| :]+\|\n(?:\|.+\|\n?)+)/g,tableBlock=>{
+    const rows=tableBlock.trim().split('\n');
+    const header=rows[0].split('|').slice(1,-1).map(c=>`<th>${c.trim()}</th>`).join('');
+    const body=rows.slice(2).map(r=>{
+      const cells=r.split('|').slice(1,-1).map(c=>`<td>${c.trim()}</td>`).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
+    return `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+  });
+
+  // lists
+  h=h.replace(/((?:^- .+\n?)+)/gm,block=>{
+    const items=block.trim().split('\n').map(l=>`<li>${l.replace(/^- /,'')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+  h=h.replace(/((?:^\d+\. .+\n?)+)/gm,block=>{
+    const items=block.trim().split('\n').map(l=>`<li>${l.replace(/^\d+\. /,'')}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
+
+  // paragraphs
+  h=h.split(/\n{2,}/).map(para=>{
+    para=para.trim();
+    if(!para)return'';
+    if(/^<(h[1-6]|ul|ol|pre|table|blockquote|hr)/.test(para))return para;
+    return`<p>${para.replace(/\n/g,' ')}</p>`;
+  }).join('\n');
+
+  return h;
 }
 
-function statusDot(s) {
-  return `<span class="dot ${s}"></span>`;
+/* ── Helpers ── */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function buildFlat(){
+  const flat=[];
+  UNIT_DEFS.forEach((u,ui)=>{
+    u.modules.forEach(m=>flat.push({id:m.code,type:'module',ui,data:m}));
+    if(u.caseStudy)(Array.isArray(u.caseStudy)?u.caseStudy:[u.caseStudy])
+      .forEach(c=>flat.push({id:c.id,type:'case',ui,data:c}));
+  });
+  return flat;
 }
 
-function stStatusText(s) {
-  if(s==='done') return '<span style="color:#10b981">Done</span>';
-  if(s==='progress') return '<span style="color:#fbbf24">In Progress</span>';
-  return '<span style="color:#334155">Not started</span>';
-}
+/* ── Render ── */
+function renderApp(){
+  const{completed,streak,modalId,view,mdContent,mdLoading}=S;
+  const flat=buildFlat();
+  let fi=flat.findIndex(n=>!completed[n.id]);
+  if(fi===-1)fi=flat.length;
+  let xp=0;flat.forEach(n=>{if(completed[n.id])xp+=n.type==='case'?25:10;});
+  const done=flat.filter(n=>completed[n.id]).length;
+  const pct=flat.length?Math.round(done/flat.length*100):0;
 
-function renderCard(m) {
-  const stRows = m.subtopics.map(st => `
-    <tr>
-      <td class="st-name">${statusDot(st.status)}${st.name}</td>
-      <td class="st-desc">${st.desc}</td>
-      <td class="st-status">${stStatusText(st.status)}</td>
-      <td class="st-score">${st.score || '—'}</td>
-    </tr>
-  `).join('');
-
-  return `
-    <div class="card status-${m.status}" id="card-${m.id}">
-      <div class="card-header" onclick="toggleCard(${m.id})">
-        <div class="card-left">
-          <div class="card-num">Module ${m.id} · ${m.time}</div>
-          <div class="card-title">${m.title}</div>
-        </div>
-        <div class="card-right">
-          ${statusBadge(m.status)}
-          <span class="chevron">▼</span>
-        </div>
-      </div>
-      <div class="card-meta-row">
-        <div class="confidence">${stars(m.confidence)}</div>
-        ${m.score ? `<span class="score-pill">Score: ${m.score}</span>` : '<span></span>'}
-        <span class="time-tag">${m.subtopics.length} topics</span>
-      </div>
-      <div class="subtopic-drawer">
-        <table class="subtopic-table">
-          <thead><tr>
-            <th style="width:22%">Sub-topic</th>
-            <th>Description</th>
-            <th style="width:14%">Status</th>
-            <th style="width:9%">Score</th>
-          </tr></thead>
-          <tbody>${stRows}</tbody>
-        </table>
-      </div>
+  const topBar=`
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-icon">C</div>
+      <span class="logo-name">Credit Risk Academy</span>
     </div>
-  `;
+    <div class="topbar-stats">
+      <div class="stat"><div class="stat-pip" style="background:#FF9600;box-shadow:0 2px 0 #E68200;"></div><span class="stat-val">${streak}</span><span class="stat-lbl">day streak</span></div>
+      <div class="stat"><div class="stat-gem" style="background:#1CB0F6;box-shadow:0 2px 0 #1899D6;"></div><span class="stat-val">${xp}</span><span class="stat-lbl">XP</span></div>
+    </div>
+  </div>`;
+
+  const hero=`
+  <div class="hero">
+    <h1>Commercial &amp; Corporate Credit Risk</h1>
+    <p class="hero-sub">47 modules · 7 case studies · 13 parts, foundations to expert. Every module: business purpose, regulation, data, Excel/SQL/Python, and interview prep.</p>
+    <div class="progress-card">
+      <div class="progress-head"><span class="progress-lbl">Course progress</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
+    </div>
+    <div class="framework">
+      <div class="framework-lbl">Every module covers all 15</div>
+      <div class="chips">${FRAMEWORK_CHIPS.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>
+    </div>
+  </div>`;
+
+  const path=`<div class="path">${UNIT_DEFS.map((u,ui)=>{
+    const col=PALETTE[ui%PALETTE.length];
+    const uFlat=flat.filter(n=>n.ui===ui);
+    const uDone=uFlat.filter(n=>completed[n.id]).length;
+    const nodes=uFlat.map(n=>{
+      const gi=flat.indexOf(n);
+      const status=gi<fi?'complete':gi===fi?'current':'available';
+      const off=OFFSETS[gi%OFFSETS.length];
+      const isCase=n.type==='case';const size=isCase?66:74;
+      const bg=col.base,sh=col.dark,txtCol='#fff';
+      const capCol=status==='current'?'var(--text-hi)':'var(--text-mid)';
+      const short=status==='complete'?'✓':isCase?'CS':n.data.code.replace('M','');
+      let btnStyle=`width:${size}px;height:${size}px;background:${bg};box-shadow:0 6px 0 ${sh};`;
+      btnStyle+=isCase?'border-radius:16px;transform:rotate(45deg);':'border-radius:50%;';
+      if(status==='current')btnStyle+=`animation:crPulse 2.2s ease-in-out infinite;--node-shadow:${sh};`;
+      const lblStyle=isCase
+        ?`transform:rotate(-45deg);font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:${txtCol};display:block;`
+        :`font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:${txtCol};display:block;`;
+      return`<div class="node-wrap" style="transform:translateX(${off}px);">
+        <button class="node-btn" style="${btnStyle}" data-action="open" data-id="${esc(n.id)}">
+          <span style="${lblStyle}">${esc(short)}</span>
+        </button>
+        <div class="node-caption" style="color:${capCol};">${esc(n.data.title)}</div>
+      </div>`;
+    }).join('');
+    return`<div class="unit">
+      <div class="unit-banner" style="background:${col.base};box-shadow:0 5px 0 ${col.dark};">
+        <div class="unit-kicker">Part ${ui+1} of 13</div>
+        <div class="unit-name">${esc(u.name)}</div>
+        <div class="unit-done">${uDone} / ${uFlat.length} complete</div>
+      </div>
+      <div class="nodes">${nodes}</div>
+    </div>`;
+  }).join('')}</div>`;
+
+  let modal='';
+  if(modalId){
+    const entry=flat.find(n=>n.id===modalId);
+    if(entry){
+      const gi=flat.indexOf(entry);
+      const status=gi<fi?'complete':gi===fi?'current':'available';
+      const col=PALETTE[entry.ui%PALETTE.length];
+      const isCase=entry.type==='case';
+      const isComplete=status==='complete';
+      const kicker=isCase?`Case Study · ${esc(entry.data.sector)}`:`${esc(entry.data.code)} · Part ${entry.ui+1}`;
+      const badges=isCase?`<div class="modal-badges"><span class="badge">${esc(entry.data.sector)}</span><span class="badge">${esc(entry.data.complexity)}</span></div>`:'';
+      const chips=!isCase?`<div class="in-lesson-lbl">In this lesson</div><div class="modal-chips">${LESSON_CHIPS.map(c=>`<span class="modal-chip">${esc(c)}</span>`).join('')}</div>`:'';
+      const aStyle=isComplete?'':'`background:${col.base};color:#fff;box-shadow:0 4px 0 ${col.dark};`';
+      const actionBtn=`<button class="action-btn${isComplete?' undone':''}" style="${isComplete?'':` background:${col.base};color:#fff;box-shadow:0 4px 0 ${col.dark};`}" data-action="toggle">${isComplete?'Mark as not done':`Complete Lesson  +${isCase?25:10} XP`}</button>`;
+
+      if(view==='reader'){
+        let readerContent='';
+        if(mdLoading){
+          readerContent=`<div class="loading"><div class="spinner"></div>Loading lesson…</div>`;
+        }else if(mdContent){
+          readerContent=`<div class="md">${mdContent}</div>`;
+        }else{
+          readerContent=`<div class="loading" style="color:var(--text-lo)">Content unavailable — check your connection.</div>`;
+        }
+        modal=`<div class="overlay" data-action="overlay-close">
+          <div class="reader" data-action="modal-inner">
+            <div class="reader-hd" style="background:${col.base};">
+              <button class="reader-back" data-action="back-card">← Summary</button>
+              <div class="reader-title">${esc(entry.data.title)}</div>
+              <button class="reader-close" data-action="close">✕</button>
+            </div>
+            <div class="reader-body" id="reader-body">${readerContent}</div>
+            <div class="reader-footer">
+              <button class="reader-complete${isComplete?' undone':''}" style="${isComplete?'':` background:${col.base};color:#fff;box-shadow:0 4px 0 ${col.dark};`}" data-action="toggle">${isComplete?'Mark as not done':`Complete Lesson  +${isCase?25:10} XP`}</button>
+            </div>
+          </div>
+        </div>`;
+      }else{
+        modal=`<div class="overlay" data-action="overlay-close">
+          <div class="modal-card" data-action="modal-inner">
+            <div class="modal-hd" style="background:${col.base};">
+              <button class="modal-close" data-action="close">✕</button>
+              <div class="modal-kicker">${kicker}</div>
+              <div class="modal-title">${esc(entry.data.title)}</div>
+              ${badges}
+            </div>
+            <div class="modal-bd">
+              <p class="modal-desc">${esc(entry.data.desc)}</p>
+              ${chips}
+              ${actionBtn}
+              <button class="open-lesson-btn" data-action="open-reader">📖 Read Full Lesson</button>
+            </div>
+          </div>
+        </div>`;
+      }
+    }
+  }
+
+  return topBar+hero+path+modal;
 }
 
-const root = document.getElementById('root');
-let html = '';
-areas.forEach(area => {
-  const areaModules = modules.filter(m => m.area === area);
-  html += `<div class="section-label">${area}</div><div class="grid">`;
-  areaModules.forEach(m => { html += renderCard(m); });
-  html += `</div>`;
-});
-root.innerHTML = html;
-
-// Toggle drawer
-function toggleCard(id) {
-  const card = document.getElementById('card-' + id);
-  card.classList.toggle('open');
+let _bound=false;
+function render(){
+  const sy=window.scrollY;
+  document.getElementById('app').innerHTML=renderApp();
+  window.scrollTo(0,sy);
+  if(!_bound){bindEvents();_bound=true;}
 }
 
-// Overall progress
-const done = modules.filter(m=>m.status==='done').length;
-const prog = modules.filter(m=>m.status==='progress').length;
-const pct  = Math.round(((done + prog*0.5) / modules.length)*100);
-document.getElementById('overall-pct').textContent = pct + '%';
-const bar = document.getElementById('overall-bar');
-bar.style.width = pct + '%';
-if(pct>=80) bar.classList.add('done');
-else if(pct>=40) bar.classList.add('warn');
+async function loadLesson(id){
+  if(mdCache[id]){S.mdContent=mdCache[id];render();return;}
+  S.mdLoading=true;S.mdContent=null;render();
+  try{
+    const url=CONTENT_URLS[id];
+    if(!url)throw new Error('no url');
+    const res=await fetch(url);
+    if(!res.ok)throw new Error('fetch failed');
+    const text=await res.text();
+    const html=mdToHtml(text);
+    mdCache[id]=html;
+    S.mdContent=html;S.mdLoading=false;render();
+  }catch(e){
+    S.mdLoading=false;S.mdContent=null;render();
+  }
+}
 
-// Area pills
-const areaStats = document.getElementById('area-stats');
-areas.forEach(area => {
-  const mods = modules.filter(m=>m.area===area);
-  const d = mods.filter(m=>m.status==='done').length;
-  const p = mods.filter(m=>m.status==='progress').length;
-  areaStats.innerHTML += `<span class="area-pill">${area}: <span>${d+p}/${mods.length}</span></span>`;
-});
+function bindEvents(){
+  document.getElementById('app').addEventListener('click',e=>{
+    const nodeBtn=e.target.closest('[data-action="open"]');
+    if(nodeBtn){S.modalId=nodeBtn.dataset.id;S.view='card';S.mdContent=null;render();return;}
+    if(e.target.closest('[data-action="close"]')){S.modalId=null;S.view='card';render();return;}
+    if(e.target.closest('[data-action="back-card"]')){S.view='card';render();return;}
+    if(e.target.closest('[data-action="overlay-close"]')&&!e.target.closest('[data-action="modal-inner"]')){S.modalId=null;S.view='card';render();return;}
+    if(e.target.closest('[data-action="open-reader"]')){S.view='reader';loadLesson(S.modalId);return;}
+    if(e.target.closest('[data-action="toggle"]')){
+      const id=S.modalId;if(!id)return;
+      const c={...S.completed};
+      if(c[id])delete c[id];else c[id]=true;
+      saveCompleted(c);S.completed=c;render();
+    }
+  });
+}
 
-document.getElementById('updated').textContent = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+loadState();render();
 </script>
-</body>
-</html>
