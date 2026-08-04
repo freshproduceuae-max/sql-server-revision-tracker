@@ -51,6 +51,13 @@ button{font-family:inherit;cursor:pointer;}
   0%,100%{box-shadow:0 6px 0 var(--node-shadow,#46A302),0 0 0 0 rgba(88,204,2,.35);}
   50%{box-shadow:0 6px 0 var(--node-shadow,#46A302),0 0 0 10px rgba(88,204,2,0);}
 }
+/* Expanding rings marking the next node to do. Two rings offset in time read as
+   a ripple; --ripple is set inline so it matches each track's colour. */
+@keyframes crRipple{
+  0%{transform:scale(1);opacity:.7;}
+  70%{opacity:.12;}
+  100%{transform:scale(1.85);opacity:0;}
+}
 @keyframes crPop{from{transform:scale(.84);opacity:0;}to{transform:scale(1);opacity:1;}}
 @keyframes spin{to{transform:rotate(360deg);}}
 
@@ -99,7 +106,15 @@ button{font-family:inherit;cursor:pointer;}
 .unit-done{font-size:12.5px;font-weight:700;opacity:.9;margin-top:4px;font-variant-numeric:tabular-nums;}
 .nodes{display:flex;flex-direction:column;align-items:center;gap:26px;}
 .node-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
-.node-btn{border:none;display:flex;align-items:center;justify-content:center;padding:0;}
+.node-btn{border:none;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
+.node-btn.is-next::before,.node-btn.is-next::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  border:3px solid var(--ripple,#58CC02);
+  animation:crRipple 2.1s ease-out infinite;pointer-events:none;
+}
+.node-btn.is-next::after{animation-delay:1.05s;}
+.next-badge{margin-top:3px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.7px;
+  text-transform:uppercase;color:#fff;padding:2px 8px;border-radius:10px;}
 .node-btn:hover{filter:brightness(1.07);}
 .node-btn:focus-visible{outline:3px solid #58CC02;outline-offset:3px;}
 .node-caption{font-size:11.5px;font-weight:700;max-width:120px;text-align:center;text-wrap:pretty;}
@@ -220,7 +235,12 @@ button{font-family:inherit;cursor:pointer;}
 .tl-dot{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:19px;color:#fff;z-index:1;transition:transform .12s ease;}
 .tl-item:hover .tl-dot{transform:scale(1.08);}
 .tl-dot.done{background:#58CC02;box-shadow:0 5px 0 #46A302;}
-.tl-dot.open{background:#FF9600;box-shadow:0 5px 0 #E68200;animation:crPulse 2.2s ease-in-out infinite;--node-shadow:#E68200;}
+.tl-dot.open{background:#FF9600;box-shadow:0 5px 0 #E68200;position:relative;}
+.tl-dot.open::before,.tl-dot.open::after{
+  content:'';position:absolute;inset:0;border-radius:50%;border:3px solid #FF9600;
+  animation:crRipple 2.1s ease-out infinite;pointer-events:none;
+}
+.tl-dot.open::after{animation-delay:1.05s;}
 .tl-dot.locked{background:var(--node-locked-bg);box-shadow:0 5px 0 var(--node-locked-sh);color:var(--node-locked-txt);}
 .tl-title{margin-top:10px;font-weight:800;font-size:12.5px;color:var(--text-hi);text-align:center;max-width:150px;text-wrap:pretty;line-height:1.3;}
 .tl-sub{margin-top:3px;font-weight:700;font-size:10.5px;color:var(--text-lo);text-align:center;max-width:150px;}
@@ -958,7 +978,9 @@ function renderPath(units,flat,completed,fi){
       const short=nodeShort(n,status);
       let btnStyle=`width:${size}px;height:${size}px;background:${bg};box-shadow:0 6px 0 ${sh};`;
       btnStyle+=isDiamond?'border-radius:16px;transform:rotate(45deg);':'border-radius:50%;';
-      if(status==='current')btnStyle+=`animation:crPulse 2.2s ease-in-out infinite;--node-shadow:${sh};`;
+      // The next node to do gets expanding rings in the track's own colour.
+      const isNext=status==='current';
+      if(isNext)btnStyle+=`--ripple:${bg};`;
       const lblStyle=isDiamond
         ?`transform:rotate(-45deg);font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:${txtCol};display:block;`
         :`font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:${txtCol};display:block;`;
@@ -968,10 +990,11 @@ function renderPath(units,flat,completed,fi){
         ?`<div style="font-size:10.5px;font-weight:700;color:var(--text-lo);">${n.data.count} q${score!==undefined?` · best ${score}%`:''}</div>`
         :'';
       return`<div class="node-wrap" style="transform:translateX(${off}px);">
-        <a href="${href}" class="node-btn" style="${btnStyle};text-decoration:none;">
+        <a href="${href}" class="node-btn${isNext?' is-next':''}" style="${btnStyle};text-decoration:none;">
           <span style="${lblStyle}">${esc(short)}</span>
         </a>
-        <div class="node-caption" style="color:${capCol};">${esc(n.data.title)}</div>
+        <div class="node-caption" style="color:${capCol};font-weight:${isNext?800:700};">${esc(n.data.title)}</div>
+        ${isNext?`<div class="next-badge" style="background:${bg};">Next</div>`:''}
         ${sub}
       </div>`;
     }).join('');
