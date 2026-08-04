@@ -1,0 +1,9 @@
+# Build tooling and source docs — tracked in git, but nothing the site serves.
+scripts/
+CURRICULUM.md
+STUDY_TRACKER.md
+lesson-learned-vercel-deploy.md
+data-validation-taxonomy.json
+snippets/
+CLAUDE.md
+LESSONS-LEARNED.md
