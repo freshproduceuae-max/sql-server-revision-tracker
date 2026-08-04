@@ -126,3 +126,4 @@ and let it guess.
 
 After deploying, verify in a browser — not just that the build succeeded. Check a
 lesson renders its content and a quiz question answers correctly.
+
