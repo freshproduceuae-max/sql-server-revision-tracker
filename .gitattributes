@@ -1,0 +1,11 @@
+# Store and check out LF everywhere.
+#
+# Without this, git checks out CRLF on Windows while the build scripts write LF,
+# so simply rebuilding the generated files shows ~23 modified markdown files that
+# differ only in line endings. On a fresh clone that reads as "I broke something".
+* text=auto eol=lf
+
+# Generated — mark so diffs stay readable in review.
+quiz-bank.json     linguist-generated=true
+projects/**        linguist-generated=true
+sources/**         linguist-generated=true linguist-vendored=true
