@@ -400,3 +400,35 @@ constraint is acceptable; *unguarded* duplication is not.
   on a project is often written outside the project and therefore never backed up.
 - When two copies are genuinely unavoidable, make divergence fail loudly rather
   than trusting discipline to keep them aligned.
+
+
+---
+
+## 18. A guard that only works on the machine that wrote it
+
+**Found by:** actually cloning the repo into a temp directory and following
+`HANDOFF.md` as a new agent would, rather than assuming the handoff worked.
+
+**What broke:** `check-docs-sync.js` exited non-zero on a clean clone with
+"0 drifted, 2 missing". It compares the working copies of `CLAUDE.md` and
+`LESSONS-LEARNED.md` — which live one directory *above* the repo — against the
+tracked copies. In a clone those working copies do not exist, so the guard
+treated a perfectly correct state as a failure. A new agent's first act would
+have been debugging a false alarm.
+
+**Fix:** a missing working copy above the repo is now normal (the tracked file is
+authoritative there); only a copy that exists *and* disagrees fails.
+
+**Second bug, caused while fixing the first:** removing the `missing` counter left
+a `${missing}` reference in the failure message, so the drift path would have
+thrown a ReferenceError instead of printing its message. The drift test still
+"passed" because a crash also exits non-zero — the exit code was right for the
+wrong reason.
+
+**Rules:**
+- Test a handoff by performing it. Clone into a fresh directory and follow your
+  own instructions; assumptions about what a clone contains are usually wrong.
+- Guards must pass in every environment they will run in, not just the one that
+  authored them. A guard that cries wolf on a clean checkout gets deleted.
+- An exit code alone does not prove a failure path works. Check the *message* —
+  a crash and a clean failure are indistinguishable by exit status.

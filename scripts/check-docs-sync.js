@@ -26,9 +26,11 @@ for (const name of DOCS) {
   const live = path.join(ROOT, name);      // auto-loaded / hand-edited copy
   const tracked = path.join(REPO, name);   // versioned copy
 
+  // In a fresh clone there is no working copy above the repo — the tracked file
+  // is the only one, which is correct, not an error. Only a copy that exists and
+  // disagrees is a problem.
   if (!fs.existsSync(live)) {
-    console.error(`MISSING working copy: ${live}`);
-    missing++;
+    console.log(`no working copy above the repo for ${name} — tracked copy is authoritative`);
     continue;
   }
   const liveText = fs.readFileSync(live, 'utf8');
@@ -49,8 +51,8 @@ for (const name of DOCS) {
   drifted++;
 }
 
-if (missing || drifted) {
-  console.error(`\n${drifted} drifted, ${missing} missing. Run: node scripts/check-docs-sync.js --fix`);
+if (drifted) {
+  console.error(`\n${drifted} drifted. Run: node scripts/check-docs-sync.js --fix`);
   process.exit(1);
 }
 console.log('docs in sync');

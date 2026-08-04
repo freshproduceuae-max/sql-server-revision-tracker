@@ -10,7 +10,9 @@ C:\Projects\Academy\
 ├─ sql-server-revision-tracker\    ← the deployed app (git repo, Vercel root)
 │  ├─ index.html                   ← the entire app: one file, plain JS, no build
 │  ├─ quiz-bank.json               ← generated — do not hand-edit
+│  ├─ sources\                     ← quiz source data (rebuilds are self-contained)
 │  ├─ scripts\                     ← build tooling (tracked in git)
+│  ├─ HANDOFF.md                   ← read this first if you are new here
 │  ├─ data-validation-lab\         ← lesson markdown, served from GitHub raw
 │  └─ vercel.json
 ├─ _scratch\                       ← local scratchpad (untracked, see below)
@@ -82,10 +84,13 @@ catch-all silently serves index.html instead — see LESSONS-LEARNED entry 13.
 
 `quiz-bank.json` is generated. To regenerate it:
 
+Sources are committed under `sources/`, so this works from a clean clone with no
+files from outside the repo:
+
 ```bash
 cd sql-server-revision-tracker
-node scripts/build-quiz-bank.js "../_archive/quiz-app/quizzes.json" ../_scratch/out-sql.json
-node scripts/build-quiz-bank.js "C:/Projects/Studying Assistant/ai_supercourse_quizzes.json" ../_scratch/out-ai.json all
+node scripts/build-quiz-bank.js sources/quizzes-sql-powerbi.json ../_scratch/out-sql.json
+node scripts/build-quiz-bank.js sources/quizzes-ai-supercourse.json ../_scratch/out-ai.json all
 node scripts/merge-quiz-banks.js quiz-bank.json ../_scratch/out-sql.json ../_scratch/out-ai.json
 ```
 
@@ -114,8 +119,11 @@ cd sql-server-revision-tracker
 npx vercel --prod --yes
 ```
 
-`.vercel/project.json` pins team `team_cxU0NZtjMsnBvJprrVzn43Xo` and project
-`prj_LAGdEd02pyHEQbY8WWjKqAKVjx7t`, so don't run `vercel link` and let it guess.
+`.vercel/` is gitignored, so a fresh clone has no project link. Run
+`node scripts/setup-vercel.js` to pin team `team_cxU0NZtjMsnBvJprrVzn43Xo` and
+project `prj_LAGdEd02pyHEQbY8WWjKqAKVjx7t` — never run interactive `vercel link`
+and let it guess.
 
 After deploying, verify in a browser — not just that the build succeeded. Check a
 lesson renders its content and a quiz question answers correctly.
+
