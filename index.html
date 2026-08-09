@@ -77,9 +77,9 @@ button{font-family:inherit;cursor:pointer;}
 .tracks{max-width:720px;margin:20px auto 0;padding:0 20px;display:flex;gap:10px;}
 .track-tab{flex:1;text-align:center;padding:13px 10px;border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text-mid);font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;text-decoration:none;transition:all .15s ease;}
 .track-tab:hover{filter:brightness(1.04);}
+/* Active-tab accent comes from the track registry as an inline style, so a new
+   track needs no CSS of its own. This rule is only the fallback. */
 .track-tab.active{border-color:#58CC02;color:#58CC02;background:rgba(88,204,2,.08);box-shadow:0 3px 0 rgba(70,163,2,.35);}
-.track-tab.active.dv{border-color:#1CB0F6;color:#1CB0F6;background:rgba(28,176,246,.08);box-shadow:0 3px 0 rgba(24,153,214,.35);}
-.track-tab.active.quiz{border-color:#FF9600;color:#FF9600;background:rgba(255,150,0,.09);box-shadow:0 3px 0 rgba(230,130,0,.35);}
 @media(max-width:560px){.tracks{flex-wrap:wrap;}.track-tab{font-size:13px;padding:11px 8px;}}
 
 /* ── Hero ── */
@@ -672,19 +672,20 @@ function toggleProject(id){
 /* ── Routing ── */
 function getHashRoute(){
   const h=window.location.hash.slice(1);
-  if(!h||h==='/') return {view:'main',track:'credit'};
-  if(h==='track/dv') return {view:'main',track:'dv'};
-  if(h==='track/quiz') return {view:'main',track:'quiz'};
-  if(h==='track/credit') return {view:'main',track:'credit'};
+  if(!h||h==='/') return {view:'main',track:DEFAULT_TRACK};
+  // Any registered track id routes itself; unknown ids fall through to the default.
+  const t=h.match(/^track\/(.+)$/);
+  if(t&&TRACK[t[1]]) return {view:'main',track:t[1]};
   const q=h.match(/^quiz\/(\d+)\/(\d+)$/);
   if(q) return {view:'quiz',qi:+q[1],li:+q[2]};
-  const pt=h.match(/^projects\/(credit|dv)$/);
-  if(pt) return {view:'projtl',ptrack:pt[1]};
+  // Only tracks that registered a projPrefix have a checkpoint timeline.
+  const pt=h.match(/^projects\/(.+)$/);
+  if(pt&&TRACK[pt[1]]&&TRACK[pt[1]].hasProjects) return {view:'projtl',ptrack:pt[1]};
   const pr=h.match(/^project\/(P-[A-Z]+-\d+)$/);
   if(pr) return {view:'project',id:pr[1]};
   const m=h.match(/^lesson\/(.+)$/);
   if(m) return {view:'lesson',id:m[1]};
-  return {view:'main',track:'credit'};
+  return {view:'main',track:DEFAULT_TRACK};
 }
 
 /* ── Quiz session ──
@@ -871,17 +872,39 @@ function renderQuizSession(route){
   </div>`;
 }
 
+/* ── Track registry ──
+   The single source of truth for tracks. Routing, the nav tabs, the checkpoint
+   routes and the project-id → track mapping are all DERIVED from this list, so
+   adding a track means adding one entry here plus its hero/path body in
+   renderApp — not edits in five separate places.
+   `projPrefix` is what makes a track own checkpoint projects; omit it (as Quiz
+   Practice does) and no checkpoint route is generated for that track. */
+const TRACKS=[
+  {id:'credit',name:'Credit Risk',    tab:'💼 Credit Risk',    col:'#58CC02',dark:'#46A302',projPrefix:'P-CR-'},
+  {id:'dv',    name:'Data Validation',tab:'🧪 Data Validation',col:'#1CB0F6',dark:'#1899D6',projPrefix:'P-DV-'},
+  {id:'quiz',  name:'Quiz Practice',  tab:'🎯 Quiz Practice',  col:'#FF9600',dark:'#E68200'}
+];
+const TRACK={};
+TRACKS.forEach(t=>{t.home='track/'+t.id;t.hasProjects=!!t.projPrefix;TRACK[t.id]=t;});
+const DEFAULT_TRACK='credit';
+/* Which track owns a checkpoint id, by its registered prefix. */
+function trackForProject(id){
+  const t=TRACKS.find(t=>t.projPrefix&&String(id).indexOf(t.projPrefix)===0);
+  return t?t.id:DEFAULT_TRACK;
+}
+/* Hex → rgba so a track's accent can tint backgrounds without extra CSS. */
+function hexRgba(hex,a){
+  const n=parseInt(hex.slice(1),16);
+  return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;
+}
+
 /* ── Checkpoint pages (full pages, no dialogs) ── */
-const TRACK_META={
-  credit:{name:'Credit Risk',col:'#58CC02',dark:'#46A302',home:'track/credit'},
-  dv:{name:'Data Validation',col:'#1CB0F6',dark:'#1899D6',home:'track/dv'}
-};
 function coversLabel(p){
   if(p.groups)return p.groups.join(' + ');
   return p.covers[0]+(p.covers.length>1?'–'+p.covers[p.covers.length-1]:'');
 }
 function renderProjTimeline(route){
-  const meta=TRACK_META[route.ptrack];
+  const meta=TRACK[route.ptrack];
   const header=`
   <div style="background:${meta.col};color:#fff;padding:20px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;">
     <a href="#${meta.home}" style="background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;text-decoration:none;">← ${esc(meta.name)} path</a>
@@ -917,9 +940,9 @@ function renderProjectPage(route){
   const p=(S.projIndex||[]).find(x=>x.id===route.id);
   // On an unknown id, infer the track from the id itself rather than defaulting to
   // credit — otherwise a bad DV link sends you back to the wrong track's timeline.
-  const guessed=/^P-DV-/.test(route.id)?'dv':'credit';
+  const guessed=trackForProject(route.id);
   const track=p?p.track:guessed;
-  const meta=TRACK_META[track];
+  const meta=TRACK[track];
   const header=`
   <div style="background:${meta.col};color:#fff;padding:20px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;">
     <a href="#projects/${track}" style="background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;text-decoration:none;">← Timeline</a>
@@ -1075,11 +1098,15 @@ function renderApp(){
 
   const isDvTrack=route.track==='dv';
   const isQuizTrack=route.track==='quiz';
+  // Tabs are generated from the registry; the active tab carries its own accent
+  // inline, so adding a track needs no new markup and no new CSS.
   const tabs=`
   <div class="tracks">
-    <a class="track-tab${!isDvTrack&&!isQuizTrack?' active':''}" href="#track/credit">💼 Credit Risk</a>
-    <a class="track-tab${isDvTrack?' active dv':''}" href="#track/dv">🧪 Data Validation</a>
-    <a class="track-tab${isQuizTrack?' active quiz':''}" href="#track/quiz">🎯 Quiz Practice</a>
+    ${TRACKS.map(t=>{
+      const on=route.track===t.id;
+      const accent=on?` style="border-color:${t.col};color:${t.col};background:${hexRgba(t.col,.08)};box-shadow:0 3px 0 ${hexRgba(t.dark,.35)};"`:'';
+      return `<a class="track-tab${on?' active':''}"${accent} href="#${t.home}">${esc(t.tab)}</a>`;
+    }).join('')}
   </div>`;
 
   let hero,path;
