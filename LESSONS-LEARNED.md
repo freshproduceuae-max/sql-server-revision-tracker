@@ -432,3 +432,70 @@ wrong reason.
   authored them. A guard that cries wolf on a clean checkout gets deleted.
 - An exit code alone does not prove a failure path works. Check the *message* —
   a crash and a clean failure are indistinguishable by exit status.
+
+---
+
+## 20. Two agents, one working tree
+
+**Looked like:** the working tree was clean and level with origin at the start of
+the session — verified. An hour later, `git checkout -b feature/...` reported
+success, and `git status` immediately showed seven uncommitted changes to files
+I had never touched, including a staged deletion.
+
+**First hypothesis, wrong:** that the changes were somehow leftovers, and that
+creating a branch was a safe local act with nothing to undo. Both wrong, and the
+second one is the dangerous one.
+
+**Actually was:** a second agent was working in the same directory. `git checkout -b`
+moved HEAD off *its* branch (`chore/remove-redundancies`) and carried its
+uncommitted work onto mine. Separate agent sessions are not separate
+workspaces — the working tree and HEAD are one piece of shared mutable state.
+Had I committed, its half-finished work would have landed in my PR. Had it run
+`git status` in that window, it would have seen a branch it never created.
+
+**Fix:** `git reflog` showed the real sequence and named the branch I had moved
+it off — information `git status` cannot recover after the fact. Checked back to
+that branch, deleted the stray one, confirmed all seven changes intact. Then
+`git worktree add` for a second checkout with its own directory and its own
+HEAD, sharing history but nothing mutable.
+
+**Rules:**
+- Before any branch operation, run `git status` and check it matches what you
+  expect. "It was clean when I started" is not a current fact.
+- If another agent might be active, use `git worktree add` rather than
+  `checkout -b`. Worktrees are what isolation actually looks like.
+- `git reflog` is the recovery tool when HEAD has been moved unexpectedly. It
+  records the branch you came *from*; nothing else does.
+- Restoring shared state you disturbed comes before continuing your own task,
+  even when your change is unrelated and your task is approved.
+
+---
+
+## 21. A stale screenshot is not evidence of a live mismatch
+
+**Looked like:** a scheduled task the user wanted gone. The MCP tool reported it
+deleted and its list empty; a screenshot of the Routines UI showed it still
+Active with a daily 9 AM schedule. The two views also disagreed *before*
+deletion — MCP said `enabled: false, "Manual only"`, the UI said Active, daily.
+
+**First hypothesis, wrong:** two separate stores, with the MCP view not
+authoritative. I reported that as an unresolved discrepancy and wrote it into
+the session handoff as a warning for the next agent to chase.
+
+**Actually was:** one store. The task had run earlier that afternoon, seen that
+the PR it was nagging about was merged, and disabled itself per its own
+instructions — it just failed to complete the deletion. The screenshot predated
+that self-disable by hours. Nothing disagreed; one observation was simply older
+than the other.
+
+**Fix:** re-checked current state, then went back and corrected the handoff
+entry rather than leaving the alarming version in place.
+
+**Rules:**
+- Every observation carries a timestamp, including ones handed to you. Before
+  concluding two systems disagree, establish that both readings are *current*.
+- A screenshot is a claim about the past, not the present.
+- When you record a suspected problem in a handoff and it later resolves, go
+  back and correct the entry. An inherited false warning costs the next reader
+  real time — the same failure mode this file's own deploy notes had before
+  entry 10 corrected them.
