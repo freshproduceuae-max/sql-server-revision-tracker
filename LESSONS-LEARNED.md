@@ -7,6 +7,33 @@ wrong — the wrong turn is usually the valuable part.
 Format for each entry: what it looked like → what actually caused it → the fix →
 the rule to carry forward.
 
+## Maintaining this file
+
+**Adding to it means revising it too, not only appending.** An append-only log
+decays: entries quietly stop describing how the code actually works, and a reader
+cannot tell which are current. When later work bears on an existing entry, update
+that entry in place with a **"Since this was written"** note saying what changed —
+whether the lesson was applied, extended, narrowed, or superseded by a better
+answer. If an entry turns out to be wrong, correct it rather than adding a
+contradicting one; a stale lessons file is worse than none, which already happened
+once with the deploy notes before entry 10 fixed them.
+
+**Cross-reference.** Several entries here are the same failure wearing different
+clothes, and that is the most useful thing about them:
+
+- **1, 2, 3, 13** — something returned `200` and looked fine while being wrong.
+  Wrong branch, SPA fallback, missing `builds` entry.
+- **12, 16, 18** — drift between two representations of the same thing, or a
+  guard validating the wrong source.
+- **1, 6, 21** — confidently reporting a state that was never true: content
+  "unavailable" that existed, a lesson "not found" that had not loaded yet, a
+  task "still running" that had already stopped.
+- **14, 15, 16, 18** — a fix that was incomplete, or that introduced a worse bug
+  than the one it closed.
+
+When you add an entry, say which family it belongs to. When you can't place it,
+that is worth noticing — it may be a genuinely new class of problem.
+
 ---
 
 ## 1. "Vercel is broken" — it was a git branch that didn't exist
@@ -25,6 +52,22 @@ the branch in all URLs.
 **Rule:** Before blaming the platform, `curl` the exact URL the app requests. A
 platform is guilty far less often than a wrong path. Reproduce the failure at the
 smallest possible layer first.
+
+**Since this was written — the root cause is now designed out, not just fixed.**
+The deeper problem was never the wrong branch name; it was that content lived on
+a *different commit* from the app that referenced it, so the two could drift with
+nothing to catch it. Credit Risk and DV still fetch from GitHub raw on
+`claude/credit-risk-academy` and remain exposed to this. The Business Analysis
+track deliberately does not: its markdown ships in this repo and loads from this
+origin (`./business-analysis/…`), so app and content move together and a wrong
+path fails at build time rather than silently at runtime.
+
+**Standing rule for new content:** serve it from the same commit as the app. Only
+use a cross-branch raw URL when there is a reason that outweighs this entry, and
+write the reason down. Note the trap this creates for the two legacy tracks —
+`claude/credit-risk-academy` is load-bearing at runtime and must never be deleted
+or merged away, which is not obvious from looking at it. See also entries 16 and
+20 on drift between representations.
 
 ---
 
@@ -119,6 +162,23 @@ explicit error state with a retry action instead of silently re-trying forever.
 **Rule:** Any render that can trigger a fetch needs a guard for in-flight *and*
 failed states. A missing failure state becomes an infinite loop.
 
+**Since this was written — applied a third time, and it exposed a second failure
+mode the original entry missed.** `loadBaIndex()` follows the pattern
+(`!S.baIndex && !S.baLoading && !S.baError`), which is the third loader to do so
+after lessons and the quiz bank. But the guard alone is not sufficient: a deep
+link to `#lesson/BA07-T03` on a cold load arrives *before* the chapter index
+exists, so the lookup fails and the page renders "Lesson not found" for content
+that is present and fine.
+
+That is the same false negative as entry 1 — the app confidently reporting
+missing content that was never missing — reached by a different route. The fix is
+a third state: not loaded yet is distinct from loaded and absent.
+
+**Extended rule:** a fetch-triggering render needs *three* states, not two —
+in-flight, failed, and **not-yet-attempted**. Any lookup against data that loads
+asynchronously must distinguish "not there" from "not here yet", or it will lie
+about missing content on every deep link.
+
 ---
 
 ## 7. Silent drops hide data-shape variance
@@ -206,6 +266,26 @@ correct by rebuilding and diffing against the live artefact.
 **Rule:** Avoid `Math.random()`/`Date.now()` in build scripts. Determinism turns
 "I think this still works" into a diff.
 
+**Since this was written — three build scripts now hold to this, and it paid off
+twice in one session.** `build-projects.js`, the quiz build and
+`build-ba-lessons.js` are all deterministic. Two checks that were only possible
+because of it:
+
+- Rebuilding `quiz-bank.json` from `sources/` produced a **byte-identical** file
+  to the committed one, which proved in seconds that a repo audit had not
+  disturbed the generated artefacts. Without determinism that is an afternoon of
+  eyeballing diffs.
+- Running `build-ba-lessons.js` twice produced identical output across all 42
+  lessons, confirming the generator has no hidden ordering or timestamp
+  dependency before it was ever committed.
+
+**The rule has a corollary worth stating:** determinism is only useful if you
+actually run the rebuild-and-diff. It is cheap, it is fast, and it is the only
+thing that distinguishes "the generated files are current" from "the generated
+files were current when someone last looked". Do it before claiming a build is
+clean. Related: entry 16 on single sources of truth, and entry 18 on guards that
+only work in one environment.
+
 ---
 
 ## Working with Codex
@@ -246,6 +326,29 @@ entry, not just a route. And the check that catches it is always the same: compa
 sizes and content-types across several URLs. This is now the third time identical
 byte counts revealed a fallback — treat it as the first thing to check after any
 deploy that adds assets.
+
+**Since this was written — the first time this entry prevented the bug instead of
+explaining it.** Adding the Business Analysis track created a fourth static
+folder. `business-analysis/**` went into `builds` in the same commit as the
+folder, because this entry said to, so there was no broken deploy to diagnose.
+That is the return on writing these up.
+
+Two refinements learned from doing it:
+
+- **The `builds` entry is only half of it.** `.vercelignore` can also exclude a
+  folder, and an ignored folder fails exactly the same way — SPA fallback, `200`,
+  wrong content-type. Check both when adding assets.
+- **A `404` on a path that does not exist is not evidence of this bug.** While
+  auditing the live site I probed `projects/portfolio.csv` and
+  `projects/projects.json`, got HTML back, and briefly took it for a fallback
+  failure. Neither file exists — the fallback was behaving correctly. Probe
+  filenames you have confirmed on disk, or you will diagnose a bug that is not
+  there. This is entry 21's rule in another costume: check the observation before
+  trusting the conclusion.
+
+Adding a track is now a documented checklist in `CLAUDE.md` with this step on it.
+Entries 2, 3 and this one are the same defect at three different moments; read
+them as one lesson.
 
 ---
 
@@ -372,6 +475,30 @@ checkpoint generator. The costly cases were never "no check existed" — a check
 existed and was validating the wrong thing, or the right thing against the wrong
 source.
 
+**Since this was written — there is a better answer than the one recorded here.**
+The fix above keeps two representations and reconciles them by parsing
+`index.html` at build time. That works, but it is a *guard against* drift, not an
+absence of drift: the id space still exists twice, and the parser is now a
+dependency that will break if the constants are ever reformatted.
+
+The Business Analysis track avoids the problem instead of policing it. Its
+chapter and lesson list exists once, in `business-analysis/index.json`, generated
+alongside the markdown. `index.html` contains no BA ids at all — the app fetches
+the index at runtime and builds its id space from it. There is nothing to drift,
+so there is nothing to validate.
+
+**Refined rule, superseding the first bullet above for new content:** prefer one
+representation, fetched, over two representations reconciled by a parser. Reach
+for build-time validation only when a single source genuinely is not possible —
+as with `UNIT_DEFS` and `DV_GROUPS`, which are already baked into the app and
+cannot be extracted without a larger change.
+
+`build-ba-lessons.js` still guards the invariant that remains: that `index.json`
+and the markdown on disk agree on every id, since a lesson in one but not the
+other is an unreachable page or a dead link, and both fail silently. That is the
+right shape for a guard — it checks a relationship that cannot be designed away,
+rather than compensating for a duplication that could have been.
+
 
 ---
 
@@ -469,6 +596,20 @@ HEAD, sharing history but nothing mutable.
 - Restoring shared state you disturbed comes before continuing your own task,
   even when your change is unrelated and your task is approved.
 
+**Family:** this one does not fit the existing clusters, which is why it is worth
+flagging. Every earlier entry is about a *representation* being wrong — a wrong
+path, a stale copy, two sources disagreeing. This is the first about **shared
+mutable state with a second writer you cannot see**. Expect more of this class as
+more agents run concurrently, and note that the usual defences do not help:
+determinism, guards and validation all assume you are the only one writing.
+
+**Open risk this leaves.** The other agent's work still exists only as
+uncommitted changes in the main working tree, on a branch with zero commits. That
+is one stray `git checkout` from being lost, and nothing in the repo protects it.
+Uncommitted work is not backed up by anything — see entry 19 on git's safety net
+stopping at the repo boundary, which is the same blind spot from the other
+direction.
+
 ---
 
 ## 21. A stale screenshot is not evidence of a live mismatch
@@ -499,3 +640,15 @@ entry rather than leaving the alarming version in place.
   back and correct the entry. An inherited false warning costs the next reader
   real time — the same failure mode this file's own deploy notes had before
   entry 10 corrected them.
+
+**Family: confidently reporting a state that was never true** — with entries 1
+and 6. Entry 1 said content was unavailable when it existed. Entry 6's extension
+says a lesson is "not found" when it merely has not loaded. This one said a task
+was running when it had already stopped. In all three the system was not broken;
+the *observation* was, and the confident wording of the error is what sent
+everyone looking in the wrong place.
+
+**The cheap general defence:** before reporting that something is missing, wrong
+or inconsistent, ask what would be true if the observation were simply out of
+date — and spend the ten seconds it costs to re-check. That single question would
+have prevented all three.
