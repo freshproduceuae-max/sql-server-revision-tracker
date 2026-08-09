@@ -98,6 +98,46 @@ Output is deterministic — same inputs produce a byte-identical file. The merge
 step refuses to write if any free-text question survived or an answer is missing
 from its choices.
 
+## Adding a track
+
+Tracks are **data-driven**. `TRACKS` in `index.html` is the single source of
+truth — routing, the nav tabs, the checkpoint routes, the active-tab accent and
+the project-id → track mapping are all derived from it. Adding a track is one
+registry entry plus its hero/path body in `renderApp`, not edits in five places.
+
+A track owns checkpoint projects only if it declares a `projPrefix`. Omit it (as
+Quiz Practice and Business Analysis do) and no `#projects/<id>` route is
+generated for that track.
+
+Per-track hero/path bodies stay bespoke on purpose — they render genuinely
+different shapes (modules, techniques, chapters, question banks).
+
+## Business Analysis track
+
+Content follows the BABOK v3 chapter and task structure — 10 chapters, 42
+lessons. **Only the structure is taken from BABOK, which is factual published
+information; all lesson text is original writing for this app.** The BABOK Guide
+itself is IIBA copyright and this site is public, so never paste its text in.
+
+`business-analysis/` is generated — do not hand-edit it:
+
+```bash
+node scripts/build-ba-lessons.js
+```
+
+Output is deterministic, and the script fails if `index.json` and the markdown on
+disk disagree about any lesson id.
+
+Unlike Credit Risk and DV, **BA content loads from this origin, not GitHub raw**
+(`./business-analysis/…`). That is deliberate: cross-branch content URLs are what
+caused LESSONS-LEARNED entry 1. The chapter list is fetched from
+`business-analysis/index.json` at runtime rather than duplicated into
+`index.html`, so the two cannot drift (entry 16).
+
+`business-analysis/**` has a `builds` entry in `vercel.json`. Without it the SPA
+catch-all serves `index.html` with a `200` and every lesson silently breaks —
+entry 13.
+
 ## Rules this app already follows — don't regress them
 
 - **No free-text questions.** There is no text-entry UI. `fill_in_the_blank` and
