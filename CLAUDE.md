@@ -100,10 +100,19 @@ from its choices.
 
 ## Adding a track
 
-Tracks are **data-driven**. `TRACKS` in `index.html` is the single source of
-truth — routing, the nav tabs, the checkpoint routes, the active-tab accent and
-the project-id → track mapping are all derived from it. Adding a track is one
-registry entry plus its hero/path body in `renderApp`, not edits in five places.
+Tracks are **data-driven for navigation**. `TRACKS` in `index.html` is the single
+source of truth for routing, the nav tabs, the checkpoint routes, the active-tab
+accent and the project-id → track mapping. Those five no longer need touching.
+
+Be accurate about what that does and does not cover. A track that brings its own
+content source still needs three explicit additions beyond the registry entry:
+
+1. its hero/path body in `renderApp`
+2. a branch in `contentUrl()` if lesson content lives somewhere new
+3. a loader plus its trigger in `render()`, if the content is fetched
+
+Those are genuine per-track dispatch, not leftover hardcoding — but "adding a
+track is one registry entry" overstates it, and Codex was right to say so.
 
 A track owns checkpoint projects only if it declares a `projPrefix`. Omit it (as
 Quiz Practice and Business Analysis do) and no `#projects/<id>` route is

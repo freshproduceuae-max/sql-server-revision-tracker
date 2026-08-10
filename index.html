@@ -584,7 +584,10 @@ function buildDvFlat(){
 function isDvId(id){return /^G\d\d-T\d\d$/.test(id)||DV_EXERCISES.some(x=>x.id===id);}
 function isBaId(id){return /^BA\d\d-T\d\d$/.test(id);}
 function contentUrl(id){
-  if(CONTENT_URLS[id])return CONTENT_URLS[id];
+  // hasOwnProperty, not a bare lookup: CONTENT_URLS is an object literal, so
+  // contentUrl('constructor') would otherwise return Object.prototype.constructor
+  // and hand a function to fetch(). Same inherited-key bug class as TRACK above.
+  if(Object.prototype.hasOwnProperty.call(CONTENT_URLS,id))return CONTENT_URLS[id];
   const g=id.match(/^(G\d\d)-T\d\d$/);
   if(g){const grp=DV_GROUPS.find(x=>x.code===g[1]);if(grp)return DV_BASE+grp.folder+'/'+id+'.md';}
   const ex=DV_EXERCISES.find(x=>x.id===id);
@@ -802,7 +805,11 @@ function quizNext(){
 
 function renderQuizSession(route){
   if(S.quizLoading)return `<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
-  if(!S.quizBank)return `<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable.<button onclick="retryQuizBank()" class="quiz-btn" style="margin-top:12px;max-width:200px;">Try again</button></div>`;
+  // Only quizError means failed. A cold deep link to #quiz/0/0 has no bank and no
+  // fetch started yet, and must show pending rather than "unavailable" (entry 6).
+  if(!S.quizBank)return S.quizError
+    ? `<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable.<button onclick="retryQuizBank()" class="quiz-btn" style="margin-top:12px;max-width:200px;">Try again</button></div>`
+    : `<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
   const quiz=S.quizBank.quizzes[route.qi];
   const lesson=quiz&&quiz.lessons[route.li];
   if(!lesson)return `<div style="padding:40px;text-align:center;color:var(--text-mid)">Quiz lesson not found</div>`;
@@ -924,7 +931,11 @@ const TRACKS=[
   {id:'ba',    name:'Business Analysis',tab:'📐 Business Analysis',col:'#CE82FF',dark:'#A568CC'},
   {id:'quiz',  name:'Quiz Practice',  tab:'🎯 Quiz Practice',  col:'#FF9600',dark:'#E68200'}
 ];
-const TRACK={};
+/* Object.create(null), not {} — a plain object inherits from Object.prototype,
+   so TRACK['constructor'] and TRACK['toString'] would be truthy and a hash like
+   #track/constructor would validate as a real track. A null-prototype map has no
+   inherited keys, so lookups are exactly the registry and nothing else. */
+const TRACK=Object.create(null);
 TRACKS.forEach(t=>{t.home='track/'+t.id;t.hasProjects=!!t.projPrefix;TRACK[t.id]=t;});
 const DEFAULT_TRACK='credit';
 /* Which track owns a checkpoint id, by its registered prefix. */
@@ -954,7 +965,10 @@ function renderProjTimeline(route){
     </div>
   </div>`;
   if(S.projLoading)return header+`<div class="loading"><div class="spinner"></div>Loading checkpoints…</div>`;
-  if(!S.projIndex)return header+`<div class="loading" style="color:var(--text-lo)">Checkpoints unavailable.<button class="proj-complete-btn" onclick="retryProjIndex()">Try again</button></div>`;
+  // Same three-state rule: a cold #projects/credit deep link is pending, not failed.
+  if(!S.projIndex)return header+(S.projError
+    ? `<div class="loading" style="color:var(--text-lo)">Checkpoints unavailable.<button class="proj-complete-btn" onclick="retryProjIndex()">Try again</button></div>`
+    : `<div class="loading"><div class="spinner"></div>Loading checkpoints…</div>`);
   const list=S.projIndex.filter(p=>p.track===route.ptrack);
   const done=list.filter(p=>S.completed[p.id]).length;
   const items=list.map(p=>{
@@ -1169,7 +1183,11 @@ function renderApp(){
       return topBar+tabs+`<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
     }
     if(!S.quizBank){
-      return topBar+tabs+`<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryQuizBank()">Try again</button></div>`;
+      // Pending until quizError says otherwise — same fix as the BA track body.
+      if(S.quizError){
+        return topBar+tabs+`<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryQuizBank()">Try again</button></div>`;
+      }
+      return topBar+tabs+`<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
     }
     const flat=buildQuizFlat();
     let fi=flat.findIndex(n=>!completed[n.id]);
@@ -1197,11 +1215,16 @@ function renderApp(){
     return topBar+tabs+hero+path;
   }
   if(route.track==='ba'){
-    if(S.baLoading){
-      return topBar+tabs+`<div class="loading"><div class="spinner"></div>Loading chapters…</div>`;
-    }
+    // Three states, not two. render() starts the fetch only AFTER this returns,
+    // so on a cold load baLoading is still false and baIndex is still null —
+    // testing "not loading and no index" as failure flashes "unavailable" before
+    // the spinner appears. Only baError means failed; anything else is pending.
+    // This is entry 6's own extended rule, broken here first.
     if(!S.baIndex){
-      return topBar+tabs+`<div class="loading" style="color:var(--text-lo)">Business Analysis chapters unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryBaIndex()">Try again</button></div>`;
+      if(S.baError){
+        return topBar+tabs+`<div class="loading" style="color:var(--text-lo)">Business Analysis chapters unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryBaIndex()">Try again</button></div>`;
+      }
+      return topBar+tabs+`<div class="loading"><div class="spinner"></div>Loading chapters…</div>`;
     }
     const flat=buildBaFlat();
     let fi=flat.findIndex(n=>!completed[n.id]);

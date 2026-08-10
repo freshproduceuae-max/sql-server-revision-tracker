@@ -179,6 +179,58 @@ in-flight, failed, and **not-yet-attempted**. Any lookup against data that loads
 asynchronously must distinguish "not there" from "not here yet", or it will lie
 about missing content on every deep link.
 
+**And then I broke that rule, in the same session, two files away.** Codex review
+caught it before merge. Having written the three-state rule above for the *lesson
+deep link*, I wrote the *track page* with two states:
+
+```
+if(S.baLoading){ spinner }
+if(!S.baIndex){ error }
+```
+
+`render()` starts the fetch only *after* `renderApp()` returns, so on a cold load
+`baLoading` is still `false` and `baIndex` is still `null` — which lands on the
+error branch. The page flashed "chapters unavailable — check your connection"
+before the spinner, on a perfectly healthy load. Exactly the false negative this
+entry is about, in the code written to obey this entry.
+
+**Why the rule did not save me:** I applied it where I had just been bitten (the
+deep link) and not where the same asynchrony existed (the page). The ordering
+detail is the trap — `!loading && !data` reads like "failed" and is actually
+"nothing has started yet".
+
+**Sharpened rule:** test the *failure branch's condition*, not just its message.
+`if(!data)` as an error case is wrong whenever the load is kicked off after
+render. Make failed depend on an explicit error flag and nothing else — `if(!data)
+{ if(error) show error; show spinner }` — so pending can never be misread as
+broken. Grep for `!S.` conditions that render an error and check each one.
+
+**Meta-lesson:** a rule written in this file is not a rule applied in the code.
+The gap between the two is the most likely place for the next bug, because
+writing it up creates the feeling of having handled it.
+
+**Then the audit found three more, all pre-existing.** Grepping `if(!S.` error
+branches as the sharpened rule prescribes turned up the identical two-state
+defect in code written long before this session:
+
+| Where | Cold-load symptom |
+|---|---|
+| `renderQuizSession` | `#quiz/0/0` deep link showed "Quiz bank unavailable" |
+| `renderProjTimeline` | `#projects/credit` deep link showed "Checkpoints unavailable" |
+| quiz track body | `#track/quiz` flashed "unavailable — check your connection" |
+
+Every one of them told a user with a perfectly good connection to check their
+connection. All three now test the error flag explicitly and fall back to
+pending. Verified in both directions: five cold paths render a spinner and never
+the error, and four genuine failures still render the error with a retry.
+
+**What this says about the rule:** it was worth more as a *grep* than as a
+sentence. The bug is invisible when reading a single branch — `if(!data) show
+error` looks obviously correct — and obvious the moment you ask "what is true
+before the fetch starts?". When you write a rule here, write the search that
+finds its violations, then run it across the whole file rather than only the code
+you happen to be touching.
+
 ---
 
 ## 7. Silent drops hide data-shape variance
