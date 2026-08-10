@@ -144,6 +144,36 @@ a lesson and check its content renders, and answer one quiz question.
 
 ---
 
+## Rolling back
+
+**Know which half you are in before you delete anything.** Git covers only what
+lives inside this repo. `_scratch/` and `_archive/` are above it and untracked —
+no tag, reset or checkout will bring them back.
+
+```bash
+git ls-files <path>        # empty output = untracked = no undo. Back it up first.
+```
+
+Tracked files — restore from the rollback tag:
+
+```bash
+git restore --source=pre-cleanup-2026-08-07 -- <path>   # one file back
+git reset --hard pre-cleanup-2026-08-07                 # whole repo back
+```
+
+Untracked areas — restore from the backup taken before the cleanup:
+
+```bash
+# C:\Projects\Academy-backup\untracked-2026-08-07.zip  (41 files: _scratch + _archive)
+```
+
+Before any destructive pass: tag the last known-good commit, zip anything
+untracked to a location **outside** the project, and verify the zip by reading it
+back (count files in the archive against files on disk). See LESSONS-LEARNED
+entry 19.
+
+---
+
 ## Known gaps
 
 - **Progress is browser-local.** Completion state lives in `localStorage` under

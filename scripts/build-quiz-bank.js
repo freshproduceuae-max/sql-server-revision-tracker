@@ -3,9 +3,11 @@
 // Usage (run from the repo root):
 //   node scripts/build-quiz-bank.js <source.json> <out.json> [all]
 //
-// The two sources this was built from, and how the live bank was produced:
-//   node scripts/build-quiz-bank.js ../_archive/quiz-app/quizzes.json  out-sql.json
-//   node scripts/build-quiz-bank.js "C:/Projects/Studying Assistant/ai_supercourse_quizzes.json" out-ai.json all
+// Both sources are committed under sources/, so this rebuilds from a clean clone
+// with no files from outside the repo. How the live bank is produced:
+//   node scripts/build-quiz-bank.js sources/quizzes-sql-powerbi.json  ../_scratch/out-sql.json
+//   node scripts/build-quiz-bank.js sources/quizzes-ai-supercourse.json ../_scratch/out-ai.json all
+//   node scripts/merge-quiz-banks.js quiz-bank.json ../_scratch/out-sql.json ../_scratch/out-ai.json
 // The live quiz-bank.json is those two outputs concatenated on `quizzes`.
 //
 // Two jobs:
