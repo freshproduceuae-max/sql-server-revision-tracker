@@ -698,6 +698,35 @@ plus a tag on the last known-good commit for the tracked half.
 verify a backup by reading it back, not by the fact the command exited 0
 (entry 2: HTTP 200 does not mean it worked).
 
+**Since this was written — the same blind spot has a third form: squash merges
+break "is this branch merged?".** After squash-merging this very branch, the
+routine cleanup check said it was *not* merged:
+
+```bash
+git merge-base --is-ancestor <branch-tip> origin/<default>   # false
+git branch --merged origin/<default>                          # branch absent
+```
+
+Both are correct and both are misleading. A squash merge replays the *content*
+as one new commit; the original commits never become ancestors. So the branch
+looks unmerged forever, while every line of it has already shipped.
+
+The trap runs both ways. Trust the check and you keep dead branches indefinitely.
+Distrust it and delete the branch, and you drop the last ref to those commits —
+they become unreachable and are eventually garbage collected. The content
+survives in the squashed commit either way, but the original authorship and
+history do not.
+
+**Rules:**
+- After a squash merge, verify by *content*, not ancestry: check the actual files
+  or lines landed at HEAD. `--is-ancestor` answers a different question than the
+  one you are asking.
+- Do not delete a squash-merged branch on the strength of "the content is in" if
+  you care about preserving whose commit it was. Here the branch is deliberately
+  kept, because it holds another session's only real commit.
+- This belongs with entries 19 and 20: three different ways of assuming git is
+  protecting something it is not.
+
 ---
 
 ## 20. Two agents, one working tree
