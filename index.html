@@ -255,6 +255,40 @@ button{font-family:inherit;cursor:pointer;}
 .proj-complete-btn{margin-top:12px;padding:13px 26px;border:none;border-radius:14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:#fff;background:#58CC02;box-shadow:0 4px 0 #46A302;cursor:pointer;}
 .proj-complete-btn.undo{background:var(--chip-bg);color:var(--text-lo);box-shadow:none;}
 
+/* ── Study plan ── */
+.plan-page{max-width:1100px;margin:0 auto;padding:26px 20px 60px;}
+.plan-hero{max-width:720px;margin:0 auto;padding:10px 0 6px;}
+.plan-kicker{font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;}
+.plan-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:30px;color:var(--text-hi);line-height:1.15;text-wrap:balance;margin-top:2px;}
+.plan-sub{font-size:15px;color:var(--text-mid);margin-top:6px;font-weight:600;line-height:1.5;text-wrap:pretty;}
+.plan-track-row{margin-top:18px;}
+.plan-overview{margin-top:18px;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:16px 18px;}
+.plan-overview-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:8px;}
+.plan-overview-lbl{font-weight:800;font-size:13px;color:var(--text-hi);}
+.plan-overview-cnt{font-weight:800;font-size:13px;color:#58CC02;font-variant-numeric:tabular-nums;}
+.plan-overview-track{height:14px;border-radius:8px;background:var(--track-bg);overflow:hidden;}
+.plan-overview-fill{height:100%;border-radius:8px;transition:width .35s ease;}
+.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:24px;}
+.plan-card{background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:18px 18px 16px;box-shadow:0 4px 0 rgba(0,0,0,.03);}
+.plan-card.primary{border-color:var(--plan-accent,#58CC02);box-shadow:0 5px 0 var(--plan-shadow,#46A302);}
+.plan-card.habit{border-color:#FF9600;box-shadow:0 5px 0 #E68200;}
+.plan-card h2{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:22px;color:var(--text-hi);margin:2px 0 4px;}
+.plan-card .plan-card-sub{font-size:14px;color:var(--text-mid);font-weight:600;line-height:1.5;}
+.plan-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
+.plan-card-meta{font-weight:800;font-size:12.5px;color:var(--text-lo);text-align:right;white-space:nowrap;}
+.plan-next{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--chip-bg);color:var(--text-hi);font-size:13.5px;font-weight:700;line-height:1.45;}
+.plan-next a{color:inherit;text-decoration:none;font-weight:800;}
+.plan-next a:hover{text-decoration:underline;}
+.plan-lessons{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.plan-lesson{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:2px solid var(--border);border-radius:14px;background:var(--bg);color:var(--text-body);text-decoration:none;}
+.plan-lesson:hover{border-color:#84D8FF;background:rgba(28,176,246,.06);}
+.plan-lesson.done{border-color:#58CC02;background:rgba(88,204,2,.12);}
+.plan-lesson-code{flex-shrink:0;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:var(--text-hi);min-width:42px;}
+.plan-lesson-body{flex:1;min-width:0;}
+.plan-lesson-title{display:block;font-weight:700;font-size:13.5px;line-height:1.45;text-wrap:pretty;}
+.plan-lesson-sub{display:block;margin-top:2px;font-size:11.5px;font-weight:700;color:var(--text-lo);}
+.plan-empty{margin-top:18px;padding:40px 20px;border:2px dashed var(--border);border-radius:18px;text-align:center;color:var(--text-mid);font-weight:700;}
+
 /* ── Confetti ── */
 .confetti-piece{position:fixed;top:-12px;width:10px;height:14px;z-index:999;pointer-events:none;animation:confettiFall linear forwards;}
 @keyframes confettiFall{to{transform:translateY(105vh) rotate(720deg);opacity:0;}}
@@ -711,10 +745,206 @@ function toggleProject(id){
   if(c[id])confetti();
 }
 
+function defaultPlanTrack(){
+  return TRACKS.find(t=>t.projPrefix)?.id||TRACKS[0].id;
+}
+function planTrackId(id){
+  return TRACK[id]?id:defaultPlanTrack();
+}
+function makeLessonLookup(){
+  const lookup=new Map();
+  buildFlat().forEach(n=>lookup.set(n.id,n));
+  buildDvFlat().forEach(n=>lookup.set(n.id,n));
+  if(S.baIndex)buildBaFlat().forEach(n=>lookup.set(n.id,n));
+  return lookup;
+}
+function planLessonFromLookup(lookup,id){
+  const n=lookup.get(id);
+  return {
+    id,
+    code:n?n.data.code:id,
+    title:n?n.data.title:id,
+    href:`#lesson/${id}`,
+    done:!!S.completed[id]
+  };
+}
+function buildPlanBlocks(trackId){
+  const meta=TRACK[trackId];
+  if(!meta)return null;
+  const lookup=makeLessonLookup();
+  if(meta.projPrefix){
+    if(!S.projIndex)return null;
+    const blocks=S.projIndex.filter(p=>p.track===trackId).sort((a,b)=>a.n-b.n).map(p=>{
+      const lessons=p.covers.map(id=>planLessonFromLookup(lookup,id));
+      const doneCount=lessons.filter(l=>l.done).length;
+      const nextLesson=lessons.find(l=>!l.done)||lessons[0]||null;
+      return {
+        id:p.id,
+        title:p.title,
+        subtitle:p.tagline,
+        lessons,
+        doneCount,
+        total:lessons.length,
+        nextLesson,
+        kind:'checkpoint'
+      };
+    });
+    const total=blocks.reduce((a,b)=>a+b.total,0);
+    const done=blocks.reduce((a,b)=>a+b.doneCount,0);
+    const current=blocks.find(b=>b.doneCount<b.total)||blocks[blocks.length-1]||null;
+    return {meta,kind:'checkpoint',kindLabel:'Checkpoint block',blocks,total,done,current};
+  }
+  if(meta.chapterIndex){
+    const chapters=meta.chapterIndex();
+    if(!chapters)return null;
+    const blocks=chapters.map((ch,ui)=>{
+      const lessons=ch.lessons.map(l=>planLessonFromLookup(lookup,l.id));
+      const doneCount=lessons.filter(l=>l.done).length;
+      const nextLesson=lessons.find(l=>!l.done)||lessons[0]||null;
+      return {
+        id:ch.code,
+        title:ch.name,
+        subtitle:ch.desc||`Chapter ${ui+1}`,
+        lessons,
+        doneCount,
+        total:lessons.length,
+        nextLesson,
+        kind:'chapter'
+      };
+    });
+    const total=blocks.reduce((a,b)=>a+b.total,0);
+    const done=blocks.reduce((a,b)=>a+b.doneCount,0);
+    const current=blocks.find(b=>b.doneCount<b.total)||blocks[blocks.length-1]||null;
+    return {meta,kind:'chapter',kindLabel:'BABOK chapter',blocks,total,done,current};
+  }
+  return null;
+}
+function buildQuizHabit(){
+  if(!S.quizBank)return null;
+  const flat=buildQuizFlat();
+  if(!flat.length)return null;
+  const next=flat.find(n=>!S.completed[n.id])||flat[0];
+  const qz=S.quizBank.quizzes[next.qi];
+  const lesson=qz&&qz.lessons[next.li];
+  const questions=(lesson&&lesson.questions)||[];
+  const done=!!S.completed[next.id];
+  return {
+    title:qz?qz.quiz_name:'Quiz Practice',
+    subtitle:`${lesson?lesson.lesson_name:next.data.title} · ${next.data.count} questions`,
+    meta:done?'Review':'Today',
+    doneCount:done?1:0,
+    total:1,
+    nextLesson:{
+      id:next.id,
+      code:String(next.li+1),
+      title:lesson?lesson.lesson_name:next.data.title,
+      href:`#quiz/${next.qi}/${next.li}`,
+      done,
+      subtitle:`${questions.length} questions`
+    },
+    lessons:[{
+      id:next.id,
+      code:String(next.li+1),
+      title:lesson?lesson.lesson_name:next.data.title,
+      href:`#quiz/${next.qi}/${next.li}`,
+      done,
+      subtitle:`${questions.length} questions`
+    }]
+  };
+}
+function renderPlanLesson(lesson){
+  return `<a class="plan-lesson${lesson.done?' done':''}" href="${lesson.href}">
+    <div class="plan-lesson-code">${esc(lesson.code)}</div>
+    <div class="plan-lesson-body">
+      <span class="plan-lesson-title">${esc(lesson.title)}</span>
+      <span class="plan-lesson-sub">${esc(lesson.subtitle|| (lesson.done?'Done':'Open'))}</span>
+    </div>
+  </a>`;
+}
+function renderPlanCard(block,meta,label,ctaLabel){
+  if(!block)return '';
+  const next=block.nextLesson||block.lessons[0]||null;
+  const allDone=block.doneCount===block.total&&block.total>0;
+  return `<div class="plan-card ${label==='Daily habit'?'habit':'primary'}" style="--plan-accent:${meta.col};--plan-shadow:${meta.dark};">
+    <div class="plan-card-head">
+      <div>
+        <div class="plan-kicker">${esc(label)}</div>
+        <h2>${esc(block.title)}</h2>
+        <div class="plan-card-sub">${esc(block.subtitle||'')}</div>
+      </div>
+      <div class="plan-card-meta">${block.doneCount} / ${block.total} done</div>
+    </div>
+    <div class="plan-next">${esc(allDone?'Review':'Next')} up: ${next?`<a href="${next.href}">${esc(next.title)}</a>`:'nothing left'}</div>
+    <div class="plan-lessons">${block.lessons.map(renderPlanLesson).join('')}</div>
+  </div>`;
+}
+function renderStudyPlan(route){
+  const trackId=planTrackId(route.ptrack);
+  const meta=TRACK[trackId];
+  const blocks=buildPlanBlocks(trackId);
+  const habit=buildQuizHabit();
+  const topBar=`
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-icon">A</div>
+      <span class="logo-name">Analyst Academy</span>
+      <span style="font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;">Study Plan</span>
+    </div>
+    <div class="topbar-stats">
+      <div class="stat"><div class="stat-pip" style="background:#FF9600;box-shadow:0 2px 0 #E68200;"></div><span class="stat-val">${S.streak}</span><span class="stat-lbl">day streak</span></div>
+      <div class="stat"><div class="stat-gem" style="background:#1CB0F6;box-shadow:0 2px 0 #1899D6;"></div><span class="stat-val">${Object.keys(S.completed).length}</span><span class="stat-lbl">items done</span></div>
+    </div>
+  </div>`;
+  const selector=`
+  <div class="tracks plan-track-row">
+    ${TRACKS.map(t=>{
+      const on=trackId===t.id;
+      const accent=on?` style="border-color:${t.col};color:${t.col};background:${hexRgba(t.col,.08)};box-shadow:0 3px 0 ${hexRgba(t.dark,.35)};"`:'';
+      return `<a class="track-tab${on?' active':''}"${accent} href="#plan/${t.id}">${esc(t.tab)}</a>`;
+    }).join('')}
+  </div>`;
+  if(S.projError||S.baError||S.quizError){
+    const retries=[];
+    if(S.projError)retries.push('<button class="proj-complete-btn" onclick="retryProjIndex()">Retry checkpoints</button>');
+    if(S.baError)retries.push('<button class="proj-complete-btn" onclick="retryBaIndex()">Retry BA index</button>');
+    if(S.quizError)retries.push('<button class="proj-complete-btn" onclick="retryQuizBank()">Retry quiz bank</button>');
+    return topBar+`<div class="plan-page"><div class="plan-empty">Study plan unavailable. Check your connection.<div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">${retries.join('')}</div></div></div>`;
+  }
+  if(S.projLoading||S.baLoading||S.quizLoading||!S.projIndex||!S.baIndex||!S.quizBank){
+    return topBar+`<div class="plan-page"><div class="loading"><div class="spinner"></div>Loading study plan…</div></div>`;
+  }
+  const blockCard=blocks?renderPlanCard(blocks.current,meta,'Primary track'):`<div class="plan-card primary" style="--plan-accent:${meta.col};--plan-shadow:${meta.dark};"><div class="plan-kicker">Primary track</div><h2>${esc(meta.name)}</h2><div class="plan-card-sub">This track does not have a derived study-plan source yet.</div></div>`;
+  const total=blocks?blocks.total:0;
+  const done=blocks?blocks.done:0;
+  const pct=total?Math.round(done/total*100):0;
+  const habitCard=habit?renderPlanCard(habit,TRACK.quiz,'Daily habit'):'<div class="plan-card habit"><div class="plan-kicker">Daily habit</div><h2>Quiz Practice</h2><div class="plan-card-sub">Quiz bank unavailable.</div></div>';
+  const overview=blocks?`
+    <div class="plan-overview">
+      <div class="plan-overview-head"><span class="plan-overview-lbl">${esc(meta.name)} progress</span><span class="plan-overview-cnt">${done} / ${total}</span></div>
+      <div class="plan-overview-track"><div class="plan-overview-fill" style="width:${pct}%;background:${meta.col};"></div></div>
+    </div>`:'';
+  return topBar+`
+  <div class="plan-page">
+    <div class="plan-hero">
+      <div class="plan-kicker">Landing page</div>
+      <div class="plan-title">Study Plan</div>
+      <div class="plan-sub">One primary content block and one daily quiz habit, both derived from existing lessons. Change the track in the URL hash or with the selector below.</div>
+      ${selector}
+      ${overview}
+    </div>
+    <div class="plan-grid">
+      ${blockCard}
+      ${habitCard}
+    </div>
+  </div>`;
+}
+
 /* ── Routing ── */
 function getHashRoute(){
   const h=window.location.hash.slice(1);
-  if(!h||h==='/') return {view:'main',track:DEFAULT_TRACK};
+  if(!h||h==='/') return {view:'plan',ptrack:defaultPlanTrack()};
+  const pl=h.match(/^plan(?:\/(.+))?$/);
+  if(pl) return {view:'plan',ptrack:planTrackId(pl[1]||defaultPlanTrack())};
   // Any registered track id routes itself; unknown ids fall through to the default.
   const t=h.match(/^track\/(.+)$/);
   if(t&&TRACK[t[1]]) return {view:'main',track:t[1]};
@@ -928,7 +1158,11 @@ function renderQuizSession(route){
 const TRACKS=[
   {id:'credit',name:'Credit Risk',    tab:'💼 Credit Risk',    col:'#58CC02',dark:'#46A302',projPrefix:'P-CR-'},
   {id:'dv',    name:'Data Validation',tab:'🧪 Data Validation',col:'#1CB0F6',dark:'#1899D6',projPrefix:'P-DV-'},
-  {id:'ba',    name:'Business Analysis',tab:'📐 Business Analysis',col:'#CE82FF',dark:'#A568CC'},
+  // chapterIndex: how the Study Plan blocks a track that owns no checkpoints.
+  // Declared here rather than tested by id in the plan code, so a future
+  // checkpoint-less track works by adding a registry entry, not by editing plan
+  // logic. A track needs exactly one of projPrefix or chapterIndex to appear.
+  {id:'ba',    name:'Business Analysis',tab:'📐 Business Analysis',col:'#CE82FF',dark:'#A568CC',chapterIndex:()=>S.baIndex},
   {id:'quiz',  name:'Quiz Practice',  tab:'🎯 Quiz Practice',  col:'#FF9600',dark:'#E68200'}
 ];
 /* Object.create(null), not {} — a plain object inherits from Object.prototype,
@@ -1108,6 +1342,7 @@ function renderApp(){
   // BA chapter index is still being fetched.
   Object.keys(completed).forEach(k=>{if(isBaId(k))xp+=BA_XP;});
 
+  if(route.view==='plan')return renderStudyPlan(route);
   if(route.view==='quiz')return renderQuizSession(route);
   if(route.view==='projtl')return renderProjTimeline(route);
   if(route.view==='project')return renderProjectPage(route);
@@ -1309,6 +1544,11 @@ function renderApp(){
 function render(){
   document.getElementById('app').innerHTML=renderApp();
   const route=getHashRoute();
+  if(route.view==='plan'){
+    if(!S.projIndex&&!S.projLoading&&!S.projError)loadProjIndex();
+    if(!S.baIndex&&!S.baLoading&&!S.baError)loadBaIndex();
+    if(!S.quizBank&&!S.quizLoading&&!S.quizError)loadQuizBank();
+  }
   if(route.view==='lesson'&&!S.mdContent[route.id]&&!S.mdLoading[route.id]&&!S.mdError[route.id]){
     loadLesson(route.id);
   }
