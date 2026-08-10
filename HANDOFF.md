@@ -10,13 +10,19 @@ Live: **https://credit-risk-academy.vercel.app**
 
 ## What this is
 
-A Duolingo-style learning app with three tracks:
+A Duolingo-style learning app with four tracks:
 
 | Track | Content | Where the content lives |
 |---|---|---|
 | 💼 Credit Risk | 47 modules + 7 case studies | GitHub raw, **separate branch** (see below) |
 | 🧪 Data Validation | 236 techniques / 19 groups + 15 exercises | `data-validation-lab/` in this repo |
+| 📐 Business Analysis | 42 lessons / 10 chapters | `business-analysis/` in this repo (**generated**) |
 | 🎯 Quiz Practice | 2,079 questions, 11 banks | `quiz-bank.json` (generated) |
+
+Tracks are **data-driven**: `TRACKS` in `index.html` drives routing, the nav tabs,
+the checkpoint routes and the tab accent. Adding a track is a registry entry plus
+its hero/path body — and, if it brings its own content source, a `contentUrl()`
+branch and a loader. See `CLAUDE.md` for the full checklist.
 
 Plus **23 checkpoint projects** (13 credit, 10 data validation) that unlock only
 when the lessons they consolidate are marked complete.
@@ -67,9 +73,9 @@ content-type and size after adding assets, not just the status code.
 
 ## Regenerating what is generated
 
-`quiz-bank.json` and everything under `projects/` are **build outputs — never
-hand-edit them.** Sources are committed under `sources/`, so the repo can rebuild
-itself with no external files.
+`quiz-bank.json`, everything under `projects/`, and everything under
+`business-analysis/` are **build outputs — never hand-edit them.** Sources are
+committed under `sources/`, so the repo can rebuild itself with no external files.
 
 ```bash
 # Quiz bank (2,079 questions across 11 banks)
@@ -79,7 +85,18 @@ node scripts/merge-quiz-banks.js quiz-bank.json ../_scratch/o1.json ../_scratch/
 
 # Checkpoint projects (briefs + synthetic portfolio CSV)
 node scripts/build-projects.js
+
+# Business Analysis lessons (42 lessons + index.json)
+node scripts/build-ba-lessons.js
 ```
+
+**Business Analysis content loads from this origin, not GitHub raw.** That is
+deliberate — cross-branch content URLs caused entry 1 in `LESSONS-LEARNED.md`.
+Its chapter list is fetched from the generated `business-analysis/index.json` at
+runtime rather than duplicated into `index.html`, so the two cannot drift. Only
+the BABOK chapter *structure* is used, which is factual published information;
+all lesson prose is original, because the BABOK Guide is IIBA copyright and this
+site is public.
 
 Builds are **deterministic** — same inputs give a byte-identical file. That is
 deliberate: it means you can verify a change by rebuilding and diffing against
@@ -98,10 +115,17 @@ went wrong once.
 
 | Command | Fails when |
 |---|---|
-| `node scripts/lint-markdown.js data-validation-lab projects` | a fence is indented inside a list, or left unclosed |
-| `node scripts/check-docs-sync.js` | `CLAUDE.md`/`LESSONS-LEARNED.md` drift from their versioned copies (`--fix` repairs) |
+| `node scripts/lint-markdown.js data-validation-lab projects business-analysis` | a fence is indented inside a list, or left unclosed |
+| `node scripts/check-docs-sync.js` | `CLAUDE.md`/`LESSONS-LEARNED.md` drift from their versioned copies |
 | `node scripts/build-projects.js` | checkpoint coverage breaks, or a checkpoint waits on an id the app cannot complete |
+| `node scripts/build-ba-lessons.js` | `business-analysis/index.json` and the markdown on disk disagree about any lesson id |
 | `node scripts/merge-quiz-banks.js …` | a free-text question survives, an answer is missing from its choices, or an option looks truncated |
+
+`check-docs-sync.js` is safe to run from any worktree — it locates the live docs
+via git rather than assuming the repo's parent directory. `--fix` makes the root
+copy win; `--from-repo` makes the tracked copy win. It **refuses** `--fix` when
+the tracked copy is the newer of the two, so editing `CLAUDE.md` on a branch
+cannot be silently reverted by someone running `--fix` out of habit.
 
 `build-projects.js` parses the module and technique id spaces **out of
 `index.html`**, so it validates against ids the app can really mark complete.
@@ -141,6 +165,36 @@ The Vercel MCP connector drops out often — the CLI is the reliable path. Confi
 
 **Verify in a browser after deploying, not just that the build succeeded.** Open
 a lesson and check its content renders, and answer one quiz question.
+
+---
+
+## Rolling back
+
+**Know which half you are in before you delete anything.** Git covers only what
+lives inside this repo. `_scratch/` and `_archive/` are above it and untracked —
+no tag, reset or checkout will bring them back.
+
+```bash
+git ls-files <path>        # empty output = untracked = no undo. Back it up first.
+```
+
+Tracked files — restore from the rollback tag:
+
+```bash
+git restore --source=pre-cleanup-2026-08-07 -- <path>   # one file back
+git reset --hard pre-cleanup-2026-08-07                 # whole repo back
+```
+
+Untracked areas — restore from the backup taken before the cleanup:
+
+```bash
+# C:\Projects\Academy-backup\untracked-2026-08-07.zip  (41 files: _scratch + _archive)
+```
+
+Before any destructive pass: tag the last known-good commit, zip anything
+untracked to a location **outside** the project, and verify the zip by reading it
+back (count files in the archive against files on disk). See LESSONS-LEARNED
+entry 19.
 
 ---
 

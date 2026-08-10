@@ -30,9 +30,17 @@ clothes, and that is the most useful thing about them:
   task "still running" that had already stopped.
 - **14, 15, 16, 18** — a fix that was incomplete, or that introduced a worse bug
   than the one it closed.
+- **19, 20** — the limits of what git protects. Untracked paths have no undo
+  (19); a working tree shared with another session is mutable state nobody owns
+  (20). Both are cases where "it's in git" was assumed and was not true.
 
 When you add an entry, say which family it belongs to. When you can't place it,
 that is worth noticing — it may be a genuinely new class of problem.
+
+Entries 19 and 20 were written independently by two sessions working in the same
+repo at the same time, and arrived at the same blind spot from opposite ends —
+one deleting untracked files, one moving a shared HEAD. That convergence is the
+strongest signal in this file about where the next failure will come from.
 
 ---
 
@@ -276,24 +284,41 @@ If light formatting is wanted, handle backticks only and leave `*` alone.
 
 ---
 
-## 10. Deploying: MCP first, CLI as a real fallback
+## 10. Deploying: the target matters more than the tool
 
-**Supersedes the older claim that the CLI is the problem.** Both paths are valid;
-the failure mode is *guessing the target*, not the tool.
+**Looked like:** Deploys to Vercel failed across several sessions while
+`index.html` worked fine locally. All the friction was environmental — `gh` and
+`vercel` installed but not picked up on `PATH`, terminals needing a reopen before
+a `PATH` change registered, inconsistent Node/npm state on Windows, and no
+certainty about which team or project the CLI would actually target. None of it
+was a bug in the app; the *delivery mechanism* was failing, not the content.
 
-- The Vercel MCP connector drops out regularly (it was dead for most of this
-  session). Don't wait on it.
-- The CLI works when you: confirm `npx vercel whoami` is authenticated **first**,
-  pin the target by writing `.vercel/project.json` with the known org/project IDs
-  rather than running interactive `vercel link`, and use `--prod --yes` so nothing
-  waits on a prompt.
+**First hypothesis — wrong: "the CLI is the point of failure."** A deploy through
+the Vercel MCP connector then succeeded, passing file content straight from the
+conversation with explicit team and project IDs, `framework: null` and
+`target: production` — no PATH, no CLI install, no git remote auth. The
+conclusion drawn at the time was that MCP sidesteps local fragility, so the CLI
+should be avoided.
 
-**Resolved from the earlier doc:** the production alias
-`credit-risk-academy.vercel.app` no longer needs manual promotion — a `--prod`
-deploy of the pinned project aliases it automatically.
+**Actually was:** ambiguity about the *deploy target*, not the tool. What made
+that call work was supplying the exact org and project IDs — not the transport.
+The CLI is just as reliable once the target is pinned, and the MCP connector has
+since been disconnected most of the time.
+
+**Fix:** Confirm `npx vercel whoami` is authenticated **first**, pin the target by
+writing `.vercel/project.json` with the known org/project IDs rather than running
+interactive `vercel link` (`scripts/setup-vercel.js` does this), and use
+`--prod --yes` so nothing waits on a prompt. Don't wait on the MCP connector —
+treat it as the optional path, not the required one.
+
+**Also corrected:** the production alias `credit-risk-academy.vercel.app` no
+longer needs manual promotion — a `--prod` deploy of the pinned project aliases
+it automatically.
 
 **Rule:** Verify auth and target before deploying; ambiguity about *where* it
-deploys causes more lost time than the deploy itself.
+deploys costs more time than the deploy itself. And when swapping tools appears
+to fix something, check what actually changed — it is often a parameter you
+supplied, not the tool you supplied it through.
 
 ---
 
@@ -649,6 +674,29 @@ way round. Reading the four lines of the script would have settled it.
   success message is the worst combination available.
 - Before describing what a command does to a user, read it. See entry 21 —
   checking the observation is cheaper than the correction.
+
+
+---
+
+## 19. Git's safety net stops at the repo boundary
+
+**Looked like:** A cleanup pass removing redundant files across the whole project
+felt safe because "git can undo it."
+
+**Actually was:** git tracks only files inside `sql-server-revision-tracker/`.
+`_scratch/` and `_archive/` sit *above* the repo and are untracked, so `git
+checkout`, `git reset --hard` and a rollback tag do nothing for them. Deleting
+there is permanent. Half the deletion targets were in exactly that blind spot.
+
+**Fix:** Before deleting anything, split the targets by what actually protects
+them, then give the unprotected half its own net — here a verified zip outside the
+project (file count in the archive checked against file count on disk, 41 = 41)
+plus a tag on the last known-good commit for the tracked half.
+
+**Rule:** "It's in git" is a claim about a *path*, not a project. Run
+`git ls-files <path>` before trusting it — an untracked path has no undo. And
+verify a backup by reading it back, not by the fact the command exited 0
+(entry 2: HTTP 200 does not mean it worked).
 
 ---
 
