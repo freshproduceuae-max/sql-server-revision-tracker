@@ -885,7 +885,7 @@ function renderStudyPlan(route){
   const habit=buildQuizHabit();
   const topBar=`
   <div class="topbar">
-    <div class="topbar-logo">
+    <a class="topbar-logo" href="#" style="text-decoration:none;color:inherit;" title="Back to Study Plan">
       <div class="logo-icon">A</div>
       <span class="logo-name">Analyst Academy</span>
       <span style="font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;">Study Plan</span>
@@ -903,21 +903,36 @@ function renderStudyPlan(route){
       return `<a class="track-tab${on?' active':''}"${accent} href="#plan/${t.id}">${esc(t.tab)}</a>`;
     }).join('')}
   </div>`;
-  if(S.projError||S.baError||S.quizError){
+  // Degrade per section, not per page. The primary block needs only its own
+  // source and the habit needs only the quiz bank, so a single failed fetch must
+  // not blank a landing page whose other half loaded fine. Only when BOTH halves
+  // are unusable is a whole-page failure honest.
+  const primaryErr=(meta.projPrefix&&S.projError)||(meta.chapterIndex&&S.baError);
+  const habitErr=S.quizError;
+  if(primaryErr&&habitErr){
     const retries=[];
     if(S.projError)retries.push('<button class="proj-complete-btn" onclick="retryProjIndex()">Retry checkpoints</button>');
     if(S.baError)retries.push('<button class="proj-complete-btn" onclick="retryBaIndex()">Retry BA index</button>');
     if(S.quizError)retries.push('<button class="proj-complete-btn" onclick="retryQuizBank()">Retry quiz bank</button>');
     return topBar+`<div class="plan-page"><div class="plan-empty">Study plan unavailable. Check your connection.<div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">${retries.join('')}</div></div></div>`;
   }
-  if(S.projLoading||S.baLoading||S.quizLoading||!S.projIndex||!S.baIndex||!S.quizBank){
-    return topBar+`<div class="plan-page"><div class="loading"><div class="spinner"></div>Loading study plan…</div></div>`;
-  }
-  const blockCard=blocks?renderPlanCard(blocks.current,meta,'Primary track'):`<div class="plan-card primary" style="--plan-accent:${meta.col};--plan-shadow:${meta.dark};"><div class="plan-kicker">Primary track</div><h2>${esc(meta.name)}</h2><div class="plan-card-sub">This track does not have a derived study-plan source yet.</div></div>`;
+  const planPending=el=>`<div class="plan-card"><div class="loading"><div class="spinner"></div>Loading ${el}…</div></div>`;
+  const planFailed=(el,fn)=>`<div class="plan-card"><div class="plan-kicker">Unavailable</div><div class="plan-card-sub">${el} could not load.</div><div style="margin-top:12px;"><button class="proj-complete-btn" onclick="${fn}()">Try again</button></div></div>`;
+  const blockCard=blocks
+    ? renderPlanCard(blocks.current,meta,'Primary track')
+    : primaryErr
+      ? planFailed(esc(meta.name),meta.chapterIndex?'retryBaIndex':'retryProjIndex')
+      : (meta.projPrefix||meta.chapterIndex)
+        ? planPending(esc(meta.name))
+        : `<div class="plan-card primary" style="--plan-accent:${meta.col};--plan-shadow:${meta.dark};"><div class="plan-kicker">Primary track</div><h2>${esc(meta.name)}</h2><div class="plan-card-sub">This track does not have a derived study-plan source yet.</div></div>`;
   const total=blocks?blocks.total:0;
   const done=blocks?blocks.done:0;
   const pct=total?Math.round(done/total*100):0;
-  const habitCard=habit?renderPlanCard(habit,TRACK.quiz,'Daily habit'):'<div class="plan-card habit"><div class="plan-kicker">Daily habit</div><h2>Quiz Practice</h2><div class="plan-card-sub">Quiz bank unavailable.</div></div>';
+  const habitCard=habit
+    ? renderPlanCard(habit,TRACK.quiz,'Daily habit')
+    : habitErr
+      ? planFailed('The quiz bank','retryQuizBank')
+      : planPending('the daily habit');
   const overview=blocks?`
     <div class="plan-overview">
       <div class="plan-overview-head"><span class="plan-overview-lbl">${esc(meta.name)} progress</span><span class="plan-overview-cnt">${done} / ${total}</span></div>
@@ -1397,10 +1412,10 @@ function renderApp(){
 
   const topBar=`
   <div class="topbar">
-    <div class="topbar-logo">
+    <a class="topbar-logo" href="#" style="text-decoration:none;color:inherit;" title="Back to Study Plan">
       <div class="logo-icon">A</div>
       <span class="logo-name">Analyst Academy</span>
-    </div>
+    </a>
     <div class="topbar-stats">
       <div class="stat"><div class="stat-pip" style="background:#FF9600;box-shadow:0 2px 0 #E68200;"></div><span class="stat-val">${streak}</span><span class="stat-lbl">day streak</span></div>
       <div class="stat"><div class="stat-gem" style="background:#1CB0F6;box-shadow:0 2px 0 #1899D6;"></div><span class="stat-val">${xp}</span><span class="stat-lbl">XP</span></div>
