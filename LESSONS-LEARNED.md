@@ -32,7 +32,12 @@ clothes, and that is the most useful thing about them:
   than the one it closed.
 - **19, 20** — the limits of what git protects. Untracked paths have no undo
   (19); a working tree shared with another session is mutable state nobody owns
-  (20). Both are cases where "it's in git" was assumed and was not true.
+  (20); a squash merge makes a fully-shipped branch look unmerged forever (19,
+  extended). All are cases where "it's in git" was assumed and was not true.
+- **20, 22** — shared mutable state with more than one writer. A working tree
+  shared by two sessions (20) and a single `index.html` that only one agent may
+  edit at a time (22) are the same constraint at different scales. This is the
+  family to check first as more work runs concurrently.
 
 When you add an entry, say which family it belongs to. When you can't place it,
 that is worth noticing — it may be a genuinely new class of problem.
@@ -64,18 +69,40 @@ smallest possible layer first.
 **Since this was written — the root cause is now designed out, not just fixed.**
 The deeper problem was never the wrong branch name; it was that content lived on
 a *different commit* from the app that referenced it, so the two could drift with
-nothing to catch it. Credit Risk and DV still fetch from GitHub raw on
-`claude/credit-risk-academy` and remain exposed to this. The Business Analysis
+nothing to catch it. Credit Risk and DV both still fetch from GitHub raw on
+`claude/credit-risk-academy`, **but they are not equally exposed — see the
+correction below.** The Business Analysis
 track deliberately does not: its markdown ships in this repo and loads from this
 origin (`./business-analysis/…`), so app and content move together and a wrong
 path fails at build time rather than silently at runtime.
 
 **Standing rule for new content:** serve it from the same commit as the app. Only
 use a cross-branch raw URL when there is a reason that outweighs this entry, and
-write the reason down. Note the trap this creates for the two legacy tracks —
-`claude/credit-risk-academy` is load-bearing at runtime and must never be deleted
-or merged away, which is not obvious from looking at it. See also entries 16 and
-20 on drift between representations.
+write the reason down.
+
+**Correction — only ONE track actually depends on that branch.** This entry
+lumped Credit Risk and DV together; an audit checked and they are different
+cases:
+
+| Track | Fetched from | Files in this repo | Real exposure |
+|---|---|---|---|
+| Credit Risk | content branch | **none** — 54 URLs, no local copy | genuinely load-bearing |
+| Data Validation | content branch | **251 tracked files** under `data-validation-lab/methods/` | fetches its own in-repo files over the network |
+
+`git ls-files data-validation-lab/methods` returns 251 files, including exactly
+the paths `DV_BASE` requests. So DV is not exposed to cross-commit drift at all —
+the content is right here, on the same commit, merely reached the long way round.
+`HANDOFF.md` already described DV as living "in this repo", so this file and that
+one disagreed, and this one was wrong.
+
+**What that changes:** the standing rule reads as *one track to migrate*, not
+"never touch this branch". DV can be repointed to `./data-validation-lab/methods/`
+with a `builds` entry for it in `vercel.json` (entry 13), which would remove a
+network hop and a branch dependency for 251 files. **Credit Risk cannot** — it has
+no local copy, so `claude/credit-risk-academy` must never be deleted or merged
+away until that content is brought into the repo.
+
+See also entries 16 and 20 on drift between representations.
 
 ---
 
@@ -140,6 +167,26 @@ latent, not live. `scripts/lint-markdown.js` now fails on either pattern so it
 stays that way. Do not claim the parser "handles all code" — it handles the cases
 this content actually contains.
 
+**Since this was written — the number is stale and the guarantee was overstated.**
+
+The Business Analysis track added 42 lesson files, so the linter now scans **318
+local files** (`data-validation-lab projects business-analysis`), still with 0
+occurrences. The old figure survived in two places at once — this entry and the
+header comment of `lint-markdown.js` itself — which is the same two-copies drift
+as entry 16, in documentation rather than code.
+
+**The larger correction: the linter does not cover Credit Risk at all.** It walks
+local directories with `fs.readdirSync`, and the 54 Credit Risk lesson files are
+not in this repo — they are fetched at runtime from the content branch (entry 1).
+So the guard protects the in-repo content only, and just **6 of the 54** credit
+files were ever spot-checked. A fence nested inside a list committed to that
+branch would ship unlinted and render wrong, with nothing to catch it.
+
+**Rule:** when you write "a guard now prevents this", state exactly what it walks.
+A linter that cannot reach half the content is a real guard over a partial
+surface, not a guarantee — and the sentence that omits the boundary is the one a
+future reader will rely on.
+
 ---
 
 ## 5. Never write a raw NUL byte into HTML
@@ -170,10 +217,12 @@ explicit error state with a retry action instead of silently re-trying forever.
 **Rule:** Any render that can trigger a fetch needs a guard for in-flight *and*
 failed states. A missing failure state becomes an infinite loop.
 
-**Since this was written — applied a third time, and it exposed a second failure
+**Since this was written — applied again, and it exposed a second failure
 mode the original entry missed.** `loadBaIndex()` follows the pattern
-(`!S.baIndex && !S.baLoading && !S.baError`), which is the third loader to do so
-after lessons and the quiz bank. But the guard alone is not sufficient: a deep
+(`!S.baIndex && !S.baLoading && !S.baError`), which is the fifth loader to do so
+after lessons, the quiz bank, the project index and project briefs. That the
+pattern was already established in four places and still was not applied to the
+render side is the point, not a detail. But the guard alone is not sufficient: a deep
 link to `#lesson/BA07-T03` on a cold load arrives *before* the chapter index
 exists, so the lookup fails and the page renders "Lesson not found" for content
 that is present and fine.
@@ -231,6 +280,32 @@ Every one of them told a user with a perfectly good connection to check their
 connection. All three now test the error flag explicitly and fall back to
 pending. Verified in both directions: five cold paths render a spinner and never
 the error, and four genuine failures still render the error with a retry.
+
+**And the sweep still missed a fourth — the grep was too narrow.** An audit of
+this very entry found `renderProjectPage` carrying the same defect in a form the
+prescribed search could not see:
+
+```
+if(S.projLoading||!S.projIndex&&!S.projError) return spinner;   // && binds tighter
+if(!p) return "Checkpoint not found";
+```
+
+When the index fetch genuinely **failed**, the first condition was false, so it
+fell through to *"Checkpoint not found"* — no error text, no retry — and
+`render()` will not re-fetch while `projError` is set. The page was permanently
+wrong about a checkpoint that exists.
+
+Two reasons the sweep missed it. The false negative is worded **"not found"**,
+not "unavailable", so a grep for the error wording skipped it. And the bug lived
+in **operator precedence** inside a condition that *looked* three-state, rather
+than in a missing branch. Fixed by parenthesising the pending test and adding the
+real error branch between pending and not-found.
+
+**Sharpened again:** search for the *symptom class*, not the wording — any branch
+reachable after a failed load that tells the user something is missing,
+including "not found", "no results", "none yet" and an empty list. And read the
+precedence of any `||`/`&&` condition that claims to separate pending from
+failed; `a || !b && !c` does not mean what it looks like.
 
 **What this says about the rule:** it was worth more as a *grep* than as a
 sentence. The bug is invisible when reading a single branch — `if(!data) show
@@ -698,6 +773,35 @@ plus a tag on the last known-good commit for the tracked half.
 verify a backup by reading it back, not by the fact the command exited 0
 (entry 2: HTTP 200 does not mean it worked).
 
+**Since this was written — the same blind spot has a third form: squash merges
+break "is this branch merged?".** After squash-merging this very branch, the
+routine cleanup check said it was *not* merged:
+
+```bash
+git merge-base --is-ancestor <branch-tip> origin/<default>   # false
+git branch --merged origin/<default>                          # branch absent
+```
+
+Both are correct and both are misleading. A squash merge replays the *content*
+as one new commit; the original commits never become ancestors. So the branch
+looks unmerged forever, while every line of it has already shipped.
+
+The trap runs both ways. Trust the check and you keep dead branches indefinitely.
+Distrust it and delete the branch, and you drop the last ref to those commits —
+they become unreachable and are eventually garbage collected. The content
+survives in the squashed commit either way, but the original authorship and
+history do not.
+
+**Rules:**
+- After a squash merge, verify by *content*, not ancestry: check the actual files
+  or lines landed at HEAD. `--is-ancestor` answers a different question than the
+  one you are asking.
+- Do not delete a squash-merged branch on the strength of "the content is in" if
+  you care about preserving whose commit it was. Here the branch is deliberately
+  kept, because it holds another session's only real commit.
+- This belongs with entries 19 and 20: three different ways of assuming git is
+  protecting something it is not.
+
 ---
 
 ## 20. Two agents, one working tree
@@ -790,3 +894,56 @@ everyone looking in the wrong place.
 or inconsistent, ask what would be true if the observation were simply out of
 date — and spend the ten seconds it costs to re-check. That single question would
 have prevented all three.
+
+---
+
+## 22. Match the parallelism to the shape of the work, not to the budget
+
+**Looked like:** more compute was authorised mid-project, with an instruction to
+be exhaustive and stop optimising for cost. The obvious reading is "throw many
+agents at everything" — fan out on every task, because fanning out is now free.
+
+**Why that is wrong:** parallelism is not a budget decision, it is a *shape*
+decision. Work splits cleanly only where the parts are genuinely independent.
+This app is **one file**. Two agents editing `index.html` collide exactly the way
+two sessions sharing one working tree collide — see entry 20, which is the same
+failure at a different scale. A file is a shared working tree in miniature, and
+throwing more writers at it makes the collision more likely, not the work faster.
+
+**What was actually done:**
+
+| Work | Shape | Treatment |
+|---|---|---|
+| Design exploration, code audit, review | independent, read-only | **fan out** — rival designs scored against each other, adversarial sweeps |
+| Editing `index.html` | one file, shared mutable state | **strictly sequential**, done by one writer |
+
+Read-only analysis parallelises perfectly because nothing is being mutated.
+Implementation does not. The rule that falls out: **fan out on reading, stay
+serial on writing.**
+
+**The second half — do not improvise through ambiguity.** The request was "a page
+with this chronology of courses and quizzes so I can select them as a package."
+That admits several genuinely different products: committed curriculum data, user
+composed packages, or a pure derived view with no new state. Those are not
+variations of one design; they have different data models and different failure
+modes. The improvising move is to pick the one you thought of first and build it,
+then discover at review that it answered a different question.
+
+The user's framing for this, and it is the better one: **ask without shame.**
+Asking costs a moment; building the wrong thing costs the build, the review, and
+the rebuild. Where the ambiguity is real, either ask outright or generate the
+rival designs and have them judged — do not silently collapse the ambiguity by
+guessing and call it decisiveness.
+
+**Rules:**
+- Decide fan-out by asking "are these parts independent?", never by "how much
+  compute do I have?". A large budget spent on serial work is just a slower way
+  to collide.
+- Anything with one writer and shared mutable state — a single file, a working
+  tree, a deployment target — stays sequential regardless of budget.
+- More resource should raise *depth* first (more adversarial review, more rival
+  designs, more verification) and *breadth* only where the work truly splits.
+- When a request is ambiguous, ask, or explore rivals and judge them. Improvising
+  a single interpretation is the expensive option that feels like the cheap one.
+- Extra capacity is best spent on **checking**, because verification is
+  embarrassingly parallel and this file is mostly a record of unverified claims.

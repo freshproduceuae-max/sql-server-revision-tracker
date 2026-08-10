@@ -200,6 +200,12 @@ entry 19.
 
 ## Known gaps
 
+- **Business Analysis has no checkpoint projects.** Credit Risk has 13 and Data
+  Validation 10; BA has none, because it declares no `projPrefix`. The Study Plan
+  works around this by blocking BA on BABOK chapters instead. Giving BA its own
+  checkpoints is agreed future work — it needs briefs written against the 10
+  chapters and a `projPrefix` added to its registry entry, after which
+  `build-projects.js` will enforce coverage for it like the other two tracks.
 - **Progress is browser-local.** Completion state lives in `localStorage` under
   `crAcademy_v1`. Nothing syncs across devices, and clearing site data wipes it.
   This is the largest open item.
