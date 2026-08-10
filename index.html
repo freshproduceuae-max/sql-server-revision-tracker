@@ -77,9 +77,9 @@ button{font-family:inherit;cursor:pointer;}
 .tracks{max-width:720px;margin:20px auto 0;padding:0 20px;display:flex;gap:10px;}
 .track-tab{flex:1;text-align:center;padding:13px 10px;border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text-mid);font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;text-decoration:none;transition:all .15s ease;}
 .track-tab:hover{filter:brightness(1.04);}
+/* Active-tab accent comes from the track registry as an inline style, so a new
+   track needs no CSS of its own. This rule is only the fallback. */
 .track-tab.active{border-color:#58CC02;color:#58CC02;background:rgba(88,204,2,.08);box-shadow:0 3px 0 rgba(70,163,2,.35);}
-.track-tab.active.dv{border-color:#1CB0F6;color:#1CB0F6;background:rgba(28,176,246,.08);box-shadow:0 3px 0 rgba(24,153,214,.35);}
-.track-tab.active.quiz{border-color:#FF9600;color:#FF9600;background:rgba(255,150,0,.09);box-shadow:0 3px 0 rgba(230,130,0,.35);}
 @media(max-width:560px){.tracks{flex-wrap:wrap;}.track-tab{font-size:13px;padding:11px 8px;}}
 
 /* ── Hero ── */
@@ -345,6 +345,19 @@ const DV_BASE="https://raw.githubusercontent.com/freshproduceuae-max/sql-server-
 const DV_GROUPS=[{"code":"G01","name":"Completeness","desc":"Is the data there? Checks for missing or absent values.","folder":"G01_Completeness","t":["NULL Check","Empty String Check","Whitespace-Only Check","Zero-Length String","Mandatory Field Presence","Conditional Mandatory","At-Least-One Check","Cross-Field Completeness","Partial Record","Header Without Detail","Detail Without Header","Sparse Population Rate"]},{"code":"G02","name":"Uniqueness & Duplicates","desc":"Is there exactly one record per key? No duplicate entries.","folder":"G02_Uniqueness","t":["Primary Key Duplicate","Composite Key Duplicate","Natural Key Duplicate","Full Row Duplicate","Near-Duplicate (Fuzzy)","Cross-Table Uniqueness","Sequence Gap","Sequence Duplicate","Soundex / Phonetic Match","Levenshtein Distance Match"]},{"code":"G03","name":"Referential Integrity","desc":"Do all relationships between tables hold? No broken links.","folder":"G03_Referential_Integrity","t":["Foreign Key Violation","Orphaned Child Record","Circular Reference","Self-Referential Check","Cross-Database FK","Soft-Delete FK Violation","Future Parent Reference","Lookup / Code Table Violation","Many-to-Many Bridge Integrity"]},{"code":"G04","name":"Format & Pattern","desc":"Is the data in the right shape, structure, and format?","folder":"G04_Format_Pattern","t":["Email Format","Phone Number Format","URL Format","IP Address Format (IPv4)","IP Address Format (IPv6)","Credit Card Format","Luhn Algorithm Check","National ID Format (SSN)","National ID Format (NIN/UK)","Passport Number Format","Postal / ZIP Code Format","IBAN Format","BIC / SWIFT Code Format","Date Format Consistency","Time Format","DateTime Format (ISO 8601)","UUID / GUID Format","MAC Address Format","Custom Regex Pattern","Alphanumeric Only","Numeric Only","Alpha Only","No Leading Zeros","Fixed Length","Minimum Length","Maximum Length","Case Format","Encoding / Unicode Check","Control Character Presence","HTML Tag in Plain Text","SQL Injection Characters","BOM (Byte Order Mark)"]},{"code":"G05","name":"Range & Boundary","desc":"Are values within acceptable numerical, date, or statistical limits?","folder":"G05_Range_Boundary","t":["Minimum Value Check","Maximum Value Check","Between Range Check","Exclusive Range Check","Percentage 0–100","Latitude Range","Longitude Range","Age Validity","Year Validity","Quantity Positive","Price Positive","Future Date Violation","Backdated Beyond Limit","Statistical Outlier (3-Sigma)","Statistical Outlier (IQR)","Z-Score Outlier","Ratio Outlier","Integer Overflow Risk","Decimal Precision Mismatch","Negative Percentage","Zero Division Risk"]},{"code":"G06","name":"Consistency","desc":"Does the same fact agree with itself across fields and tables?","folder":"G06_Consistency","t":["Date Sequence","Header-vs-Detail Total","Bidirectional Relationship","Status-Date Consistency","Derived Field Consistency","Aggregation Consistency","Currency Consistency","Cross-System Consistency","Version Consistency","Category-Subcategory Consistency","Gender-Title Consistency","Country-Currency Consistency","Country-Postcode Consistency","Product-Supplier Consistency","Approval-Status Consistency","Quantity-Unit Consistency"]},{"code":"G07","name":"Business Rules","desc":"Domain-specific logic that the data must satisfy.","folder":"G07_Business_Rules","t":["One Active Record Per Key","Minimum Age Requirement","Credit Limit Breach","Inventory Cannot Go Negative","Discount Ceiling","No Self-Approval","No Self-Referencing Hierarchy","Sequence / Workflow Order","Territory Assignment Rule","Tenure Validation","Mandatory Approval Threshold","Return Window Violation","Contractual Date Compliance","Regulatory Compliance Check","Tax Rule Validation","Shipping Restriction"]},{"code":"G08","name":"Reconciliation","desc":"Does the source match the target after a load or transformation?","folder":"G08_Reconciliation","t":["Row Count Match","SUM Match","AVG Match","MIN / MAX Match","EXCEPT Forward","EXCEPT Reverse","Column-Level Value Diff","Checksum / Hash Comparison","Aggregate Totals Comparison","Audit Trail Reconciliation","Pre / Post Load Comparison","File-vs-Database Match","API-vs-Database Match","Report-vs-Source Match","Cross-Environment Match"]},{"code":"G09","name":"Temporal & Timeliness","desc":"Is the data fresh, in the right time order, and without gaps?","folder":"G09_Timeliness","t":["Last Load Date Check","Data Lag / Latency","SLA Breach Detection","Stale Data Detection","Time Series Gap","Duplicate Load Detection","Out-of-Order Records","Record Creation Sequence","Status Timeline Violation","Future Event in History","Event Sequence Skip"]},{"code":"G10","name":"Data Type & Storage","desc":"Is data stored in the correct type and within capacity limits?","folder":"G10_Data_Type_Storage","t":["String Stored as Number","Number Stored as String","Date Stored as String","Boolean Stored Inconsistently","Integer vs Decimal Mismatch","Precision / Scale Mismatch","Truncation Detection","Column Count Mismatch","Schema Change Detection","Data Type Widening Needed"]},{"code":"G11","name":"Profiling","desc":"Understand the shape and quality of data before cleansing.","folder":"G11_Profiling","t":["Column Cardinality","Value Frequency Distribution","NULL Rate by Column","Length Distribution","Pattern Frequency Analysis","Data Density Over Time","Numeric Range Profiling","Uniqueness Ratio","Cross-Column Correlation","Column Dependency Check"]},{"code":"G12","name":"Statistical & Analytical","desc":"Advanced pattern detection using statistical methods.","folder":"G12_Statistical_Analytical","t":["Mean Shift Detection","Variance Anomaly","Trend Break Detection","Seasonality Violation","Ratio Consistency Check","Benford's Law Check","Duplicate Transaction Detection","Round Number Bias"]},{"code":"G13","name":"Hierarchical & Structural","desc":"Integrity of tree structures, parent-child, and graph relationships.","folder":"G13_Hierarchical_Structural","t":["Circular Hierarchy","Maximum Depth Limit","Root Node Exists","Orphaned Hierarchy Node","Leaf Node Validation","Multiple Roots"]},{"code":"G14","name":"Data Warehouse & SCD","desc":"Validation specific to dimensional models and slowly changing dimensions.","folder":"G14_DW_SCD_Specific","t":["SCD2 Date Range Overlap","SCD2 Date Range Gap","SCD2 Current Flag Uniqueness","Surrogate Key Integrity","Fact-to-Dimension Resolution","Grain Violation","Degenerate Dimension Check","Late-Arriving Fact","Early-Arriving Dimension"]},{"code":"G15","name":"ETL & Load Process","desc":"Validation of the pipeline itself, not just the data it moves.","folder":"G15_ETL_Load_Process","t":["Pre-Load Row Count","Post-Load Row Count","Rejected Record Count","Transform Error Log Check","Load Duration Anomaly","Watermark / Bookmark Validation","Duplicate Load Detection","Delta Load Completeness","Full vs Incremental Mismatch","Unexpected New Code Values"]},{"code":"G16","name":"Geospatial","desc":"Validation specific to location, coordinates, and address data.","folder":"G16_Geospatial","t":["Valid Lat-Lng Pair","Coordinates in Ocean","Coordinates Outside Country","Postcode-City Mismatch","Address Geocoding Failure","Coordinate Precision"]},{"code":"G17","name":"Security & Compliance","desc":"Sensitive data, privacy regulations, and security policy enforcement.","folder":"G17_Security_Compliance","t":["PII in Non-Secure Column","Credit Card in Plain Text","Password in Plain Text","Sensitive Data Classification","GDPR Consent Flag Missing","Retention Policy Violation","Masked Data Integrity","Data Sharing Violation"]},{"code":"G18","name":"Cross-System & Integration","desc":"Data consistency across multiple systems, APIs, and environments.","folder":"G18_Cross_System","t":["ERP vs Data Warehouse","CRM vs Marketing Database","Flat File vs Database","API Response vs Persisted","Report vs Database Source","Prod vs UAT Parity","Data Contract Validation","Schema Registry Check"]},{"code":"G19","name":"Cleansing Operations","desc":"The actual fix operations applied after validation identifies issues.","folder":"G19_Cleansing_Operations","t":["Strip Whitespace","Standardise Case","Remove Special Characters","Replace Empty with NULL","Replace NULL with Default","Date String to DATE Type","Remove Currency Symbols","Parse First / Last Name","Standardise Phone Format","Standardise Address","Fix Character Encoding","Correct Known Bad Values","Impute Missing Values","Merge Duplicate Records","Split Combined Fields","Resolve Fuzzy Duplicates","Normalise Units of Measure","Standardise Boolean Values","Apply Business Rule Correction"]}];
 const DV_EXERCISES=[{"id":"M01-E1","title":"NULL in Mandatory Fields","file":"M01_Completeness/M01-E1_null_mandatory_fields.md"},{"id":"M01-E2","title":"Blank & Placeholder Strings","file":"M01_Completeness/M01-E2_blank_placeholder_strings.md"},{"id":"M02-E1","title":"Duplicate Primary Key / Exact Rows","file":"M02_Uniqueness/M02-E1_duplicate_primary_key.md"},{"id":"M02-E2","title":"Fuzzy / Near-Duplicate Detection","file":"M02_Uniqueness/M02-E2_fuzzy_near_duplicates.md"},{"id":"M03-E1","title":"Orphan Records (FK Violations)","file":"M03_Referential_Integrity/M03-E1_orphan_records.md"},{"id":"M03-E2","title":"Self-Referencing Hierarchy","file":"M03_Referential_Integrity/M03-E2_self_referencing_hierarchy.md"},{"id":"M04-E1","title":"Email Address Format","file":"M04_Format_Pattern/M04-E1_email_format.md"},{"id":"M05-E1","title":"Negative, Zero & Out-of-Range Values","file":"M05_Range_Boundary/M05-E1_negative_and_zero_values.md"},{"id":"M05-E2","title":"Date Range & Sequence Violations","file":"M05_Range_Boundary/M05-E2_date_range_violations.md"},{"id":"M06-E1","title":"Calculated Field Mismatch","file":"M06_Consistency/M06-E1_calculated_field_mismatch.md"},{"id":"M06-E2","title":"Cross-Column Logic Violations","file":"M06_Consistency/M06-E2_cross_column_logic.md"},{"id":"M07-E1","title":"Allowed Values / Domain Check","file":"M07_Business_Rules/M07-E1_allowed_values_domain_check.md"},{"id":"M08-E1","title":"Source-to-Target Reconciliation","file":"M08_Reconciliation/M08-E1_source_to_target_count_and_sum.md"},{"id":"M09-E1","title":"Gap & Overlap in Date Sequences","file":"M09_Temporal/M09-E1_gap_and_overlap_detection.md"},{"id":"M10-E1","title":"Outlier Detection (Z-Score + IQR)","file":"M10_Statistical/M10-E1_outlier_detection.md"}];
 const DV_TABLE_CHIPS=['Customers','Orders','Products','Employees','Transactions','SalesTargets'];
+const BA_CHIPS=['Live scenario','The question','Approach','Deliverables','Tools','Interview angle'];
+
+/* Business Analysis content ships in this repo and loads from this origin, not
+   from GitHub raw on a content branch. Credit Risk and DV fetch across branches,
+   and a wrong branch name there is what caused LESSONS-LEARNED entry 1 — every
+   lesson reading "Content unavailable" while the deployment was blamed. Serving
+   BA from the same commit as the app removes that failure mode entirely.
+   The chapter and lesson list is NOT duplicated here: it is read from
+   business-analysis/index.json, which build-ba-lessons.js generates alongside the
+   markdown, so the two cannot drift (LESSONS-LEARNED entry 16). */
+const BA_BASE='./business-analysis/';
+const BA_INDEX_URL=BA_BASE+'index.json';
+const BA_XP=10;
 
 /* Quiz bank ships alongside index.html, so it loads from this origin rather than GitHub. */
 const QUIZ_URL='./quiz-bank.json';
@@ -434,7 +447,8 @@ const UNIT_DEFS=[
 let S={completed:{},streak:1,mdContent:{},mdLoading:{},mdError:{},
        quizBank:null,quizLoading:false,quizError:false,quizScores:{},session:null,
        projIndex:null,projLoading:false,projError:false,
-       projMd:{},projMdLoading:{},projMdError:{}};
+       projMd:{},projMdLoading:{},projMdError:{},
+       baIndex:null,baLoading:false,baError:false};
 const mdCache={};
 
 function loadState(){
@@ -568,13 +582,30 @@ function buildDvFlat(){
   return flat;
 }
 function isDvId(id){return /^G\d\d-T\d\d$/.test(id)||DV_EXERCISES.some(x=>x.id===id);}
+function isBaId(id){return /^BA\d\d-T\d\d$/.test(id);}
 function contentUrl(id){
-  if(CONTENT_URLS[id])return CONTENT_URLS[id];
+  // hasOwnProperty, not a bare lookup: CONTENT_URLS is an object literal, so
+  // contentUrl('constructor') would otherwise return Object.prototype.constructor
+  // and hand a function to fetch(). Same inherited-key bug class as TRACK above.
+  if(Object.prototype.hasOwnProperty.call(CONTENT_URLS,id))return CONTENT_URLS[id];
   const g=id.match(/^(G\d\d)-T\d\d$/);
   if(g){const grp=DV_GROUPS.find(x=>x.code===g[1]);if(grp)return DV_BASE+grp.folder+'/'+id+'.md';}
   const ex=DV_EXERCISES.find(x=>x.id===id);
   if(ex)return DV_BASE+ex.file;
+  if(isBaId(id))return BA_BASE+id+'.md';
   return null;
+}
+/* BA chapters come from the generated index, so the flat list is empty until it
+   loads. Callers must handle that — see the loading guard in the BA render body. */
+function buildBaFlat(){
+  const flat=[];
+  if(!S.baIndex)return flat;
+  S.baIndex.forEach((ch,ui)=>{
+    ch.lessons.forEach((l,li)=>{
+      flat.push({id:l.id,type:'balesson',ui,data:{code:'T'+String(li+1).padStart(2,'0'),title:l.title}});
+    });
+  });
+  return flat;
 }
 
 /* ── Quiz helpers ── */
@@ -637,6 +668,17 @@ async function loadProjIndex(){
   }catch(e){S.projLoading=false;S.projError=true;render();}
 }
 function retryProjIndex(){S.projError=false;loadProjIndex();}
+async function loadBaIndex(){
+  if(S.baIndex||S.baLoading)return;
+  S.baLoading=true;S.baError=false;render();
+  try{
+    const res=await fetch(BA_INDEX_URL);
+    if(!res.ok)throw new Error('fetch failed');
+    S.baIndex=await res.json();
+    S.baLoading=false;render();
+  }catch(e){S.baLoading=false;S.baError=true;render();}
+}
+function retryBaIndex(){S.baError=false;loadBaIndex();}
 async function loadProjMd(id){
   if(S.projMd[id]||S.projMdLoading[id])return;
   S.projMdLoading[id]=true;render();
@@ -672,19 +714,20 @@ function toggleProject(id){
 /* ── Routing ── */
 function getHashRoute(){
   const h=window.location.hash.slice(1);
-  if(!h||h==='/') return {view:'main',track:'credit'};
-  if(h==='track/dv') return {view:'main',track:'dv'};
-  if(h==='track/quiz') return {view:'main',track:'quiz'};
-  if(h==='track/credit') return {view:'main',track:'credit'};
+  if(!h||h==='/') return {view:'main',track:DEFAULT_TRACK};
+  // Any registered track id routes itself; unknown ids fall through to the default.
+  const t=h.match(/^track\/(.+)$/);
+  if(t&&TRACK[t[1]]) return {view:'main',track:t[1]};
   const q=h.match(/^quiz\/(\d+)\/(\d+)$/);
   if(q) return {view:'quiz',qi:+q[1],li:+q[2]};
-  const pt=h.match(/^projects\/(credit|dv)$/);
-  if(pt) return {view:'projtl',ptrack:pt[1]};
+  // Only tracks that registered a projPrefix have a checkpoint timeline.
+  const pt=h.match(/^projects\/(.+)$/);
+  if(pt&&TRACK[pt[1]]&&TRACK[pt[1]].hasProjects) return {view:'projtl',ptrack:pt[1]};
   const pr=h.match(/^project\/(P-[A-Z]+-\d+)$/);
   if(pr) return {view:'project',id:pr[1]};
   const m=h.match(/^lesson\/(.+)$/);
   if(m) return {view:'lesson',id:m[1]};
-  return {view:'main',track:'credit'};
+  return {view:'main',track:DEFAULT_TRACK};
 }
 
 /* ── Quiz session ──
@@ -762,7 +805,11 @@ function quizNext(){
 
 function renderQuizSession(route){
   if(S.quizLoading)return `<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
-  if(!S.quizBank)return `<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable.<button onclick="retryQuizBank()" class="quiz-btn" style="margin-top:12px;max-width:200px;">Try again</button></div>`;
+  // Only quizError means failed. A cold deep link to #quiz/0/0 has no bank and no
+  // fetch started yet, and must show pending rather than "unavailable" (entry 6).
+  if(!S.quizBank)return S.quizError
+    ? `<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable.<button onclick="retryQuizBank()" class="quiz-btn" style="margin-top:12px;max-width:200px;">Try again</button></div>`
+    : `<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
   const quiz=S.quizBank.quizzes[route.qi];
   const lesson=quiz&&quiz.lessons[route.li];
   if(!lesson)return `<div style="padding:40px;text-align:center;color:var(--text-mid)">Quiz lesson not found</div>`;
@@ -871,17 +918,44 @@ function renderQuizSession(route){
   </div>`;
 }
 
+/* ── Track registry ──
+   The single source of truth for tracks. Routing, the nav tabs, the checkpoint
+   routes and the project-id → track mapping are all DERIVED from this list, so
+   adding a track means adding one entry here plus its hero/path body in
+   renderApp — not edits in five separate places.
+   `projPrefix` is what makes a track own checkpoint projects; omit it (as Quiz
+   Practice does) and no checkpoint route is generated for that track. */
+const TRACKS=[
+  {id:'credit',name:'Credit Risk',    tab:'💼 Credit Risk',    col:'#58CC02',dark:'#46A302',projPrefix:'P-CR-'},
+  {id:'dv',    name:'Data Validation',tab:'🧪 Data Validation',col:'#1CB0F6',dark:'#1899D6',projPrefix:'P-DV-'},
+  {id:'ba',    name:'Business Analysis',tab:'📐 Business Analysis',col:'#CE82FF',dark:'#A568CC'},
+  {id:'quiz',  name:'Quiz Practice',  tab:'🎯 Quiz Practice',  col:'#FF9600',dark:'#E68200'}
+];
+/* Object.create(null), not {} — a plain object inherits from Object.prototype,
+   so TRACK['constructor'] and TRACK['toString'] would be truthy and a hash like
+   #track/constructor would validate as a real track. A null-prototype map has no
+   inherited keys, so lookups are exactly the registry and nothing else. */
+const TRACK=Object.create(null);
+TRACKS.forEach(t=>{t.home='track/'+t.id;t.hasProjects=!!t.projPrefix;TRACK[t.id]=t;});
+const DEFAULT_TRACK='credit';
+/* Which track owns a checkpoint id, by its registered prefix. */
+function trackForProject(id){
+  const t=TRACKS.find(t=>t.projPrefix&&String(id).indexOf(t.projPrefix)===0);
+  return t?t.id:DEFAULT_TRACK;
+}
+/* Hex → rgba so a track's accent can tint backgrounds without extra CSS. */
+function hexRgba(hex,a){
+  const n=parseInt(hex.slice(1),16);
+  return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;
+}
+
 /* ── Checkpoint pages (full pages, no dialogs) ── */
-const TRACK_META={
-  credit:{name:'Credit Risk',col:'#58CC02',dark:'#46A302',home:'track/credit'},
-  dv:{name:'Data Validation',col:'#1CB0F6',dark:'#1899D6',home:'track/dv'}
-};
 function coversLabel(p){
   if(p.groups)return p.groups.join(' + ');
   return p.covers[0]+(p.covers.length>1?'–'+p.covers[p.covers.length-1]:'');
 }
 function renderProjTimeline(route){
-  const meta=TRACK_META[route.ptrack];
+  const meta=TRACK[route.ptrack];
   const header=`
   <div style="background:${meta.col};color:#fff;padding:20px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;">
     <a href="#${meta.home}" style="background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;text-decoration:none;">← ${esc(meta.name)} path</a>
@@ -891,7 +965,10 @@ function renderProjTimeline(route){
     </div>
   </div>`;
   if(S.projLoading)return header+`<div class="loading"><div class="spinner"></div>Loading checkpoints…</div>`;
-  if(!S.projIndex)return header+`<div class="loading" style="color:var(--text-lo)">Checkpoints unavailable.<button class="proj-complete-btn" onclick="retryProjIndex()">Try again</button></div>`;
+  // Same three-state rule: a cold #projects/credit deep link is pending, not failed.
+  if(!S.projIndex)return header+(S.projError
+    ? `<div class="loading" style="color:var(--text-lo)">Checkpoints unavailable.<button class="proj-complete-btn" onclick="retryProjIndex()">Try again</button></div>`
+    : `<div class="loading"><div class="spinner"></div>Loading checkpoints…</div>`);
   const list=S.projIndex.filter(p=>p.track===route.ptrack);
   const done=list.filter(p=>S.completed[p.id]).length;
   const items=list.map(p=>{
@@ -917,9 +994,9 @@ function renderProjectPage(route){
   const p=(S.projIndex||[]).find(x=>x.id===route.id);
   // On an unknown id, infer the track from the id itself rather than defaulting to
   // credit — otherwise a bad DV link sends you back to the wrong track's timeline.
-  const guessed=/^P-DV-/.test(route.id)?'dv':'credit';
+  const guessed=trackForProject(route.id);
   const track=p?p.track:guessed;
-  const meta=TRACK_META[track];
+  const meta=TRACK[track];
   const header=`
   <div style="background:${meta.col};color:#fff;padding:20px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;">
     <a href="#projects/${track}" style="background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;text-decoration:none;">← Timeline</a>
@@ -1019,6 +1096,9 @@ function renderApp(){
   dvFlat.forEach(n=>{if(completed[n.id])xp+=n.type==='exercise'?15:5;});
   Object.keys(completed).forEach(k=>{if(k.indexOf('quiz:')===0)xp+=QUIZ_XP;});
   Object.keys(completed).forEach(k=>{if(k.indexOf('P-')===0)xp+=PROJECT_XP;});
+  // Counted from the ids, not from baFlat, so XP does not dip to zero while the
+  // BA chapter index is still being fetched.
+  Object.keys(completed).forEach(k=>{if(isBaId(k))xp+=BA_XP;});
 
   if(route.view==='quiz')return renderQuizSession(route);
   if(route.view==='projtl')return renderProjTimeline(route);
@@ -1026,17 +1106,28 @@ function renderApp(){
 
   if(route.view==='lesson'){
     const dv=isDvId(route.id);
-    const flat=dv?dvFlat:creditFlat;
+    const ba=isBaId(route.id);
+    // A BA deep link can arrive before the chapter index has loaded. Without this
+    // guard the lookup fails and the page reads "Lesson not found" for content
+    // that exists — the same false negative as LESSONS-LEARNED entry 1.
+    if(ba&&!S.baIndex){
+      if(S.baError){
+        return `<div class="loading" style="color:var(--text-lo)">Business Analysis chapters unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryBaIndex()">Try again</button></div>`;
+      }
+      return `<div class="loading"><div class="spinner"></div>Loading lesson…</div>`;
+    }
+    const flat=ba?buildBaFlat():(dv?dvFlat:creditFlat);
     const entry=flat.find(n=>n.id===route.id);
     if(!entry) return `<div style="padding:40px;text-align:center;color:var(--text-mid)">Lesson not found</div>`;
 
     const col=PALETTE[entry.ui%PALETTE.length];
     const isComplete=completed[route.id];
-    const backHash=dv?'track/dv':'';
+    const backHash=ba?'track/ba':(dv?'track/dv':'');
     let kicker;
     if(entry.type==='case')kicker=`Case Study · ${esc(entry.data.sector)}`;
     else if(entry.type==='technique')kicker=`${esc(DV_GROUPS[entry.ui].name)} · Technique ${esc(entry.data.code.replace('T',''))}`;
     else if(entry.type==='exercise')kicker=`Worked Exercise · SSMS Lab`;
+    else if(entry.type==='balesson')kicker=`${esc(S.baIndex[entry.ui].name)} · Chapter ${entry.ui+1}`;
     else kicker=`${esc(entry.data.code)} · Part ${entry.ui+1}`;
     let lessonContent='';
     if(mdLoading[route.id]){
@@ -1075,11 +1166,15 @@ function renderApp(){
 
   const isDvTrack=route.track==='dv';
   const isQuizTrack=route.track==='quiz';
+  // Tabs are generated from the registry; the active tab carries its own accent
+  // inline, so adding a track needs no new markup and no new CSS.
   const tabs=`
   <div class="tracks">
-    <a class="track-tab${!isDvTrack&&!isQuizTrack?' active':''}" href="#track/credit">💼 Credit Risk</a>
-    <a class="track-tab${isDvTrack?' active dv':''}" href="#track/dv">🧪 Data Validation</a>
-    <a class="track-tab${isQuizTrack?' active quiz':''}" href="#track/quiz">🎯 Quiz Practice</a>
+    ${TRACKS.map(t=>{
+      const on=route.track===t.id;
+      const accent=on?` style="border-color:${t.col};color:${t.col};background:${hexRgba(t.col,.08)};box-shadow:0 3px 0 ${hexRgba(t.dark,.35)};"`:'';
+      return `<a class="track-tab${on?' active':''}"${accent} href="#${t.home}">${esc(t.tab)}</a>`;
+    }).join('')}
   </div>`;
 
   let hero,path;
@@ -1088,7 +1183,11 @@ function renderApp(){
       return topBar+tabs+`<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
     }
     if(!S.quizBank){
-      return topBar+tabs+`<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryQuizBank()">Try again</button></div>`;
+      // Pending until quizError says otherwise — same fix as the BA track body.
+      if(S.quizError){
+        return topBar+tabs+`<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryQuizBank()">Try again</button></div>`;
+      }
+      return topBar+tabs+`<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
     }
     const flat=buildQuizFlat();
     let fi=flat.findIndex(n=>!completed[n.id]);
@@ -1112,6 +1211,40 @@ function renderApp(){
     const units=S.quizBank.quizzes.map((z,i)=>({
       kicker:`Bank ${i+1} of ${S.quizBank.quizzes.length} · ${z.lessons.reduce((a,l)=>a+l.questions.length,0)} questions`,
       name:z.quiz_name}));
+    path=renderPath(units,flat,completed,fi);
+    return topBar+tabs+hero+path;
+  }
+  if(route.track==='ba'){
+    // Three states, not two. render() starts the fetch only AFTER this returns,
+    // so on a cold load baLoading is still false and baIndex is still null —
+    // testing "not loading and no index" as failure flashes "unavailable" before
+    // the spinner appears. Only baError means failed; anything else is pending.
+    // This is entry 6's own extended rule, broken here first.
+    if(!S.baIndex){
+      if(S.baError){
+        return topBar+tabs+`<div class="loading" style="color:var(--text-lo)">Business Analysis chapters unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryBaIndex()">Try again</button></div>`;
+      }
+      return topBar+tabs+`<div class="loading"><div class="spinner"></div>Loading chapters…</div>`;
+    }
+    const flat=buildBaFlat();
+    let fi=flat.findIndex(n=>!completed[n.id]);
+    if(fi===-1)fi=flat.length;
+    const done=flat.filter(n=>completed[n.id]).length;
+    const pct=flat.length?Math.round(done/flat.length*100):0;
+    hero=`
+    <div class="hero">
+      <h1>Business Analysis</h1>
+      <p class="hero-sub">${flat.length} lessons across ${S.baIndex.length} chapters, following the BABOK knowledge areas. Every lesson: a live scenario, the question you would be asked, the approach, the deliverables, and the interview angle.</p>
+      <div class="progress-card">
+        <div class="progress-head"><span class="progress-lbl">Course progress</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:#CE82FF;"></div></div>
+      </div>
+      <div class="framework">
+        <div class="framework-lbl">Every lesson covers all six</div>
+        <div class="chips">${BA_CHIPS.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>
+      </div>
+    </div>`;
+    const units=S.baIndex.map((ch,i)=>({kicker:`Chapter ${i+1} of ${S.baIndex.length} · ${ch.desc}`,name:ch.name}));
     path=renderPath(units,flat,completed,fi);
     return topBar+tabs+hero+path;
   }
@@ -1173,6 +1306,12 @@ function render(){
   }
   if((route.track==='quiz'||route.view==='quiz')&&!S.quizBank&&!S.quizLoading&&!S.quizError){
     loadQuizBank();
+  }
+  // Needed for the BA track page and for a BA lesson deep link, which has no
+  // chapter index yet. Guarded on all three flags or the render self-loops
+  // (LESSONS-LEARNED entry 6).
+  if((route.track==='ba'||(route.view==='lesson'&&isBaId(route.id)))&&!S.baIndex&&!S.baLoading&&!S.baError){
+    loadBaIndex();
   }
   // the index also feeds the "N banked" counts on the two track pages
   if(!S.projIndex&&!S.projLoading&&!S.projError)loadProjIndex();

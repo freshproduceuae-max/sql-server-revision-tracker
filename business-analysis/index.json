@@ -1,0 +1,240 @@
+[
+  {
+    "code": "BA01",
+    "name": "Introduction",
+    "desc": "What business analysis is, and the shape of the BABOK framework.",
+    "lessons": [
+      {
+        "id": "BA01-T01",
+        "title": "What Business Analysis Actually Is"
+      },
+      {
+        "id": "BA01-T02",
+        "title": "How the BABOK Framework Fits Together"
+      }
+    ]
+  },
+  {
+    "code": "BA02",
+    "name": "Key Concepts",
+    "desc": "The core model, requirement types, and who counts as a stakeholder.",
+    "lessons": [
+      {
+        "id": "BA02-T01",
+        "title": "The Six Core Concepts and Why They Interlock"
+      },
+      {
+        "id": "BA02-T02",
+        "title": "Classifying Requirements So They Stay Useful"
+      },
+      {
+        "id": "BA02-T03",
+        "title": "Identifying Stakeholders You Would Otherwise Miss"
+      }
+    ]
+  },
+  {
+    "code": "BA03",
+    "name": "Planning and Monitoring",
+    "desc": "Deciding how the analysis itself will be done, governed and measured.",
+    "lessons": [
+      {
+        "id": "BA03-T01",
+        "title": "Choosing a Business Analysis Approach"
+      },
+      {
+        "id": "BA03-T02",
+        "title": "Planning Stakeholder Engagement"
+      },
+      {
+        "id": "BA03-T03",
+        "title": "Establishing Governance for Requirements"
+      },
+      {
+        "id": "BA03-T04",
+        "title": "Planning Business Analysis Information Management"
+      },
+      {
+        "id": "BA03-T05",
+        "title": "Measuring Business Analysis Performance"
+      }
+    ]
+  },
+  {
+    "code": "BA04",
+    "name": "Elicitation and Collaboration",
+    "desc": "Drawing out what stakeholders actually need, and keeping them with you.",
+    "lessons": [
+      {
+        "id": "BA04-T01",
+        "title": "Preparing for Elicitation"
+      },
+      {
+        "id": "BA04-T02",
+        "title": "Conducting Elicitation That Surfaces the Real Rule"
+      },
+      {
+        "id": "BA04-T03",
+        "title": "Confirming Elicitation Results"
+      },
+      {
+        "id": "BA04-T04",
+        "title": "Communicating Business Analysis Information"
+      },
+      {
+        "id": "BA04-T05",
+        "title": "Managing Stakeholder Collaboration"
+      }
+    ]
+  },
+  {
+    "code": "BA05",
+    "name": "Requirements Life Cycle Management",
+    "desc": "Keeping requirements traceable, current, prioritised and approved.",
+    "lessons": [
+      {
+        "id": "BA05-T01",
+        "title": "Tracing Requirements"
+      },
+      {
+        "id": "BA05-T02",
+        "title": "Maintaining Requirements for Reuse"
+      },
+      {
+        "id": "BA05-T03",
+        "title": "Prioritising Requirements Under Real Constraint"
+      },
+      {
+        "id": "BA05-T04",
+        "title": "Assessing Requirements Changes"
+      },
+      {
+        "id": "BA05-T05",
+        "title": "Approving Requirements"
+      }
+    ]
+  },
+  {
+    "code": "BA06",
+    "name": "Strategy Analysis",
+    "desc": "Understanding where the business is, where it needs to be, and how it gets there.",
+    "lessons": [
+      {
+        "id": "BA06-T01",
+        "title": "Analysing the Current State"
+      },
+      {
+        "id": "BA06-T02",
+        "title": "Defining the Future State"
+      },
+      {
+        "id": "BA06-T03",
+        "title": "Assessing Risks to the Change"
+      },
+      {
+        "id": "BA06-T04",
+        "title": "Defining the Change Strategy"
+      }
+    ]
+  },
+  {
+    "code": "BA07",
+    "name": "Requirements Analysis and Design Definition",
+    "desc": "Turning what stakeholders said into something precise enough to build and verify.",
+    "lessons": [
+      {
+        "id": "BA07-T01",
+        "title": "Specifying and Modelling Requirements"
+      },
+      {
+        "id": "BA07-T02",
+        "title": "Verifying Requirements"
+      },
+      {
+        "id": "BA07-T03",
+        "title": "Validating Requirements Against Business Need"
+      },
+      {
+        "id": "BA07-T04",
+        "title": "Defining Requirements Architecture"
+      },
+      {
+        "id": "BA07-T05",
+        "title": "Defining Solution Options"
+      },
+      {
+        "id": "BA07-T06",
+        "title": "Analysing Potential Value and Recommending a Solution"
+      }
+    ]
+  },
+  {
+    "code": "BA08",
+    "name": "Solution Evaluation",
+    "desc": "Finding out whether the change actually worked, and what to do if it did not.",
+    "lessons": [
+      {
+        "id": "BA08-T01",
+        "title": "Measuring Solution Performance"
+      },
+      {
+        "id": "BA08-T02",
+        "title": "Analysing Performance Measures"
+      },
+      {
+        "id": "BA08-T03",
+        "title": "Assessing Solution Limitations"
+      },
+      {
+        "id": "BA08-T04",
+        "title": "Assessing Enterprise Limitations"
+      },
+      {
+        "id": "BA08-T05",
+        "title": "Recommending Actions to Increase Solution Value"
+      }
+    ]
+  },
+  {
+    "code": "BA09",
+    "name": "Underlying Competencies",
+    "desc": "The personal capabilities that decide whether the analysis lands.",
+    "lessons": [
+      {
+        "id": "BA09-T01",
+        "title": "Analytical Thinking and Problem Solving"
+      },
+      {
+        "id": "BA09-T02",
+        "title": "Behavioural Characteristics Under Pressure"
+      },
+      {
+        "id": "BA09-T03",
+        "title": "Communication and Interaction Skills"
+      }
+    ]
+  },
+  {
+    "code": "BA10",
+    "name": "Techniques",
+    "desc": "The specific methods, and knowing which one the situation calls for.",
+    "lessons": [
+      {
+        "id": "BA10-T01",
+        "title": "Choosing Elicitation Techniques"
+      },
+      {
+        "id": "BA10-T02",
+        "title": "Modelling and Prototyping"
+      },
+      {
+        "id": "BA10-T03",
+        "title": "Prioritisation and Decision Techniques"
+      },
+      {
+        "id": "BA10-T04",
+        "title": "Evaluation and Measurement Techniques"
+      }
+    ]
+  }
+]

@@ -1,0 +1,873 @@
+{
+  "_comment": "Source of truth for the Business Analysis track. Structured after the BABOK v3 chapter and task layout, which is factual published structure. All scenario, approach, pitfall and interview text here is original writing for this app - no text is reproduced from the BABOK Guide itself. scripts/build-ba-lessons.js renders these to markdown in business-analysis/.",
+  "chapters": [
+    {
+      "code": "BA01",
+      "name": "Introduction",
+      "desc": "What business analysis is, and the shape of the BABOK framework.",
+      "lessons": [
+        {
+          "id": "BA01-T01",
+          "title": "What Business Analysis Actually Is",
+          "scenario": "A logistics firm hires its first business analyst after a warehouse system rollout runs 40% over budget. The post-mortem finds nobody ever wrote down what problem the system was meant to solve — the team went straight from 'our warehouse is slow' to picking a vendor.",
+          "question": "The CEO asks you: 'We already have project managers and developers. What do you actually add?' How do you answer in a way that is concrete rather than a job description?",
+          "approach": [
+            "Define business analysis by its output: recommended changes that deliver value to stakeholders, not documents.",
+            "Separate the three questions that get conflated — what problem are we solving, what change would solve it, and did the change work.",
+            "Show where the warehouse project skipped straight from symptom to solution with no needs analysis in between.",
+            "Name the cost of that gap in the firm's own numbers: the 40% overrun is the price of an unexamined requirement."
+          ],
+          "outputs": [
+            "A one-page statement of the business need, separate from any proposed solution",
+            "A stakeholder list with who is affected and who decides"
+          ],
+          "tools": ["Word or Confluence for the needs statement", "PowerPoint for the framing conversation"],
+          "pitfall": "Answering the question with a list of deliverables. Stakeholders do not want documents; they want a change that works. Lead with the outcome and mention artefacts only as evidence.",
+          "interview": "Expect 'what is the difference between a BA and a project manager?' The clean answer: a project manager owns delivering the change on time and budget; a business analyst owns whether it is the right change at all."
+        },
+        {
+          "id": "BA01-T02",
+          "title": "How the BABOK Framework Fits Together",
+          "scenario": "You join a team where every analyst works differently. One writes 60-page specifications, another writes sticky notes. Requirements get lost between them, and nobody can tell whether a piece of analysis is finished.",
+          "question": "How do you introduce a shared framework without imposing bureaucracy on a team that is already delivering?",
+          "approach": [
+            "Present the six knowledge areas as a checklist of concerns, not a sequence of phases.",
+            "Map what the team already does onto those areas so the framework validates existing practice rather than replacing it.",
+            "Identify the genuinely missing areas — usually solution evaluation, because teams stop at go-live.",
+            "Agree a minimum standard per area rather than a mandatory template."
+          ],
+          "outputs": [
+            "A one-page map of current practice against the six knowledge areas",
+            "An agreed definition of done for a piece of analysis"
+          ],
+          "tools": ["Confluence for the shared standard", "Miro or Lucidchart for the mapping workshop"],
+          "pitfall": "Treating the knowledge areas as sequential phases. They are concurrent concerns — you revisit strategy analysis when elicitation surfaces something that changes the problem.",
+          "interview": "Be able to name the six knowledge areas and say which one most teams neglect. Solution evaluation is the honest answer, and saying so shows you have shipped things."
+        }
+      ]
+    },
+    {
+      "code": "BA02",
+      "name": "Key Concepts",
+      "desc": "The core model, requirement types, and who counts as a stakeholder.",
+      "lessons": [
+        {
+          "id": "BA02-T01",
+          "title": "The Six Core Concepts and Why They Interlock",
+          "scenario": "A retail bank proposes replacing its loan origination system. The business case says the current system is 'outdated'. When you ask what value the replacement delivers, you get three incompatible answers from three directors.",
+          "question": "How do you use a structured core model to expose that the team has not agreed what the change is actually for?",
+          "approach": [
+            "Walk the six concepts in turn — change, need, solution, stakeholder, value, context — and ask the room to fill each one in.",
+            "Note where answers diverge; divergence on value is the usual fault line.",
+            "Show that 'outdated' is a context observation, not a need.",
+            "Force a single articulated need before any solution discussion resumes."
+          ],
+          "outputs": [
+            "A completed core-concept model with one agreed statement per concept",
+            "A logged disagreement register where consensus was not reached"
+          ],
+          "tools": ["Miro for the live workshop", "Excel for the disagreement register"],
+          "pitfall": "Accepting a solution as a need. 'We need a new system' is a solution; 'we lose 30% of applications to processing delay' is a need. The second one can be solved several ways.",
+          "interview": "You may be asked to distinguish need from solution on the spot. Have a real example ready where reframing the need changed what got built."
+        },
+        {
+          "id": "BA02-T02",
+          "title": "Classifying Requirements So They Stay Useful",
+          "scenario": "A requirements document mixes 'the system shall support 5,000 concurrent users' with 'we want to reduce call centre volume by 20%' and 'the login button should be blue'. The development team cannot tell what is negotiable.",
+          "question": "How do you reclassify this so that priorities, ownership and traceability all become possible?",
+          "approach": [
+            "Separate business requirements (the outcome the organisation wants) from stakeholder requirements (what a specific group needs).",
+            "Separate solution requirements into functional and non-functional.",
+            "Pull transition requirements out — data migration and training are temporary and get forgotten otherwise.",
+            "Trace each lower-level requirement up to the business requirement it serves; anything that traces to nothing is a candidate for deletion."
+          ],
+          "outputs": [
+            "A reclassified requirements set with type labels",
+            "A list of orphan requirements that serve no stated business outcome"
+          ],
+          "tools": ["Jira or Azure DevOps for typed requirement records", "Excel for the traceability matrix"],
+          "pitfall": "Forgetting transition requirements. They only apply while the change happens, so they are invisible in a steady-state specification and then blow up the cutover.",
+          "interview": "Know the difference between functional and non-functional cold, and be ready to give a non-functional requirement that killed a project. Performance and regulatory retention are strong examples."
+        },
+        {
+          "id": "BA02-T03",
+          "title": "Identifying Stakeholders You Would Otherwise Miss",
+          "scenario": "A hospital rolls out a new patient scheduling system. Clinicians and administrators were consulted throughout. On go-live, the medical records team discovers the system does not produce the audit trail their regulator requires.",
+          "question": "What systematic method would have surfaced the medical records team before go-live rather than after?",
+          "approach": [
+            "Work outward from the process, not the org chart — trace who touches the data before, during and after.",
+            "Include regulatory and audit roles explicitly; they rarely self-identify as users.",
+            "Include those who receive outputs downstream, even if they never log in.",
+            "Classify each by influence and interest so engagement effort is proportionate."
+          ],
+          "outputs": [
+            "A stakeholder register including non-user stakeholders",
+            "An influence/interest grid driving engagement frequency"
+          ],
+          "tools": ["Excel or Sheets for the stakeholder matrix", "Visio or Lucidchart for the process trace"],
+          "pitfall": "Building the stakeholder list from the org chart. The org chart shows reporting lines, not information flows, and regulators never appear on it.",
+          "interview": "A very common question is 'how do you handle a stakeholder you discover late?' The answer involves impact assessment and change control, not heroics."
+        }
+      ]
+    },
+    {
+      "code": "BA03",
+      "name": "Planning and Monitoring",
+      "desc": "Deciding how the analysis itself will be done, governed and measured.",
+      "lessons": [
+        {
+          "id": "BA03-T01",
+          "title": "Choosing a Business Analysis Approach",
+          "scenario": "You are handed two projects on the same day. One replaces a core banking ledger under regulatory deadline. The other is a customer-facing mobile feature the product team wants to test in six weeks.",
+          "question": "Why should these two projects not use the same analysis approach, and how do you justify the difference to a governance board that wants consistency?",
+          "approach": [
+            "Assess each on change complexity, regulatory exposure and cost of being wrong.",
+            "Choose predictive analysis where rework is expensive and requirements are stable — the ledger.",
+            "Choose adaptive analysis where learning is cheap and requirements are uncertain — the mobile feature.",
+            "Document the rationale so the choice is defensible rather than stylistic."
+          ],
+          "outputs": [
+            "A documented analysis approach per project with rationale",
+            "Agreed deliverables and level of formality for each"
+          ],
+          "tools": ["Confluence for the approach document", "Microsoft Project or Smartsheet where predictive"],
+          "pitfall": "Letting the organisation's default methodology decide for you. A regulated ledger migration run on two-week discovery cycles produces an audit finding, not agility.",
+          "interview": "Expect 'are you agile or waterfall?' The strong answer refuses the framing and explains what drives the choice."
+        },
+        {
+          "id": "BA03-T02",
+          "title": "Planning Stakeholder Engagement",
+          "scenario": "A finance transformation has 40 identified stakeholders. The previous analyst invited all 40 to every workshop. Attendance collapsed to six, and the six were the least affected people.",
+          "question": "How do you design an engagement plan that gets the right people in the room without consuming the organisation's time?",
+          "approach": [
+            "Segment by influence and interest, then assign an engagement mode to each quadrant.",
+            "Reserve workshops for those who must co-create; use interviews for high-influence, low-availability people.",
+            "Use written review cycles for those who only need to be informed.",
+            "Set decision rights explicitly — who is consulted versus who approves."
+          ],
+          "outputs": [
+            "A stakeholder engagement plan with mode and frequency per group",
+            "A RACI showing decision rights"
+          ],
+          "tools": ["Excel or Sheets for the RACI", "Teams or Outlook for the cadence", "Trello or Asana for tracking actions"],
+          "pitfall": "Confusing consultation with approval. Stakeholders who believe they are approving when they are only being consulted will block at the worst moment.",
+          "interview": "Be ready for 'how do you deal with an unresponsive stakeholder?' Escalation is part of the answer, but so is checking that you asked them for something they actually own."
+        },
+        {
+          "id": "BA03-T03",
+          "title": "Establishing Governance for Requirements",
+          "scenario": "Three months into a programme, nobody can say who approved a requirement that added £200,000 of scope. Everyone remembers discussing it. No one remembers deciding.",
+          "question": "What governance would have made that decision traceable without slowing the team to a halt?",
+          "approach": [
+            "Define who approves what at which level — not every change needs a board.",
+            "Set thresholds so small changes move fast and material ones escalate.",
+            "Require that approvals are recorded against the requirement itself, not in meeting minutes.",
+            "Define the escalation path for disagreement before you need it."
+          ],
+          "outputs": [
+            "A requirements governance model with approval thresholds",
+            "A change control process with named decision makers"
+          ],
+          "tools": ["Jira workflow states for approval", "Confluence or SharePoint for sign-off records", "DocuSign where formal signature is required"],
+          "pitfall": "Governance that treats all changes equally. If a typo correction needs the same board as a scope change, people route around the process entirely.",
+          "interview": "Know the difference between change control and configuration management. Change control governs decisions; configuration management governs versions."
+        },
+        {
+          "id": "BA03-T04",
+          "title": "Planning Business Analysis Information Management",
+          "scenario": "A programme ends and the operations team inherits it. The requirements live across 200 emails, a shared drive, two Confluence spaces and one analyst's laptop. Within a month nobody can answer why a rule was built the way it was.",
+          "question": "How do you plan information management so that analysis survives the people who produced it?",
+          "approach": [
+            "Decide what must be retained long-term versus what is working material.",
+            "Choose one authoritative location per artefact type and make the others explicitly non-authoritative.",
+            "Define naming and versioning so a reader can tell current from superseded.",
+            "Set access and retention against the organisation's regulatory obligations."
+          ],
+          "outputs": [
+            "An information management plan naming the authoritative source per artefact",
+            "A retention and access rule set"
+          ],
+          "tools": ["Confluence or SharePoint as the system of record", "Jira for requirement state", "Excel for the traceability matrix"],
+          "pitfall": "Allowing two authoritative sources. The moment a requirement exists in both Jira and a Word document with no stated precedence, they diverge and both become untrustworthy.",
+          "interview": "This connects directly to data governance. If you have a data background, say so — the reasoning is identical to defining a golden source."
+        },
+        {
+          "id": "BA03-T05",
+          "title": "Measuring Business Analysis Performance",
+          "scenario": "Your manager asks whether the analysis function is adding value. The only metric available is the number of requirements documents produced, which rewards volume over quality.",
+          "question": "What would you measure instead, and how would you avoid a metric that changes behaviour for the worse?",
+          "approach": [
+            "Measure outcomes of analysis, not volume of artefacts — defect rates traced to requirements, rework after sign-off.",
+            "Track how many requirements change after approval as a proxy for elicitation quality.",
+            "Include stakeholder-reported measures, since analysis quality is partly perceived.",
+            "Review the measures for gaming risk before adopting them."
+          ],
+          "outputs": [
+            "An agreed performance measure set with baselines",
+            "A periodic review of measures for unintended effects"
+          ],
+          "tools": ["Power BI or Tableau for the dashboard", "Jira for defect-to-requirement traceability"],
+          "pitfall": "Measuring documents produced or hours logged. Both reward the wrong behaviour and neither correlates with whether the change worked.",
+          "interview": "A strong answer names a metric you rejected and why. It shows you understand that measures shape behaviour."
+        }
+      ]
+    },
+    {
+      "code": "BA04",
+      "name": "Elicitation and Collaboration",
+      "desc": "Drawing out what stakeholders actually need, and keeping them with you.",
+      "lessons": [
+        {
+          "id": "BA04-T01",
+          "title": "Preparing for Elicitation",
+          "scenario": "An analyst books two hours with the head of claims, arrives with no agenda, and asks 'so, what do you need?'. The session produces a wish list, no decisions, and a stakeholder who now believes the project is unprepared.",
+          "question": "What preparation would have converted that two hours into usable analysis?",
+          "approach": [
+            "Define the specific decisions or gaps the session must close before booking it.",
+            "Choose the technique that fits the outcome — interview for depth, workshop for consensus, observation for tacit process.",
+            "Pre-read existing documentation so stakeholder time is spent on what is not already written down.",
+            "Send the scope in advance so participants arrive with the right material."
+          ],
+          "outputs": [
+            "A session plan stating the questions to be answered",
+            "Pre-read material and a participant list"
+          ],
+          "tools": ["Word or Docs for the session plan", "Outlook or Teams for scheduling", "Miro for workshop boards"],
+          "pitfall": "Open-ended 'tell me what you need' sessions. They generate wish lists rather than requirements, and they transfer the analysis burden onto the stakeholder.",
+          "interview": "You may be asked how you prepare for a requirements workshop. The differentiator is stating the decisions the session must produce."
+        },
+        {
+          "id": "BA04-T02",
+          "title": "Conducting Elicitation That Surfaces the Real Rule",
+          "scenario": "Underwriters tell you they 'always' escalate cases above £500,000. Observation shows they also escalate below that when the borrower is in construction, a rule that appears in no policy document and that everyone assumes is written down somewhere.",
+          "question": "Which elicitation techniques expose undocumented rules that interviews alone will miss?",
+          "approach": [
+            "Combine techniques deliberately — interviews for stated process, observation for actual process.",
+            "Probe exceptions rather than the happy path; the rules live in the exceptions.",
+            "Use document analysis to find where the stated rule originated and whether it still applies.",
+            "Replay what you heard back in concrete cases to test whether the rule holds."
+          ],
+          "outputs": [
+            "Elicitation results distinguishing stated from observed practice",
+            "A list of undocumented rules for confirmation"
+          ],
+          "tools": ["Teams or Zoom for remote sessions", "Miro for live capture", "Word or Confluence for write-up"],
+          "pitfall": "Trusting the happy path. Stakeholders describe their process as they believe it works; the difference between that and what they do is where the defects come from.",
+          "interview": "Have an example of a rule you found by observation that nobody could produce documentation for. It is a strong story because it is common and rarely told well."
+        },
+        {
+          "id": "BA04-T03",
+          "title": "Confirming Elicitation Results",
+          "scenario": "Two weeks after a workshop, you circulate notes. The operations lead replies that half of what you captured is not what they meant, and the build has already started against your version.",
+          "question": "How do you confirm understanding early enough that a misreading is cheap rather than expensive?",
+          "approach": [
+            "Confirm within the session by replaying understanding in the stakeholder's own terms.",
+            "Cross-check statements from different stakeholders against each other and surface conflicts explicitly.",
+            "Use a model or example rather than prose — people spot errors in a diagram or a worked case that they miss in paragraphs.",
+            "Timebox confirmation so silence does not become implicit agreement forever."
+          ],
+          "outputs": [
+            "Confirmed elicitation results with recorded conflicts",
+            "A log of assumptions awaiting validation"
+          ],
+          "tools": ["Lucidchart or Visio for confirming models", "Confluence comments for asynchronous review"],
+          "pitfall": "Treating no response as agreement. It usually means nobody read it, and the disagreement arrives later at a much higher cost.",
+          "interview": "Expect 'what do you do when two stakeholders disagree?' Confirmation is where you find it; governance is where you resolve it."
+        },
+        {
+          "id": "BA04-T04",
+          "title": "Communicating Business Analysis Information",
+          "scenario": "The same requirement set goes to a steering committee, a development team and a compliance officer. All three receive the 80-page specification. The committee does not read it, the developers cannot find the acceptance criteria, and compliance misses the retention rule.",
+          "question": "How do you communicate one set of information to three audiences without maintaining three versions of the truth?",
+          "approach": [
+            "Keep one authoritative requirement set and derive audience views from it.",
+            "Match form to audience — summary and decisions for the committee, acceptance criteria for developers, rule extracts for compliance.",
+            "State clearly which view is authoritative so derived views are never edited in place.",
+            "Confirm the message landed rather than assuming distribution equals communication."
+          ],
+          "outputs": [
+            "Audience-specific views derived from a single source",
+            "A statement of which artefact is authoritative"
+          ],
+          "tools": ["Confluence for the source", "PowerPoint for the committee view", "Jira for developer-facing criteria"],
+          "pitfall": "Maintaining parallel documents per audience. They drift within weeks and you can no longer say which one the build followed.",
+          "interview": "Tailoring communication to audience is a standard competency question. Use a concrete three-audience example rather than generalities."
+        },
+        {
+          "id": "BA04-T05",
+          "title": "Managing Stakeholder Collaboration",
+          "scenario": "A key stakeholder who was engaged for three months stops attending. Their input is needed for a decision due in ten days, and the project manager suggests proceeding without them.",
+          "question": "How do you diagnose the disengagement rather than escalate straight past it?",
+          "approach": [
+            "Establish whether it is capacity, relevance or trust — the remedy differs entirely for each.",
+            "Check that what you are asking of them is something they actually own.",
+            "Reduce the ask to the specific decision needed rather than a standing meeting commitment.",
+            "Record the risk formally if engagement cannot be restored in time."
+          ],
+          "outputs": [
+            "A documented engagement risk with mitigation",
+            "A revised engagement approach for that stakeholder"
+          ],
+          "tools": ["Excel risk register", "Teams or Slack for lightweight asynchronous input"],
+          "pitfall": "Proceeding without them and calling it decisiveness. If they own the decision, the change will unwind later at far higher cost.",
+          "interview": "This is a behavioural question in disguise. Show diagnosis before escalation — most candidates jump straight to escalating."
+        }
+      ]
+    },
+    {
+      "code": "BA05",
+      "name": "Requirements Life Cycle Management",
+      "desc": "Keeping requirements traceable, current, prioritised and approved.",
+      "lessons": [
+        {
+          "id": "BA05-T01",
+          "title": "Tracing Requirements",
+          "scenario": "A regulator asks the bank to demonstrate that a specific lending control is implemented. The team can show the code and the test, but cannot show which regulatory obligation the control derives from, or that it covers the obligation fully.",
+          "question": "What traceability would let the bank answer that question in an afternoon rather than a month?",
+          "approach": [
+            "Trace upward from solution requirements to the business need and the obligation behind it.",
+            "Trace downward to design, build and test artefacts so coverage is demonstrable.",
+            "Keep traceability in the tool where requirements live, not in a separate spreadsheet that ages.",
+            "Use the trace to find both orphans and gaps — obligations with no requirement are the audit risk."
+          ],
+          "outputs": [
+            "A requirements traceability matrix linking obligation to test",
+            "A gap list of obligations with no covering requirement"
+          ],
+          "tools": ["Jira or Azure DevOps for linked issues", "IBM DOORS for large regulated sets", "Excel for a lightweight RTM"],
+          "pitfall": "A traceability matrix maintained by hand in a spreadsheet. It is accurate on the day it is written and misleading thereafter.",
+          "interview": "Traceability is a favourite in regulated-sector interviews. Be able to explain forward and backward tracing and what each one catches."
+        },
+        {
+          "id": "BA05-T02",
+          "title": "Maintaining Requirements for Reuse",
+          "scenario": "Three projects in the same organisation each write their own definition of 'active customer'. The definitions differ subtly. Two years later, three reports disagree and nobody can say which is correct.",
+          "question": "How do you maintain requirements so that a shared definition is stated once and reused rather than rewritten?",
+          "approach": [
+            "Identify requirements that describe enduring business rules rather than project-specific behaviour.",
+            "Move those to a maintained rule catalogue owned outside the project.",
+            "Reference the catalogue from projects instead of copying the text.",
+            "Assign ownership for review, since an unowned catalogue decays into another stale document."
+          ],
+          "outputs": [
+            "A business rule catalogue with named owners",
+            "Project requirements referencing rather than duplicating rules"
+          ],
+          "tools": ["Confluence for the catalogue", "Jira links for references", "Excel for the rule inventory"],
+          "pitfall": "Copying a rule into a project document. The copy immediately becomes a second source of truth and drifts from the original.",
+          "interview": "This maps directly onto master data management. If you know that domain, the parallel is worth drawing explicitly."
+        },
+        {
+          "id": "BA05-T03",
+          "title": "Prioritising Requirements Under Real Constraint",
+          "scenario": "Every requirement in a 120-item backlog is marked high priority by its requesting stakeholder. Delivery capacity covers about 40 items before the regulatory deadline.",
+          "question": "How do you produce a defensible priority order when every stakeholder has already declared their item critical?",
+          "approach": [
+            "Replace individual ratings with a shared basis — value, risk, dependency and regulatory obligation.",
+            "Force ranking rather than rating, so relative order must be stated.",
+            "Make dependencies explicit; an item is not deliverable ahead of what it depends on regardless of priority.",
+            "Take the ranking through governance so it is an organisational decision, not the analyst's opinion."
+          ],
+          "outputs": [
+            "A ranked backlog with the basis for ranking recorded",
+            "A dependency map constraining the order"
+          ],
+          "tools": ["MoSCoW or weighted scoring in Excel", "Jira backlog ranking", "Aha! or ProductPlan for roadmap views"],
+          "pitfall": "Rating instead of ranking. If everything can be 'high', nothing is prioritised — forcing a strict order is what surfaces the real trade-off.",
+          "interview": "Know MoSCoW and at least one weighted method, and be honest that MoSCoW collapses when everything becomes Must."
+        },
+        {
+          "id": "BA05-T04",
+          "title": "Assessing Requirements Changes",
+          "scenario": "Late in build, the head of operations asks for an extra approval step. It sounds minor. It touches the workflow engine, the audit log, three reports and the user training already written.",
+          "question": "How do you assess this change so the decision is made on real cost rather than on how small it sounds?",
+          "approach": [
+            "Trace the change through the requirements to find everything it touches.",
+            "Assess impact on cost, timeline, risk and already-delivered work including training and documentation.",
+            "Check the change against the original business need — does it still serve it, or is it scope creep with a sponsor.",
+            "Present options rather than a single verdict: accept, defer, or accept with a named trade-off."
+          ],
+          "outputs": [
+            "A change impact assessment with options",
+            "An updated traceability view showing affected artefacts"
+          ],
+          "tools": ["Jira for the change request", "Excel for impact analysis", "Confluence for the decision record"],
+          "pitfall": "Assessing only the build effort. Training, documentation, migration and reporting are where late changes actually cost, and they are usually invisible to the requester.",
+          "interview": "Expect a scenario question on late change. Traceability is what makes impact assessment possible — say so."
+        },
+        {
+          "id": "BA05-T05",
+          "title": "Approving Requirements",
+          "scenario": "A requirement was 'approved' in a meeting. Build proceeded. At UAT the approver states they had approved the concept, not the detailed behaviour, and the behaviour is wrong.",
+          "question": "How do you make approval unambiguous about what exactly is being approved?",
+          "approach": [
+            "State explicitly what is in scope of the approval and what is not.",
+            "Approve against a specific version, not a moving document.",
+            "Record approval against the requirement itself so it survives the meeting.",
+            "Confirm the approver has the authority — approval by someone without decision rights is not approval."
+          ],
+          "outputs": [
+            "Recorded approvals tied to requirement versions",
+            "A named approver per requirement area"
+          ],
+          "tools": ["Jira approval workflow states", "DocuSign for formal sign-off", "Confluence page versioning"],
+          "pitfall": "Approval recorded in meeting minutes. Minutes describe a discussion; they do not tie a decision to a specific version of a specific requirement.",
+          "interview": "Sign-off disputes are common in interviews. Version-specific approval is the answer that shows you have been burned before."
+        }
+      ]
+    },
+    {
+      "code": "BA06",
+      "name": "Strategy Analysis",
+      "desc": "Understanding where the business is, where it needs to be, and how it gets there.",
+      "lessons": [
+        {
+          "id": "BA06-T01",
+          "title": "Analysing the Current State",
+          "scenario": "A manufacturer wants to 'digitise procurement'. Nobody can say how long the current process takes, how many people touch a purchase order, or what it costs per order. The improvement target of '50% faster' has no baseline behind it.",
+          "question": "How do you establish a current state description solid enough that improvement can actually be measured against it?",
+          "approach": [
+            "Map the process as it is performed, not as policy describes it.",
+            "Quantify the baseline — cycle time, volume, cost, error rate — even approximately.",
+            "Identify the constraints causing the pain, separating symptoms from causes.",
+            "Capture the current-state capabilities, since the change will build on or replace them."
+          ],
+          "outputs": [
+            "A current state assessment with a quantified baseline",
+            "A process model reflecting actual practice"
+          ],
+          "tools": ["Visio, Lucidchart or Bizagi for process models", "Excel for baseline metrics", "SWOT in PowerPoint for context"],
+          "pitfall": "Skipping the baseline because it is hard to measure. Without it, no future benefit claim can be substantiated and the business case is unfalsifiable.",
+          "interview": "Expect 'how do you measure success?' The honest answer starts with whether a baseline exists at all."
+        },
+        {
+          "id": "BA06-T02",
+          "title": "Defining the Future State",
+          "scenario": "A future state is described as 'a modern, integrated, customer-centric platform'. Two directors read this as two different systems, and both believe the board approved theirs.",
+          "question": "How do you define a future state specific enough to be buildable but not so specific that it presumes a solution?",
+          "approach": [
+            "Describe the future state in terms of capabilities and outcomes, not products.",
+            "State the measurable targets that define success, tied to the current-state baseline.",
+            "Define scope boundaries explicitly — what the change will not address.",
+            "Validate the future state against the business need to check it actually closes the gap."
+          ],
+          "outputs": [
+            "A future state description with measurable targets",
+            "An explicit out-of-scope statement"
+          ],
+          "tools": ["Lucidchart for capability models", "Excel for target metrics", "Word for the future state definition"],
+          "pitfall": "Adjective-driven future states. 'Modern' and 'seamless' cannot be tested, so they cannot be delivered or disputed — which is precisely why they survive review.",
+          "interview": "Be able to convert a vague aspiration into a measurable target on the spot. Interviewers use this to test rigour."
+        },
+        {
+          "id": "BA06-T03",
+          "title": "Assessing Risks to the Change",
+          "scenario": "A migration business case lists one risk: 'project delay'. Midway through, the vendor is acquired, two key staff leave, and a regulatory change alters the data retention requirement. None were considered.",
+          "question": "How do you assess risk in a way that surfaces the threats that actually materialise?",
+          "approach": [
+            "Assess risk across categories — delivery, operational, regulatory, vendor, people — rather than as a single list.",
+            "For each, state the impact on the value expected from the change, not just on the schedule.",
+            "Assign owners; an unowned risk is an observation.",
+            "Distinguish risks you will mitigate from those you accept, and record the acceptance."
+          ],
+          "outputs": [
+            "A risk register with categories, owners and responses",
+            "Recorded risk acceptances with rationale"
+          ],
+          "tools": ["Excel risk register", "Jira for mitigation actions", "Power BI for risk reporting"],
+          "pitfall": "A risk register written once at initiation and never revisited. Risks change as the change progresses; a static register is documentation theatre.",
+          "interview": "Know the difference between a risk and an issue. A risk has not happened yet; an issue has. Candidates confuse them constantly."
+        },
+        {
+          "id": "BA06-T04",
+          "title": "Defining the Change Strategy",
+          "scenario": "A bank must migrate 400,000 accounts to a new platform. The options are a single cutover weekend, a phased migration by product, or running both platforms in parallel for six months.",
+          "question": "How do you evaluate these options on more than cost, and make the trade-off explicit for the board?",
+          "approach": [
+            "Define the evaluation criteria before evaluating — risk, cost, customer impact, reversibility.",
+            "Assess each option against all criteria rather than defending a preferred one.",
+            "State the transition requirements each option creates, since these are often the deciding cost.",
+            "Recommend one option with the trade-off stated plainly, not buried."
+          ],
+          "outputs": [
+            "A change strategy with options assessed against stated criteria",
+            "Transition requirements per option"
+          ],
+          "tools": ["Excel for cost-benefit and option scoring", "PowerPoint for the board decision", "Visio for transition state models"],
+          "pitfall": "Presenting one option with two strawmen. Boards recognise it, and it destroys the analyst's credibility for every future recommendation.",
+          "interview": "Reversibility is an underrated criterion. Mentioning it signals you have thought about what happens when the change goes wrong."
+        }
+      ]
+    },
+    {
+      "code": "BA07",
+      "name": "Requirements Analysis and Design Definition",
+      "desc": "Turning what stakeholders said into something precise enough to build and verify.",
+      "lessons": [
+        {
+          "id": "BA07-T01",
+          "title": "Specifying and Modelling Requirements",
+          "scenario": "A requirement reads: 'The system should handle overdue invoices appropriately.' Three developers implement three different behaviours, all defensible against that sentence.",
+          "question": "How do you specify this so that only one implementation is possible?",
+          "approach": [
+            "Replace ambiguous verbs with defined behaviour and explicit conditions.",
+            "Model rather than describe where structure matters — a decision table beats a paragraph for branching rules.",
+            "State the boundaries: what happens at exactly 30 days, at zero balance, on a weekend.",
+            "Define acceptance criteria alongside the requirement so 'done' is testable."
+          ],
+          "outputs": [
+            "A specified requirement with acceptance criteria",
+            "A decision table or process model for branching logic"
+          ],
+          "tools": ["Visio or Lucidchart for models", "Confluence for specifications", "Jira for acceptance criteria"],
+          "pitfall": "Words like appropriately, properly, and as required. Each one is a decision deferred to whoever writes the code, usually without them realising it.",
+          "interview": "You may be handed a vague requirement and asked to improve it. Boundary conditions are what separate a strong answer from a generic one."
+        },
+        {
+          "id": "BA07-T02",
+          "title": "Verifying Requirements",
+          "scenario": "A requirements set passes review and goes to build. During development the team finds two requirements that contradict each other and one that cannot be tested as written.",
+          "question": "What verification would have caught these before the build started?",
+          "approach": [
+            "Check each requirement for the quality characteristics — unambiguous, testable, complete, consistent, feasible.",
+            "Check the set as a whole for internal contradiction, which single-requirement review never finds.",
+            "Confirm every requirement is atomic; compound requirements hide contradictions inside themselves.",
+            "Review with someone who will have to test it, since testability failures are invisible to authors."
+          ],
+          "outputs": [
+            "Verified requirements meeting agreed quality criteria",
+            "A defect log of requirements returned for rework"
+          ],
+          "tools": ["Confluence review workflow", "Jira for requirement defects", "Excel checklist for quality criteria"],
+          "pitfall": "Confusing verification with validation. Verification asks whether the requirement is well written; validation asks whether it is the right requirement. Both are needed and they catch different failures.",
+          "interview": "The verification versus validation distinction is asked constantly. Have a one-line answer and an example of each."
+        },
+        {
+          "id": "BA07-T03",
+          "title": "Validating Requirements Against Business Need",
+          "scenario": "A perfectly specified, fully traceable requirements set is delivered on time. Six months after go-live, the process is no faster and the original business case benefit has not materialised.",
+          "question": "How does a technically correct requirements set fail to deliver value, and what validation would have caught it?",
+          "approach": [
+            "Trace each requirement to the business objective and ask whether delivering it moves the measure.",
+            "Check for the requirements nobody asked for that consumed capacity without serving the objective.",
+            "Check for the objective with thin requirement coverage — the benefit nobody actually built for.",
+            "Validate with the benefit owner, not only with the requesting stakeholder."
+          ],
+          "outputs": [
+            "Validated requirements linked to benefit measures",
+            "A list of requirements delivering no measurable benefit"
+          ],
+          "tools": ["Excel benefit-to-requirement mapping", "Power BI for benefit tracking", "Confluence for validation records"],
+          "pitfall": "Validating with the person who requested the feature. They will confirm it is what they asked for, which is not the same as it being what the business needed.",
+          "interview": "This is where benefits realisation meets business analysis. Being able to describe a project that delivered on spec and failed on value is a strong, credible story."
+        },
+        {
+          "id": "BA07-T04",
+          "title": "Defining Requirements Architecture",
+          "scenario": "A programme has 600 requirements across five workstreams. Each workstream's set is coherent internally. Nobody can tell whether they are consistent with each other, or whether the whole covers the business need.",
+          "question": "How do you structure a large requirements set so that completeness and consistency can be assessed at all?",
+          "approach": [
+            "Organise requirements into a structure that mirrors the business, not the project team layout.",
+            "Define the relationships between requirement sets, especially where workstreams interface.",
+            "Use the structure to test coverage — every business objective should map to a populated area.",
+            "Identify the interface requirements explicitly; the gaps between workstreams are where integration defects live."
+          ],
+          "outputs": [
+            "A requirements architecture showing structure and relationships",
+            "An identified set of cross-workstream interface requirements"
+          ],
+          "tools": ["Lucidchart or Enterprise Architect for structure", "Jira epics and links", "IBM DOORS for large sets"],
+          "pitfall": "Structuring requirements by delivery team. Teams reorganise; the business structure is more stable and makes coverage assessable.",
+          "interview": "Relevant for any large-programme role. The insight to lead with is that defects concentrate at the interfaces between workstreams."
+        },
+        {
+          "id": "BA07-T05",
+          "title": "Defining Solution Options",
+          "scenario": "The steering committee is presented with a single recommended solution and asks what else was considered. The answer is that alternatives were discussed informally but not assessed.",
+          "question": "How do you define and assess genuine solution options rather than retrofitting justification onto a decision already made?",
+          "approach": [
+            "Generate options that differ structurally — build, buy, configure, do nothing — not variants of one idea.",
+            "Include the do-nothing option honestly, since it is the baseline every other option must beat.",
+            "Assess each against the same criteria derived from the business need.",
+            "Be explicit about which requirements each option cannot satisfy."
+          ],
+          "outputs": [
+            "A defined option set with assessment against common criteria",
+            "Stated requirement gaps per option"
+          ],
+          "tools": ["Excel for weighted option scoring", "PowerPoint for the recommendation", "Confluence for the option analysis record"],
+          "pitfall": "Omitting do-nothing. It is often genuinely viable, and excluding it means the cost of change is never compared against the cost of the status quo.",
+          "interview": "Mentioning the do-nothing baseline unprompted marks you out. Most candidates never raise it."
+        },
+        {
+          "id": "BA07-T06",
+          "title": "Analysing Potential Value and Recommending a Solution",
+          "scenario": "Two options: one costs £2m and delivers £3m of benefit over five years; the other costs £600,000 and delivers £1.2m. The board wants the higher absolute return. Delivery capacity is fully committed for the next year.",
+          "question": "How do you frame the recommendation so that constraints and risk are weighed alongside headline return?",
+          "approach": [
+            "Assess value net of cost, risk and the capacity required to deliver it.",
+            "Account for time-to-benefit, not just total benefit; delayed value is worth less.",
+            "Surface the delivery constraint explicitly — a superior option that cannot be resourced is not superior.",
+            "Recommend clearly, with the conditions under which the recommendation would change."
+          ],
+          "outputs": [
+            "A value analysis covering cost, risk, timing and capacity",
+            "A recommendation with stated conditions and sensitivities"
+          ],
+          "tools": ["Excel for cost-benefit and sensitivity analysis", "PowerPoint for board presentation"],
+          "pitfall": "Comparing options on headline benefit alone. Risk-adjusted, capacity-constrained, time-discounted value frequently reverses the ranking.",
+          "interview": "If you have a finance or credit background, this is where it pays. Discounting and risk adjustment are the same reasoning you already know."
+        }
+      ]
+    },
+    {
+      "code": "BA08",
+      "name": "Solution Evaluation",
+      "desc": "Finding out whether the change actually worked, and what to do if it did not.",
+      "lessons": [
+        {
+          "id": "BA08-T01",
+          "title": "Measuring Solution Performance",
+          "scenario": "Six months after go-live, the sponsor asks whether the new system delivered. The team reports 99.8% uptime and 40 defects closed. The sponsor asks whether processing time fell, and nobody has measured it.",
+          "question": "How do you define performance measures that answer the business question rather than the technical one?",
+          "approach": [
+            "Derive measures from the business objectives stated at the outset, not from what is easy to instrument.",
+            "Include the baseline so the measure has something to be compared against.",
+            "Cover both intended benefit and unintended effect — throughput may rise while quality falls.",
+            "Agree the measures before go-live; defining them afterwards invites selection to fit the result."
+          ],
+          "outputs": [
+            "An agreed performance measure set tied to business objectives",
+            "A measurement plan with owners and frequency"
+          ],
+          "tools": ["Power BI or Tableau for dashboards", "Excel for baseline comparison", "SQL for extracting operational measures"],
+          "pitfall": "Measuring what the system reports rather than what the business needed. Uptime is a technical measure; it tells you nothing about whether the process got faster.",
+          "interview": "A strong story here is a project that hit every technical measure and missed the business one. It shows you evaluate rather than just deliver."
+        },
+        {
+          "id": "BA08-T02",
+          "title": "Analysing Performance Measures",
+          "scenario": "Processing time fell 30% overall. Broken down by region, one region improved 60% and another got 15% slower. The overall figure conceals both.",
+          "question": "How do you analyse measures so that averages do not hide the effects that matter?",
+          "approach": [
+            "Disaggregate by the dimensions where behaviour plausibly differs — region, product, user group, volume band.",
+            "Look for variance and distribution, not only central tendency.",
+            "Investigate the outliers rather than dismissing them; they usually explain the mechanism.",
+            "Separate correlation from cause before attributing improvement to the change."
+          ],
+          "outputs": [
+            "A disaggregated performance analysis with identified variance",
+            "Hypotheses explaining outlier segments"
+          ],
+          "tools": ["Power BI or Tableau for segmentation", "SQL for cohort extraction", "Excel for distribution analysis"],
+          "pitfall": "Reporting the average. It is the single most reliable way to miss that a change helped one group and harmed another.",
+          "interview": "If you have a data validation background, say so — this is the same reasoning as profiling before trusting an aggregate."
+        },
+        {
+          "id": "BA08-T03",
+          "title": "Assessing Solution Limitations",
+          "scenario": "Users are bypassing the new system for 20% of cases, using a spreadsheet instead. The system is functioning as specified. The workaround is undocumented and growing.",
+          "question": "How do you assess whether the limitation is in the solution or in how it is being used?",
+          "approach": [
+            "Investigate the bypassed cases specifically — what do they have in common.",
+            "Establish whether the solution cannot handle them or merely handles them badly.",
+            "Check whether the case type was in scope originally; a known exclusion is different from a defect.",
+            "Quantify the risk the workaround creates, since undocumented spreadsheets carry control and audit exposure."
+          ],
+          "outputs": [
+            "A solution limitation assessment distinguishing defect from exclusion",
+            "A quantified risk statement for the workaround"
+          ],
+          "tools": ["SQL or Excel for analysing bypassed cases", "Jira for raised defects", "Visio for the actual versus intended process"],
+          "pitfall": "Treating a workaround as a training problem. Users usually work around a system because it genuinely does not fit the case, and blaming them prevents you from learning that.",
+          "interview": "Workarounds are excellent interview material because they are universal. The insight is that they are evidence, not misbehaviour."
+        },
+        {
+          "id": "BA08-T04",
+          "title": "Assessing Enterprise Limitations",
+          "scenario": "A new CRM works exactly as designed. Adoption sits at 30% because the sales incentive scheme still rewards the behaviour the old process encouraged, and nobody changed it.",
+          "question": "How do you identify limitations that sit outside the solution but determine whether it delivers value?",
+          "approach": [
+            "Examine the surrounding operating model — incentives, roles, policies, culture — for conflict with the intended behaviour.",
+            "Check whether the change assumed an organisational change that was never scoped or owned.",
+            "Identify who owns each blocking factor, since none of them are owned by the project.",
+            "Escalate as a benefit risk rather than a project defect, because the fix is outside project control."
+          ],
+          "outputs": [
+            "An enterprise limitation assessment with owners outside the project",
+            "A benefit risk escalation"
+          ],
+          "tools": ["Excel for the limitation register", "PowerPoint for the sponsor escalation", "Miro for operating model mapping"],
+          "pitfall": "Assuming behaviour change follows system change. Incentives beat interfaces every time; if the scheme rewards the old way, the old way persists.",
+          "interview": "This distinguishes senior from junior answers. Junior candidates fix the system; senior candidates ask why people are not using it."
+        },
+        {
+          "id": "BA08-T05",
+          "title": "Recommending Actions to Increase Solution Value",
+          "scenario": "Evaluation shows the solution delivers 60% of the expected benefit. Options are to invest further, accept the shortfall, change the surrounding process, or retire the solution.",
+          "question": "How do you build a recommendation that is honest about a shortfall without triggering a defensive reaction that blocks action?",
+          "approach": [
+            "Present the evidence before the recommendation so the conclusion is visibly derived, not asserted.",
+            "Separate what the solution caused from what the environment caused.",
+            "Give options with cost and expected uplift for each, including doing nothing further.",
+            "State what you would need to know to be more confident, rather than overclaiming."
+          ],
+          "outputs": [
+            "An evidence-led recommendation with costed options",
+            "A stated confidence level and information gaps"
+          ],
+          "tools": ["Power BI for the evidence pack", "Excel for option costing", "PowerPoint for the recommendation"],
+          "pitfall": "Leading with the recommendation. If the audience disagrees with the conclusion before seeing the evidence, they will attack the evidence rather than weigh it.",
+          "interview": "Delivering unwelcome findings is a standard senior interview theme. Evidence-before-conclusion is the structural answer."
+        }
+      ]
+    },
+    {
+      "code": "BA09",
+      "name": "Underlying Competencies",
+      "desc": "The personal capabilities that decide whether the analysis lands.",
+      "lessons": [
+        {
+          "id": "BA09-T01",
+          "title": "Analytical Thinking and Problem Solving",
+          "scenario": "Complaints about a billing system rise 300% in a month. The obvious explanation is the release that shipped three weeks earlier. Fixing the release changes nothing.",
+          "question": "How do you structure the investigation so you find the cause rather than the most available explanation?",
+          "approach": [
+            "State the problem precisely — which complaints, from whom, starting exactly when.",
+            "Test the timing assumption against the data before accepting the release as cause.",
+            "Generate competing hypotheses and identify what evidence would discriminate between them.",
+            "Trace to root cause rather than stopping at the first plausible explanation."
+          ],
+          "outputs": [
+            "A structured problem statement with evidence",
+            "A root cause analysis with the discarded hypotheses recorded"
+          ],
+          "tools": ["Fishbone diagrams in Lucidchart or Visio", "Five Whys in Miro", "SQL and Excel for the underlying data"],
+          "pitfall": "Anchoring on the first plausible cause. Coincident timing is not causation, and a fix aimed at the wrong cause costs twice — once to build, once to discover it did not work.",
+          "interview": "Have a story where your first hypothesis was wrong and you found out. Candidates who only tell success stories read as untested."
+        },
+        {
+          "id": "BA09-T02",
+          "title": "Behavioural Characteristics Under Pressure",
+          "scenario": "In a steering meeting a director states that the analysis is wrong and the requirement was always agreed. You have documentation showing otherwise. The room is watching.",
+          "question": "How do you handle this so the decision is corrected without turning it into a personal contest?",
+          "approach": [
+            "Separate the factual correction from the interpersonal challenge and address the fact only.",
+            "Offer the evidence neutrally rather than as proof of who was right.",
+            "Move the resolution offline if the meeting is not where it can be settled.",
+            "Follow up in writing so the record is corrected regardless of what was said in the room."
+          ],
+          "outputs": [
+            "A corrected record circulated after the meeting",
+            "A resolved position agreed with the stakeholder"
+          ],
+          "tools": ["Confluence or email for the written record", "Jira history as the evidence trail"],
+          "pitfall": "Winning the exchange in the room. You may correct the record and lose the working relationship, which costs more across the rest of the programme.",
+          "interview": "This is a behavioural question you will certainly meet. The strong answer corrects the fact and protects the relationship — both, not one."
+        },
+        {
+          "id": "BA09-T03",
+          "title": "Communication and Interaction Skills",
+          "scenario": "You must explain to a non-technical executive why a seemingly small data change requires eight weeks. Previous attempts have used the words schema, referential integrity and migration, and lost the room.",
+          "question": "How do you explain technical constraint in business language without oversimplifying to the point of being wrong?",
+          "approach": [
+            "Lead with the business consequence, not the technical mechanism.",
+            "Use an analogy that holds up under a follow-up question, and check it does before using it.",
+            "Quantify in terms the audience already reasons about — cost, risk, customer impact.",
+            "Offer the technical detail as available rather than delivering it uninvited."
+          ],
+          "outputs": [
+            "An explanation the audience can repeat accurately to someone else",
+            "An agreed decision based on understood trade-offs"
+          ],
+          "tools": ["PowerPoint for the visual explanation", "Lucidchart for a simplified model"],
+          "pitfall": "Analogies that break under scrutiny. A simplification that collapses at the first intelligent question costs more credibility than the jargon it replaced.",
+          "interview": "'Explain a technical concept to a non-technical stakeholder' is near-universal. Practise one until it is genuinely clear, not merely shorter."
+        }
+      ]
+    },
+    {
+      "code": "BA10",
+      "name": "Techniques",
+      "desc": "The specific methods, and knowing which one the situation calls for.",
+      "lessons": [
+        {
+          "id": "BA10-T01",
+          "title": "Choosing Elicitation Techniques",
+          "scenario": "You need to understand a claims process spanning four departments, two of which are in another time zone and one of which is openly sceptical about the project.",
+          "question": "Which combination of techniques fits these constraints, and what does each one buy you?",
+          "approach": [
+            "Match technique to constraint — workshops need availability, observation needs access, surveys need scale.",
+            "Use interviews where a stakeholder is sceptical; a workshop gives them an audience for objection.",
+            "Use document analysis first to avoid spending scarce stakeholder time on what is already written.",
+            "Combine techniques so that each covers another's blind spot."
+          ],
+          "outputs": [
+            "A technique selection with rationale per stakeholder group",
+            "An elicitation plan fitting the constraints"
+          ],
+          "tools": ["Teams or Zoom for distributed sessions", "Miro for asynchronous workshop boards", "Google Forms for scale"],
+          "pitfall": "Defaulting to workshops for everything. They are expensive, they favour the confident voice, and they are the worst format for a sceptic.",
+          "interview": "Naming three techniques and when each fails is more convincing than listing ten you have heard of."
+        },
+        {
+          "id": "BA10-T02",
+          "title": "Modelling and Prototyping",
+          "scenario": "Stakeholders sign off a 40-page specification. At UAT they say the screens are not what they imagined, though the build matches the document exactly.",
+          "question": "What modelling or prototyping would have exposed the mismatch while it was still cheap to fix?",
+          "approach": [
+            "Model where the risk of misunderstanding is highest — interfaces and complex branching, not everything.",
+            "Prototype at the fidelity that answers the question; a wireframe tests layout, not colour.",
+            "Use models as conversation instruments rather than sign-off artefacts.",
+            "Be explicit that the prototype is not the build, or it becomes an implied commitment."
+          ],
+          "outputs": [
+            "Models or prototypes covering the highest-ambiguity areas",
+            "Recorded feedback and resulting requirement changes"
+          ],
+          "tools": ["Balsamiq or Figma for wireframes", "Axure for interactive prototypes", "Lucidchart or Visio for process and data models"],
+          "pitfall": "High-fidelity prototypes shown too early. Stakeholders review the styling and miss the logic, and executives assume it is nearly built.",
+          "interview": "Knowing when not to prototype matters as much as knowing how. Prototyping a settled back-end rule wastes everyone's time."
+        },
+        {
+          "id": "BA10-T03",
+          "title": "Prioritisation and Decision Techniques",
+          "scenario": "A workshop must choose between five options. Two stakeholders dominate discussion, a third stays silent, and the group converges on the option that the loudest person raised first.",
+          "question": "Which decision techniques counteract group dynamics rather than amplifying them?",
+          "approach": [
+            "Collect individual positions before group discussion to prevent anchoring.",
+            "Use structured scoring against agreed criteria rather than open debate.",
+            "Make the criteria and weights explicit and agree them before seeing the options.",
+            "Record dissent rather than manufacturing consensus, so a later reversal is not a surprise."
+          ],
+          "outputs": [
+            "A decision with recorded criteria, scores and dissent",
+            "An auditable rationale for the chosen option"
+          ],
+          "tools": ["Excel for weighted scoring", "Miro for anonymous input", "Jira or Trello for MoSCoW backlog views"],
+          "pitfall": "Open discussion before individual input. The first opinion voiced anchors the group, and the quietest stakeholder often holds the most operationally important objection.",
+          "interview": "Anchoring is a real and nameable effect. Referring to it explicitly shows you have thought about facilitation, not just attendance."
+        },
+        {
+          "id": "BA10-T04",
+          "title": "Evaluation and Measurement Techniques",
+          "scenario": "The sponsor wants to know if a process change worked. Volumes rose 20% in the same period for unrelated commercial reasons, and the process measure moved too.",
+          "question": "How do you evaluate the change when the environment did not hold still?",
+          "approach": [
+            "Choose measures less sensitive to volume — rate and ratio measures rather than absolute counts.",
+            "Find a comparison group unaffected by the change where possible.",
+            "Compare against the pre-change trend, not a single pre-change point.",
+            "State the confounders explicitly rather than claiming attribution you cannot support."
+          ],
+          "outputs": [
+            "An evaluation stating what can and cannot be attributed to the change",
+            "Measures normalised for volume"
+          ],
+          "tools": ["Power BI or Tableau for trend analysis", "SQL for cohort comparison", "Excel for benchmarking"],
+          "pitfall": "Claiming attribution from a before-and-after comparison. If anything else changed in the same window, the comparison cannot separate the effects and an overclaim will eventually be found out.",
+          "interview": "Naming a confounder unprompted is a strong signal. It shows you distinguish measurement from proof."
+        }
+      ]
+    }
+  ]
+}
