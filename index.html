@@ -1005,7 +1005,15 @@ function renderProjectPage(route){
       <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;margin-top:3px;">${p?esc(p.title):'Checkpoint'}</div>
     </div>
   </div>`;
-  if(S.projLoading||!S.projIndex&&!S.projError)return header+`<div class="loading"><div class="spinner"></div>Loading…</div>`;
+  // Three states, and the third one used to be unreachable. Precedence made this
+  // `projLoading || (!projIndex && !projError)`, so once the index fetch FAILED
+  // it fell through to "Checkpoint not found" — no error, no retry — and
+  // render()'s trigger will not re-fetch while projError is set, leaving the page
+  // permanently wrong about a checkpoint that exists. Entry 6's sweep missed it
+  // because the false negative is worded "not found", not "unavailable".
+  if(S.projLoading||(!S.projIndex&&!S.projError))return header+`<div class="loading"><div class="spinner"></div>Loading…</div>`;
+  if(!S.projIndex)return header+`<div class="loading" style="color:var(--text-lo)">Checkpoints unavailable — check your connection.<button class="proj-complete-btn" onclick="retryProjIndex()">Try again</button></div>`;
+  // Index loaded successfully and this id genuinely is not in it.
   if(!p)return header+`<div style="padding:40px;text-align:center;color:var(--text-mid)">Checkpoint not found</div>`;
   const st=projState(p);
   const missing=p.covers.filter(id=>!S.completed[id]);

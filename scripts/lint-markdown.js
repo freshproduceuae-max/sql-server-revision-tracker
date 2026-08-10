@@ -1,10 +1,13 @@
 // Content linter for lesson/project markdown.
 //
-// Usage: node scripts/lint-markdown.js data-validation-lab projects
+// Usage: node scripts/lint-markdown.js data-validation-lab projects business-analysis
+//
+// Walks LOCAL directories only. The 54 Credit Risk lessons live on the content
+// branch and are fetched at runtime, so they are outside this guard entirely.
 //
 // mdToHtml() extracts fenced code before other rules, but the paragraph and list
 // passes still run around it. A fence nested inside a list item (indented) or an
-// unclosed fence would render wrong. Neither occurs today (0/282 files) — this
+// unclosed fence would render wrong. Neither occurs today (0/318 in-repo files) —
 // linter exists so it stays that way. Exits non-zero on any hit.
 const fs = require('fs');
 const path = require('path');

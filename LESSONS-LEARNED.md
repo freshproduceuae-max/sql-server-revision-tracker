@@ -69,18 +69,40 @@ smallest possible layer first.
 **Since this was written — the root cause is now designed out, not just fixed.**
 The deeper problem was never the wrong branch name; it was that content lived on
 a *different commit* from the app that referenced it, so the two could drift with
-nothing to catch it. Credit Risk and DV still fetch from GitHub raw on
-`claude/credit-risk-academy` and remain exposed to this. The Business Analysis
+nothing to catch it. Credit Risk and DV both still fetch from GitHub raw on
+`claude/credit-risk-academy`, **but they are not equally exposed — see the
+correction below.** The Business Analysis
 track deliberately does not: its markdown ships in this repo and loads from this
 origin (`./business-analysis/…`), so app and content move together and a wrong
 path fails at build time rather than silently at runtime.
 
 **Standing rule for new content:** serve it from the same commit as the app. Only
 use a cross-branch raw URL when there is a reason that outweighs this entry, and
-write the reason down. Note the trap this creates for the two legacy tracks —
-`claude/credit-risk-academy` is load-bearing at runtime and must never be deleted
-or merged away, which is not obvious from looking at it. See also entries 16 and
-20 on drift between representations.
+write the reason down.
+
+**Correction — only ONE track actually depends on that branch.** This entry
+lumped Credit Risk and DV together; an audit checked and they are different
+cases:
+
+| Track | Fetched from | Files in this repo | Real exposure |
+|---|---|---|---|
+| Credit Risk | content branch | **none** — 54 URLs, no local copy | genuinely load-bearing |
+| Data Validation | content branch | **251 tracked files** under `data-validation-lab/methods/` | fetches its own in-repo files over the network |
+
+`git ls-files data-validation-lab/methods` returns 251 files, including exactly
+the paths `DV_BASE` requests. So DV is not exposed to cross-commit drift at all —
+the content is right here, on the same commit, merely reached the long way round.
+`HANDOFF.md` already described DV as living "in this repo", so this file and that
+one disagreed, and this one was wrong.
+
+**What that changes:** the standing rule reads as *one track to migrate*, not
+"never touch this branch". DV can be repointed to `./data-validation-lab/methods/`
+with a `builds` entry for it in `vercel.json` (entry 13), which would remove a
+network hop and a branch dependency for 251 files. **Credit Risk cannot** — it has
+no local copy, so `claude/credit-risk-academy` must never be deleted or merged
+away until that content is brought into the repo.
+
+See also entries 16 and 20 on drift between representations.
 
 ---
 
@@ -145,6 +167,26 @@ latent, not live. `scripts/lint-markdown.js` now fails on either pattern so it
 stays that way. Do not claim the parser "handles all code" — it handles the cases
 this content actually contains.
 
+**Since this was written — the number is stale and the guarantee was overstated.**
+
+The Business Analysis track added 42 lesson files, so the linter now scans **318
+local files** (`data-validation-lab projects business-analysis`), still with 0
+occurrences. The old figure survived in two places at once — this entry and the
+header comment of `lint-markdown.js` itself — which is the same two-copies drift
+as entry 16, in documentation rather than code.
+
+**The larger correction: the linter does not cover Credit Risk at all.** It walks
+local directories with `fs.readdirSync`, and the 54 Credit Risk lesson files are
+not in this repo — they are fetched at runtime from the content branch (entry 1).
+So the guard protects the in-repo content only, and just **6 of the 54** credit
+files were ever spot-checked. A fence nested inside a list committed to that
+branch would ship unlinted and render wrong, with nothing to catch it.
+
+**Rule:** when you write "a guard now prevents this", state exactly what it walks.
+A linter that cannot reach half the content is a real guard over a partial
+surface, not a guarantee — and the sentence that omits the boundary is the one a
+future reader will rely on.
+
 ---
 
 ## 5. Never write a raw NUL byte into HTML
@@ -175,10 +217,12 @@ explicit error state with a retry action instead of silently re-trying forever.
 **Rule:** Any render that can trigger a fetch needs a guard for in-flight *and*
 failed states. A missing failure state becomes an infinite loop.
 
-**Since this was written — applied a third time, and it exposed a second failure
+**Since this was written — applied again, and it exposed a second failure
 mode the original entry missed.** `loadBaIndex()` follows the pattern
-(`!S.baIndex && !S.baLoading && !S.baError`), which is the third loader to do so
-after lessons and the quiz bank. But the guard alone is not sufficient: a deep
+(`!S.baIndex && !S.baLoading && !S.baError`), which is the fifth loader to do so
+after lessons, the quiz bank, the project index and project briefs. That the
+pattern was already established in four places and still was not applied to the
+render side is the point, not a detail. But the guard alone is not sufficient: a deep
 link to `#lesson/BA07-T03` on a cold load arrives *before* the chapter index
 exists, so the lookup fails and the page renders "Lesson not found" for content
 that is present and fine.
@@ -236,6 +280,32 @@ Every one of them told a user with a perfectly good connection to check their
 connection. All three now test the error flag explicitly and fall back to
 pending. Verified in both directions: five cold paths render a spinner and never
 the error, and four genuine failures still render the error with a retry.
+
+**And the sweep still missed a fourth — the grep was too narrow.** An audit of
+this very entry found `renderProjectPage` carrying the same defect in a form the
+prescribed search could not see:
+
+```
+if(S.projLoading||!S.projIndex&&!S.projError) return spinner;   // && binds tighter
+if(!p) return "Checkpoint not found";
+```
+
+When the index fetch genuinely **failed**, the first condition was false, so it
+fell through to *"Checkpoint not found"* — no error text, no retry — and
+`render()` will not re-fetch while `projError` is set. The page was permanently
+wrong about a checkpoint that exists.
+
+Two reasons the sweep missed it. The false negative is worded **"not found"**,
+not "unavailable", so a grep for the error wording skipped it. And the bug lived
+in **operator precedence** inside a condition that *looked* three-state, rather
+than in a missing branch. Fixed by parenthesising the pending test and adding the
+real error branch between pending and not-found.
+
+**Sharpened again:** search for the *symptom class*, not the wording — any branch
+reachable after a failed load that tells the user something is missing,
+including "not found", "no results", "none yet" and an empty list. And read the
+precedence of any `||`/`&&` condition that claims to separate pending from
+failed; `a || !b && !c` does not mean what it looks like.
 
 **What this says about the rule:** it was worth more as a *grep* than as a
 sentence. The bug is invisible when reading a single branch — `if(!data) show
