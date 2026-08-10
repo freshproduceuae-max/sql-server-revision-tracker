@@ -612,6 +612,44 @@ wrong reason.
 - An exit code alone does not prove a failure path works. Check the *message* —
   a crash and a clean failure are indistinguishable by exit status.
 
+**Since this was written — the same guard failed the same way again, twice more,
+and the second one could have destroyed work.** Codex found both.
+
+**Failure A — a false all-clear in a worktree.** The script hardcoded
+`ROOT = REPO/..`, which only holds for the main checkout. Run it from a linked
+worktree at `_worktrees/track-registry` and `REPO/..` is the worktrees folder,
+which contains no docs — so it printed *"tracked copy is authoritative"* and
+exited 0 without comparing anything. Entry 18 fixed this guard crying wolf on a
+clean clone and, in doing so, taught it to stay silent when it had not looked.
+That is the worse failure: a guard that cries wolf gets investigated, a guard
+that says all-clear gets trusted. It now asks git for the main worktree instead
+of assuming directory layout.
+
+**Failure B — `--fix` could silently revert the newer edit.** `--fix` syncs
+root → repo on the assumption that the root copy is the hand-edited one. That
+assumption breaks the moment you edit the tracked copy on a branch, which is
+exactly what happens when a feature branch changes `CLAUDE.md`. Running `--fix`
+out of habit would have overwritten this session's edits with a three-day-old
+root copy, silently, with a success message. `--fix` now compares mtimes and
+refuses when the repo copy is newer, pointing at a new `--from-repo` flag.
+
+**I also got the direction wrong when reporting it**, telling the user `--fix`
+would clobber the *root* copy. It writes root → repo; the hazard is the opposite
+way round. Reading the four lines of the script would have settled it.
+
+**Rules:**
+- A guard's "pass" must mean *it checked and found nothing*, never *it could not
+  find anything to check*. If it cannot locate its inputs, that is a failure, not
+  a pass.
+- Do not infer environment layout from relative paths when a tool can tell you.
+  `git worktree list --porcelain` knows where the main checkout is; `REPO/..` is
+  a guess that happens to be right in one configuration.
+- Any `--fix` that picks a winner between two copies must justify the choice, and
+  refuse when the evidence points the other way. A destructive default with a
+  success message is the worst combination available.
+- Before describing what a command does to a user, read it. See entry 21 —
+  checking the observation is cheaper than the correction.
+
 ---
 
 ## 20. Two agents, one working tree
