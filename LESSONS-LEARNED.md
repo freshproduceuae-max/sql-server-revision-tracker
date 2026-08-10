@@ -32,7 +32,12 @@ clothes, and that is the most useful thing about them:
   than the one it closed.
 - **19, 20** — the limits of what git protects. Untracked paths have no undo
   (19); a working tree shared with another session is mutable state nobody owns
-  (20). Both are cases where "it's in git" was assumed and was not true.
+  (20); a squash merge makes a fully-shipped branch look unmerged forever (19,
+  extended). All are cases where "it's in git" was assumed and was not true.
+- **20, 22** — shared mutable state with more than one writer. A working tree
+  shared by two sessions (20) and a single `index.html` that only one agent may
+  edit at a time (22) are the same constraint at different scales. This is the
+  family to check first as more work runs concurrently.
 
 When you add an entry, say which family it belongs to. When you can't place it,
 that is worth noticing — it may be a genuinely new class of problem.
@@ -819,3 +824,56 @@ everyone looking in the wrong place.
 or inconsistent, ask what would be true if the observation were simply out of
 date — and spend the ten seconds it costs to re-check. That single question would
 have prevented all three.
+
+---
+
+## 22. Match the parallelism to the shape of the work, not to the budget
+
+**Looked like:** more compute was authorised mid-project, with an instruction to
+be exhaustive and stop optimising for cost. The obvious reading is "throw many
+agents at everything" — fan out on every task, because fanning out is now free.
+
+**Why that is wrong:** parallelism is not a budget decision, it is a *shape*
+decision. Work splits cleanly only where the parts are genuinely independent.
+This app is **one file**. Two agents editing `index.html` collide exactly the way
+two sessions sharing one working tree collide — see entry 20, which is the same
+failure at a different scale. A file is a shared working tree in miniature, and
+throwing more writers at it makes the collision more likely, not the work faster.
+
+**What was actually done:**
+
+| Work | Shape | Treatment |
+|---|---|---|
+| Design exploration, code audit, review | independent, read-only | **fan out** — rival designs scored against each other, adversarial sweeps |
+| Editing `index.html` | one file, shared mutable state | **strictly sequential**, done by one writer |
+
+Read-only analysis parallelises perfectly because nothing is being mutated.
+Implementation does not. The rule that falls out: **fan out on reading, stay
+serial on writing.**
+
+**The second half — do not improvise through ambiguity.** The request was "a page
+with this chronology of courses and quizzes so I can select them as a package."
+That admits several genuinely different products: committed curriculum data, user
+composed packages, or a pure derived view with no new state. Those are not
+variations of one design; they have different data models and different failure
+modes. The improvising move is to pick the one you thought of first and build it,
+then discover at review that it answered a different question.
+
+The user's framing for this, and it is the better one: **ask without shame.**
+Asking costs a moment; building the wrong thing costs the build, the review, and
+the rebuild. Where the ambiguity is real, either ask outright or generate the
+rival designs and have them judged — do not silently collapse the ambiguity by
+guessing and call it decisiveness.
+
+**Rules:**
+- Decide fan-out by asking "are these parts independent?", never by "how much
+  compute do I have?". A large budget spent on serial work is just a slower way
+  to collide.
+- Anything with one writer and shared mutable state — a single file, a working
+  tree, a deployment target — stays sequential regardless of budget.
+- More resource should raise *depth* first (more adversarial review, more rival
+  designs, more verification) and *breadth* only where the work truly splits.
+- When a request is ambiguous, ask, or explore rivals and judge them. Improvising
+  a single interpretation is the expensive option that feels like the cheap one.
+- Extra capacity is best spent on **checking**, because verification is
+  embarrassingly parallel and this file is mostly a record of unverified claims.
