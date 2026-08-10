@@ -85,39 +85,42 @@ function lessonMd(ch, chIndex, lesson) {
   return lines.join('\n');
 }
 
+/* ── Render and validate ENTIRELY IN MEMORY before touching the disk ──
+   The earlier version deleted the generated markdown, then wrote, then validated.
+   Anything that failed in between — a bad source field, a crash, a Ctrl-C — left
+   a half-generated tree on disk that the app would serve without complaint. The
+   disk is now only written once the whole output is built and checked, so a
+   failed run leaves the previous good output exactly as it was. */
+const files = new Map();          // filename -> contents
+const index = [];
+src.chapters.forEach((ch, ci) => {
+  ch.lessons.forEach(l => files.set(l.id + '.md', lessonMd(ch, ci, l)));
+  index.push({ code: ch.code, name: ch.name, desc: ch.desc || '', lessons: ch.lessons.map(l => ({ id: l.id, title: l.title })) });
+});
+files.set('index.json', JSON.stringify(index, null, 2) + '\n');
+
+/* The app builds its BA id space from index.json at runtime, not from index.html,
+   so the invariant worth guarding is that the index and the markdown agree. A
+   lesson in one but not the other is an unreachable page or a dead link, and both
+   fail silently in the browser. Checked against what we are ABOUT to write. */
+const indexed = new Set(index.flatMap(ch => ch.lessons.map(l => l.id)));
+const rendered = new Set([...files.keys()].filter(f => f.endsWith('.md')).map(f => f.replace(/\.md$/, '')));
+const notRendered = [...indexed].filter(id => !rendered.has(id));
+const notIndexed = [...rendered].filter(id => !indexed.has(id));
+if (notRendered.length) fail('in index.json but not rendered: ' + notRendered.join(', '));
+if (notIndexed.length) fail('rendered but missing from index.json: ' + notIndexed.join(', '));
+
+/* Validation passed — now the disk. */
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
 
-/* Remove only files this script owns, so a renamed lesson does not leave a
-   stale orphan behind that the app would still happily serve. */
+/* Remove only files this script owns, so a renamed lesson does not leave a stale
+   orphan behind that the app would still happily serve. */
 fs.readdirSync(OUT)
   .filter(f => ID_RE.test(f.replace(/\.md$/, '')))
   .forEach(f => fs.unlinkSync(path.join(OUT, f)));
 
-let count = 0;
-const index = [];
-src.chapters.forEach((ch, ci) => {
-  ch.lessons.forEach(l => {
-    fs.writeFileSync(path.join(OUT, l.id + '.md'), lessonMd(ch, ci, l), 'utf8');
-    count++;
-  });
-  index.push({ code: ch.code, name: ch.name, desc: ch.desc || '', lessons: ch.lessons.map(l => ({ id: l.id, title: l.title })) });
-});
+for (const [name, body] of files) fs.writeFileSync(path.join(OUT, name), body, 'utf8');
 
-fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify(index, null, 2) + '\n', 'utf8');
-
-console.log('chapters: ' + src.chapters.length + ' | lessons: ' + count);
+console.log('chapters: ' + src.chapters.length + ' | lessons: ' + rendered.size);
 console.log('written to business-analysis/ (+ index.json)');
-
-/* The app builds its BA id space from index.json at runtime, not from index.html,
-   so the invariant worth guarding is that the index and the markdown on disk
-   agree. A lesson in one but not the other is an unreachable page or a dead link,
-   and both fail silently in the browser. */
-const indexed = new Set(index.flatMap(ch => ch.lessons.map(l => l.id)));
-const onDisk = new Set(
-  fs.readdirSync(OUT).filter(f => f.endsWith('.md')).map(f => f.replace(/\.md$/, ''))
-);
-const notOnDisk = [...indexed].filter(id => !onDisk.has(id));
-const notIndexed = [...onDisk].filter(id => !indexed.has(id));
-if (notOnDisk.length) fail('in index.json but no markdown file: ' + notOnDisk.join(', '));
-if (notIndexed.length) fail('markdown file with no index.json entry: ' + notIndexed.join(', '));
 console.log('index.json and markdown agree on all ' + indexed.size + ' lesson ids');
