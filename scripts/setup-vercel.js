@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ORG = 'team_cxU0NZtjMsnBvJprrVzn43Xo';       // freshproduceuae-maxs-projects
-const PROJECT = 'prj_LAGdEd02pyHEQbY8WWjKqAKVjx7t'; // credit-risk-academy
+const PROJECT = 'prj_LAGdEd02pyHEQbY8WWjKqAKVjx7t'; // analyst-path (was credit-risk-academy)
 
 const dir = path.join(__dirname, '..', '.vercel');
 const file = path.join(dir, 'project.json');
@@ -34,7 +34,7 @@ if (fs.existsSync(file)) {
 fs.mkdirSync(dir, { recursive: true });
 fs.writeFileSync(file, JSON.stringify(desired, null, 2) + '\n');
 
-console.log('linked to credit-risk-academy (freshproduceuae-maxs-projects)');
+console.log('linked to analyst-path (freshproduceuae-maxs-projects)');
 console.log('');
 console.log('Next: confirm you are authenticated, then deploy.');
 console.log('  npx vercel whoami        # must succeed before deploying');

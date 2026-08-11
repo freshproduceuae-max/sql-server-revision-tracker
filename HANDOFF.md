@@ -213,9 +213,21 @@ entry 19.
   app's rendering logic changing so that ids become uncompletable without the
   ids themselves changing. Closing that properly needs a headless harness this
   single-file app does not have.
-- **The Vercel project is still named `credit-risk-academy`**, so the URL says
-  credit-risk although the app is now Analyst Academy. Renaming it changes the
-  production URL, so it was left alone deliberately.
+- **The Vercel project is now named `analyst-path`, but the live URL is still
+  `credit-risk-academy.vercel.app`.** Renaming the project did not move the
+  `.vercel.app` domain: the old one is registered as the project's *production
+  domain* in project settings, which is what exempts it from Deployment
+  Protection. `analyst-path.vercel.app` exists and is aliased to the current
+  production deployment, but returns a `302` to Vercel SSO because it is only an
+  alias, not the production domain.
+
+  **To finish the switch** (dashboard only — the CLI does not expose it):
+  Project → Settings → Domains → add `analyst-path.vercel.app` and set it as the
+  production domain, then remove `credit-risk-academy.vercel.app`.
+
+  **Before doing that, export your progress from `#backup` on the old URL and
+  re-import it on the new one.** `localStorage` is per-origin, so a domain change
+  reads as zero completed lessons and a zero streak until you restore.
 
 ---
 
