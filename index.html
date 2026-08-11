@@ -516,6 +516,160 @@ function saveQuizScore(id,pct){
   }catch(e){}
 }
 
+/* ── Backup and restore ──
+   Progress lives only in localStorage, so clearing site data wipes it and nothing
+   moves between devices. This makes it recoverable without a backend or an account.
+
+   The payload carries EXACTLY the keys loadState() writes and no more. loadState
+   rebuilds crAcademy_v1 from a whitelist {completed,streak,lastDate,quizScores},
+   so any extra key restored here would be silently dropped on the next boot —
+   which would look like a restore that half-worked.
+
+   Import MERGES, never replaces. A restore must not be able to destroy progress
+   that is newer than the file, since the whole point of the feature is not losing
+   work. Merging is safe because progress here is monotonic. */
+const BACKUP_APP='analyst-academy';
+const BACKUP_VERSION=1;
+
+function currentState(){
+  try{return JSON.parse(localStorage.getItem('crAcademy_v1')||'{}');}catch(e){return {};}
+}
+function backupPayload(){
+  const sv=currentState();
+  const completed=sv.completed||{};
+  const quizScores=sv.quizScores||{};
+  return {
+    app:BACKUP_APP,
+    version:BACKUP_VERSION,
+    exportedAt:new Date().toISOString(),
+    // Plain-text summary so the file says what it holds without a code editor.
+    summary:{
+      lessonsCompleted:Object.keys(completed).length,
+      quizLessonsScored:Object.keys(quizScores).length,
+      dayStreak:sv.streak||1,
+      lastStudied:sv.lastDate||null
+    },
+    state:{completed,streak:sv.streak||1,lastDate:sv.lastDate||null,quizScores}
+  };
+}
+/* Validate fully BEFORE touching storage: a rejected file must leave progress
+   byte-identical. Returns an error string, or null when the payload is usable. */
+function validateBackup(obj){
+  if(!obj||typeof obj!=='object')return 'That file is not a backup object.';
+  if(obj.app!==BACKUP_APP)return 'That file is not an Analyst Academy backup.';
+  if(typeof obj.version!=='number')return 'That backup has no version number.';
+  if(obj.version>BACKUP_VERSION)return `That backup was made by a newer version (v${obj.version}). Update the app first.`;
+  const st=obj.state;
+  if(!st||typeof st!=='object')return 'That backup has no progress in it.';
+  if(st.completed!==undefined&&(typeof st.completed!=='object'||st.completed===null||Array.isArray(st.completed)))return 'The completed list in that backup is malformed.';
+  if(st.quizScores!==undefined&&(typeof st.quizScores!=='object'||st.quizScores===null||Array.isArray(st.quizScores)))return 'The quiz scores in that backup are malformed.';
+  return null;
+}
+/* Union for completed, max per id for quizScores (matching saveQuizScore), max
+   streak, later lastDate. Nothing can be removed by a restore. */
+function mergeBackup(obj){
+  const cur=currentState();
+  const cc={...(cur.completed||{})}, cq={...(cur.quizScores||{})};
+  const ic=obj.state.completed||{}, iq=obj.state.quizScores||{};
+  let addedLessons=0, addedScores=0;
+  Object.keys(ic).forEach(k=>{if(ic[k]&&!cc[k]){cc[k]=true;addedLessons++;}});
+  Object.keys(iq).forEach(k=>{
+    const v=Number(iq[k]);
+    if(!isFinite(v))return;
+    if(cq[k]===undefined||v>cq[k]){cq[k]=v;addedScores++;}
+  });
+  const streak=Math.max(Number(cur.streak)||1,Number(obj.state.streak)||1);
+  const dates=[cur.lastDate,obj.state.lastDate].filter(Boolean)
+    .sort((a,b)=>new Date(b)-new Date(a));
+  const merged={completed:cc,streak,lastDate:dates[0]||cur.lastDate||null,quizScores:cq};
+  localStorage.setItem('crAcademy_v1',JSON.stringify(merged));
+  loadState();
+  return {addedLessons,addedScores,totalLessons:Object.keys(cc).length};
+}
+/* Full page, not a dialog — a modal reader once caused an infinite render loop,
+   and the project rule is that anything with its own content is a page. */
+function renderBackupPage(){
+  const p=backupPayload(), s=p.summary;
+  const m=S.backupMsg;
+  const tone=m&&m.kind==='err'?'#FF4B4B':(m&&m.kind==='ok'?'#58CC02':'var(--text-mid)');
+  const msg=m?`<div style="margin-top:18px;padding:14px 16px;border-radius:12px;border:2px solid ${tone};color:${tone};font-weight:700;font-size:14px;line-height:1.5;">${esc(m.text)}</div>`:'';
+  return `
+  <div style="background:#1CB0F6;color:#fff;padding:20px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;">
+    <a href="#" style="background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;text-decoration:none;">← Study Plan</a>
+    <div style="flex:1;">
+      <div style="font-size:12px;font-weight:800;opacity:.85;text-transform:uppercase;letter-spacing:.6px;">Your progress</div>
+      <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;margin-top:3px;">Backup &amp; restore</div>
+    </div>
+  </div>
+  <div style="max-width:720px;margin:0 auto;padding:32px 24px 48px;">
+    <p style="font-size:15px;line-height:1.6;color:var(--text-mid);font-weight:600;margin:0 0 22px;">
+      Your progress is stored in this browser only. Clearing site data erases it, and it does not follow you to another device. Download a backup to keep it safe, and restore it anywhere.
+    </p>
+
+    <div class="plan-card" style="--plan-accent:#58CC02;--plan-shadow:#46A302;">
+      <div class="plan-kicker">In this browser right now</div>
+      <div style="display:flex;flex-wrap:wrap;gap:22px;margin-top:10px;font-weight:800;">
+        <div><div style="font-size:26px;">${s.lessonsCompleted}</div><div style="font-size:12px;color:var(--text-lo);text-transform:uppercase;letter-spacing:.5px;">lessons done</div></div>
+        <div><div style="font-size:26px;">${s.quizLessonsScored}</div><div style="font-size:12px;color:var(--text-lo);text-transform:uppercase;letter-spacing:.5px;">quizzes scored</div></div>
+        <div><div style="font-size:26px;">${s.dayStreak}</div><div style="font-size:12px;color:var(--text-lo);text-transform:uppercase;letter-spacing:.5px;">day streak</div></div>
+      </div>
+      <div style="margin-top:18px;">
+        <button class="proj-complete-btn" onclick="downloadBackup()">⬇ Download backup</button>
+      </div>
+    </div>
+
+    <div class="plan-card" style="margin-top:18px;--plan-accent:#1CB0F6;--plan-shadow:#1899D6;">
+      <div class="plan-kicker">Restore from a file</div>
+      <div class="plan-card-sub" style="margin-top:8px;">
+        Restoring <strong>adds</strong> to what is already here — it never deletes. A lesson finished on either device stays finished, and the higher quiz score wins. If the file is not a valid backup, nothing is changed.
+      </div>
+      <div style="margin-top:16px;">
+        <input type="file" accept="application/json,.json" onchange="importBackupFile(this)"
+               style="font-family:inherit;font-size:14px;font-weight:600;color:var(--text-mid);">
+      </div>
+    </div>
+    ${msg}
+  </div>`;
+}
+
+function downloadBackup(){
+  try{
+    const data=JSON.stringify(backupPayload(),null,2);
+    const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='analyst-academy-progress-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),0);
+    S.backupMsg={kind:'ok',text:'Backup downloaded. Keep it somewhere outside this browser.'};
+  }catch(e){
+    S.backupMsg={kind:'err',text:'Could not create the file: '+e.message};
+  }
+  render();
+}
+function importBackupFile(input){
+  const file=input&&input.files&&input.files[0];
+  if(!file)return;
+  S.backupMsg={kind:'busy',text:'Reading '+file.name+'…'};render();
+  const reader=new FileReader();
+  reader.onerror=()=>{S.backupMsg={kind:'err',text:'That file could not be read.'};render();};
+  reader.onload=()=>{
+    let obj=null;
+    try{obj=JSON.parse(reader.result);}
+    catch(e){S.backupMsg={kind:'err',text:'That file is not valid JSON.'};render();return;}
+    const bad=validateBackup(obj);
+    if(bad){S.backupMsg={kind:'err',text:bad};render();return;}
+    try{
+      const r=mergeBackup(obj);
+      S.backupMsg={kind:'ok',text:`Restored. ${r.addedLessons} new lesson${r.addedLessons===1?'':'s'} and ${r.addedScores} quiz score${r.addedScores===1?'':'s'} merged in — ${r.totalLessons} completed in total. Nothing was removed.`};
+    }catch(e){
+      S.backupMsg={kind:'err',text:'Restore failed, and your progress was left unchanged: '+e.message};
+    }
+    render();
+  };
+  reader.readAsText(file);
+}
+
 /* ── Markdown parser ── */
 function mdToHtml(md){
   // Code is lifted out before anything else runs and put back at the very end.
@@ -893,6 +1047,7 @@ function renderStudyPlan(route){
     <div class="topbar-stats">
       <div class="stat"><div class="stat-pip" style="background:#FF9600;box-shadow:0 2px 0 #E68200;"></div><span class="stat-val">${S.streak}</span><span class="stat-lbl">day streak</span></div>
       <div class="stat"><div class="stat-gem" style="background:#1CB0F6;box-shadow:0 2px 0 #1899D6;"></div><span class="stat-val">${Object.keys(S.completed).length}</span><span class="stat-lbl">items done</span></div>
+      <a href="#backup" title="Backup &amp; restore your progress" style="text-decoration:none;color:var(--text-lo);font-size:18px;line-height:1;padding:4px 6px;">🛟</a>
     </div>
   </div>`;
   const selector=`
@@ -960,6 +1115,7 @@ function getHashRoute(){
   if(!h||h==='/') return {view:'plan',ptrack:defaultPlanTrack()};
   const pl=h.match(/^plan(?:\/(.+))?$/);
   if(pl) return {view:'plan',ptrack:planTrackId(pl[1]||defaultPlanTrack())};
+  if(h==='backup') return {view:'backup'};
   // Any registered track id routes itself; unknown ids fall through to the default.
   const t=h.match(/^track\/(.+)$/);
   if(t&&TRACK[t[1]]) return {view:'main',track:t[1]};
@@ -1358,6 +1514,7 @@ function renderApp(){
   Object.keys(completed).forEach(k=>{if(isBaId(k))xp+=BA_XP;});
 
   if(route.view==='plan')return renderStudyPlan(route);
+  if(route.view==='backup')return renderBackupPage();
   if(route.view==='quiz')return renderQuizSession(route);
   if(route.view==='projtl')return renderProjTimeline(route);
   if(route.view==='project')return renderProjectPage(route);
@@ -1419,6 +1576,7 @@ function renderApp(){
     <div class="topbar-stats">
       <div class="stat"><div class="stat-pip" style="background:#FF9600;box-shadow:0 2px 0 #E68200;"></div><span class="stat-val">${streak}</span><span class="stat-lbl">day streak</span></div>
       <div class="stat"><div class="stat-gem" style="background:#1CB0F6;box-shadow:0 2px 0 #1899D6;"></div><span class="stat-val">${xp}</span><span class="stat-lbl">XP</span></div>
+      <a href="#backup" title="Backup &amp; restore your progress" style="text-decoration:none;color:var(--text-lo);font-size:18px;line-height:1;padding:4px 6px;">🛟</a>
     </div>
   </div>`;
 
