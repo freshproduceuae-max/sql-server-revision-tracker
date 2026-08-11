@@ -50,8 +50,9 @@ went wrong here.
 **That copy is hand-written, not generated, so the two can drift.** This file
 stays the detailed record — 22 entries with the full symptom, wrong first
 hypothesis, root cause and fix. That one is the portable summary. If you correct
-something here that appears there, correct it in both. Note also that the other
-repo has **no git remote**, so its history exists on one disk only.
+something here that appears there, correct it in both. That repo was local-only when this
+note was written; it is now pushed to **github.com/freshproduceuae-max/ai-support-system**
+(private), so it is no longer single-disk.
 
 When you add an entry, say which family it belongs to. When you can't place it,
 that is worth noticing — it may be a genuinely new class of problem.
