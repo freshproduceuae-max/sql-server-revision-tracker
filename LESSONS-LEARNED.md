@@ -39,6 +39,20 @@ clothes, and that is the most useful thing about them:
   edit at a time (22) are the same constraint at different scales. This is the
   family to check first as more work runs concurrently.
 
+## A portable copy lives outside this repo
+
+On 2026-08-10 the generalisable rules here were distilled into
+`C:\Projects\Make an AI Support System\AGENT-LESSONS.md`, and linked from that
+repo's root README and its idea-launchpad, teaching-lessons, operating-model and
+Small Business Websites templates, so future projects start from what already
+went wrong here.
+
+**That copy is hand-written, not generated, so the two can drift.** This file
+stays the detailed record — 22 entries with the full symptom, wrong first
+hypothesis, root cause and fix. That one is the portable summary. If you correct
+something here that appears there, correct it in both. Note also that the other
+repo has **no git remote**, so its history exists on one disk only.
+
 When you add an entry, say which family it belongs to. When you can't place it,
 that is worth noticing — it may be a genuinely new class of problem.
 
