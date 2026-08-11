@@ -530,6 +530,7 @@ function saveQuizScore(id,pct){
    work. Merging is safe because progress here is monotonic. */
 const BACKUP_APP='analyst-academy';
 const BACKUP_VERSION=1;
+const BACKUP_MAX_BYTES=4*1024*1024;   // ~4MB; a full-progress backup is far under 1MB
 
 function currentState(){
   try{return JSON.parse(localStorage.getItem('crAcademy_v1')||'{}');}catch(e){return {};}
@@ -560,7 +561,8 @@ function validateBackup(obj){
   if(typeof obj.version!=='number')return 'That backup has no version number.';
   if(obj.version>BACKUP_VERSION)return `That backup was made by a newer version (v${obj.version}). Update the app first.`;
   const st=obj.state;
-  if(!st||typeof st!=='object')return 'That backup has no progress in it.';
+  // Arrays are objects, so an array would slip past a bare typeof check.
+  if(!st||typeof st!=='object'||Array.isArray(st))return 'That backup has no progress in it.';
   if(st.completed!==undefined&&(typeof st.completed!=='object'||st.completed===null||Array.isArray(st.completed)))return 'The completed list in that backup is malformed.';
   if(st.quizScores!==undefined&&(typeof st.quizScores!=='object'||st.quizScores===null||Array.isArray(st.quizScores)))return 'The quiz scores in that backup are malformed.';
   return null;
@@ -582,7 +584,15 @@ function mergeBackup(obj){
   const dates=[cur.lastDate,obj.state.lastDate].filter(Boolean)
     .sort((a,b)=>new Date(b)-new Date(a));
   const merged={completed:cc,streak,lastDate:dates[0]||cur.lastDate||null,quizScores:cq};
+  // A single setItem, so a quota failure throws before anything is replaced and
+  // the previous value survives intact. Read it back rather than trusting the
+  // write: storage can be full, or disabled entirely in private browsing, and
+  // loadState() below swallows its own write failure by design.
   localStorage.setItem('crAcademy_v1',JSON.stringify(merged));
+  const back=currentState();
+  if(Object.keys(back.completed||{}).length!==Object.keys(cc).length){
+    throw new Error('the browser did not keep the restored data (storage may be full)');
+  }
   loadState();
   return {addedLessons,addedScores,totalLessons:Object.keys(cc).length};
 }
@@ -650,6 +660,13 @@ function downloadBackup(){
 function importBackupFile(input){
   const file=input&&input.files&&input.files[0];
   if(!file)return;
+  // Gate on size before reading. A real backup of every lesson in the app is a
+  // few hundred KB; anything far larger is a wrong file or a hostile one, and
+  // parsing it would stall the tab before validation ever runs.
+  if(file.size>BACKUP_MAX_BYTES){
+    S.backupMsg={kind:'err',text:`That file is ${Math.round(file.size/1048576)} MB. A progress backup is well under 1 MB, so this is not one.`};
+    render();return;
+  }
   S.backupMsg={kind:'busy',text:'Reading '+file.name+'…'};render();
   const reader=new FileReader();
   reader.onerror=()=>{S.backupMsg={kind:'err',text:'That file could not be read.'};render();};
