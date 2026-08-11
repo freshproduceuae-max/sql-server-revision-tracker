@@ -256,6 +256,22 @@ button{font-family:inherit;cursor:pointer;}
 .proj-complete-btn.undo{background:var(--chip-bg);color:var(--text-lo);box-shadow:none;}
 
 /* ── Study plan ── */
+/* Block arc — one dot per block, so the whole course length is visible at once. */
+.plan-arc{margin-top:18px;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:18px;}
+.plan-arc-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;}
+.plan-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex:0 0 auto;text-decoration:none;}
+.plan-dot-line{width:14px;height:2px;background:var(--border);flex:0 0 auto;}
+.plan-arc-cap{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.5px;}
+/* Full sequence list — the part that shows there IS an end to reach. */
+.plan-list{max-width:720px;margin:22px auto 0;}
+.plan-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:8px;font-weight:700;font-size:14px;}
+.plan-row.here{box-shadow:0 2px 0 rgba(0,0,0,.06);}
+.plan-row-mark{width:16px;text-align:center;font-weight:900;}
+.plan-row-n{width:22px;color:var(--text-lo);font-size:12px;}
+.plan-row-title{flex:1;color:var(--text-hi);}
+.plan-row-ids{color:var(--text-lo);font-size:12px;white-space:nowrap;}
+.plan-row-cnt{color:var(--text-lo);font-size:12px;min-width:44px;text-align:right;}
+@media(max-width:560px){.plan-row-ids{display:none;}}
 .plan-page{max-width:1100px;margin:0 auto;padding:26px 20px 60px;}
 .plan-hero{max-width:720px;margin:0 auto;padding:10px 0 6px;}
 .plan-kicker{font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;}
@@ -605,7 +621,7 @@ function renderBackupPage(){
   const msg=m?`<div style="margin-top:18px;padding:14px 16px;border-radius:12px;border:2px solid ${tone};color:${tone};font-weight:700;font-size:14px;line-height:1.5;">${esc(m.text)}</div>`:'';
   return `
   <div style="background:#1CB0F6;color:#fff;padding:20px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;">
-    <a href="#" style="background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;text-decoration:none;">← Study Plan</a>
+    <a href="#" style="background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;text-decoration:none;">← Back to the path</a>
     <div style="flex:1;">
       <div style="font-size:12px;font-weight:800;opacity:.85;text-transform:uppercase;letter-spacing:.6px;">Your progress</div>
       <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;margin-top:3px;">Backup &amp; restore</div>
@@ -927,15 +943,18 @@ function makeLessonLookup(){
   buildFlat().forEach(n=>lookup.set(n.id,n));
   buildDvFlat().forEach(n=>lookup.set(n.id,n));
   if(S.baIndex)buildBaFlat().forEach(n=>lookup.set(n.id,n));
+  if(S.quizBank)buildQuizFlat().forEach(n=>lookup.set(n.id,n));
   return lookup;
 }
 function planLessonFromLookup(lookup,id){
   const n=lookup.get(id);
+  // Quiz lessons open a quiz session, not a markdown lesson page.
+  const q=/^quiz:(\d+):(\d+)$/.exec(id);
   return {
     id,
     code:n?n.data.code:id,
     title:n?n.data.title:id,
-    href:`#lesson/${id}`,
+    href:q?`#quiz/${q[1]}/${q[2]}`:`#lesson/${id}`,
     done:!!S.completed[id]
   };
 }
@@ -1056,11 +1075,11 @@ function renderStudyPlan(route){
   const habit=buildQuizHabit();
   const topBar=`
   <div class="topbar">
-    <a class="topbar-logo" href="#" style="text-decoration:none;color:inherit;" title="Back to Study Plan">
+    <a class="topbar-logo" href="#" style="text-decoration:none;color:inherit;" title="Back to the learning path">
       <div class="logo-icon">A</div>
       <span class="logo-name">Analyst Academy</span>
       <span style="font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;">Study Plan</span>
-    </div>
+    </a>
     <div class="topbar-stats">
       <div class="stat"><div class="stat-pip" style="background:#FF9600;box-shadow:0 2px 0 #E68200;"></div><span class="stat-val">${S.streak}</span><span class="stat-lbl">day streak</span></div>
       <div class="stat"><div class="stat-gem" style="background:#1CB0F6;box-shadow:0 2px 0 #1899D6;"></div><span class="stat-val">${Object.keys(S.completed).length}</span><span class="stat-lbl">items done</span></div>
@@ -1110,26 +1129,70 @@ function renderStudyPlan(route){
       <div class="plan-overview-head"><span class="plan-overview-lbl">${esc(meta.name)} progress</span><span class="plan-overview-cnt">${done} / ${total}</span></div>
       <div class="plan-overview-track"><div class="plan-overview-fill" style="width:${pct}%;background:${meta.col};"></div></div>
     </div>`:'';
+  // The whole arc at a glance: one dot per block, filled for done, ringed for the
+  // one in progress. Seeing block 13 exist is the point — the Credit Risk course
+  // is one borrower's story and the last block only lands if you did the first.
+  let arc='',blockList='';
+  if(blocks&&blocks.blocks.length){
+    const cur=blocks.current;
+    arc=`
+    <div class="plan-arc">
+      <div class="plan-arc-dots">
+        ${blocks.blocks.map((b,i)=>{
+          const done=b.doneCount===b.total&&b.total>0;
+          const here=cur&&b.id===cur.id;
+          const bg=done?meta.col:(here?'transparent':'var(--border)');
+          const ring=here?`box-shadow:0 0 0 3px ${hexRgba(meta.col,.35)};border-color:${meta.col};`:'';
+          // Status markers, not navigation — every dot would have led to this
+          // same page, so as links they were a row of identical empty tab stops.
+          // A span with a title keeps the hover label without the focus noise.
+          return `<span class="plan-dot" title="${esc(String(i+1)+'. '+b.title+' — '+(done?'done':(here?'in progress':'not started')))}" style="background:${bg};${ring}"></span>`;
+        }).join('<span class="plan-dot-line"></span>')}
+      </div>
+      <div class="plan-arc-cap"><span>${blocks.blocks.filter(b=>b.doneCount===b.total&&b.total>0).length} of ${blocks.blocks.length} blocks complete</span><span>${done} / ${total} lessons</span></div>
+    </div>`;
+    blockList=`
+    <div class="plan-list">
+      <div class="plan-kicker" style="margin-bottom:10px;">The whole ${esc(meta.name)} sequence</div>
+      ${blocks.blocks.map((b,i)=>{
+        const isDone=b.doneCount===b.total&&b.total>0;
+        const here=cur&&b.id===cur.id;
+        const mark=isDone?'✓':(here?'▸':'○');
+        const ids=b.lessons.map(l=>l.id);
+        const span=ids.length>2?ids[0]+'–'+ids[ids.length-1]:ids.join(' ');
+        return `<div class="plan-row${here?' here':''}" style="${here?`border-color:${meta.col};`:''}">
+          <span class="plan-row-mark" style="color:${isDone?meta.col:'var(--text-lo)'}">${mark}</span>
+          <span class="plan-row-n">${i+1}</span>
+          <span class="plan-row-title">${esc(b.title)}</span>
+          <span class="plan-row-ids">${esc(span)}</span>
+          <span class="plan-row-cnt">${isDone?'done':b.doneCount+'/'+b.total}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
   return topBar+`
   <div class="plan-page">
     <div class="plan-hero">
-      <div class="plan-kicker">Landing page</div>
       <div class="plan-title">Study Plan</div>
-      <div class="plan-sub">One primary content block and one daily quiz habit, both derived from existing lessons. Change the track in the URL hash or with the selector below.</div>
+      <div class="plan-sub">Where you are, what to do next, and everything still ahead. Pick a track.</div>
       ${selector}
-      ${overview}
+      ${arc}
     </div>
     <div class="plan-grid">
       ${blockCard}
       ${habitCard}
     </div>
+    ${blockList}
   </div>`;
 }
 
 /* ── Routing ── */
 function getHashRoute(){
   const h=window.location.hash.slice(1);
-  if(!h||h==='/') return {view:'plan',ptrack:defaultPlanTrack()};
+  // The front page is the track path — the road. The Study Plan is its own page
+  // at #plan. Making the plan the landing page hid the path, which is the thing
+  // that shows the whole journey and is why the app is motivating at all.
+  if(!h||h==='/') return {view:'main',track:DEFAULT_TRACK};
   const pl=h.match(/^plan(?:\/(.+))?$/);
   if(pl) return {view:'plan',ptrack:planTrackId(pl[1]||defaultPlanTrack())};
   if(h==='backup') return {view:'backup'};
@@ -1351,7 +1414,16 @@ const TRACKS=[
   // checkpoint-less track works by adding a registry entry, not by editing plan
   // logic. A track needs exactly one of projPrefix or chapterIndex to appear.
   {id:'ba',    name:'Business Analysis',tab:'📐 Business Analysis',col:'#CE82FF',dark:'#A568CC',chapterIndex:()=>S.baIndex},
-  {id:'quiz',  name:'Quiz Practice',  tab:'🎯 Quiz Practice',  col:'#FF9600',dark:'#E68200'}
+  // Quiz Practice owns no checkpoints, but its 11 banks are natural blocks —
+  // same chapterIndex mechanism the BA track uses, so the plan page needs no
+  // special case for it.
+  {id:'quiz',  name:'Quiz Practice',  tab:'🎯 Quiz Practice',  col:'#FF9600',dark:'#E68200',
+   chapterIndex:()=>S.quizBank&&S.quizBank.quizzes.map((z,qi)=>({
+     code:'Q'+(qi+1),
+     name:z.quiz_name,
+     desc:z.lessons.length+' lessons · '+z.lessons.reduce((a,l)=>a+l.questions.length,0)+' questions',
+     lessons:z.lessons.map((l,li)=>({id:quizId(qi,li),title:l.lesson_name}))
+   }))}
 ];
 /* Object.create(null), not {} — a plain object inherits from Object.prototype,
    so TRACK['constructor'] and TRACK['toString'] would be truthy and a hash like
@@ -1593,6 +1665,7 @@ function renderApp(){
     <div class="topbar-stats">
       <div class="stat"><div class="stat-pip" style="background:#FF9600;box-shadow:0 2px 0 #E68200;"></div><span class="stat-val">${streak}</span><span class="stat-lbl">day streak</span></div>
       <div class="stat"><div class="stat-gem" style="background:#1CB0F6;box-shadow:0 2px 0 #1899D6;"></div><span class="stat-val">${xp}</span><span class="stat-lbl">XP</span></div>
+      <a href="#plan" title="Study Plan — where you are and what is next" style="text-decoration:none;color:var(--text-lo);font-size:18px;line-height:1;padding:4px 6px;">📋</a>
       <a href="#backup" title="Backup &amp; restore your progress" style="text-decoration:none;color:var(--text-lo);font-size:18px;line-height:1;padding:4px 6px;">🛟</a>
     </div>
   </div>`;
