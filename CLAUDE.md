@@ -1,7 +1,72 @@
 # Analyst Academy — project instructions
 
-Live: https://credit-risk-academy.vercel.app (project name still says credit-risk;
-the app is now **Analyst Academy** and covers three tracks).
+Live: https://credit-risk-academy.vercel.app (the Vercel project is now named
+`analyst-path`, but the live URL still says credit-risk — see HANDOFF "Known
+gaps"). The app is **Analyst Academy** and covers **four tracks**: Credit Risk,
+Data Validation, Business Analysis and Quiz Practice.
+
+---
+
+## How work gets done here — read this first
+
+Standing operating procedure. Applies to every change.
+
+**1. Work sequentially. No subagents, no workflows.** The front end is a single
+`index.html`; two writers collide. Reading parallelises, writing does not. Use
+extra capacity for review, never for parallel editing.
+
+**2. Codex reviews every change after it is built.** Hand it the diff **plus the
+evidence** — the failing input, the reproduction, what was measured before and
+after. State the constraints it cannot infer from code (see "Rules this app
+already follows") and point it at this file. Ask whether the *diagnosis* is
+right, not whether the style is good; the costly errors here were wrong
+diagnoses (entries 1, 10), never syntax.
+
+**Also review before building** when the change is ambiguous, multi-step, or
+touches routing, storage, deploys or content loading. Skip the pre-review for
+obvious low-risk fixes — making it unconditional turns it into ritual that gets
+skipped wholesale.
+
+**3. Do not take Codex on faith.** Verify each finding against the code before
+acting. It has been right about real bugs and wrong about details in the same
+review.
+
+**4. Check the contract at the boundary.** This is the single most common defect
+class in this repo. For any change to routing, parsing, validation, storage or
+rendering, verify the **real input shape, the real output, and the real
+user-visible state**. Shallow guards are where the bugs live:
+
+- `typeof x === 'object'` passes for arrays and `null`
+- a bare key lookup passes for `constructor` and `__proto__`
+- `a || !b && !c` does not group the way it reads
+- no size limit means a hostile input parses until the tab dies
+- an existence check is not a visibility check
+- a link's text is not proof of where it points
+
+**5. Verify your own claims before reporting.** Everything asserted must be
+something checked *this session*:
+
+- `200` ≠ worked — check content-type and size (entries 2, 3, 13)
+- exit `0` ≠ worked — read the message (entry 18)
+- a passing guard may have checked nothing; if it cannot find its inputs that is
+  a failure, not a pass (entry 18)
+- an element existing ≠ visible. Where meaning is carried by colour, shape or
+  position, compute the contrast ratio and render in **both themes**. Text dumps
+  and element counts are blind to visual bugs (entry 23)
+- your own probe can false-negative — inspect the real output before concluding
+  the code is broken (entry 21)
+
+**6. Ask rather than improvise.** When a request admits materially different
+implementations — different data models, different failure modes — sketch the
+options and ask. Do not silently pick one.
+
+**7. Branch and PR. Never commit to the default branch.** There is no `main`;
+the default is `claude/confident-volta-l3e55f`.
+
+A portable copy lives in `AGENT-LESSONS.md` in the `Make an AI Support System`
+repo; it is hand-maintained, so corrections here need making there too.
+
+---
 
 ## Layout
 
