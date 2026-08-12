@@ -1271,7 +1271,11 @@ function renderStudyPlan(route){
         const isDone=b.doneCount===b.total&&b.total>0;
         const here=cur&&b.id===cur.id;
         const open=route.pblock===b.id;
-        const mark=isDone?'✓':(here?'▸':'○');
+        // '◉' for the current block, not '▸'. The caret on the right of the same
+        // row already uses '▸' to mean collapsed, so the two read as one repeated
+        // symbol with two different meanings. A filled ring also matches how the
+        // arc above marks the current block.
+        const mark=isDone?'✓':(here?'◉':'○');
         const ids=b.lessons.map(l=>l.id);
         const span=ids.length>2?ids[0]+'–'+ids[ids.length-1]:ids.join(' ');
         // Every block is reachable, not just the current one. Finished work must
