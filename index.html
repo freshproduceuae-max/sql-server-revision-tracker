@@ -1148,7 +1148,13 @@ function renderStudyPlan(route){
           // Filled only when done. Everything else is hollow with the --text-lo
           // rim from the class, which reads in both themes.
           const bg=done?meta.col:'transparent';
-          const ring=here?`box-shadow:0 0 0 3px ${hexRgba(meta.col,.35)};border-color:${meta.col};`:'';
+          // The "you are here" ring must not rely on the track accent for its
+          // shape. All four accents fall under 3.0:1 on the light surface —
+          // credit 2.09, dv 2.44, ba 2.54, quiz 2.18 — so a coloured rim is
+          // effectively invisible in light mode. --text-hi carries the outline
+          // (16.1 light / 14.3 dark) and the accent stays as the halo, which
+          // keeps the track identity without being load-bearing.
+          const ring=here?`box-shadow:0 0 0 3px ${hexRgba(meta.col,.45)};border-color:var(--text-hi);`:'';
           // Status markers, not navigation — every dot would have led to this
           // same page, so as links they were a row of identical empty tab stops.
           // A span with a title keeps the hover label without the focus noise.
