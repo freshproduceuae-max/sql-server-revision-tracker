@@ -7,7 +7,7 @@
 <style>
 :root {
   --bg:#F7F9FA; --surface:#FFFFFF; --border:#E5E5E5;
-  --text-hi:#202124; --text-mid:#6B6B6B; --text-lo:#8A8A8A; --text-body:#3C3C3C;
+  --text-hi:#202124; --text-mid:#6B6B6B; --text-lo:#6C6C6C; --text-body:#3C3C3C;
   --chip-bg:#F0F0F0; --chip-fg:#575757;
   --node-locked-bg:#E5E5E5; --node-locked-sh:#C9C9C9; --node-locked-txt:#B9B9B9;
   --caption-locked:#BEBEBE; --track-bg:#E5E5E5;
@@ -16,7 +16,7 @@
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#0F1117; --surface:#1C2130; --border:#2D3348;
-  --text-hi:#F0F2F5; --text-mid:#B8C0CC; --text-lo:#7A8494; --text-body:#CDD4DF;
+  --text-hi:#F0F2F5; --text-mid:#B8C0CC; --text-lo:#8B95A4; --text-body:#CDD4DF;
   --chip-bg:#262D3D; --chip-fg:#B8C0CC;
   --node-locked-bg:#2D3348; --node-locked-sh:#1E2534; --node-locked-txt:#4A5568;
   --caption-locked:#4A5568; --track-bg:#2D3348;
@@ -25,7 +25,7 @@
 }}
 :root[data-theme="light"]{
   --bg:#F7F9FA; --surface:#FFFFFF; --border:#E5E5E5;
-  --text-hi:#202124; --text-mid:#6B6B6B; --text-lo:#8A8A8A; --text-body:#3C3C3C;
+  --text-hi:#202124; --text-mid:#6B6B6B; --text-lo:#6C6C6C; --text-body:#3C3C3C;
   --chip-bg:#F0F0F0; --chip-fg:#575757;
   --node-locked-bg:#E5E5E5; --node-locked-sh:#C9C9C9; --node-locked-txt:#B9B9B9;
   --caption-locked:#BEBEBE; --track-bg:#E5E5E5;
@@ -34,7 +34,7 @@
 }
 :root[data-theme="dark"]{
   --bg:#0F1117; --surface:#1C2130; --border:#2D3348;
-  --text-hi:#F0F2F5; --text-mid:#B8C0CC; --text-lo:#7A8494; --text-body:#CDD4DF;
+  --text-hi:#F0F2F5; --text-mid:#B8C0CC; --text-lo:#8B95A4; --text-body:#CDD4DF;
   --chip-bg:#262D3D; --chip-fg:#B8C0CC;
   --node-locked-bg:#2D3348; --node-locked-sh:#1E2534; --node-locked-txt:#4A5568;
   --caption-locked:#4A5568; --track-bg:#2D3348;
@@ -264,7 +264,7 @@ button{font-family:inherit;cursor:pointer;}
    (#1C2130) in dark mode, so a dot filled with it is invisible against the very
    card it sits on. A shape that must be seen needs a text-grade colour. */
 .plan-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--text-lo);flex:0 0 auto;text-decoration:none;}
-.plan-dot-line{width:14px;height:2px;background:var(--text-lo);opacity:.5;flex:0 0 auto;}
+.plan-dot-line{width:14px;height:2px;background:var(--text-lo);flex:0 0 auto;}
 .plan-arc-cap{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.5px;}
 /* Full sequence list — the part that shows there IS an end to reach. */
 .plan-list{max-width:720px;margin:22px auto 0;}
