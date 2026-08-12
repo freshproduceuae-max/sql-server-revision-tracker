@@ -288,7 +288,19 @@ button{font-family:inherit;cursor:pointer;}
 .plan-overview-cnt{font-weight:800;font-size:13px;color:#58CC02;font-variant-numeric:tabular-nums;}
 .plan-overview-track{height:14px;border-radius:8px;background:var(--track-bg);overflow:hidden;}
 .plan-overview-fill{height:100%;border-radius:8px;transition:width .35s ease;}
-.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:24px;}
+/* One card, full width — the course block is the point of the page. */
+.plan-primary{max-width:720px;margin:24px auto 0;}
+/* The daily habit is a strip, not a peer card. Deliberately quieter: no accent
+   border, no 22px heading, one line. It is a fifteen-minute warm-up and the
+   layout should say so. */
+.plan-habit{max-width:720px;margin:12px auto 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:12px 16px;
+  text-decoration:none;font-weight:700;font-size:13.5px;color:var(--text-hi);}
+.plan-habit:hover{filter:brightness(1.04);}
+.plan-habit-tag{font-size:11px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
+.plan-habit-text{flex:1;min-width:160px;}
+.plan-habit-meta{font-size:12px;color:var(--text-lo);white-space:nowrap;}
+.plan-habit-go{font-size:12.5px;font-weight:800;color:var(--text-hi);white-space:nowrap;}
 .plan-card{background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:18px 18px 16px;box-shadow:0 4px 0 rgba(0,0,0,.03);}
 .plan-card.primary{border-color:var(--plan-accent,#58CC02);box-shadow:0 5px 0 var(--plan-shadow,#46A302);}
 .plan-card.habit{border-color:#FF9600;box-shadow:0 5px 0 #E68200;}
@@ -1123,11 +1135,23 @@ function renderStudyPlan(route){
   const total=blocks?blocks.total:0;
   const done=blocks?blocks.done:0;
   const pct=total?Math.round(done/total*100):0;
-  const habitCard=habit
-    ? renderPlanCard(habit,TRACK.quiz,'Daily habit')
+  // The daily habit IS a quiz lesson, so on the Quiz Practice plan it repeats
+  // what the whole page already shows. Suppress it there rather than render the
+  // same content twice under two headings.
+  const habitIsRedundant=trackId==='quiz';
+  // Rendered as a slim strip, not a second card. In an equal two-column grid a
+  // fifteen-minute warm-up claimed the same visual weight as the course block,
+  // which told the user they were peers. They are not.
+  const habitStrip=habitIsRedundant?'':(habit
+    ? `<a class="plan-habit" href="${habit.nextLesson.href}">
+         <span class="plan-habit-tag">Daily habit</span>
+         <span class="plan-habit-text">${esc(habit.title)} · ${esc(habit.nextLesson.title)}</span>
+         <span class="plan-habit-meta">${esc(habit.nextLesson.subtitle||'')}</span>
+         <span class="plan-habit-go">${habit.nextLesson.done?'Review':'Start'} →</span>
+       </a>`
     : habitErr
-      ? planFailed('The quiz bank','retryQuizBank')
-      : planPending('the daily habit');
+      ? `<div class="plan-habit"><span class="plan-habit-tag">Daily habit</span><span class="plan-habit-text">Quiz bank unavailable.</span><button class="proj-complete-btn" onclick="retryQuizBank()">Try again</button></div>`
+      : `<div class="plan-habit"><span class="plan-habit-tag">Daily habit</span><span class="plan-habit-text">Loading…</span></div>`);
   const overview=blocks?`
     <div class="plan-overview">
       <div class="plan-overview-head"><span class="plan-overview-lbl">${esc(meta.name)} progress</span><span class="plan-overview-cnt">${done} / ${total}</span></div>
@@ -1190,10 +1214,10 @@ function renderStudyPlan(route){
       ${selector}
       ${arc}
     </div>
-    <div class="plan-grid">
+    <div class="plan-primary">
       ${blockCard}
-      ${habitCard}
     </div>
+    ${habitStrip}
     ${blockList}
   </div>`;
 }
