@@ -39,6 +39,10 @@ clothes, and that is the most useful thing about them:
   shared by two sessions (20) and a single `index.html` that only one agent may
   edit at a time (22) are the same constraint at different scales. This is the
   family to check first as more work runs concurrently.
+- **23, 24** — the gap between what the code does and what the user perceives.
+  An element that existed and could not be seen (23); elements that were seen and
+  misrepresented their own importance (24). No guard in this repo checks either.
+  Only looking does — in both themes, on every page a change touches.
 
 ## A portable copy lives outside this repo
 
@@ -49,7 +53,7 @@ Small Business Websites templates, so future projects start from what already
 went wrong here.
 
 **That copy is hand-written, not generated, so the two can drift.** This file
-stays the detailed record — 22 entries with the full symptom, wrong first
+stays the detailed record — 24 entries with the full symptom, wrong first
 hypothesis, root cause and fix. That one is the portable summary. If you correct
 something here that appears there, correct it in both. That repo was local-only when this
 note was written; it is now pushed to **github.com/freshproduceuae-max/ai-support-system**
@@ -1019,3 +1023,57 @@ was never true. Those three reported *missing things as present or present
 things as missing*. This one reported **shipped as working** on the strength of a
 check that could not observe the thing it claimed to verify. The common root is
 the same: the observation did not cover the claim.
+
+---
+
+## 24. A page that shows everything shows nothing — plan for scale, not for today
+
+**Looked like:** the Study Plan page put the current course block and a daily
+quiz habit side by side in an equal two-column grid. The owner's reaction:
+"its the same size as the study plans items giving it a huge significance", and
+then, on switching tracks, "it starts to look redundant like the quiz practice".
+
+**Actually was:** two separate design failures with one root.
+
+**Weight.** `.plan-grid` was `repeat(2, 1fr)` and both children were
+`.plan-card`. The only difference between them was border colour. So a
+fifteen-minute warm-up rendered at exactly the size, padding and heading weight
+of the actual coursework. Equal size is a claim of equal importance, and the
+layout was making a claim the content did not support.
+
+**Redundancy.** The daily habit *is* a quiz lesson. On the Quiz Practice plan the
+page therefore showed the same class of content twice, under two headings, one
+of them labelled as if it were a different thing. Content that is a sibling of
+the page's subject cannot also be a highlight on it.
+
+**Fix:** the course block is one full-width card; the habit is a slim one-line
+strip with no accent border and no heading; and it is suppressed entirely on the
+Quiz Practice plan, where it duplicates the page.
+
+**The rule that generalises, and the reason to write this down:**
+
+**Do not solve "the user needs X too" by adding X to the current page.** It works
+for the first two additions and fails from the third. Every element added to a
+page competes with every other element for the reader's attention, and the
+budget is fixed — so each addition quietly devalues everything already there.
+Four tracks became four blocks became four block-lists; adding one more "useful"
+panel per iteration is how a page that answered one question ends up answering
+none.
+
+**Before adding to a page, ask three questions:**
+
+1. **Is this the page's subject, or a sibling of it?** A sibling belongs on its
+   own page with a link, not inlined. The daily habit is a sibling of Quiz
+   Practice, which is why it read as redundant there.
+2. **What is this page's single question?** The Study Plan answers "where am I
+   and what is next". The road answers "what does the whole course look like".
+   Anything that answers a third question wants a third page.
+3. **Does the visual weight match the actual importance?** Equal size means
+   equal importance whether you intended it or not. If something is secondary,
+   it must *look* secondary — smaller, quieter, no accent.
+
+**Related:** entry 23. Both are about the gap between what the code does and what
+the user perceives. There, an element existed and could not be seen. Here,
+elements were seen and misrepresented their own importance. Rendering correctly
+is not the same as communicating correctly, and neither is checked by any guard
+in this repo — only by looking, in both themes, at every page a change touches.
