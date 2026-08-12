@@ -1114,7 +1114,7 @@ function renderStudyPlan(route){
   // source and the habit needs only the quiz bank, so a single failed fetch must
   // not blank a landing page whose other half loaded fine. Only when BOTH halves
   // are unusable is a whole-page failure honest.
-  const primaryErr=(meta.projPrefix&&S.projError)||(meta.chapterIndex&&S.baError);
+  const primaryErr=!!(meta.planErr&&meta.planErr());
   const habitErr=S.quizError;
   if(primaryErr&&habitErr){
     const retries=[];
@@ -1128,7 +1128,7 @@ function renderStudyPlan(route){
   const blockCard=blocks
     ? renderPlanCard(blocks.current,meta,'Primary track')
     : primaryErr
-      ? planFailed(esc(meta.name),meta.chapterIndex?'retryBaIndex':'retryProjIndex')
+      ? planFailed(esc(meta.name),meta.planRetry||'retryProjIndex')
       : (meta.projPrefix||meta.chapterIndex)
         ? planPending(esc(meta.name))
         : `<div class="plan-card primary" style="--plan-accent:${meta.col};--plan-shadow:${meta.dark};"><div class="plan-kicker">Primary track</div><h2>${esc(meta.name)}</h2><div class="plan-card-sub">This track does not have a derived study-plan source yet.</div></div>`;
@@ -1138,7 +1138,7 @@ function renderStudyPlan(route){
   // The daily habit IS a quiz lesson, so on the Quiz Practice plan it repeats
   // what the whole page already shows. Suppress it there rather than render the
   // same content twice under two headings.
-  const habitIsRedundant=trackId==='quiz';
+  const habitIsRedundant=!!meta.habitRedundant;
   // Rendered as a slim strip, not a second card. In an equal two-column grid a
   // fifteen-minute warm-up claimed the same visual weight as the course block,
   // which told the user they were peers. They are not.
@@ -1442,14 +1442,23 @@ function renderQuizSession(route){
    renderApp — not edits in five separate places.
    `projPrefix` is what makes a track own checkpoint projects; omit it (as Quiz
    Practice does) and no checkpoint route is generated for that track. */
+/* planErr / planRetry: which fetch backs this track's plan blocks, and how to
+   retry it. Declared here because the plan page previously inferred it — it
+   assumed any chapterIndex track was backed by baIndex, which is true for BA and
+   false for Quiz Practice. A failed quiz-bank fetch then matched no error branch
+   and the page span forever with no retry. Never infer which loader owns a
+   track; make the track say so. */
 const TRACKS=[
-  {id:'credit',name:'Credit Risk',    tab:'💼 Credit Risk',    col:'#58CC02',dark:'#46A302',projPrefix:'P-CR-'},
-  {id:'dv',    name:'Data Validation',tab:'🧪 Data Validation',col:'#1CB0F6',dark:'#1899D6',projPrefix:'P-DV-'},
+  {id:'credit',name:'Credit Risk',    tab:'💼 Credit Risk',    col:'#58CC02',dark:'#46A302',projPrefix:'P-CR-',
+   planErr:()=>S.projError, planRetry:'retryProjIndex'},
+  {id:'dv',    name:'Data Validation',tab:'🧪 Data Validation',col:'#1CB0F6',dark:'#1899D6',projPrefix:'P-DV-',
+   planErr:()=>S.projError, planRetry:'retryProjIndex'},
   // chapterIndex: how the Study Plan blocks a track that owns no checkpoints.
   // Declared here rather than tested by id in the plan code, so a future
   // checkpoint-less track works by adding a registry entry, not by editing plan
   // logic. A track needs exactly one of projPrefix or chapterIndex to appear.
-  {id:'ba',    name:'Business Analysis',tab:'📐 Business Analysis',col:'#CE82FF',dark:'#A568CC',chapterIndex:()=>S.baIndex},
+  {id:'ba',    name:'Business Analysis',tab:'📐 Business Analysis',col:'#CE82FF',dark:'#A568CC',chapterIndex:()=>S.baIndex,
+   planErr:()=>S.baError, planRetry:'retryBaIndex'},
   // Quiz Practice owns no checkpoints, but its 11 banks are natural blocks —
   // same chapterIndex mechanism the BA track uses, so the plan page needs no
   // special case for it.
@@ -1459,7 +1468,11 @@ const TRACKS=[
      name:z.quiz_name,
      desc:z.lessons.length+' lessons · '+z.lessons.reduce((a,l)=>a+l.questions.length,0)+' questions',
      lessons:z.lessons.map((l,li)=>({id:quizId(qi,li),title:l.lesson_name}))
-   }))}
+   })),
+   planErr:()=>S.quizError, planRetry:'retryQuizBank',
+   // The daily habit IS a quiz lesson, so on this track's plan it would repeat
+   // the page's own subject. Declared, not tested by id in the plan code.
+   habitRedundant:true}
 ];
 /* Object.create(null), not {} — a plain object inherits from Object.prototype,
    so TRACK['constructor'] and TRACK['toString'] would be truthy and a hash like
