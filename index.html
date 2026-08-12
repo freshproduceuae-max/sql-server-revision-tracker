@@ -259,8 +259,12 @@ button{font-family:inherit;cursor:pointer;}
 /* Block arc — one dot per block, so the whole course length is visible at once. */
 .plan-arc{margin-top:18px;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:18px;}
 .plan-arc-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;}
-.plan-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex:0 0 auto;text-decoration:none;}
-.plan-dot-line{width:14px;height:2px;background:var(--border);flex:0 0 auto;}
+/* Not-started dots are hollow with a --text-lo rim, NOT filled with --border.
+   --border is a hairline colour (#2D3348) and sits almost on top of --surface
+   (#1C2130) in dark mode, so a dot filled with it is invisible against the very
+   card it sits on. A shape that must be seen needs a text-grade colour. */
+.plan-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--text-lo);flex:0 0 auto;text-decoration:none;}
+.plan-dot-line{width:14px;height:2px;background:var(--text-lo);opacity:.5;flex:0 0 auto;}
 .plan-arc-cap{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.5px;}
 /* Full sequence list — the part that shows there IS an end to reach. */
 .plan-list{max-width:720px;margin:22px auto 0;}
@@ -1141,7 +1145,9 @@ function renderStudyPlan(route){
         ${blocks.blocks.map((b,i)=>{
           const done=b.doneCount===b.total&&b.total>0;
           const here=cur&&b.id===cur.id;
-          const bg=done?meta.col:(here?'transparent':'var(--border)');
+          // Filled only when done. Everything else is hollow with the --text-lo
+          // rim from the class, which reads in both themes.
+          const bg=done?meta.col:'transparent';
           const ring=here?`box-shadow:0 0 0 3px ${hexRgba(meta.col,.35)};border-color:${meta.col};`:'';
           // Status markers, not navigation — every dot would have led to this
           // same page, so as links they were a row of identical empty tab stops.
