@@ -25,9 +25,10 @@ clothes, and that is the most useful thing about them:
   Wrong branch, SPA fallback, missing `builds` entry.
 - **12, 16, 18** — drift between two representations of the same thing, or a
   guard validating the wrong source.
-- **1, 6, 21** — confidently reporting a state that was never true: content
+- **1, 6, 21, 23** — confidently reporting a state that was never true: content
   "unavailable" that existed, a lesson "not found" that had not loaded yet, a
-  task "still running" that had already stopped.
+  task "still running" that had already stopped, and a UI reported as working
+  when the check could not observe the thing it claimed to verify (23).
 - **14, 15, 16, 18** — a fix that was incomplete, or that introduced a worse bug
   than the one it closed.
 - **19, 20** — the limits of what git protects. Untracked paths have no undo
@@ -962,3 +963,59 @@ guessing and call it decisiveness.
   a single interpretation is the expensive option that feels like the cheap one.
 - Extra capacity is best spent on **checking**, because verification is
   embarrassingly parallel and this file is mostly a record of unverified claims.
+
+---
+
+## 23. I verified the DOM, not the render — the element existed and was invisible
+
+**Looked like:** the owner opened a page I had just built, verified and deployed,
+and said "i dont see dots". I had checked that feature in a browser and reported
+it working.
+
+**First hypothesis, wrong:** that they had missed them, or were looking at the
+wrong section. The page *had* rendered; the section header above the dots was
+visibly present in my own transcript.
+
+**Actually was:** all thirteen dots existed, at the right size, at the right
+position, fully opaque — and were the same colour as the card behind them. I had
+filled them with `var(--border)`, a hairline colour, and measured afterwards:
+
+| Theme | Dot vs its card | Verdict |
+|---|---|---|
+| Dark | **1.28 : 1** | invisible |
+| Light | **1.26 : 1** | invisible |
+
+WCAG asks for **3.0 : 1** on a graphical object. It was broken in *both* themes.
+Dark mode, which the owner uses and I had never rendered, just made it total.
+
+**Why my verification could not have caught it.** I checked with
+`get_page_text` and element counts. The dots carry no text, so they never
+appeared in a text dump at all; and counting thirteen elements proves they
+*exist*, not that they can be *seen*. Every check I ran confirmed the DOM and
+none of them confirmed the render. `querySelectorAll(...).length === 13` felt
+like evidence and was not.
+
+**Fix:** hollow dots with a `--text-lo` rim, filled only when a block is done.
+4.24 : 1 dark, 3.45 : 1 light.
+
+**Rules:**
+- **Element present ≠ element visible.** A count, a selector match, or a text
+  dump tells you the markup shipped. It says nothing about whether a human can
+  perceive it.
+- **For anything whose meaning is carried by colour or shape rather than text,
+  compute the contrast ratio.** It is four lines of arithmetic against the two
+  hex values and it is objective, unlike squinting at a screenshot.
+- **Never fill a shape with a border token.** `--border` exists to be nearly
+  invisible against `--surface`; that is its whole job. A shape that must be read
+  needs a text-grade colour.
+- **Render every new UI in both themes before claiming it works.** I had never
+  once looked at this app in dark mode, which is the mode its only user runs.
+- Text-based page checks are blind to purely visual elements. When a feature's
+  output is a shape, a colour or a position, the check has to be a screenshot or
+  a computed style — not `get_page_text`.
+
+**Family:** this belongs with 1, 6 and 21 — confidently reporting a state that
+was never true. Those three reported *missing things as present or present
+things as missing*. This one reported **shipped as working** on the strength of a
+check that could not observe the thing it claimed to verify. The common root is
+the same: the observation did not cover the claim.
