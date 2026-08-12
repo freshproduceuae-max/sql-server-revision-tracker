@@ -8,7 +8,7 @@
 :root {
   --bg:#F7F9FA; --surface:#FFFFFF; --border:#E5E5E5;
   --text-hi:#202124; --text-mid:#6B6B6B; --text-lo:#6C6C6C; --text-body:#3C3C3C;
-  --chip-bg:#F0F0F0; --chip-fg:#575757;
+  --chip-bg:#F0F0F0; --chip-fg:#575757; --danger:#D92C2C;
   --node-locked-bg:#E5E5E5; --node-locked-sh:#C9C9C9; --node-locked-txt:#B9B9B9;
   --caption-locked:#BEBEBE; --track-bg:#E5E5E5;
   --code-bg:#F3F4F6; --code-border:#E5E7EB; --code-fg:#1F2937;
@@ -17,7 +17,7 @@
 @media (prefers-color-scheme:dark){:root{
   --bg:#0F1117; --surface:#1C2130; --border:#2D3348;
   --text-hi:#F0F2F5; --text-mid:#B8C0CC; --text-lo:#8B95A4; --text-body:#CDD4DF;
-  --chip-bg:#262D3D; --chip-fg:#B8C0CC;
+  --chip-bg:#262D3D; --chip-fg:#B8C0CC; --danger:#FF4B4B;
   --node-locked-bg:#2D3348; --node-locked-sh:#1E2534; --node-locked-txt:#4A5568;
   --caption-locked:#4A5568; --track-bg:#2D3348;
   --code-bg:#161B27; --code-border:#2D3348; --code-fg:#E2E8F0;
@@ -26,7 +26,7 @@
 :root[data-theme="light"]{
   --bg:#F7F9FA; --surface:#FFFFFF; --border:#E5E5E5;
   --text-hi:#202124; --text-mid:#6B6B6B; --text-lo:#6C6C6C; --text-body:#3C3C3C;
-  --chip-bg:#F0F0F0; --chip-fg:#575757;
+  --chip-bg:#F0F0F0; --chip-fg:#575757; --danger:#D92C2C;
   --node-locked-bg:#E5E5E5; --node-locked-sh:#C9C9C9; --node-locked-txt:#B9B9B9;
   --caption-locked:#BEBEBE; --track-bg:#E5E5E5;
   --code-bg:#F3F4F6; --code-border:#E5E7EB; --code-fg:#1F2937;
@@ -35,7 +35,7 @@
 :root[data-theme="dark"]{
   --bg:#0F1117; --surface:#1C2130; --border:#2D3348;
   --text-hi:#F0F2F5; --text-mid:#B8C0CC; --text-lo:#8B95A4; --text-body:#CDD4DF;
-  --chip-bg:#262D3D; --chip-fg:#B8C0CC;
+  --chip-bg:#262D3D; --chip-fg:#B8C0CC; --danger:#FF4B4B;
   --node-locked-bg:#2D3348; --node-locked-sh:#1E2534; --node-locked-txt:#4A5568;
   --caption-locked:#4A5568; --track-bg:#2D3348;
   --code-bg:#161B27; --code-border:#2D3348; --code-fg:#E2E8F0;
@@ -534,7 +534,8 @@ let S={completed:{},streak:1,mdContent:{},mdLoading:{},mdError:{},
        quizBank:null,quizLoading:false,quizError:false,quizScores:{},session:null,
        projIndex:null,projLoading:false,projError:false,
        projMd:{},projMdLoading:{},projMdError:{},
-       baIndex:null,baLoading:false,baError:false};
+       baIndex:null,baLoading:false,baError:false,
+       backupMsg:null,resetArm:false};
 const mdCache={};
 
 function loadState(){
@@ -690,8 +691,64 @@ function renderBackupPage(){
                style="font-family:inherit;font-size:14px;font-weight:600;color:var(--text-mid);">
       </div>
     </div>
+
+    ${renderResetCard(s)}
     ${msg}
   </div>`;
+}
+
+/* ── Start fresh ──
+   Two steps in the page, not a browser confirm() and not a modal: the first
+   click only arms it, and the armed state states exactly what is about to be
+   destroyed and offers the backup download right there. Nothing is erased
+   without a second, deliberate click on a differently-worded button. */
+function armReset(){S.resetArm=true;S.backupMsg=null;render();}
+function cancelReset(){S.resetArm=false;render();}
+function doReset(){
+  try{
+    localStorage.removeItem('crAcademy_v1');
+    S.completed={};S.quizScores={};S.streak=1;
+    // A quiz in flight lives in S.session and is reused whenever the route's
+    // qi/li still match, so without this a reset leaves you mid-quiz with your
+    // old score — "start fresh" would not be fresh.
+    S.session=null;
+    loadState();
+    S.resetArm=false;
+    S.backupMsg={kind:'ok',text:'Progress cleared. You are back at the first lesson of every track.'};
+  }catch(e){
+    S.resetArm=false;
+    S.backupMsg={kind:'err',text:'Could not clear progress: '+e.message};
+  }
+  render();
+}
+function renderResetCard(s){
+  const nothingToLose=s.lessonsCompleted===0&&s.quizLessonsScored===0;
+  if(!S.resetArm){
+    return `
+    <div class="plan-card" style="margin-top:18px;">
+      <div class="plan-kicker">Start fresh</div>
+      <div class="plan-card-sub" style="margin-top:8px;">
+        Clears every completed lesson, quiz score and your streak, in this browser only. ${nothingToLose?'There is nothing recorded yet, so this would change nothing.':'Download a backup first if you might want any of it back — this cannot be undone from inside the app.'}
+      </div>
+      <div style="margin-top:16px;">
+        <button class="proj-complete-btn" onclick="armReset()" ${nothingToLose?'disabled style="opacity:.5;cursor:default;"':''}>Start fresh…</button>
+      </div>
+    </div>`;
+  }
+  return `
+    <div class="plan-card" style="margin-top:18px;border-color:var(--danger);box-shadow:0 5px 0 var(--danger);">
+      <div class="plan-kicker" style="color:var(--danger);">This erases your progress</div>
+      <div class="plan-card-sub" style="margin-top:8px;">
+        About to delete <strong>${s.lessonsCompleted} completed lesson${s.lessonsCompleted===1?'':'s'}</strong>,
+        <strong>${s.quizLessonsScored} quiz score${s.quizLessonsScored===1?'':'s'}</strong>
+        and a <strong>${s.dayStreak}-day streak</strong>. This browser only, and it cannot be undone from inside the app.
+      </div>
+      <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;">
+        <button class="proj-complete-btn" onclick="downloadBackup()">⬇ Download backup first</button>
+        <button class="proj-complete-btn" onclick="cancelReset()">Keep my progress</button>
+        <button class="proj-complete-btn" style="background:#D92C2C;box-shadow:0 4px 0 #A81F1F;color:#fff;" onclick="doReset()">Yes, erase everything</button>
+      </div>
+    </div>`;
 }
 
 function downloadBackup(){
@@ -1902,6 +1959,9 @@ function renderApp(){
 }
 
 function render(){
+  // An armed "erase everything" must not survive navigating away and back.
+  // Disarm before painting, so leaving the page is itself a cancel.
+  if(getHashRoute().view!=='backup')S.resetArm=false;
   document.getElementById('app').innerHTML=renderApp();
   const route=getHashRoute();
   if(route.view==='plan'){
