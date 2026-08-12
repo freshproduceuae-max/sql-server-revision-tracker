@@ -268,14 +268,34 @@ button{font-family:inherit;cursor:pointer;}
 .plan-arc-cap{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.5px;}
 /* Full sequence list — the part that shows there IS an end to reach. */
 .plan-list{max-width:720px;margin:22px auto 0;}
-.plan-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:8px;font-weight:700;font-size:14px;}
+.plan-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:8px;font-weight:700;font-size:14px;text-decoration:none;color:inherit;}
+.plan-row:hover{filter:brightness(1.04);}
+.plan-row.open{margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0;}
 .plan-row.here{box-shadow:0 2px 0 rgba(0,0,0,.06);}
 .plan-row-mark{width:16px;text-align:center;font-weight:900;}
 .plan-row-n{width:22px;color:var(--text-lo);font-size:12px;}
-.plan-row-title{flex:1;color:var(--text-hi);}
+.plan-row-title{flex:1;color:var(--text-hi);min-width:0;}
 .plan-row-ids{color:var(--text-lo);font-size:12px;white-space:nowrap;}
 .plan-row-cnt{color:var(--text-lo);font-size:12px;min-width:44px;text-align:right;}
-@media(max-width:560px){.plan-row-ids{display:none;}}
+.plan-row-caret{color:var(--text-lo);font-size:12px;width:12px;text-align:center;}
+/* Expanded block: the lessons inside, each openable whether done or not. */
+.plan-row-open{border:2px solid var(--border);border-top:0;border-radius:0 0 12px 12px;background:var(--surface);margin-bottom:8px;padding:4px 10px 8px;}
+.plan-open-lesson{display:flex;align-items:center;gap:10px;padding:8px 6px;text-decoration:none;color:inherit;font-weight:700;font-size:13.5px;border-radius:8px;}
+.plan-open-lesson:hover{background:var(--chip-bg);}
+.plan-open-mark{width:14px;text-align:center;font-weight:900;}
+.plan-open-code{color:var(--text-lo);font-size:12px;min-width:34px;}
+.plan-open-title{flex:1;color:var(--text-hi);min-width:0;}
+.plan-open-go{color:var(--text-lo);font-size:12px;white-space:nowrap;}
+/* The module ids used to be hidden below 560px, which removed the only place a
+   narrow screen could see WHICH modules a block contains. They wrap instead. */
+@media(max-width:560px){
+  .plan-row{flex-wrap:wrap;}
+  .plan-row-title{flex:1 0 60%;}
+  .plan-row-ids{order:9;flex-basis:100%;padding-left:48px;white-space:normal;}
+  /* Touch targets: 36px is under the 44px minimum for a finger. */
+  .plan-open-lesson{min-height:44px;}
+  .plan-row{min-height:44px;}
+}
 .plan-page{max-width:1100px;margin:0 auto;padding:26px 20px 60px;}
 .plan-hero{max-width:720px;margin:0 auto;padding:10px 0 6px;}
 .plan-kicker{font-size:12px;font-weight:800;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;}
@@ -1193,15 +1213,33 @@ function renderStudyPlan(route){
       ${blocks.blocks.map((b,i)=>{
         const isDone=b.doneCount===b.total&&b.total>0;
         const here=cur&&b.id===cur.id;
+        const open=route.pblock===b.id;
         const mark=isDone?'✓':(here?'▸':'○');
         const ids=b.lessons.map(l=>l.id);
         const span=ids.length>2?ids[0]+'–'+ids[ids.length-1]:ids.join(' ');
-        return `<div class="plan-row${here?' here':''}" style="${here?`border-color:${meta.col};`:''}">
+        // Every block is reachable, not just the current one. Finished work must
+        // stay openable — you revise by going back to it, and a plan that only
+        // ever points forward cannot show you what you already did.
+        const href=open?`#plan/${encodeURIComponent(trackId)}`
+                       :`#plan/${encodeURIComponent(trackId)}/${encodeURIComponent(b.id)}`;
+        const head=`<a class="plan-row${here?' here':''}${open?' open':''}" href="${href}"
+             style="${here?`border-color:${meta.col};`:''}"
+             aria-expanded="${open}" aria-controls="planblk-${esc(b.id)}">
           <span class="plan-row-mark" style="color:${isDone?meta.col:'var(--text-lo)'}">${mark}</span>
           <span class="plan-row-n">${i+1}</span>
           <span class="plan-row-title">${esc(b.title)}</span>
           <span class="plan-row-ids">${esc(span)}</span>
           <span class="plan-row-cnt">${isDone?'done':b.doneCount+'/'+b.total}</span>
+          <span class="plan-row-caret">${open?'▾':'▸'}</span>
+        </a>`;
+        if(!open)return head;
+        return head+`<div class="plan-row-open" id="planblk-${esc(b.id)}">
+          ${b.lessons.map(l=>`<a class="plan-open-lesson${l.done?' done':''}" href="${l.href}">
+             <span class="plan-open-mark" style="color:${l.done?meta.col:'var(--text-lo)'}">${l.done?'✓':'○'}</span>
+             <span class="plan-open-code">${esc(l.code||l.id)}</span>
+             <span class="plan-open-title">${esc(l.title)}</span>
+             <span class="plan-open-go">${l.done?'Revisit':'Open'} →</span>
+           </a>`).join('')}
         </div>`;
       }).join('')}
     </div>`;
@@ -1229,8 +1267,18 @@ function getHashRoute(){
   // at #plan. Making the plan the landing page hid the path, which is the thing
   // that shows the whole journey and is why the app is motivating at all.
   if(!h||h==='/') return {view:'main',track:DEFAULT_TRACK};
-  const pl=h.match(/^plan(?:\/(.+))?$/);
-  if(pl) return {view:'plan',ptrack:planTrackId(pl[1]||defaultPlanTrack())};
+  // #plan/<track>/<blockId> opens that block inline. The open block lives in the
+  // hash rather than in S, so it survives a re-render (marking a lesson complete
+  // rebuilds the page) and is bookmarkable — same reason the track is in the hash.
+  // Empty segments and a trailing slash are tolerated: #plan, #plan/, #plan//,
+  // #plan/credit and #plan/credit/ all land on the plan rather than falling
+  // through to the road. Segments are decoded because they are built with
+  // encodeURIComponent, so an id needing escaping survives the round trip.
+  const pl=h.match(/^plan(?:\/([^/]*))?(?:\/([^/]*))?\/?$/);
+  if(pl){
+    const dec=v=>{try{return v?decodeURIComponent(v):'';}catch(e){return '';}};
+    return {view:'plan',ptrack:planTrackId(dec(pl[1])||defaultPlanTrack()),pblock:dec(pl[2])||null};
+  }
   if(h==='backup') return {view:'backup'};
   // Any registered track id routes itself; unknown ids fall through to the default.
   const t=h.match(/^track\/(.+)$/);
