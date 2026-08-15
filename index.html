@@ -105,6 +105,31 @@ button{font-family:inherit;cursor:pointer;}
 .unit-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:20px;margin-top:2px;}
 .unit-done{font-size:12.5px;font-weight:700;opacity:.9;margin-top:4px;font-variant-numeric:tabular-nums;}
 .nodes{display:flex;flex-direction:column;align-items:center;gap:26px;}
+
+/* ── Quiz bank accordion ──
+   Quiz Practice's landing page: every bank is a peer, pickable in any order —
+   unlike Credit Risk/DV/BA, no bank depends on another being finished first. A
+   single continuous path across all banks would visually imply an order that
+   does not exist and bury bank 13 under 12 banks of scrolling. Each bank is a
+   collapsible row instead: thin and closed by default, and clicking it expands
+   that bank's own path inline — the path metaphor is still right one level
+   down, since the lessons within one bank remain a nice progression to walk.
+   Independent per-bank state (S.quizExpanded), not a single-open accordion —
+   nothing here says only one bank may be open at a time. */
+.quiz-bank-list{max-width:760px;margin:28px auto 0;padding:0 20px;}
+.quiz-bank-row{margin-bottom:14px;border-radius:14px;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.14);}
+.quiz-bank-bar{width:100%;border:none;cursor:pointer;color:#fff;display:flex;align-items:center;gap:12px;
+  padding:12px 18px;text-align:left;font-family:inherit;}
+.quiz-bank-bar-num{font-size:11px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.quiz-bank-bar-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;flex:1;line-height:1.2;}
+.quiz-bank-bar-meta{font-size:11.5px;font-weight:700;opacity:.9;white-space:nowrap;}
+.quiz-bank-bar-caret{font-size:13px;opacity:.85;transition:transform .15s;}
+.quiz-bank-row.expanded .quiz-bank-bar-caret{transform:rotate(90deg);}
+.quiz-bank-row.expanded .quiz-bank-bar{box-shadow:inset 0 -1px 0 rgba(255,255,255,.25);}
+.quiz-bank-body{background:var(--surface);padding:24px 20px 6px;}
+.quiz-bank-body .path{margin-top:0;padding:0;max-width:none;}
+.quiz-bank-body .unit{margin-bottom:8px;}
+.quiz-bank-body .unit-banner{display:none;}
 .node-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .node-btn{border:none;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
 .node-btn.is-next::before,.node-btn.is-next::after{
@@ -520,6 +545,10 @@ const UNIT_DEFS=[
 /* ── State ── */
 let S={completed:{},streak:1,mdContent:{},mdLoading:{},mdError:{},
        quizBank:null,quizLoading:false,quizError:false,quizScores:{},session:null,
+       // Which banks are expanded on the Quiz Practice landing page. Never
+       // persisted (not in the localStorage save/load list) — every page load
+       // starts fully collapsed on purpose, so the picker is never cluttered.
+       quizExpanded:new Set(),
        projIndex:null,projLoading:false,projError:false,
        projMd:{},projMdLoading:{},projMdError:{},
        baIndex:null,baLoading:false,baError:false,
@@ -957,6 +986,10 @@ async function loadQuizBank(){
   }
 }
 function retryQuizBank(){S.quizError=false;loadQuizBank();}
+function toggleQuizBank(qi){
+  if(S.quizExpanded.has(qi))S.quizExpanded.delete(qi);else S.quizExpanded.add(qi);
+  render();
+}
 
 /* ── Checkpoint projects ── */
 async function loadProjIndex(){
@@ -1279,6 +1312,10 @@ function getHashRoute(){
   if(t&&TRACK[t[1]]) return {view:'main',track:t[1]};
   const q=h.match(/^quiz\/(\d+)\/(\d+)$/);
   if(q) return {view:'quiz',qi:+q[1],li:+q[2]};
+  // A single bank's own path — the landing page links here instead of flattening
+  // every bank into one continuous trail. See the .quiz-cat-grid comment.
+  const qb=h.match(/^quizbank\/(\d+)$/);
+  if(qb) return {view:'quizbank',qi:+qb[1]};
   // Only tracks that registered a projPrefix have a checkpoint timeline.
   const pt=h.match(/^projects\/(.+)$/);
   if(pt&&TRACK[pt[1]]&&TRACK[pt[1]].hasProjects) return {view:'projtl',ptrack:pt[1]};
@@ -1380,7 +1417,7 @@ function renderQuizSession(route){
 
   const header=`
   <div style="background:${col.base};color:#fff;padding:18px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;">
-    <button onclick="S.session=null;window.location.hash='track/quiz'" style="background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;cursor:pointer;">← Back to quizzes</button>
+    <button onclick="S.session=null;window.location.hash='quizbank/${route.qi}'" style="background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;cursor:pointer;">← Back to quizzes</button>
     <div style="flex:1;">
       <div style="font-size:12px;font-weight:800;opacity:.85;text-transform:uppercase;letter-spacing:.6px;">${esc(quiz.quiz_name)}</div>
       <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;margin-top:3px;">${esc(lesson.lesson_name)}</div>
@@ -1399,7 +1436,7 @@ function renderQuizSession(route){
         <div class="quiz-final-sub" style="margin-top:14px;color:var(--text-hi);">${esc(msg)}</div>
         <div class="quiz-actions" style="max-width:420px;margin:26px auto 0;">
           <button class="quiz-btn" onclick="startQuizSession(${route.qi},${route.li});render();">Retry</button>
-          <button class="quiz-btn next" onclick="S.session=null;window.location.hash='track/quiz'">Done</button>
+          <button class="quiz-btn next" onclick="S.session=null;window.location.hash='quizbank/${route.qi}'">Done</button>
         </div>
       </div>
     </div>`;
@@ -1693,6 +1730,21 @@ function renderApp(){
   if(route.view==='plan')return renderStudyPlan(route);
   if(route.view==='backup')return renderBackupPage();
   if(route.view==='quiz')return renderQuizSession(route);
+  // #quizbank/<qi> is a deep-link shortcut (the quiz session's Back button
+  // uses it) — it lands on the normal accordion landing page with that one
+  // bank pre-expanded, rather than a separate page. S.quizBank may not be
+  // loaded yet on a cold link; the expand just no-ops harmlessly until it is,
+  // since the accordion body only renders once S.quizBank exists.
+  if(route.view==='quizbank'){
+    S.quizExpanded.add(route.qi);
+    route.view='main';route.track='quiz';
+    // replaceState, not location.hash= — the latter fires hashchange and
+    // re-enters render() recursively. Without advancing the URL off
+    // #quizbank/<qi> at all, every later render() (e.g. from toggling a
+    // different bank) re-reads this same route and force-re-expands qi,
+    // making it impossible to ever collapse the bank the deep link opened.
+    history.replaceState(null,'','#track/quiz');
+  }
   if(route.view==='projtl')return renderProjTimeline(route);
   if(route.view==='project')return renderProjectPage(route);
 
@@ -1802,11 +1854,35 @@ function renderApp(){
         <div class="chips">${S.quizBank.quizzes.map(z=>`<span class="chip">${esc(z.quiz_name)}</span>`).join('')}</div>
       </div>
     </div>`;
-    const units=S.quizBank.quizzes.map((z,i)=>({
-      kicker:`Bank ${i+1} of ${S.quizBank.quizzes.length} · ${z.lessons.reduce((a,l)=>a+l.questions.length,0)} questions`,
-      name:z.quiz_name}));
-    path=renderPath(units,flat,completed,fi);
-    return topBar+tabs+hero+path;
+    // A list of collapsible bank rows, not one continuous path — every bank is
+    // a peer you can start in any order. Collapsed by default (S.quizExpanded
+    // starts empty); clicking a bar toggles that bank open in place to show its
+    // own path of sub-lesson modules (see the .quiz-bank-list CSS comment).
+    const list=`<div class="quiz-bank-list">${S.quizBank.quizzes.map((z,qi)=>{
+      const col=PALETTE[qi%PALETTE.length];
+      const lDone=flat.filter(n=>n.qi===qi&&completed[n.id]).length;
+      const lTotal=z.lessons.length;
+      const qCount=z.lessons.reduce((a,l)=>a+l.questions.length,0);
+      const open=S.quizExpanded.has(qi);
+      const bar=`<button class="quiz-bank-bar" onclick="toggleQuizBank(${qi})" style="background:${col.base};">
+        <span class="quiz-bank-bar-num">Bank ${qi+1}</span>
+        <span class="quiz-bank-bar-name">${esc(z.quiz_name)}</span>
+        <span class="quiz-bank-bar-meta">${lDone}/${lTotal} · ${qCount} q</span>
+        <span class="quiz-bank-bar-caret">▸</span>
+      </button>`;
+      if(!open)return `<div class="quiz-bank-row">${bar}</div>`;
+      // ui:0 — renderPath groups nodes by matching n.ui to the loop index within
+      // `units` below (always 0, the single unit on this row), not the bank's
+      // own index. Mixing those up silently renders zero nodes (hit this once
+      // already for the old #quizbank page — see git history).
+      const lFlat=z.lessons.map((l,li)=>({id:quizId(qi,li),type:'quizlesson',ui:0,qi,li,
+        data:{code:String(li+1),title:l.lesson_name,count:l.questions.length}}));
+      let lfi=lFlat.findIndex(n=>!completed[n.id]);
+      if(lfi===-1)lfi=lFlat.length;
+      const units=[{kicker:'',name:z.quiz_name}];
+      return `<div class="quiz-bank-row expanded">${bar}<div class="quiz-bank-body">${renderPath(units,lFlat,completed,lfi)}</div></div>`;
+    }).join('')}</div>`;
+    return topBar+tabs+hero+list;
   }
   if(route.track==='ba'){
     // Three states, not two. render() starts the fetch only AFTER this returns,
@@ -1906,7 +1982,7 @@ function render(){
   if(route.view==='lesson'&&!S.mdContent[route.id]&&!S.mdLoading[route.id]&&!S.mdError[route.id]){
     loadLesson(route.id);
   }
-  if((route.track==='quiz'||route.view==='quiz')&&!S.quizBank&&!S.quizLoading&&!S.quizError){
+  if((route.track==='quiz'||route.view==='quiz'||route.view==='quizbank')&&!S.quizBank&&!S.quizLoading&&!S.quizError){
     loadQuizBank();
   }
   // Needed for the BA track page and for a BA lesson deep link, which has no
