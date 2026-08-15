@@ -106,21 +106,30 @@ button{font-family:inherit;cursor:pointer;}
 .unit-done{font-size:12.5px;font-weight:700;opacity:.9;margin-top:4px;font-variant-numeric:tabular-nums;}
 .nodes{display:flex;flex-direction:column;align-items:center;gap:26px;}
 
-/* ── Quiz category grid ──
+/* ── Quiz bank accordion ──
    Quiz Practice's landing page: every bank is a peer, pickable in any order —
    unlike Credit Risk/DV/BA, no bank depends on another being finished first. A
    single continuous path across all banks would visually imply an order that
-   does not exist and bury bank 13 under 12 banks of scrolling. Picking a card
-   opens that bank's own path (#quizbank/<qi>), where the path metaphor is still
-   right — the lessons within one bank remain a nice progression to walk. */
-.quiz-cat-grid{max-width:1040px;margin:28px auto 0;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
-.quiz-cat-card{display:block;border-radius:16px;padding:18px 20px;color:#fff;text-decoration:none;box-shadow:0 5px 0 rgba(0,0,0,.18);transition:transform .12s;}
-.quiz-cat-card:hover{transform:translateY(-2px);}
-.quiz-cat-num{font-size:11.5px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.6px;}
-.quiz-cat-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16.5px;margin-top:3px;line-height:1.25;}
-.quiz-cat-meta{font-size:12px;font-weight:700;opacity:.9;margin-top:10px;}
-.quiz-cat-progress{height:6px;border-radius:4px;background:rgba(255,255,255,.3);margin-top:10px;overflow:hidden;}
-.quiz-cat-progress-fill{height:100%;background:#fff;}
+   does not exist and bury bank 13 under 12 banks of scrolling. Each bank is a
+   collapsible row instead: thin and closed by default, and clicking it expands
+   that bank's own path inline — the path metaphor is still right one level
+   down, since the lessons within one bank remain a nice progression to walk.
+   Independent per-bank state (S.quizExpanded), not a single-open accordion —
+   nothing here says only one bank may be open at a time. */
+.quiz-bank-list{max-width:760px;margin:28px auto 0;padding:0 20px;}
+.quiz-bank-row{margin-bottom:14px;border-radius:14px;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.14);}
+.quiz-bank-bar{width:100%;border:none;cursor:pointer;color:#fff;display:flex;align-items:center;gap:12px;
+  padding:12px 18px;text-align:left;font-family:inherit;}
+.quiz-bank-bar-num{font-size:11px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.quiz-bank-bar-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;flex:1;line-height:1.2;}
+.quiz-bank-bar-meta{font-size:11.5px;font-weight:700;opacity:.9;white-space:nowrap;}
+.quiz-bank-bar-caret{font-size:13px;opacity:.85;transition:transform .15s;}
+.quiz-bank-row.expanded .quiz-bank-bar-caret{transform:rotate(90deg);}
+.quiz-bank-row.expanded .quiz-bank-bar{box-shadow:inset 0 -1px 0 rgba(255,255,255,.25);}
+.quiz-bank-body{background:var(--surface);padding:24px 20px 6px;}
+.quiz-bank-body .path{margin-top:0;padding:0;max-width:none;}
+.quiz-bank-body .unit{margin-bottom:8px;}
+.quiz-bank-body .unit-banner{display:none;}
 .node-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .node-btn{border:none;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
 .node-btn.is-next::before,.node-btn.is-next::after{
@@ -536,6 +545,10 @@ const UNIT_DEFS=[
 /* ── State ── */
 let S={completed:{},streak:1,mdContent:{},mdLoading:{},mdError:{},
        quizBank:null,quizLoading:false,quizError:false,quizScores:{},session:null,
+       // Which banks are expanded on the Quiz Practice landing page. Never
+       // persisted (not in the localStorage save/load list) — every page load
+       // starts fully collapsed on purpose, so the picker is never cluttered.
+       quizExpanded:new Set(),
        projIndex:null,projLoading:false,projError:false,
        projMd:{},projMdLoading:{},projMdError:{},
        baIndex:null,baLoading:false,baError:false,
@@ -973,6 +986,10 @@ async function loadQuizBank(){
   }
 }
 function retryQuizBank(){S.quizError=false;loadQuizBank();}
+function toggleQuizBank(qi){
+  if(S.quizExpanded.has(qi))S.quizExpanded.delete(qi);else S.quizExpanded.add(qi);
+  render();
+}
 
 /* ── Checkpoint projects ── */
 async function loadProjIndex(){
@@ -1497,54 +1514,6 @@ function renderQuizSession(route){
   </div>`;
 }
 
-/* One bank's own path of sub-lesson modules — reached from a category card on
-   the Quiz Practice landing page. Mirrors renderProjectPage's shape (sticky
-   coloured header + back link, no full topBar/tabs) since this is a drill-down
-   page, not a track root. */
-function renderQuizBankPath(route){
-  if(S.quizLoading)return `<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
-  if(!S.quizBank){
-    if(S.quizError){
-      return `<div class="loading" style="color:var(--text-lo)">Quiz bank unavailable.<button onclick="retryQuizBank()" class="quiz-btn" style="margin-top:12px;max-width:200px;">Try again</button></div>`;
-    }
-    return `<div class="loading"><div class="spinner"></div>Loading quiz bank…</div>`;
-  }
-  const quiz=S.quizBank.quizzes[route.qi];
-  const col=PALETTE[route.qi%PALETTE.length];
-  const header=`
-  <div style="background:${col.base};color:#fff;padding:20px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;">
-    <a href="#track/quiz" style="background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px;text-decoration:none;">← All banks</a>
-    <div style="flex:1;">
-      <div style="font-size:12px;font-weight:800;opacity:.85;text-transform:uppercase;letter-spacing:.6px;">Quiz Practice${quiz?` · Bank ${route.qi+1} of ${S.quizBank.quizzes.length}`:''}</div>
-      <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;margin-top:3px;">${quiz?esc(quiz.quiz_name):'Bank not found'}</div>
-    </div>
-  </div>`;
-  if(!quiz)return header+`<div style="padding:40px;text-align:center;color:var(--text-mid)">Quiz bank not found</div>`;
-
-  // ui is the index into `units` below (always the single unit at 0 on this
-  // page), not the bank index — renderPath groups nodes by matching n.ui to the
-  // unit's own loop index, and a mismatch here silently renders zero nodes.
-  const flat=quiz.lessons.map((l,li)=>({id:quizId(route.qi,li),type:'quizlesson',ui:0,qi:route.qi,li,
-    data:{code:String(li+1),title:l.lesson_name,count:l.questions.length}}));
-  let fi=flat.findIndex(n=>!S.completed[n.id]);
-  if(fi===-1)fi=flat.length;
-  const done=flat.filter(n=>S.completed[n.id]).length;
-  const pct=flat.length?Math.round(done/flat.length*100):0;
-  const totalQ=quiz.lessons.reduce((a,l)=>a+l.questions.length,0);
-
-  const hero=`
-  <div class="hero">
-    <p class="hero-sub">${totalQ} questions across ${flat.length} lessons in this bank. Pick any lesson below — they do not need to be done in order.</p>
-    <div class="progress-card">
-      <div class="progress-head"><span class="progress-lbl">Lessons cleared</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
-      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${col.base};"></div></div>
-    </div>
-  </div>`;
-
-  const units=[{kicker:`${flat.length} lessons · ${totalQ} questions`,name:quiz.quiz_name}];
-  return header+hero+renderPath(units,flat,S.completed,fi);
-}
-
 /* ── Track registry ──
    The single source of truth for tracks. Routing, the nav tabs, the checkpoint
    routes and the project-id → track mapping are all DERIVED from this list, so
@@ -1761,7 +1730,21 @@ function renderApp(){
   if(route.view==='plan')return renderStudyPlan(route);
   if(route.view==='backup')return renderBackupPage();
   if(route.view==='quiz')return renderQuizSession(route);
-  if(route.view==='quizbank')return renderQuizBankPath(route);
+  // #quizbank/<qi> is a deep-link shortcut (the quiz session's Back button
+  // uses it) — it lands on the normal accordion landing page with that one
+  // bank pre-expanded, rather than a separate page. S.quizBank may not be
+  // loaded yet on a cold link; the expand just no-ops harmlessly until it is,
+  // since the accordion body only renders once S.quizBank exists.
+  if(route.view==='quizbank'){
+    S.quizExpanded.add(route.qi);
+    route.view='main';route.track='quiz';
+    // replaceState, not location.hash= — the latter fires hashchange and
+    // re-enters render() recursively. Without advancing the URL off
+    // #quizbank/<qi> at all, every later render() (e.g. from toggling a
+    // different bank) re-reads this same route and force-re-expands qi,
+    // making it impossible to ever collapse the bank the deep link opened.
+    history.replaceState(null,'','#track/quiz');
+  }
   if(route.view==='projtl')return renderProjTimeline(route);
   if(route.view==='project')return renderProjectPage(route);
 
@@ -1871,23 +1854,35 @@ function renderApp(){
         <div class="chips">${S.quizBank.quizzes.map(z=>`<span class="chip">${esc(z.quiz_name)}</span>`).join('')}</div>
       </div>
     </div>`;
-    // A grid of banks, not one continuous path — every bank is a peer you can
-    // start in any order. Each card links to #quizbank/<qi>, that bank's own
-    // path of sub-lesson modules (see the .quiz-cat-grid CSS comment).
-    const grid=`<div class="quiz-cat-grid">${S.quizBank.quizzes.map((z,qi)=>{
+    // A list of collapsible bank rows, not one continuous path — every bank is
+    // a peer you can start in any order. Collapsed by default (S.quizExpanded
+    // starts empty); clicking a bar toggles that bank open in place to show its
+    // own path of sub-lesson modules (see the .quiz-bank-list CSS comment).
+    const list=`<div class="quiz-bank-list">${S.quizBank.quizzes.map((z,qi)=>{
       const col=PALETTE[qi%PALETTE.length];
-      const lFlat=flat.filter(n=>n.qi===qi);
-      const lDone=lFlat.filter(n=>completed[n.id]).length;
-      const lPct=lFlat.length?Math.round(lDone/lFlat.length*100):0;
+      const lDone=flat.filter(n=>n.qi===qi&&completed[n.id]).length;
+      const lTotal=z.lessons.length;
       const qCount=z.lessons.reduce((a,l)=>a+l.questions.length,0);
-      return `<a class="quiz-cat-card" href="#quizbank/${qi}" style="background:${col.base};box-shadow:0 5px 0 ${col.dark};">
-        <div class="quiz-cat-num">Bank ${qi+1} of ${S.quizBank.quizzes.length}</div>
-        <div class="quiz-cat-name">${esc(z.quiz_name)}</div>
-        <div class="quiz-cat-meta">${z.lessons.length} lessons · ${qCount} questions · ${lDone}/${lFlat.length} cleared</div>
-        <div class="quiz-cat-progress"><div class="quiz-cat-progress-fill" style="width:${lPct}%;"></div></div>
-      </a>`;
+      const open=S.quizExpanded.has(qi);
+      const bar=`<button class="quiz-bank-bar" onclick="toggleQuizBank(${qi})" style="background:${col.base};">
+        <span class="quiz-bank-bar-num">Bank ${qi+1}</span>
+        <span class="quiz-bank-bar-name">${esc(z.quiz_name)}</span>
+        <span class="quiz-bank-bar-meta">${lDone}/${lTotal} · ${qCount} q</span>
+        <span class="quiz-bank-bar-caret">▸</span>
+      </button>`;
+      if(!open)return `<div class="quiz-bank-row">${bar}</div>`;
+      // ui:0 — renderPath groups nodes by matching n.ui to the loop index within
+      // `units` below (always 0, the single unit on this row), not the bank's
+      // own index. Mixing those up silently renders zero nodes (hit this once
+      // already for the old #quizbank page — see git history).
+      const lFlat=z.lessons.map((l,li)=>({id:quizId(qi,li),type:'quizlesson',ui:0,qi,li,
+        data:{code:String(li+1),title:l.lesson_name,count:l.questions.length}}));
+      let lfi=lFlat.findIndex(n=>!completed[n.id]);
+      if(lfi===-1)lfi=lFlat.length;
+      const units=[{kicker:'',name:z.quiz_name}];
+      return `<div class="quiz-bank-row expanded">${bar}<div class="quiz-bank-body">${renderPath(units,lFlat,completed,lfi)}</div></div>`;
     }).join('')}</div>`;
-    return topBar+tabs+hero+grid;
+    return topBar+tabs+hero+list;
   }
   if(route.track==='ba'){
     // Three states, not two. render() starts the fetch only AFTER this returns,
