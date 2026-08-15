@@ -1,0 +1,1430 @@
+{
+  "quizzes": [
+    {
+      "quiz_name": "Saqr Academy — AI for Software Development",
+      "lessons": [
+        {
+          "lesson_name": "Pre-Class · Setup Guide",
+          "questions": [
+            {
+              "question_text": "What Claude subscription plan does the Setup Guide say is required for this course?",
+              "choices": ["Max ($100/month)", "Pro ($20/month)", "Team plan", "The free tier"],
+              "correct_answer": ["Max ($100/month)"],
+              "type": "multiple_choice",
+              "explanation": "The Setup Guide lists Claude Max at $100/month as required, since the course relies on the Claude Code feature inside the desktop app."
+            },
+            {
+              "question_text": "What Codex subscription plan does the Setup Guide require?",
+              "choices": ["Plus ($20/month)", "Pro ($200/month)", "Team plan", "The free tier"],
+              "correct_answer": ["Plus ($20/month)"],
+              "type": "multiple_choice",
+              "explanation": "Codex needs at least the Plus plan ($20/month) per the Setup Guide."
+            },
+            {
+              "question_text": "In this course, Claude is the reviewer and Codex is the primary builder.",
+              "choices": ["True", "False"],
+              "correct_answer": ["False"],
+              "type": "true_false",
+              "explanation": "It's the reverse: Claude is the primary coding partner (the builder, via Claude Code), and Codex is the reviewer and architect."
+            },
+            {
+              "question_text": "Where inside the Claude desktop app do you build apps?",
+              "choices": ["The Code tab (Claude Code)", "A separate CLI-only tool with no GUI", "The Codex app", "A browser extension"],
+              "correct_answer": ["The Code tab (Claude Code)"],
+              "type": "multiple_choice",
+              "explanation": "The Setup Guide has you click the Code tab inside the Claude app to reach the Claude Code interface."
+            },
+            {
+              "question_text": "Which command checks whether Git is installed on your computer?",
+              "choices": ["git --version", "git check", "git status", "which git --install"],
+              "correct_answer": ["git --version"],
+              "type": "multiple_choice",
+              "explanation": "`git --version` is the check used on both Mac and Windows in the Setup Guide."
+            },
+            {
+              "question_text": "On a Mac, if Git is missing after the Command Line Developer Tools popup, what command does the guide say to run?",
+              "choices": ["xcode-select --install", "brew install git", "sudo apt install git", "npm install -g git"],
+              "correct_answer": ["xcode-select --install"],
+              "type": "multiple_choice",
+              "explanation": "The Mac fallback in the Setup Guide is `xcode-select --install`, run from Terminal."
+            },
+            {
+              "question_text": "On Windows, what command does the guide use to install Git via winget?",
+              "choices": ["winget install Git.Git", "winget add git", "choco install git", "winget get Git.Git"],
+              "correct_answer": ["winget install Git.Git"],
+              "type": "multiple_choice",
+              "explanation": "`winget install Git.Git`, run in PowerShell, is the Windows install path in the Setup Guide."
+            },
+            {
+              "question_text": "Which three free-tier accounts does the Setup Guide have you create?",
+              "choices": ["GitHub, Vercel, Supabase", "GitHub, AWS, Firebase", "GitLab, Netlify, MongoDB Atlas", "Vercel, Supabase, OpenAI"],
+              "correct_answer": ["GitHub, Vercel, Supabase"],
+              "type": "multiple_choice",
+              "explanation": "All three are free and used throughout the program for code hosting, deployment, and databases."
+            },
+            {
+              "question_text": "How does the Setup Guide have you sign up for Vercel and Supabase?",
+              "choices": ["\"Continue with GitHub\" to link the accounts", "A separate email and password for each", "Through a single-sign-on Google account", "By importing a project from GitHub first"],
+              "correct_answer": ["\"Continue with GitHub\" to link the accounts"],
+              "type": "multiple_choice",
+              "explanation": "Both signups use \"Continue with GitHub\" so the three accounts are linked from the start."
+            },
+            {
+              "question_text": "What is Vercel used for in this course, per the Setup Guide?",
+              "choices": ["Deploying apps to the internet", "Hosting the Postgres database", "Hosting the AI model", "Version-controlling the code"],
+              "correct_answer": ["Deploying apps to the internet"],
+              "type": "multiple_choice",
+              "explanation": "The guide describes Vercel as \"how we deploy your apps to the internet.\""
+            },
+            {
+              "question_text": "What is Supabase used for in this course?",
+              "choices": ["Database and authentication", "Deploying apps to production", "Hosting the GitHub repository", "Running the AI agents"],
+              "correct_answer": ["Database and authentication"],
+              "type": "multiple_choice",
+              "explanation": "The guide calls Supabase \"the database and authentication service we use for your apps.\""
+            },
+            {
+              "question_text": "The Setup Guide's Final Check includes confirming your laptop is charged and ready.",
+              "choices": ["True", "False"],
+              "correct_answer": ["True"],
+              "type": "true_false",
+              "explanation": "\"My laptop is charged and ready for Saturday\" is one of the six Final Check items."
+            },
+            {
+              "question_text": "If none of the Git-install fixes work, what does the Setup Guide tell you to do?",
+              "choices": ["Share a screenshot in the group chat", "Reinstall your operating system", "Email course support and wait", "Skip Git and use the browser instead"],
+              "correct_answer": ["Share a screenshot in the group chat"],
+              "type": "multiple_choice",
+              "explanation": "Both the Mac and Windows branches end with the same fallback: share a screenshot in the group chat if the fix doesn't work."
+            },
+            {
+              "question_text": "On Windows, which application does the Setup Guide have you open to check for Git?",
+              "choices": ["PowerShell", "Command Prompt", "Git Bash", "Windows Terminal"],
+              "correct_answer": ["PowerShell"],
+              "type": "multiple_choice",
+              "explanation": "The Windows branch has you press the Windows key, type PowerShell, and open Windows PowerShell."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Pre-Class · Concepts & Vocabulary",
+          "questions": [
+            {
+              "question_text": "What are the four steps of the \"build loop\" taught in this lesson?",
+              "choices": ["Plan, Build, Verify, Update progress", "Design, Code, Test, Ship", "Plan, Code, Deploy, Celebrate", "Sketch, Build, Review, Merge"],
+              "correct_answer": ["Plan, Build, Verify, Update progress"],
+              "type": "multiple_choice",
+              "explanation": "The agent proposes a change, edits files, you verify the done condition in the running app, and only then is progress updated."
+            },
+            {
+              "question_text": "In the two-agent model from this lesson, which agent is described as \"the builder\"?",
+              "choices": ["Claude Desktop App", "Codex Desktop App", "Both equally", "Neither — the student writes the code"],
+              "correct_answer": ["Claude Desktop App"],
+              "type": "multiple_choice",
+              "explanation": "Claude is the builder; Codex is the reviewer, reading proposed changes before they merge."
+            },
+            {
+              "question_text": "Which agent is described as \"the reviewer\"?",
+              "choices": ["Codex Desktop App", "Claude Desktop App", "Both equally", "A separate human TA"],
+              "correct_answer": ["Codex Desktop App"],
+              "type": "multiple_choice",
+              "explanation": "Codex acts as the second pair of eyes, reading proposed changes before they merge into the main app."
+            },
+            {
+              "question_text": "What does Row Level Security (RLS) do, per this lesson?",
+              "choices": ["Ensures each user only sees their own data rows", "Encrypts the whole database at rest", "Limits how many rows a table can hold", "Backs up rows automatically every hour"],
+              "correct_answer": ["Ensures each user only sees their own data rows"],
+              "type": "multiple_choice",
+              "explanation": "RLS is the database rule that says \"show me only the rows that belong to me\" — without it, users could see each other's data."
+            },
+            {
+              "question_text": "Which service hosts the Postgres database used throughout the course?",
+              "choices": ["Supabase", "Vercel", "GitHub", "AWS"],
+              "correct_answer": ["Supabase"],
+              "type": "multiple_choice",
+              "explanation": "The lesson names Supabase specifically as the hosted Postgres provider."
+            },
+            {
+              "question_text": "According to this lesson, \"shipping\" and \"releasing\" mean the same thing.",
+              "choices": ["True", "False"],
+              "correct_answer": ["False"],
+              "type": "true_false",
+              "explanation": "Shipping means the code is on the internet; releasing means you can show it to a stranger and stand behind it — a higher bar."
+            },
+            {
+              "question_text": "What are the four release-readiness gates named in this lesson?",
+              "choices": ["Safety, Reliability, UX polish, Demo readiness", "Design, Build, Test, Ship", "Plan, Build, Review, Deploy", "Auth, Database, API, Frontend"],
+              "correct_answer": ["Safety, Reliability, UX polish, Demo readiness"],
+              "type": "multiple_choice",
+              "explanation": "These four gates are laid out in a table, each with its own question the app must pass."
+            },
+            {
+              "question_text": "How is a \"Pull Request\" defined in the vocabulary card?",
+              "choices": ["A proposal to merge a branch into the main project, opened for review", "A request to add a new database column", "A ticket asking for a bug fix", "A saved checkpoint with a short message"],
+              "correct_answer": ["A proposal to merge a branch into the main project, opened for review"],
+              "type": "multiple_choice",
+              "explanation": "That is the vocabulary card's exact definition of Pull request."
+            },
+            {
+              "question_text": "How is a \"Migration\" defined in the vocabulary card?",
+              "choices": ["An instruction that updates the database from one schema to the next, safely", "Moving a project from Vercel to another host", "Copying a repo from GitHub to GitLab", "Converting a component from JavaScript to TypeScript"],
+              "correct_answer": ["An instruction that updates the database from one schema to the next, safely"],
+              "type": "multiple_choice",
+              "explanation": "That's the card's definition — the same word used throughout later Supabase-setup prompts in the course."
+            },
+            {
+              "question_text": "What does the vocabulary card say an \"Environment variable\" is?",
+              "choices": ["A setting or secret kept outside your code so it doesn't leak", "A variable whose value changes at runtime", "A global CSS custom property", "A command-line flag passed to a script"],
+              "correct_answer": ["A setting or secret kept outside your code so it doesn't leak"],
+              "type": "multiple_choice",
+              "explanation": "This is the card's definition, directly relevant to how API keys and Supabase URLs are handled later in the course."
+            },
+            {
+              "question_text": "Roughly how much text does the vocabulary card say one \"token\" represents?",
+              "choices": ["About ¾ of a word", "One full word", "One full sentence", "One character"],
+              "correct_answer": ["About ¾ of a word"],
+              "type": "multiple_choice",
+              "explanation": "The card defines a token as roughly ¾ of a word — how AI models count text."
+            },
+            {
+              "question_text": "Which five documents/files does this lesson say make a project \"a system, not a chat\"?",
+              "choices": ["PRD, Design Style Guide, Feature List, Progress Tracker, AGENTS.md & CLAUDE.md", "README, LICENSE, CONTRIBUTING, CHANGELOG, package.json", "PRD, Wireframes, Sitemap, Style Guide, Roadmap", "Feature List, Bug Tracker, Release Notes, Changelog, Backlog"],
+              "correct_answer": ["PRD, Design Style Guide, Feature List, Progress Tracker, AGENTS.md & CLAUDE.md"],
+              "type": "multiple_choice",
+              "explanation": "These five hold the agent's standards, scope, and progress so anyone can pick up the project and know what to do."
+            },
+            {
+              "question_text": "What is the first of the two rules for building your homework idea list?",
+              "choices": ["Personal beats clever", "Clever beats personal", "Big beats small", "Fast beats thorough"],
+              "correct_answer": ["Personal beats clever"],
+              "type": "multiple_choice",
+              "explanation": "The lesson's example: don't try to invent the next Careem, track your own gym sets."
+            },
+            {
+              "question_text": "What is the second rule for the idea list?",
+              "choices": ["Small beats ambitious", "Ambitious beats small", "Fast beats careful", "Popular beats personal"],
+              "correct_answer": ["Small beats ambitious"],
+              "type": "multiple_choice",
+              "explanation": "A working app for one specific person beats a half-built app for \"everyone.\""
+            },
+            {
+              "question_text": "How many app ideas should you aim to have on your list before Session 1?",
+              "choices": ["Ten", "Three", "Twenty", "One"],
+              "correct_answer": ["Ten"],
+              "type": "multiple_choice",
+              "explanation": "The lesson asks students to aim for ten ideas before Session 1, and to keep adding to the list."
+            },
+            {
+              "question_text": "How does the vocabulary card define \"Repo\"?",
+              "choices": ["A folder of code, tracked by version control", "A single file containing all your code", "A cloud storage bucket for backups", "The live, deployed version of your app"],
+              "correct_answer": ["A folder of code, tracked by version control"],
+              "type": "multiple_choice",
+              "explanation": "The card calls it \"your project's filing cabinet.\""
+            },
+            {
+              "question_text": "What do cohort members build together across Sessions 1 and 2, per this lesson?",
+              "choices": ["A small intro page, then a Kanban board, then a database-backed task app", "A single large e-commerce site over both sessions", "Three unrelated mobile apps", "Only a static portfolio website"],
+              "correct_answer": ["A small intro page, then a Kanban board, then a database-backed task app"],
+              "type": "multiple_choice",
+              "explanation": "These are the two sessions' \"reps\" — small intro page, then a Kanban board with browser memory, then a real database-backed task app with logins."
+            },
+            {
+              "question_text": "How does the vocabulary card define a \"Commit\"?",
+              "choices": ["A saved checkpoint with a short message describing the change", "The final deployed version of an app", "A request to merge a branch", "A backup of the entire database"],
+              "correct_answer": ["A saved checkpoint with a short message describing the change"],
+              "type": "multiple_choice",
+              "explanation": "That's the exact card definition."
+            },
+            {
+              "question_text": "This lesson says you need to pre-learn JavaScript or SQL before the program starts.",
+              "choices": ["True", "False"],
+              "correct_answer": ["False"],
+              "type": "true_false",
+              "explanation": "The lesson explicitly says you don't need to pre-learn JavaScript, SQL, or anything else — the agents handle syntax."
+            },
+            {
+              "question_text": "How does the vocabulary card define \"Context window\"?",
+              "choices": ["How much text the agent can hold in mind at once", "The visible area of the code editor", "The time limit on a single agent request", "The number of files open in a project"],
+              "correct_answer": ["How much text the agent can hold in mind at once"],
+              "type": "multiple_choice",
+              "explanation": "The card compares it to short-term memory."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Class · First Launch",
+          "questions": [
+            {
+              "question_text": "How long is the Session 1 live class?",
+              "choices": ["180 minutes", "90 minutes", "240 minutes", "120 minutes"],
+              "correct_answer": ["180 minutes"],
+              "type": "multiple_choice",
+              "explanation": "The session header states \"Session 01 · 180 min · Live.\""
+            },
+            {
+              "question_text": "What is the name of the small warm-up app built first in Session 1?",
+              "choices": ["Launch Card", "Founder Sprint Board", "Cloud Task Board", "Pipeline Board"],
+              "correct_answer": ["Launch Card"],
+              "type": "multiple_choice",
+              "explanation": "The Launch Card is Build 1 — a small app used to prove the ship cycle before the real build."
+            },
+            {
+              "question_text": "What is the name of the main Kanban app built in Session 1's Build 2?",
+              "choices": ["Founder Sprint Board", "Launch Card", "Cloud Task Board", "Client Pipeline Board"],
+              "correct_answer": ["Founder Sprint Board"],
+              "type": "multiple_choice",
+              "explanation": "Build 2 is the Founder Sprint Board — the session's real shipped Kanban micro-product."
+            },
+            {
+              "question_text": "Which two CLI tools get installed and verified in Session 1's Block 02?",
+              "choices": ["GitHub CLI and Vercel CLI", "npm and pnpm", "Supabase CLI and Docker CLI", "Git and Node"],
+              "correct_answer": ["GitHub CLI and Vercel CLI"],
+              "type": "multiple_choice",
+              "explanation": "Block 02, \"Permission modes & CLI install,\" gets both GitHub CLI and Vercel CLI ready."
+            },
+            {
+              "question_text": "What comes right after \"Build 1 · Launch Card\" in Session 1's block map?",
+              "choices": ["\"Why constraints matter\" (a teaching block)", "\"Build 2 · Founder Sprint Board\" directly", "Deploying to production", "The close and homework block"],
+              "correct_answer": ["\"Why constraints matter\" (a teaching block)"],
+              "type": "multiple_choice",
+              "explanation": "Block 04 teaches why bigger prompts don't make better apps, before Build 2 starts."
+            },
+            {
+              "question_text": "The Founder Sprint Board is built with an open-ended feature list to encourage creativity.",
+              "choices": ["True", "False"],
+              "correct_answer": ["False"],
+              "type": "true_false",
+              "explanation": "It is built under hard constraints — the whole point of the block is that constrained scope ships better than an open brief."
+            },
+            {
+              "question_text": "What is the exact one-line correction prompt used if Claude adds content outside the Launch Card brief?",
+              "choices": ["\"Remove the extra sections. Keep only the Launch Card content from the original brief.\"", "\"No. Keep the app inside the original five-feature scope.\"", "\"Stop. This is out of scope for today.\"", "\"Undo the last change and try again.\""],
+              "correct_answer": ["\"Remove the extra sections. Keep only the Launch Card content from the original brief.\""],
+              "type": "multiple_choice",
+              "explanation": "This is the exact \"Scope correction\" prompt used for the Launch Card build."
+            },
+            {
+              "question_text": "Which two prompts are reused for both Build 1 and Build 2 to ship the finished app?",
+              "choices": ["Deploy · Vercel CLI and GitHub · CLI", "Plan and Build", "Design improvement and Group chat share", "Scope correction and Deploy · Vercel CLI"],
+              "correct_answer": ["Deploy · Vercel CLI and GitHub · CLI"],
+              "type": "multiple_choice",
+              "explanation": "Both builds use a Vercel-deploy prompt and a GitHub-CLI push prompt with the same labels."
+            },
+            {
+              "question_text": "What does the \"Group chat share\" prompt at the end of Session 1 produce?",
+              "choices": ["A submission template with the live URL and repo for the Founder Sprint Board", "A private message to the instructor only", "A GitHub issue describing bugs found", "An email to future employers"],
+              "correct_answer": ["A submission template with the live URL and repo for the Founder Sprint Board"],
+              "type": "multiple_choice",
+              "explanation": "Students post proof of the Founder Sprint Board build to the group chat using this template."
+            },
+            {
+              "question_text": "According to the session's opening, what is the main sentence students should leave thinking?",
+              "choices": ["\"I built and shipped a working product today. I can do this.\"", "\"AI can replace developers entirely.\"", "\"I understand every line of code that was written.\"", "\"Constraints slow down good software.\""],
+              "correct_answer": ["\"I built and shipped a working product today. I can do this.\""],
+              "type": "multiple_choice",
+              "explanation": "This is the session's closing confidence-building line."
+            },
+            {
+              "question_text": "Which of these is one of the seven things students \"leave with\" after Session 1?",
+              "choices": ["Direct Claude to deploy the app through Vercel CLI", "Write raw SQL migrations by hand", "Configure Row Level Security policies manually", "Set up a CI/CD pipeline from scratch"],
+              "correct_answer": ["Direct Claude to deploy the app through Vercel CLI"],
+              "type": "multiple_choice",
+              "explanation": "This is listed among the seven capabilities students leave Session 1 with — deployment is agent-directed, not hand-coded."
+            },
+            {
+              "question_text": "What follow-up prompt is used after the Founder Sprint Board is built, if its design looks generic?",
+              "choices": ["Design improvement", "Scope correction", "Group chat share", "Deploy · Vercel CLI"],
+              "correct_answer": ["Design improvement"],
+              "type": "multiple_choice",
+              "explanation": "The \"Design improvement\" prompt asks Claude to improve visual design without changing functionality."
+            },
+            {
+              "question_text": "Session 1's \"Class setup · Agent-first\" prompt is used at the very start of the session, before any building begins.",
+              "choices": ["True", "False"],
+              "correct_answer": ["True"],
+              "type": "true_false",
+              "explanation": "It's part of Block 02, getting permission modes and CLI tools ready before Build 1 starts."
+            },
+            {
+              "question_text": "How long is Build 2 (Founder Sprint Board) allotted in Session 1's block map?",
+              "choices": ["80 minutes", "30 minutes", "120 minutes", "45 minutes"],
+              "correct_answer": ["80 minutes"],
+              "type": "multiple_choice",
+              "explanation": "Build 2 is the largest block of the session, at 80 minutes."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Apply · Second Launch",
+          "questions": [
+            {
+              "question_text": "What is the homework app in Session 1 Homework called?",
+              "choices": ["Client Pipeline Board", "Founder Sprint Board", "Cloud Task Board", "Launch Card"],
+              "correct_answer": ["Client Pipeline Board"],
+              "type": "multiple_choice",
+              "explanation": "\"Second Launch. Build a Pipeline Board\" has students build the Client Pipeline Board, a pipeline variant of the class Kanban pattern."
+            },
+            {
+              "question_text": "What is the exact one-line rejection sentence for the Client Pipeline Board homework?",
+              "choices": ["\"No. Keep the app inside the original five-feature scope.\"", "\"No. Keep this homework inside the approved list only.\"", "\"Stop adding new features immediately.\"", "\"Revert and restart from the brief.\""],
+              "correct_answer": ["\"No. Keep the app inside the original five-feature scope.\""],
+              "type": "multiple_choice",
+              "explanation": "This is the exact \"Rejection sentence\" prompt for the Client Pipeline Board homework."
+            },
+            {
+              "question_text": "How many required features does the Client Pipeline Board have?",
+              "choices": ["Five", "Three", "Eight", "Unlimited"],
+              "correct_answer": ["Five"],
+              "type": "multiple_choice",
+              "explanation": "The homework is scoped to exactly five required features, same discipline as the class build."
+            },
+            {
+              "question_text": "What are the four pipeline columns used in the Client Pipeline Board?",
+              "choices": ["Leads, Contacted, Proposal, Won", "Backlog, In Progress, Review, Done", "New, Active, Paused, Closed", "To Do, Doing, Testing, Shipped"],
+              "correct_answer": ["Leads, Contacted, Proposal, Won"],
+              "type": "multiple_choice",
+              "explanation": "These are the four pipeline stages used for the six preloaded client opportunities."
+            },
+            {
+              "question_text": "How many preloaded client opportunities does the Client Pipeline Board start with?",
+              "choices": ["Six", "Four", "Ten", "Zero"],
+              "correct_answer": ["Six"],
+              "type": "multiple_choice",
+              "explanation": "The feature list requires six preloaded client opportunities spread across the pipeline columns."
+            },
+            {
+              "question_text": "The Client Pipeline Board homework is allowed to include a login and database.",
+              "choices": ["True", "False"],
+              "correct_answer": ["False"],
+              "type": "true_false",
+              "explanation": "Login and database are explicitly on the \"must not include\" list for this homework — it saves state locally instead."
+            },
+            {
+              "question_text": "What must the app do when the user reloads the page, per the Save board state feature?",
+              "choices": ["Remember moved and added cards from localStorage", "Log the user out automatically", "Reset to the six demo opportunities every time", "Prompt the user to sign in again"],
+              "correct_answer": ["Remember moved and added cards from localStorage"],
+              "type": "multiple_choice",
+              "explanation": "The board must persist state locally and include a reset button that restores the six demo opportunities."
+            },
+            {
+              "question_text": "Which stretch option involves showing the sum of all opportunity values at the top of the board?",
+              "choices": ["Option A: Total pipeline value", "Option B: Count per column", "Option C: Add a Lost column", "There is no such stretch option"],
+              "correct_answer": ["Option A: Total pipeline value"],
+              "type": "multiple_choice",
+              "explanation": "Three stretch options exist; only one may be added, and only after the required work passes."
+            },
+            {
+              "question_text": "How many stretch features are students allowed to add to the Client Pipeline Board homework?",
+              "choices": ["Exactly one, and only after required work passes", "As many as they like", "Two, chosen from the three options", "None — stretch options are for reference only"],
+              "correct_answer": ["Exactly one, and only after required work passes"],
+              "type": "multiple_choice",
+              "explanation": "The rule is explicit: add only one, and only after the submitted app passes every required check."
+            },
+            {
+              "question_text": "What deliverable format does the homework ask students to submit in the group chat?",
+              "choices": ["Live URL, GitHub repo, and a short reflection template", "A video walkthrough only", "A PDF design document", "A pull request link with no other context"],
+              "correct_answer": ["Live URL, GitHub repo, and a short reflection template"],
+              "type": "multiple_choice",
+              "explanation": "The submission template asks for the live URL, repo, the five features shipped, and a scope-control reflection."
+            },
+            {
+              "question_text": "What is the fallback move mechanism required alongside drag-and-drop for moving opportunities?",
+              "choices": ["Move left / Move right buttons", "Keyboard arrow keys", "A dropdown to reassign stage", "Right-click context menu"],
+              "correct_answer": ["Move left / Move right buttons"],
+              "type": "multiple_choice",
+              "explanation": "Simple move buttons are required as a fallback in case drag-and-drop is awkward on trackpad or mobile."
+            },
+            {
+              "question_text": "What does the homework say about installing drag-and-drop npm packages?",
+              "choices": ["Not allowed — use native browser drag-and-drop instead", "Required for smooth animation", "Optional, but recommended", "Only allowed for the stretch feature"],
+              "correct_answer": ["Not allowed — use native browser drag-and-drop instead"],
+              "type": "multiple_choice",
+              "explanation": "\"Drag-and-drop package installs\" is on the forbidden list — native browser drag-and-drop plus move buttons is required."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Pre-Class · CLI Setup",
+          "questions": [
+            {
+              "question_text": "What two command-line tools does this pre-work lesson have students install?",
+              "choices": ["GitHub CLI and Vercel CLI", "Supabase CLI and Docker CLI", "npm and Yarn", "Git and Python"],
+              "correct_answer": ["GitHub CLI and Vercel CLI"],
+              "type": "multiple_choice",
+              "explanation": "The lesson is titled \"Command-line tools\" and focuses specifically on these two installs."
+            },
+            {
+              "question_text": "Roughly how long does the lesson say this pre-work should take?",
+              "choices": ["Fifteen minutes", "One hour", "Five minutes", "Thirty minutes"],
+              "correct_answer": ["Fifteen minutes"],
+              "type": "multiple_choice",
+              "explanation": "The lesson's framing is \"Fifteen minutes. Most of it is waiting for the downloads.\""
+            },
+            {
+              "question_text": "Which prerequisite technology must be installed before the Vercel CLI, since Vercel CLI ships as an npm package?",
+              "choices": ["Node.js", "Python", "Docker", "Ruby"],
+              "correct_answer": ["Node.js"],
+              "type": "multiple_choice",
+              "explanation": "The lesson checks `node --version` first, noting most students already have it from Session 1."
+            },
+            {
+              "question_text": "Is installing the Supabase CLI part of this lesson's required setup?",
+              "choices": ["No — it's explicitly listed as not required", "Yes, it's the third required tool", "Yes, but only on Windows", "Yes, but only for Mac users"],
+              "correct_answer": ["No — it's explicitly listed as not required"],
+              "type": "multiple_choice",
+              "explanation": "The lesson has a \"What you are not installing\" section: Supabase is controlled from its web dashboard instead."
+            },
+            {
+              "question_text": "Which command verifies you are signed in to GitHub CLI?",
+              "choices": ["gh auth status", "gh whoami", "gh login --check", "git auth status"],
+              "correct_answer": ["gh auth status"],
+              "type": "multiple_choice",
+              "explanation": "`gh auth status` is the verify step for GitHub CLI in this lesson."
+            },
+            {
+              "question_text": "Which command verifies you are signed in to Vercel CLI?",
+              "choices": ["vercel whoami", "vercel auth status", "vercel login --check", "vercel status"],
+              "correct_answer": ["vercel whoami"],
+              "type": "multiple_choice",
+              "explanation": "`vercel whoami` returning your username is the verify step for Vercel CLI."
+            },
+            {
+              "question_text": "How does the lesson describe signing in with GitHub CLI?",
+              "choices": ["Choose GitHub.com, then HTTPS, then log in with a web browser", "Paste a personal access token directly", "Use SSH keys generated in Terminal", "Sign in with your email and password"],
+              "correct_answer": ["Choose GitHub.com, then HTTPS, then log in with a web browser"],
+              "type": "multiple_choice",
+              "explanation": "`gh auth login` walks through this exact flow, opening a browser tab for a one-time code."
+            },
+            {
+              "question_text": "How does the lesson have students sign in with Vercel CLI?",
+              "choices": ["Select \"Continue with GitHub\"", "Enter an email and password", "Paste an API token from the dashboard", "Use a QR code scan"],
+              "correct_answer": ["Select \"Continue with GitHub\""],
+              "type": "multiple_choice",
+              "explanation": "`vercel login` has the student select Continue with GitHub, matching the account-linking pattern from Session 1's Setup Guide."
+            },
+            {
+              "question_text": "What is the final checklist item about, beyond the two CLI tools?",
+              "choices": ["Having watched the Session 2 pre-work video and done the database interactive artifact", "Confirming the laptop is charged", "Bringing a printed copy of the syllabus", "Having installed Docker Desktop"],
+              "correct_answer": ["Having watched the Session 2 pre-work video and done the database interactive artifact"],
+              "type": "multiple_choice",
+              "explanation": "This is the fourth checklist item alongside Node, GitHub CLI, and Vercel CLI confirmation."
+            },
+            {
+              "question_text": "What should you do if `node --version` returns \"command not found\"?",
+              "choices": ["Install the LTS version from nodejs.org and open a new terminal", "Ignore it — Node isn't actually needed", "Reinstall Claude Code", "Use `npm install node` to fix it"],
+              "correct_answer": ["Install the LTS version from nodejs.org and open a new terminal"],
+              "type": "multiple_choice",
+              "explanation": "The lesson points to the nodejs.org download link and specifies picking the LTS version."
+            },
+            {
+              "question_text": "Why does the lesson say it's worth doing this setup ahead of class rather than during it?",
+              "choices": ["So the Session 2 build (\"Build 3\") runs without interruption", "Because CLI tools can only be installed on weekdays", "Because Vercel requires a 24-hour waiting period", "Because GitHub CLI needs manual approval from staff"],
+              "correct_answer": ["So the Session 2 build (\"Build 3\") runs without interruption"],
+              "type": "multiple_choice",
+              "explanation": "The lesson notes Claude Code can sometimes install these tools on the fly, but each still needs a one-time human sign-in — doing that ahead of time avoids interruptions."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Class · Real App Foundations",
+          "questions": [
+            {
+              "question_text": "What is the class app built in Session 2 called?",
+              "choices": ["Cloud Task Board", "Founder Sprint Board", "Launch Card", "Cloud Pipeline Board"],
+              "correct_answer": ["Cloud Task Board"],
+              "type": "multiple_choice",
+              "explanation": "Session 2 rebuilds the Session 1 board pattern with a database, auth, and RLS as \"Cloud Task Board.\""
+            },
+            {
+              "question_text": "How many project-operating-system documents does Block 03 have Claude scaffold?",
+              "choices": ["Six", "Three", "Four", "Eight"],
+              "correct_answer": ["Six"],
+              "type": "multiple_choice",
+              "explanation": "PRD, Design Style Guide, Feature List JSON, Progress Tracker, CLAUDE.md, and CLAUDE.md — six documents, listed as \"Doc 01\" through \"Doc 06.\""
+            },
+            {
+              "question_text": "What are the four required product features of Cloud Task Board?",
+              "choices": ["Login/logout, database-backed board, move tasks, add/delete tasks", "Login/logout, comments, notifications, search", "Auth, payments, admin dashboard, analytics", "Board, chat, calendar, file uploads"],
+              "correct_answer": ["Login/logout, database-backed board, move tasks, add/delete tasks"],
+              "type": "multiple_choice",
+              "explanation": "These four features (S2-F1 through S2-F4) make up the whole feature list for Cloud Task Board."
+            },
+            {
+              "question_text": "How many mini-sprints does Session 2 run to build the four Cloud Task Board features?",
+              "choices": ["Four", "Two", "Six", "One"],
+              "correct_answer": ["Four"],
+              "type": "multiple_choice",
+              "explanation": "One sprint per feature, each following the same Plan → Review → Build → Verify → Update tracking rhythm."
+            },
+            {
+              "question_text": "What database columns does the tasks table need per the Supabase setup prompt?",
+              "choices": ["id, user_id, title, status, priority, created_at", "id, name, email, password, role", "id, task, done, owner", "id, title, description, tags, archived"],
+              "correct_answer": ["id, user_id, title, status, priority, created_at"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact column list from the Supabase setup prompt for the tasks table."
+            },
+            {
+              "question_text": "What key does the setup prompt say the app should never ask for or use?",
+              "choices": ["The Supabase secret key (service_role)", "The publishable/anon key", "The project URL", "The database password"],
+              "correct_answer": ["The Supabase secret key (service_role)"],
+              "type": "multiple_choice",
+              "explanation": "\"Never ask for or use the Supabase secret key\" appears repeatedly across the Session 2 prompts."
+            },
+            {
+              "question_text": "What is the fallback path if the Supabase CLI setup is blocked?",
+              "choices": ["A generated SQL script pasted into the Supabase dashboard SQL Editor", "Skip the database and use localStorage instead", "Ask an instructor to set it up manually", "Switch to Firebase instead"],
+              "correct_answer": ["A generated SQL script pasted into the Supabase dashboard SQL Editor"],
+              "type": "multiple_choice",
+              "explanation": "Claude generates one complete SQL script and tells the student exactly where to paste it if CLI setup fails."
+            },
+            {
+              "question_text": "What does the \"hard rule\" of the mini-sprint protocol say about the `passes` flag?",
+              "choices": ["Do not set passes to true unless done_when is actually satisfied", "Always set passes to true after building", "passes should never change once set", "passes is optional and can be skipped"],
+              "correct_answer": ["Do not set passes to true unless done_when is actually satisfied"],
+              "type": "multiple_choice",
+              "explanation": "This rule protects the feature list from becoming an unreliable record of what's actually done."
+            },
+            {
+              "question_text": "What issue does the \"Unblock · Email confirmation\" prompt address?",
+              "choices": ["Supabase email confirmation blocking test login", "A broken Vercel deployment", "A GitHub authentication failure", "A missing environment variable on production"],
+              "correct_answer": ["Supabase email confirmation blocking test login"],
+              "type": "multiple_choice",
+              "explanation": "This prompt asks for the fastest safe development-only way to disable email confirmation when it's blocking test sign-in."
+            },
+            {
+              "question_text": "In Sprint 3 (Move tasks), what two interaction methods must both be supported?",
+              "choices": ["Native drag-and-drop and fallback move buttons", "Keyboard shortcuts only", "Voice commands and touch gestures", "Right-click and double-click"],
+              "correct_answer": ["Native drag-and-drop and fallback move buttons"],
+              "type": "multiple_choice",
+              "explanation": "Same pattern as Session 1: drag-and-drop plus simple move-left/move-right buttons, with no drag-and-drop libraries installed."
+            },
+            {
+              "question_text": "What does RLS specifically enforce on the tasks table in this lesson?",
+              "choices": ["Authenticated users can select, insert, update, and delete only their own rows", "Only admins can read the table", "All users can see all tasks but not edit them", "Anonymous users get read-only access"],
+              "correct_answer": ["Authenticated users can select, insert, update, and delete only their own rows"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact RLS policy scope requested in the Supabase setup prompt."
+            },
+            {
+              "question_text": "What is Session 2's homework app called?",
+              "choices": ["Cloud Pipeline Board", "Client Pipeline Board", "Founder Sprint Board", "Second Launch Board"],
+              "correct_answer": ["Cloud Pipeline Board"],
+              "type": "multiple_choice",
+              "explanation": "The homework preview at the end of class points to \"Cloud Pipeline Board\" as the next build."
+            },
+            {
+              "question_text": "Which environment variable file must stay out of GitHub, per this lesson?",
+              "choices": [".env.local", "package.json", "vercel.json", "README.md"],
+              "correct_answer": [".env.local"],
+              "type": "multiple_choice",
+              "explanation": "Sprint 1's build prompt repeatedly emphasizes keeping .env.local out of GitHub while using it locally."
+            },
+            {
+              "question_text": "What does Block 04's readiness report check before any building starts?",
+              "choices": ["Git, Node, GitHub CLI, Vercel CLI, and Supabase CLI are all ready", "Only whether Supabase is signed up", "Whether the student has read the PRD", "Whether the Vercel project is already deployed"],
+              "correct_answer": ["Git, Node, GitHub CLI, Vercel CLI, and Supabase CLI are all ready"],
+              "type": "multiple_choice",
+              "explanation": "Block 02, \"Tool check,\" confirms all five before any project or deploy work happens."
+            },
+            {
+              "question_text": "What must happen to environment variables before the production Vercel deploy?",
+              "choices": ["They must be added to Vercel before the production deploy", "They are copied automatically from .env.local", "They only need to exist locally", "Vercel generates them automatically at build time"],
+              "correct_answer": ["They must be added to Vercel before the production deploy"],
+              "type": "multiple_choice",
+              "explanation": "The deploy prompt explicitly checks that the required Supabase environment variables are added to Vercel first."
+            },
+            {
+              "question_text": "What new file, introduced in Session 2, specifies each screen's single job and one primary action?",
+              "choices": ["docs/05_Design.md (the Screen Spec)", "docs/06_Layout.md", "docs/UX_Rules.md", "docs/wireframes.json"],
+              "correct_answer": ["docs/05_Design.md (the Screen Spec)"],
+              "type": "multiple_choice",
+              "explanation": "This is Doc 06, described as fixing the worst habit of AI-built apps: cluttered screens with competing buttons."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Apply · Cloud Pipeline Board",
+          "questions": [
+            {
+              "question_text": "What is the homework app in Session 2 Homework called?",
+              "choices": ["Cloud Pipeline Board", "Client Pipeline Board", "Cloud Task Board", "Founder Sprint Board"],
+              "correct_answer": ["Cloud Pipeline Board"],
+              "type": "multiple_choice",
+              "explanation": "Same shape as class (Cloud Task Board) but a sales-pipeline domain, built database-backed with Supabase."
+            },
+            {
+              "question_text": "What table name replaces \"tasks\" in the Cloud Pipeline Board's database schema?",
+              "choices": ["opportunities", "leads", "contacts", "deals"],
+              "correct_answer": ["opportunities"],
+              "type": "multiple_choice",
+              "explanation": "The Supabase setup prompt creates a public.opportunities table instead of public.tasks."
+            },
+            {
+              "question_text": "What are the four pipeline stages used for opportunities in this homework?",
+              "choices": ["leads, contacted, proposal, won", "new, active, closed, lost", "backlog, doing, review, done", "cold, warm, hot, closed"],
+              "correct_answer": ["leads, contacted, proposal, won"],
+              "type": "multiple_choice",
+              "explanation": "These are the exact allowed values for the stage column, matching the Session 1 pipeline naming."
+            },
+            {
+              "question_text": "What is the operating principle repeated throughout this homework about who runs the setup commands?",
+              "choices": ["Claude does the setup; the student authorises", "The student runs all CLI commands manually", "The instructor sets up Supabase for every student", "Setup is skipped and only the app is built"],
+              "correct_answer": ["Claude does the setup; the student authorises"],
+              "type": "multiple_choice",
+              "explanation": "\"If the agent can carry out a task, you should not be asked to do it manually\" is stated as the operating principle."
+            },
+            {
+              "question_text": "What are the two guardrail files students create before any app code, per Step 02?",
+              "choices": ["CLAUDE.md and features.json", "AGENTS.md and CLAUDE.md", "README.md and package.json", "PRD.md and CHANGELOG.md"],
+              "correct_answer": ["CLAUDE.md and features.json"],
+              "type": "multiple_choice",
+              "explanation": "These two files keep Claude inside the brief before any code is written, with their exact content supplied in the lesson."
+            },
+            {
+              "question_text": "How many opportunities does the reference seed list contain?",
+              "choices": ["Six", "Four", "Eight", "Ten"],
+              "correct_answer": ["Six"],
+              "type": "multiple_choice",
+              "explanation": "Six starter opportunities are seeded, matching the pattern from the Session 1 homework's Client Pipeline Board."
+            },
+            {
+              "question_text": "Is manually writing database SQL the default path in this homework?",
+              "choices": ["No — Supabase CLI is the default; SQL paste is fallback only", "Yes — SQL is always written by hand first", "Yes, but only for the opportunities table", "No — Supabase is entirely skipped"],
+              "correct_answer": ["No — Supabase CLI is the default; SQL paste is fallback only"],
+              "type": "multiple_choice",
+              "explanation": "The lesson states this explicitly under \"Operating principle\": SQL paste in the dashboard is fallback only."
+            },
+            {
+              "question_text": "Roughly what time budget does this homework's Time guidance table suggest overall?",
+              "choices": ["3.5 to 5 hours", "1 to 2 hours", "8 to 10 hours", "45 minutes to 1 hour"],
+              "correct_answer": ["3.5 to 5 hours"],
+              "type": "multiple_choice",
+              "explanation": "This is the total in the homework's own time-guidance table, spanning setup through deploy and push."
+            },
+            {
+              "question_text": "What does the homework's \"20-minute rule\" ask students to do?",
+              "choices": ["Post a screenshot in the group chat if stuck on the same issue for over 20 minutes", "Take a 20-minute break every hour", "Limit each Claude prompt to 20 minutes of runtime", "Submit progress updates every 20 minutes"],
+              "correct_answer": ["Post a screenshot in the group chat if stuck on the same issue for over 20 minutes"],
+              "type": "multiple_choice",
+              "explanation": "This rule appears consistently across the course's homework lessons to prevent silent, prolonged struggling."
+            },
+            {
+              "question_text": "What is the last section of this homework, previewing what comes after?",
+              "choices": ["\"Prepare for Session 3\" — a one-sentence capstone app idea", "\"Take a break\" with no further instructions", "A second stretch-feature challenge", "A request to grade a classmate's submission"],
+              "correct_answer": ["\"Prepare for Session 3\" — a one-sentence capstone app idea"],
+              "type": "multiple_choice",
+              "explanation": "Students fill in a template sentence describing the app they want to build for their own Session 3 capstone."
+            },
+            {
+              "question_text": "What must never appear in client-side code, according to this homework's database rule?",
+              "choices": ["The Supabase secret key", "The Supabase project URL", "The publishable key", "The table name"],
+              "correct_answer": ["The Supabase secret key"],
+              "type": "multiple_choice",
+              "explanation": "Repeated across the Session 2 track: never ask for or use the Supabase secret key."
+            },
+            {
+              "question_text": "What GitHub CLI action does the homework's push prompt request, alongside committing?",
+              "choices": ["Create the GitHub repo and push it using GitHub CLI", "Fork an existing GitHub repo", "Delete the previous week's repo", "Open a pull request against the Session 1 repo"],
+              "correct_answer": ["Create the GitHub repo and push it using GitHub CLI"],
+              "type": "multiple_choice",
+              "explanation": "Claude is directed to initialize Git if needed, create the repo via GitHub CLI, commit, and push."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Pre-Class · Agent System Prompts",
+          "questions": [
+            {
+              "question_text": "What is this lesson's on-page title?",
+              "choices": ["Give Every Agent a System", "Agent System Prompts 101", "Instructions for AI Agents", "Building Better Prompts"],
+              "correct_answer": ["Give Every Agent a System"],
+              "type": "multiple_choice",
+              "explanation": "The syllabus nav label is \"Agent System Prompts,\" but the page's own title is \"Give Every Agent a System.\""
+            },
+            {
+              "question_text": "What is the key difference between global and local instruction files, per this lesson?",
+              "choices": ["Global = your default agreements across every project; local = one project's rules", "Global applies only to Claude; local applies only to Codex", "Global is optional; local is mandatory", "There is no meaningful difference"],
+              "correct_answer": ["Global = your default agreements across every project; local = one project's rules"],
+              "type": "multiple_choice",
+              "explanation": "The lesson frames this exactly: \"Global means my default working agreements. Local means this app's rules...\""
+            },
+            {
+              "question_text": "What is Claude's global instruction file path, per this lesson?",
+              "choices": ["~/.claude/CLAUDE.md", "~/.codex/AGENTS.md", "./CLAUDE.md", "./AGENTS.md"],
+              "correct_answer": ["~/.claude/CLAUDE.md"],
+              "type": "multiple_choice",
+              "explanation": "This is the global (cross-project) path; the local project path is ./CLAUDE.md."
+            },
+            {
+              "question_text": "What is Codex's global instruction file path?",
+              "choices": ["~/.codex/AGENTS.md", "~/.claude/CLAUDE.md", "./AGENTS.md", "./CLAUDE.md"],
+              "correct_answer": ["~/.codex/AGENTS.md"],
+              "type": "multiple_choice",
+              "explanation": "Codex reads AGENTS.md; the global version lives at ~/.codex/AGENTS.md."
+            },
+            {
+              "question_text": "How does this lesson say Claude connects to a project's AGENTS.md file?",
+              "choices": ["Claude can import AGENTS.md from CLAUDE.md", "Claude ignores AGENTS.md entirely", "Claude renames AGENTS.md to CLAUDE.md automatically", "Claude and Codex share one merged file"],
+              "correct_answer": ["Claude can import AGENTS.md from CLAUDE.md"],
+              "type": "multiple_choice",
+              "explanation": "The pattern taught: make AGENTS.md the shared project rulebook, then make CLAUDE.md point to it via @AGENTS.md."
+            },
+            {
+              "question_text": "Why does this lesson say instruction files should be kept thin?",
+              "choices": ["Claude loads CLAUDE.md into context on every turn, burning tokens if it's bloated", "Thin files load faster over slow internet", "GitHub has a file-size limit for markdown", "Thin files are required by the Codex CLI"],
+              "correct_answer": ["Claude loads CLAUDE.md into context on every turn, burning tokens if it's bloated"],
+              "type": "multiple_choice",
+              "explanation": "The lesson's exact reasoning: a huge file means burning tokens on repeated instructions instead of useful work."
+            },
+            {
+              "question_text": "What three control surfaces from Session 2 does this lesson highlight as the agent's real \"memory\"?",
+              "choices": ["CLAUDE.md, docs/04_Feature_List.json, docs/process/progress.md", "README.md, LICENSE, package.json", "PRD.md, Design Style Guide, Data Model", "AGENTS.md, CLAUDE.md, and the Screen Spec"],
+              "correct_answer": ["CLAUDE.md, docs/04_Feature_List.json, docs/process/progress.md"],
+              "type": "multiple_choice",
+              "explanation": "These tell the agent what the project is, what's in/out of scope, what's passed, and what's next."
+            },
+            {
+              "question_text": "In this lesson's job-to-tool table, what is recommended for \"Reviewing a plan or a PR\"?",
+              "choices": ["The other tool, in a fresh thread", "The same tool that built it, in the same thread", "Always Claude, regardless of who built it", "A human reviewer only"],
+              "correct_answer": ["The other tool, in a fresh thread"],
+              "type": "multiple_choice",
+              "explanation": "The one rule that doesn't change: never let the agent that wrote the code be the only one to review it."
+            },
+            {
+              "question_text": "What does this lesson say to do when stuck on the same failure three times?",
+              "choices": ["Switch model or switch tool — do not keep grinding", "Restart the entire project from scratch", "Wait 24 hours before trying again", "Escalate immediately to a human developer"],
+              "correct_answer": ["Switch model or switch tool — do not keep grinding"],
+              "type": "multiple_choice",
+              "explanation": "This is the lesson's exact guidance in its job-to-tool table."
+            },
+            {
+              "question_text": "What does this lesson say a branch is, in the professional workflow it previews?",
+              "choices": ["A safe place to build one feature", "A backup of the entire repository", "A separate deployment environment", "A copy of the production database"],
+              "correct_answer": ["A safe place to build one feature"],
+              "type": "multiple_choice",
+              "explanation": "A pull request is then \"the review room for that feature,\" and a review is where another agent checks the work."
+            },
+            {
+              "question_text": "What is the feature workflow sequence given as a reference in this lesson?",
+              "choices": ["Feature list → branch → plan → build → verify → commit → PR → review → merge → deploy", "Plan → build → deploy → review", "Branch → deploy → verify → merge", "Idea → code → ship"],
+              "correct_answer": ["Feature list → branch → plan → build → verify → commit → PR → review → merge → deploy"],
+              "type": "multiple_choice",
+              "explanation": "This exact sequence is given as a reference block: \"Same shape every feature.\""
+            },
+            {
+              "question_text": "What five things does the pre-class checklist ask students NOT to do before Session 3?",
+              "choices": ["Create AGENTS.md, edit CLAUDE.md, create global instruction files, create branches, or open pull requests", "Install any software at all", "Read the lesson more than once", "Bring their laptop to class", "Watch the pre-work video"],
+              "correct_answer": ["Create AGENTS.md, edit CLAUDE.md, create global instruction files, create branches, or open pull requests"],
+              "type": "multiple_choice",
+              "explanation": "This is purely a conceptual pre-work lesson; all hands-on work is saved for the live Session 3 class."
+            },
+            {
+              "question_text": "What will Session 3 build on top of, per this lesson's preview?",
+              "choices": ["The same Session 2 app, turned into \"Cloud Task Board Pro\"", "An entirely new app from scratch", "The Session 1 Founder Sprint Board", "A shared cohort-wide app"],
+              "correct_answer": ["The same Session 2 app, turned into \"Cloud Task Board Pro\""],
+              "type": "multiple_choice",
+              "explanation": "Session 3 continues the same app with a few small, controlled product upgrades — the new complexity is the workflow, not the product."
+            },
+            {
+              "question_text": "This lesson has no copy-paste AI prompts, unlike the live-class lessons.",
+              "choices": ["True", "False"],
+              "correct_answer": ["True"],
+              "type": "true_false",
+              "explanation": "It is purely conceptual reading alongside a video; its two \"Reference\" blocks are explicitly captioned \"you do not paste this.\""
+            }
+          ]
+        },
+        {
+          "lesson_name": "Class · Professional Agent Workflow",
+          "questions": [
+            {
+              "question_text": "What does Session 3 upgrade Cloud Task Board into?",
+              "choices": ["Cloud Task Board Pro", "Cloud Task Board 2.0", "Founder Task Board", "Task Board Enterprise"],
+              "correct_answer": ["Cloud Task Board Pro"],
+              "type": "multiple_choice",
+              "explanation": "Session 3 continues the same app with three controlled feature upgrades."
+            },
+            {
+              "question_text": "What are the three Session 3 feature slices, by their IDs?",
+              "choices": ["S3-F1, S3-F2, S3-F3", "S2-F1, S2-F2, S2-F3", "S3-A, S3-B, S3-C", "F1, F2, F3, F4"],
+              "correct_answer": ["S3-F1, S3-F2, S3-F3"],
+              "type": "multiple_choice",
+              "explanation": "Edit task title/priority (S3-F1), priority filter and column counts (S3-F2), and an optional done summary panel (S3-F3)."
+            },
+            {
+              "question_text": "What is S3-F1 in Session 3?",
+              "choices": ["Edit task title and priority", "Priority filter and column counts", "Done summary panel", "Archive completed tasks"],
+              "correct_answer": ["Edit task title and priority"],
+              "type": "multiple_choice",
+              "explanation": "Opening an existing task and editing its title or priority, saved to Supabase."
+            },
+            {
+              "question_text": "What branch name does the lesson specify for building S3-F1?",
+              "choices": ["feature/S3-F1-edit-task-title-priority", "feature/edit-task", "S3-F1-branch", "feature/session3-update1"],
+              "correct_answer": ["feature/S3-F1-edit-task-title-priority"],
+              "type": "multiple_choice",
+              "explanation": "This exact branch name is given in the \"Claude · Create branch\" prompt."
+            },
+            {
+              "question_text": "What three possible verdicts can Codex return during a plan review?",
+              "choices": ["APPROVE, APPROVE WITH NOTES, BLOCK", "PASS, FAIL, RETRY", "GREEN, YELLOW, RED", "ACCEPT, REJECT, DEFER"],
+              "correct_answer": ["APPROVE, APPROVE WITH NOTES, BLOCK"],
+              "type": "multiple_choice",
+              "explanation": "This exact three-way verdict scale is used in the Codex plan-review prompt."
+            },
+            {
+              "question_text": "What four things does the \"UX gate\" specifically check on a screen, distinct from the architecture review?",
+              "choices": ["One job, one primary action, an obvious next step, nothing smuggled in", "Color contrast, font size, spacing, alignment", "Load time, bundle size, accessibility score, SEO", "Database schema, RLS, API routes, secrets"],
+              "correct_answer": ["One job, one primary action, an obvious next step, nothing smuggled in"],
+              "type": "multiple_choice",
+              "explanation": "The lesson is explicit: \"Architecture review and UX review are not the same thing\" — this gate checks flow and focus only."
+            },
+            {
+              "question_text": "What merge strategy does the lesson specify when merging an approved PR?",
+              "choices": ["Squash merge", "Rebase merge", "Fast-forward merge", "Merge commit (no squash)"],
+              "correct_answer": ["Squash merge"],
+              "type": "multiple_choice",
+              "explanation": "Every \"Merge\" prompt in this lesson specifies squash merge, then switching back to and pulling the latest main."
+            },
+            {
+              "question_text": "What severity scale does the Codex code-review prompt use for findings?",
+              "choices": ["P0 (blocks merge) through P3 (optional polish)", "Critical, High, Medium, Low", "1 through 5 stars", "Red, Amber, Green"],
+              "correct_answer": ["P0 (blocks merge) through P3 (optional polish)"],
+              "type": "multiple_choice",
+              "explanation": "P0 blocks merge; P1 should fix before merge; P2 usually fix before merge; P3 is optional polish."
+            },
+            {
+              "question_text": "What is the \"hard rule\" stated after Sprint 1 in this lesson?",
+              "choices": ["Do not let the same context approve itself — build in one window, review in a separate one", "Always merge without review to save time", "Never use squash merge", "Review must happen before the plan is approved"],
+              "correct_answer": ["Do not let the same context approve itself — build in one window, review in a separate one"],
+              "type": "multiple_choice",
+              "explanation": "This is stated verbatim as the hard rule closing out Sprint 1."
+            },
+            {
+              "question_text": "What is Sprint 2 in this lesson specifically designed to prove?",
+              "choices": ["That the project rules are portable — either Claude or Codex can build from the same rulebook", "That Codex is strictly better than Claude at building", "That two agents can edit the same file simultaneously", "That branches are unnecessary for small features"],
+              "correct_answer": ["That the project rules are portable — either Claude or Codex can build from the same rulebook"],
+              "type": "multiple_choice",
+              "explanation": "Sprint 2 is called the \"Agent switch drill\" — Codex builds S3-F2 by default, with Claude as fallback."
+            },
+            {
+              "question_text": "What does AGENTS.md need to include, per the local project rulebook prompt?",
+              "choices": ["Project summary, source-of-truth order, agent agency rule, feature workflow, branch/PR workflow, verification, design, secrets, forbidden scope", "Only a list of npm dependencies", "The full PRD text duplicated", "Nothing — it can be an empty file"],
+              "correct_answer": ["Project summary, source-of-truth order, agent agency rule, feature workflow, branch/PR workflow, verification, design, secrets, forbidden scope"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact required-contents list from the \"Create · Local instruction system\" prompt."
+            },
+            {
+              "question_text": "What line does CLAUDE.md start with, per the reference shape in this lesson?",
+              "choices": ["@AGENTS.md", "# Rules", "import AGENTS.md;", "source AGENTS.md"],
+              "correct_answer": ["@AGENTS.md"],
+              "type": "multiple_choice",
+              "explanation": "This import line is how Claude pulls in the shared AGENTS.md rulebook."
+            },
+            {
+              "question_text": "What line length limits does the lesson set for AGENTS.md and CLAUDE.md?",
+              "choices": ["AGENTS.md under 80 lines, CLAUDE.md under 45 lines", "Both under 20 lines", "AGENTS.md under 200 lines, CLAUDE.md under 100 lines", "No limit is specified"],
+              "correct_answer": ["AGENTS.md under 80 lines, CLAUDE.md under 45 lines"],
+              "type": "multiple_choice",
+              "explanation": "Both are checked in \"Block 4 complete when,\" reinforcing the thin-files principle from the pre-work lesson."
+            },
+            {
+              "question_text": "What does the \"Saqr Academy Working Agreements\" section refer to in this lesson?",
+              "choices": ["A named section added to the personal global instruction files", "A section inside the project's PRD", "A public GitHub wiki page", "A Slack channel topic"],
+              "correct_answer": ["A named section added to the personal global instruction files"],
+              "type": "multiple_choice",
+              "explanation": "Added to ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md, capped at 20 lines each, without overwriting existing content."
+            },
+            {
+              "question_text": "What does S3-F3 (the optional stretch feature) add to the board?",
+              "choices": ["A summary panel showing total done tasks and the three most recently completed titles", "A calendar view of due dates", "A chart of tasks completed per week", "An export-to-CSV button"],
+              "correct_answer": ["A summary panel showing total done tasks and the three most recently completed titles"],
+              "type": "multiple_choice",
+              "explanation": "S3-F3 is explicitly marked \"Optional stretch\" in the feature list."
+            },
+            {
+              "question_text": "What must happen before feature-branch work starts in Block 05?",
+              "choices": ["A clean baseline commit of just the workflow-setup files", "A production deploy of the current app", "All three S3 features must be pre-approved by Codex", "The Session 2 app must be deleted and rebuilt"],
+              "correct_answer": ["A clean baseline commit of just the workflow-setup files"],
+              "type": "multiple_choice",
+              "explanation": "AGENTS.md, CLAUDE.md, the feature list, and progress docs are committed alone, with no app code changes, so every branch starts from the same baseline."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Apply · Build a Lightweight CRM",
+          "questions": [
+            {
+              "question_text": "What app do students build from scratch for Session 3's homework?",
+              "choices": ["Lightweight CRM", "Cloud Task Board Pro", "Client Pipeline Board", "Cloud Pipeline Board"],
+              "correct_answer": ["Lightweight CRM"],
+              "type": "multiple_choice",
+              "explanation": "Unlike the class session (which upgrades an existing app), this homework is a brand-new app built from scratch."
+            },
+            {
+              "question_text": "What are the two homework features, by ID?",
+              "choices": ["S3-H1 and S3-H2", "S3-F1 and S3-F2", "H1 and H2", "S3-H1, S3-H2, and S3-H3"],
+              "correct_answer": ["S3-H1 and S3-H2"],
+              "type": "multiple_choice",
+              "explanation": "S3-H1 is Contacts & pipeline; S3-H2 is Contact detail + AI draft follow-up."
+            },
+            {
+              "question_text": "What is S3-H2's one AI feature?",
+              "choices": ["Draft follow-up — an LLM-generated follow-up message based on contact history", "Auto-scoring leads by likelihood to convert", "AI-generated contact photos", "Automatic email sending to contacts"],
+              "correct_answer": ["Draft follow-up — an LLM-generated follow-up message based on contact history"],
+              "type": "multiple_choice",
+              "explanation": "It is explicitly the only AI feature allowed — no sending, the draft is shown for the user to copy."
+            },
+            {
+              "question_text": "Where must the LLM API key live, per the hard constraints?",
+              "choices": ["A server-side environment variable, never in client code", "Hardcoded in the frontend for simplicity", "In the Supabase anon key field", "In a public GitHub Gist"],
+              "correct_answer": ["A server-side environment variable, never in client code"],
+              "type": "multiple_choice",
+              "explanation": "Stated as a hard boundary for S3-H2, and re-checked explicitly during its code review."
+            },
+            {
+              "question_text": "Who bootstraps the entire project-operating-system for the Lightweight CRM before any app code is written?",
+              "choices": ["Codex, acting as Chief Architect", "The student, by hand", "Claude, in Plan mode only", "A shared cohort template repo"],
+              "correct_answer": ["Codex, acting as Chief Architect"],
+              "type": "multiple_choice",
+              "explanation": "Step 01's bootstrap prompt explicitly casts Codex as \"the Chief Architect for a new app.\""
+            },
+            {
+              "question_text": "How many screens does the Lightweight CRM's design spec define?",
+              "choices": ["Three", "Two", "Four", "One"],
+              "correct_answer": ["Three"],
+              "type": "multiple_choice",
+              "explanation": "Pipeline (home), Contact detail, and Add/edit contact — each with one job and one primary action."
+            },
+            {
+              "question_text": "What are the four pipeline stages for contacts in this homework?",
+              "choices": ["New, Contacted, Proposal, Won", "Leads, Contacted, Proposal, Won", "Cold, Warm, Hot, Closed", "New, Active, Paused, Lost"],
+              "correct_answer": ["New, Contacted, Proposal, Won"],
+              "type": "multiple_choice",
+              "explanation": "These are the CRM's contact stages, distinct from the \"Leads\" wording used in the Cloud Pipeline Board homework."
+            },
+            {
+              "question_text": "What is the UX gate specifically applied to before any screen gets built?",
+              "choices": ["docs/05_Design.md, the newly bootstrapped screen spec", "The finished, deployed app", "The GitHub pull request diff", "The Supabase schema"],
+              "correct_answer": ["docs/05_Design.md, the newly bootstrapped screen spec"],
+              "type": "multiple_choice",
+              "explanation": "Step 02 runs the UX gate against the design doc so cluttered screens get caught on paper, before they're built."
+            },
+            {
+              "question_text": "What is the primary action on the Contact detail screen?",
+              "choices": ["Log activity", "Draft follow-up", "Delete contact", "Change stage"],
+              "correct_answer": ["Log activity"],
+              "type": "multiple_choice",
+              "explanation": "Draft follow-up and changing the stage are explicitly secondary actions on this screen."
+            },
+            {
+              "question_text": "Which agent builds S3-H2 by default in this homework?",
+              "choices": ["Codex, as the implementation agent", "Claude, exclusively", "Neither — it's built manually", "A separate third-party AI tool"],
+              "correct_answer": ["Codex, as the implementation agent"],
+              "type": "multiple_choice",
+              "explanation": "Codex builds S3-H2 by default; Claude is the fallback path if Codex can't edit locally, proving the rules are portable."
+            },
+            {
+              "question_text": "What must a submission for this homework include, per the group chat template?",
+              "choices": ["Live URL, GitHub repo, and two PR links", "Only a screenshot of the finished app", "A video recording of the whole build process", "A written essay about the experience"],
+              "correct_answer": ["Live URL, GitHub repo, and two PR links"],
+              "type": "multiple_choice",
+              "explanation": "One PR per feature (S3-H1 and S3-H2), each with its own review, per the homework's deliverable line."
+            },
+            {
+              "question_text": "What data does the activities table capture in this homework's data model?",
+              "choices": ["id, contact_id, user_id, note, created_at", "id, contact_id, subject, sent_at", "id, user_id, task, status", "id, contact_id, priority, due_date"],
+              "correct_answer": ["id, contact_id, user_id, note, created_at"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact schema given in the bootstrap prompt for the activity log."
+            },
+            {
+              "question_text": "What is explicitly forbidden in this homework, alongside team accounts and calendars?",
+              "choices": ["Any AI feature beyond the single draft-follow-up action", "Using Supabase for the database", "Deploying to Vercel", "Using Row Level Security"],
+              "correct_answer": ["Any AI feature beyond the single draft-follow-up action"],
+              "type": "multiple_choice",
+              "explanation": "The homework caps AI usage tightly to prevent scope creep beyond the one approved feature."
+            },
+            {
+              "question_text": "What RLS check must the S3-H1 plan review specifically confirm?",
+              "choices": ["A user must only ever see their own contacts", "All contacts are publicly readable", "Only admins can create new contacts", "Contacts can be deleted by any authenticated user"],
+              "correct_answer": ["A user must only ever see their own contacts"],
+              "type": "multiple_choice",
+              "explanation": "This is explicitly named as one of the things Codex checks for in the S3-H1 plan review."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Pre-Class · Release Prep",
+          "questions": [
+            {
+              "question_text": "What does this lesson say \"release-ready\" means?",
+              "choices": ["The current version is honest about what it is and isn't", "The app has every feature the student can imagine", "The app has zero bugs of any kind", "The app has been reviewed by a lawyer"],
+              "correct_answer": ["The current version is honest about what it is and isn't"],
+              "type": "multiple_choice",
+              "explanation": "\"A release is not a feeling. A release is evidence\" — release-ready means checked, documented, and honest about limitations."
+            },
+            {
+              "question_text": "What order does this lesson insist the release gates run in?",
+              "choices": ["Safety, then reliable, then usable, then presentable", "Presentable, then usable, then safety, then reliable", "All four gates run in parallel with no order", "Usable, then safety, then presentable, then reliable"],
+              "correct_answer": ["Safety, then reliable, then usable, then presentable"],
+              "type": "multiple_choice",
+              "explanation": "\"If safety fails, no amount of UX polish makes the release ready\" — the gates are strictly sequential."
+            },
+            {
+              "question_text": "What four things does this lesson ask students to have ready before Session 4?",
+              "choices": ["The GitHub repo, the Vercel live URL, the project open in Claude Code, Codex available", "A printed resume, a business card, a laptop charger, a notebook", "A new feature idea, a bug list, a design mockup, a demo script", "Nothing — Session 4 starts from a blank slate"],
+              "correct_answer": ["The GitHub repo, the Vercel live URL, the project open in Claude Code, Codex available"],
+              "type": "multiple_choice",
+              "explanation": "These are the exact four items in \"Have these four ready.\""
+            },
+            {
+              "question_text": "What does this lesson explicitly say NOT to do before class?",
+              "choices": ["Add new features, redesign the UI, or try to fix everything alone", "Open the project folder", "Confirm the live URL still works", "Read the pre-work page"],
+              "correct_answer": ["Add new features, redesign the UI, or try to fix everything alone"],
+              "type": "multiple_choice",
+              "explanation": "The whole point is to bring the app as-is; the release process happens together in class."
+            },
+            {
+              "question_text": "What does the showcase at the end of Session 4 require every student to do?",
+              "choices": ["Demo a live app", "Submit a written exam", "Present slides with no live demo", "Pair up and review a classmate's code"],
+              "correct_answer": ["Demo a live app"],
+              "type": "multiple_choice",
+              "explanation": "\"At the end of class, every student demos a live app\" — described as proof, not a pitch competition."
+            },
+            {
+              "question_text": "What one sentence does this lesson ask students to bring to class?",
+              "choices": ["\"The core workflow I will demo is...\"", "\"My biggest blocker this week was...\"", "\"The feature I'm most proud of is...\"", "\"My app's target user is...\""],
+              "correct_answer": ["\"The core workflow I will demo is...\""],
+              "type": "multiple_choice",
+              "explanation": "This fill-in-the-blank sentence anchors the eventual live demo."
+            },
+            {
+              "question_text": "What does this lesson say about rotating API keys before class?",
+              "choices": ["Do not rotate keys unless you already know a secret was leaked", "Always rotate every key before Session 4", "Key rotation happens automatically via Vercel", "Rotate keys only if the app has over 100 users"],
+              "correct_answer": ["Do not rotate keys unless you already know a secret was leaked"],
+              "type": "multiple_choice",
+              "explanation": "This is one of the explicit \"do not do these before class\" items."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Class · Release Readiness",
+          "questions": [
+            {
+              "question_text": "What are the four release gates worked through in Session 4, by ID?",
+              "choices": ["S4-R1 through S4-R4", "S3-R1 through S3-R4", "G1 through G4", "R-Safety, R-Speed, R-Design, R-Demo"],
+              "correct_answer": ["S4-R1 through S4-R4"],
+              "type": "multiple_choice",
+              "explanation": "Safety gate, Reliability gate, UX and design gate, Demo and release gate."
+            },
+            {
+              "question_text": "What is S4-R1?",
+              "choices": ["Safety gate", "Reliability gate", "UX and design gate", "Demo and release gate"],
+              "correct_answer": ["Safety gate"],
+              "type": "multiple_choice",
+              "explanation": "Secrets, auth protection, RLS policies, and production environment variables checked, blockers fixed or documented."
+            },
+            {
+              "question_text": "What is explicitly forbidden work during Session 4?",
+              "choices": ["New product modules, payment flows, and full redesigns that change product structure", "Fixing loading and error states", "Running build and lint checks", "Deploying to production"],
+              "correct_answer": ["New product modules, payment flows, and full redesigns that change product structure"],
+              "type": "multiple_choice",
+              "explanation": "Session 4's hard constraints keep the work to safety, reliability, UX polish, and demo readiness — not new features."
+            },
+            {
+              "question_text": "What must happen first if a secret was accidentally committed to the repo?",
+              "choices": ["Stop all feature work and create a safe remediation plan", "Immediately force-push to erase the commit", "Ignore it if the app is not yet public", "Delete the entire repository and start over"],
+              "correct_answer": ["Stop all feature work and create a safe remediation plan"],
+              "type": "multiple_choice",
+              "explanation": "The \"leaked secret remediation\" prompt is explicit: a leaked secret is not a normal bug, and history rewriting requires explicit approval."
+            },
+            {
+              "question_text": "In the safety audit prompt, what should the public Supabase client use?",
+              "choices": ["NEXT_PUBLIC_SUPABASE_URL and the publishable/anon key only", "The service_role key for full access", "A hardcoded admin token", "No key at all — public access is disabled"],
+              "correct_answer": ["NEXT_PUBLIC_SUPABASE_URL and the publishable/anon key only"],
+              "type": "multiple_choice",
+              "explanation": "The safety check explicitly verifies the public client never uses the service_role or sb_secret key."
+            },
+            {
+              "question_text": "Who acts as \"Design Guardian\" during the UX and design gate?",
+              "choices": ["Codex, in a dedicated review role", "Claude, reviewing its own work", "The instructor", "An automated linter with no AI involvement"],
+              "correct_answer": ["Codex, in a dedicated review role"],
+              "type": "multiple_choice",
+              "explanation": "This is a named review persona distinct from the earlier safety and reliability reviews, returning BLOCK or NOTE findings."
+            },
+            {
+              "question_text": "What two labels does the Design Guardian review use for its findings?",
+              "choices": ["BLOCK and NOTE", "PASS and FAIL", "P0 and P1", "Critical and Minor"],
+              "correct_answer": ["BLOCK and NOTE"],
+              "type": "multiple_choice",
+              "explanation": "BLOCK = should be fixed before release; NOTE = polish that can wait."
+            },
+            {
+              "question_text": "What three release documents does Block 02 have the agent create?",
+              "choices": ["S4_Release_Readiness.md, S4_Demo_Script.md, S4_Release_Notes.md", "README.md, CHANGELOG.md, LICENSE.md", "PRD.md, Design_Guide.md, Feature_List.json", "Safety.md, Reliability.md, UX.md"],
+              "correct_answer": ["S4_Release_Readiness.md, S4_Demo_Script.md, S4_Release_Notes.md"],
+              "type": "multiple_choice",
+              "explanation": "These live under docs/release/ and hold the evidence for each gate."
+            },
+            {
+              "question_text": "What format does the showcase demo follow?",
+              "choices": ["A six-step demo format ending with an honest limitation or next feature", "A written report with no live component", "A 30-second elevator pitch with no app shown", "A peer-graded rubric filled out silently"],
+              "correct_answer": ["A six-step demo format ending with an honest limitation or next feature"],
+              "type": "multiple_choice",
+              "explanation": "Live URL, who it's for, one core workflow, one fixed issue, one review finding, and one honest limitation."
+            },
+            {
+              "question_text": "What does the reliability gate (S4-R2) explicitly avoid installing unless necessary?",
+              "choices": ["A large testing stack", "Node.js", "Vercel CLI", "GitHub CLI"],
+              "correct_answer": ["A large testing stack"],
+              "type": "multiple_choice",
+              "explanation": "The plan-first prompt for S4-R2 says to write or run the smallest useful checks, not a heavy new framework."
+            },
+            {
+              "question_text": "What GitHub recommendation does the lesson cite for a leaked secret?",
+              "choices": ["Revoke or rotate the exposed secret first; history cleanup is a separate decision", "Immediately delete the whole GitHub organization", "Contact GitHub support before doing anything else", "Wait 30 days before rotating the key"],
+              "correct_answer": ["Revoke or rotate the exposed secret first; history cleanup is a separate decision"],
+              "type": "multiple_choice",
+              "explanation": "This is stated directly in the lesson's leaked-secret special case."
+            },
+            {
+              "question_text": "What does the lesson list as \"minimum acceptable\" for Session 4?",
+              "choices": ["Safety gate completed, production URL works, one workflow demoable, blockers written down", "All four gates merged with zero exceptions", "Just a working local build, no deployment required", "A completed written exam"],
+              "correct_answer": ["Safety gate completed, production URL works, one workflow demoable, blockers written down"],
+              "type": "multiple_choice",
+              "explanation": "This is the lesson's own \"Minimum acceptable\" bar, distinct from the \"Strong outcome\" of all four gates passing."
+            },
+            {
+              "question_text": "How many blocks make up Session 4's live class?",
+              "choices": ["Eight", "Six", "Four", "Ten"],
+              "correct_answer": ["Eight"],
+              "type": "multiple_choice",
+              "explanation": "Opening, tool check, release-track setup, four gates, showcase, and close — eight blocks total."
+            },
+            {
+              "question_text": "What recognition categories does the closing block hand out to the cohort?",
+              "choices": ["Strongest workflow discipline, best design improvement, best debugging recovery, clearest demo, strongest persistence, cleanest release evidence", "Fastest typer, most lines of code, biggest app", "Best-looking UI only", "No recognition is given — the course simply ends"],
+              "correct_answer": ["Strongest workflow discipline, best design improvement, best debugging recovery, clearest demo, strongest persistence, cleanest release evidence"],
+              "type": "multiple_choice",
+              "explanation": "Each certificate names a specific behavior that showed up across the cohort, not just the final app."
+            },
+            {
+              "question_text": "This session introduces new database tables as a normal part of the release process.",
+              "choices": ["False", "True"],
+              "correct_answer": ["False"],
+              "type": "true_false",
+              "explanation": "New tables are explicitly excluded unless required to fix a real release blocker — Session 4 hardens, it doesn't expand the schema."
+            },
+            {
+              "question_text": "What is required before students can consider S4-R1 (safety) done?",
+              "choices": ["Secrets, auth, RLS, and env vars checked, with blockers fixed or documented", "A perfect security score from an external scanner", "Zero findings of any kind from Codex", "A signed-off legal review"],
+              "correct_answer": ["Secrets, auth, RLS, and env vars checked, with blockers fixed or documented"],
+              "type": "multiple_choice",
+              "explanation": "\"Or documented\" is key — a gate can be considered handled even if a blocker remains, as long as it's written down honestly."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Apply · Your Next Build System",
+          "questions": [
+            {
+              "question_text": "Is there required homework after Session 4?",
+              "choices": ["No — this is a graduate reference, not an assignment", "Yes — one final capstone project", "Yes — a written exam", "Yes — a peer code review of another student's app"],
+              "correct_answer": ["No — this is a graduate reference, not an assignment"],
+              "type": "multiple_choice",
+              "explanation": "The lesson states clearly: no required homework is assigned after Session 4."
+            },
+            {
+              "question_text": "What is the core message of this graduate page?",
+              "choices": ["The point is not the app you built — it's the delivery system you can repeat", "You should immediately start monetizing your Cloud Task Board Pro", "The course is not truly finished until you find a job", "You must now learn a new programming language from scratch"],
+              "correct_answer": ["The point is not the app you built — it's the delivery system you can repeat"],
+              "type": "multiple_choice",
+              "explanation": "\"The point is not that you built Cloud Task Board Pro. The point is that you can repeat the process.\""
+            },
+            {
+              "question_text": "What is the suggested time budget, or \"rule of thumb,\" for your next solo build?",
+              "choices": ["One weekend", "One month", "One day", "Six weeks"],
+              "correct_answer": ["One weekend"],
+              "type": "multiple_choice",
+              "explanation": "\"If it cannot be shipped in one weekend, it is too big for your next solo build.\""
+            },
+            {
+              "question_text": "How many core features does the \"Next build prompt\" cap version 1 at?",
+              "choices": ["Four", "Two", "Eight", "Unlimited"],
+              "correct_answer": ["Four"],
+              "type": "multiple_choice",
+              "explanation": "\"Build exactly 4 core features for version 1. Put everything else in a 'later' section.\""
+            },
+            {
+              "question_text": "Which of these is one of the eight starter-idea suggestions on this page?",
+              "choices": ["Client follow-up tracker", "A social media platform", "A cryptocurrency exchange", "A video streaming service"],
+              "correct_answer": ["Client follow-up tracker"],
+              "type": "multiple_choice",
+              "explanation": "The other seven are: expense approval board, event planning board, lead qualification dashboard, hiring pipeline tracker, personal CRM, content calendar, and support ticket board."
+            },
+            {
+              "question_text": "How many moves make up the \"next build workflow\" loop per feature?",
+              "choices": ["Eleven", "Five", "Seven", "Three"],
+              "correct_answer": ["Eleven"],
+              "type": "multiple_choice",
+              "explanation": "Branch, plan, review, build, verify, update, commit, push, PR, review, merge, deploy — the lesson calls this \"eleven moves per feature, no batching.\""
+            },
+            {
+              "question_text": "How many checks are on the solo release checklist?",
+              "choices": ["Ten", "Four", "Six", "Fifteen"],
+              "correct_answer": ["Ten"],
+              "type": "multiple_choice",
+              "explanation": "A condensed version of the Session 4 gates, for use before showing an app to anyone."
+            },
+            {
+              "question_text": "Which items does the release checklist include?",
+              "choices": [".env.local is ignored, and no secret keys are committed", "The app has at least 100 active users", "The app has a paid subscription tier", "The app supports five languages"],
+              "correct_answer": [".env.local is ignored, and no secret keys are committed"],
+              "type": "multiple_choice",
+              "explanation": "These are the first two of the ten release-checklist items."
+            },
+            {
+              "question_text": "What six things should you bring when asking for help, per this lesson?",
+              "choices": ["Repo link, live URL, branch name, feature ID, error message, what the agent already tried", "Your resume, a cover letter, and three references", "A full video recording of the whole session", "Nothing — just describe the problem verbally"],
+              "correct_answer": ["Repo link, live URL, branch name, feature ID, error message, what the agent already tried"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact \"Bring six things to the helper\" list."
+            },
+            {
+              "question_text": "Which of these is listed as a reason to ask for help rather than fight it alone?",
+              "choices": ["Auth works locally but fails in production", "The app's color scheme feels slightly off", "You want a second opinion on a variable name", "The build takes longer than expected"],
+              "correct_answer": ["Auth works locally but fails in production"],
+              "type": "multiple_choice",
+              "explanation": "This is one of the seven specific \"when to ask for help\" triggers, alongside leaked secrets and RLS problems."
+            },
+            {
+              "question_text": "What is the \"graduate standard\" this lesson closes with?",
+              "choices": ["I can direct agents through a controlled delivery process and ship evidence", "I know how to prompt an AI model effectively", "I have memorized every Git command", "I can write code without any AI assistance"],
+              "correct_answer": ["I can direct agents through a controlled delivery process and ship evidence"],
+              "type": "multiple_choice",
+              "explanation": "The lesson explicitly contrasts this with \"I know how to prompt\" as the lower, insufficient bar."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Class · Security Audit Lab",
+          "questions": [
+            {
+              "question_text": "How many audit modules does this security lab walk through, in order?",
+              "choices": ["Seven", "Four", "Ten", "Five"],
+              "correct_answer": ["Seven"],
+              "type": "multiple_choice",
+              "explanation": "Scope, Threat Model, Database Audit, Auth and API, AI Features, Agentic Pen Test, and Fix/Verify/Document."
+            },
+            {
+              "question_text": "What is this lesson's central reframe of what \"security\" means?",
+              "choices": ["It is not whether the app works, but what it allows when someone tries to break it", "It is purely about having an SSL certificate", "It is a checkbox exercise done once before launch", "It only matters for apps handling payments"],
+              "correct_answer": ["It is not whether the app works, but what it allows when someone tries to break it"],
+              "type": "multiple_choice",
+              "explanation": "This is stated as \"THE REFRAME\" at the top of the lab."
+            },
+            {
+              "question_text": "According to Module 01, what does \"the UI stops them\" actually mean as a security answer?",
+              "choices": ["You have built suggestions, not security", "It is a valid and sufficient security control", "It only applies to mobile apps", "It means RLS is unnecessary"],
+              "correct_answer": ["You have built suggestions, not security"],
+              "type": "multiple_choice",
+              "explanation": "\"UI restrictions are not security. A hidden button does not mean a closed endpoint.\""
+            },
+            {
+              "question_text": "For the lightweight CRM specifically, what two surfaces does the lab say to audit hardest?",
+              "choices": ["Contact data isolation, and the AI Draft follow-up feature", "The login page's color scheme, and the footer links", "The pricing page, and the marketing copy", "The 404 error page, and the favicon"],
+              "correct_answer": ["Contact data isolation, and the AI Draft follow-up feature"],
+              "type": "multiple_choice",
+              "explanation": "Can User A reach User B's contacts by changing an ID, and can a planted note steer or leak data through the AI feature?"
+            },
+            {
+              "question_text": "What six deliverables does the threat-model prompt ask an agent to return?",
+              "choices": ["Sensitive assets, roles/trust boundaries, external services/secrets, attack surfaces, top 10 abuse cases, highest-risk flows", "A finished penetration test report with fixes applied", "A rewritten app with security bugs already patched", "A cost estimate for hiring a security consultant"],
+              "correct_answer": ["Sensitive assets, roles/trust boundaries, external services/secrets, attack surfaces, top 10 abuse cases, highest-risk flows"],
+              "type": "multiple_choice",
+              "explanation": "The threat-model prompt explicitly says \"Do not fix anything yet\" — it's a map, not a fix."
+            },
+            {
+              "question_text": "In the Module 03 checkpoint, how do you personally test cross-user data isolation?",
+              "choices": ["Log in as User A, note a record ID, then try to access it as User B in a private window", "Read the RLS policy source code only, without running the app", "Ask the agent whether RLS is enabled and trust the answer", "Check whether the login page requires a password"],
+              "correct_answer": ["Log in as User A, note a record ID, then try to access it as User B in a private window"],
+              "type": "multiple_choice",
+              "explanation": "This hands-on test is explicitly required — reading the policy alone isn't enough."
+            },
+            {
+              "question_text": "Per Module 04, where must ownership checks on user data be enforced?",
+              "choices": ["Server-side, not just in a client-side hook", "Only in the React component's useEffect", "In the URL structure alone", "In a browser extension"],
+              "correct_answer": ["Server-side, not just in a client-side hook"],
+              "type": "multiple_choice",
+              "explanation": "\"An attacker never touches the client\" — client-side-only authorization is explicitly listed as a vulnerability class."
+            },
+            {
+              "question_text": "What five AI-specific abuse categories does Module 05 test for?",
+              "choices": ["Overriding system instructions, extracting hidden prompts, cross-user data leakage via retrieval, unsafe tool calls, cost/background-work abuse", "SQL injection, XSS, CSRF, and clickjacking", "Slow page load, broken links, missing alt text, poor color contrast", "Weak passwords, missing 2FA, session timeout issues"],
+              "correct_answer": ["Overriding system instructions, extracting hidden prompts, cross-user data leakage via retrieval, unsafe tool calls, cost/background-work abuse"],
+              "type": "multiple_choice",
+              "explanation": "These map directly to the five bullet questions under \"What you are testing for\" in Module 05."
+            },
+            {
+              "question_text": "What environment restriction applies to the Agentic Pen Test in Module 06?",
+              "choices": ["Local or test environment only — never production or a third party", "It must run against the live production URL", "It requires written permission from a third-party host", "It can only be run by a certified security professional"],
+              "correct_answer": ["Local or test environment only — never production or a third party"],
+              "type": "multiple_choice",
+              "explanation": "Stated in bold: \"You are attacking yourself, not the internet.\""
+            },
+            {
+              "question_text": "What severity scale does the Agentic Pen Test checkpoint ask students to assign themselves?",
+              "choices": ["Critical, High, Medium, Low, Informational", "P0 through P3", "1 through 10", "Red, Yellow, Green"],
+              "correct_answer": ["Critical, High, Medium, Low, Informational"],
+              "type": "multiple_choice",
+              "explanation": "And the checkpoint explicitly says not to trust the agent's own rating without checking it yourself."
+            },
+            {
+              "question_text": "What does Module 07 say most fixes after an audit look like, if done wrong?",
+              "choices": ["Cosmetic — the button gets hidden, the error message gets prettier, the hole stays open", "Overly aggressive — the whole feature gets deleted", "Too slow — fixes always take longer than the audit itself", "Automatic — the agent silently fixes everything without review"],
+              "correct_answer": ["Cosmetic — the button gets hidden, the error message gets prettier, the hole stays open"],
+              "type": "multiple_choice",
+              "explanation": "A real fix must be enforced server-side or at the database layer, not just in the UI."
+            },
+            {
+              "question_text": "What must a real fix be backed by, per Module 07?",
+              "choices": ["A regression test that fails without the fix and passes with it", "A signed statement from the original developer", "A public changelog announcement", "A second, unrelated feature shipped alongside it"],
+              "correct_answer": ["A regression test that fails without the fix and passes with it"],
+              "type": "multiple_choice",
+              "explanation": "This is one of four criteria for \"what a real fix looks like.\""
+            },
+            {
+              "question_text": "Where do most database-layer fix patterns say privileged operations should move?",
+              "choices": ["Into server-only code paths", "Into the frontend for speed", "Into a public API with no auth", "Into browser localStorage"],
+              "correct_answer": ["Into server-only code paths"],
+              "type": "multiple_choice",
+              "explanation": "Listed under the \"Database\" fix-pattern category in the reference material."
+            },
+            {
+              "question_text": "What does the reference material say about signed URLs for storage?",
+              "choices": ["Use them when files should be private, with short expiries", "They are unnecessary if RLS is enabled", "They should never expire, for convenience", "They replace the need for authentication entirely"],
+              "correct_answer": ["Use them when files should be private, with short expiries"],
+              "type": "multiple_choice",
+              "explanation": "This is one of the \"Storage\" fix-pattern bullets."
+            },
+            {
+              "question_text": "What does the closing principle say you should never claim about your app?",
+              "choices": ["That it is unhackable", "That it has been tested at all", "That it uses Supabase", "That it was built with AI agents"],
+              "correct_answer": ["That it is unhackable"],
+              "type": "multiple_choice",
+              "explanation": "\"Never tell anyone the app is unhackable. Tell them what you tested, what you found, what you fixed, and what is still open.\""
+            },
+            {
+              "question_text": "What ten sections does the Final Audit Report prompt require?",
+              "choices": ["Scope, auth/authz, Supabase/RLS, API/server-side, AI-specific, secrets/env vars, storage/uploads, fixed today, still open, recommended next actions", "Only a pass/fail summary with no detail", "A list of every file in the repository", "A financial cost-benefit analysis of the fixes"],
+              "correct_answer": ["Scope, auth/authz, Supabase/RLS, API/server-side, AI-specific, secrets/env vars, storage/uploads, fixed today, still open, recommended next actions"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact ten-item structure from the \"Prompt · Final audit report\" block."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

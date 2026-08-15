@@ -1,0 +1,592 @@
+{
+  "quizzes": [
+    {
+      "quiz_name": "Saqr Academy — Prompt Engineering & Repo Workflow",
+      "lessons": [
+        {
+          "lesson_name": "Prompt Anatomy: Role, Scope & Hard Limits",
+          "questions": [
+            {
+              "question_text": "Across the course's build prompts, what pattern consistently limits an agent to only the current feature?",
+              "choices": ["An explicit \"Hard limits\" or \"Do not build X\" list naming the other features by ID", "Relying on the agent to infer scope from context alone", "A single sentence with no explicit boundary", "Splitting the app into separate GitHub repos per feature"],
+              "correct_answer": ["An explicit \"Hard limits\" or \"Do not build X\" list naming the other features by ID"],
+              "type": "multiple_choice",
+              "explanation": "Nearly every build prompt across the course (e.g. \"Only build S3-F1. Do not build S3-F2 or S3-F3.\") states the exclusion explicitly rather than trusting the agent to infer it."
+            },
+            {
+              "question_text": "What is the purpose of giving an agent a \"Read:\" list at the top of a prompt (e.g. AGENTS.md, the feature list, the design guide)?",
+              "choices": ["It grounds the agent in the current project state before it acts, instead of relying on chat memory", "It is purely decorative and has no functional effect", "It forces the agent to summarize each file back to the user first", "It replaces the need for a hard-limits section"],
+              "correct_answer": ["It grounds the agent in the current project state before it acts, instead of relying on chat memory"],
+              "type": "multiple_choice",
+              "explanation": "This is the course's core lesson from 'Give Every Agent a System': standards in files travel, standards in a chat thread disappear."
+            },
+            {
+              "question_text": "What is a \"done_when\" criterion, as used throughout the course's feature lists?",
+              "choices": ["A specific, testable condition that proves a feature is actually complete", "A vague aspiration like \"the app feels finished\"", "The date the feature is due", "A code comment left in the source file"],
+              "correct_answer": ["A specific, testable condition that proves a feature is actually complete"],
+              "type": "multiple_choice",
+              "explanation": "e.g. \"A moved task stays in the new column after page refresh\" — a done_when is written so a human can verify it directly in the running app."
+            },
+            {
+              "question_text": "Why does the course's \"hard rule\" say not to mark a feature's `passes` flag true until done_when is verified?",
+              "choices": ["It stops the agent from confidently reporting work as finished when it isn't", "It is required by the GitHub CLI", "It prevents merge conflicts", "It automatically triggers a deploy"],
+              "correct_answer": ["It stops the agent from confidently reporting work as finished when it isn't"],
+              "type": "multiple_choice",
+              "explanation": "This is stated directly in the pre-work concepts lesson: \"progress moves on evidence, not on vibes.\""
+            },
+            {
+              "question_text": "What single-sentence pattern does the course use to correct an agent that has expanded beyond the approved scope?",
+              "choices": ["A short \"No\" followed by a restatement of the exact approved scope", "A long apology followed by a full re-explanation of the whole brief", "Silently deleting the extra code without telling the agent", "Switching to a different AI model entirely"],
+              "correct_answer": ["A short \"No\" followed by a restatement of the exact approved scope"],
+              "type": "multiple_choice",
+              "explanation": "Every \"Scope correction\" / \"Reject · Out of scope\" prompt in the course follows this same tight, one-or-two-line pattern."
+            },
+            {
+              "question_text": "Why do several prompts explicitly forbid installing new npm packages for drag-and-drop?",
+              "choices": ["To force the agent toward the simplest solution (native browser APIs) instead of adding dependencies", "Because npm is not available in the course environment", "Because drag-and-drop is never used in any course app", "Because it would break the GitHub CLI"],
+              "correct_answer": ["To force the agent toward the simplest solution (native browser APIs) instead of adding dependencies"],
+              "type": "multiple_choice",
+              "explanation": "This constraint appears repeatedly (Founder Sprint Board, Client Pipeline Board, Cloud Task Board) as a way to keep scope and dependencies minimal."
+            },
+            {
+              "question_text": "What is the function of a \"Before you build, repeat back the [requirements] in plain English\" instruction, seen in several build prompts?",
+              "choices": ["It has the agent confirm its understanding before writing any code, catching misreadings early", "It is a formality with no real effect on output quality", "It replaces the need for a plan-mode step", "It is only used for AI feature prompts"],
+              "correct_answer": ["It has the agent confirm its understanding before writing any code, catching misreadings early"],
+              "type": "multiple_choice",
+              "explanation": "This appears in build prompts as a cheap, early checkpoint against misunderstanding the brief."
+            },
+            {
+              "question_text": "Why do the course's AI-feature prompts (e.g. the Draft follow-up in the Lightweight CRM) specify \"no sending — the draft is shown for the user to copy\"?",
+              "choices": ["It limits the AI feature's real-world blast radius while still letting students practice building one", "Because email sending is technically impossible in Next.js", "Because it makes the UI simpler to design", "Because Supabase does not support outbound email"],
+              "correct_answer": ["It limits the AI feature's real-world blast radius while still letting students practice building one"],
+              "type": "multiple_choice",
+              "explanation": "This is a deliberate scope constraint — the AI action produces output a human reviews and acts on, rather than an autonomous side effect."
+            },
+            {
+              "question_text": "What do prompts mean when they instruct an agent to \"stay within docs/05_Design.md\" while building a screen?",
+              "choices": ["Only build the UI elements and actions the design spec already lists — nothing extra", "Copy the markdown file's formatting exactly into the component", "Ignore the design spec if it conflicts with the PRD", "Design the screen from scratch, ignoring any prior spec"],
+              "correct_answer": ["Only build the UI elements and actions the design spec already lists — nothing extra"],
+              "type": "multiple_choice",
+              "explanation": "This is the course's anti-clutter discipline: \"Do not add buttons, links, or sections that are not in docs/05_Design.md.\""
+            },
+            {
+              "question_text": "What structural difference exists between a course prompt's \"Reference\" block and its \"Build\"/\"Plan\" blocks?",
+              "choices": ["A Reference block shows an example the student is told not to paste; the others are meant to be pasted directly", "There is no difference — both are pasted identically", "Reference blocks are always shorter than one line", "Reference blocks are only used for deployment steps"],
+              "correct_answer": ["A Reference block shows an example the student is told not to paste; the others are meant to be pasted directly"],
+              "type": "multiple_choice",
+              "explanation": "e.g. \"Reference · AGENTS.md shape — Claude writes this file. You are not pasting it. You are looking at it so you can recognise the shape.\""
+            },
+            {
+              "question_text": "Why do many prompts specify an exact commit message and PR title rather than leaving them to the agent's judgment?",
+              "choices": ["To keep commit history and PR titles consistent and predictable across every student's repo", "Because GitHub CLI requires a fixed message format", "Because agents cannot generate commit messages on their own", "Because it saves tokens compared to free-form text"],
+              "correct_answer": ["To keep commit history and PR titles consistent and predictable across every student's repo"],
+              "type": "multiple_choice",
+              "explanation": "e.g. \"commit message: feat: add S3-F1 task editing / PR title: S3-F1: Edit task title and priority\" — specified verbatim in the prompt."
+            },
+            {
+              "question_text": "What is the purpose of placeholder text like \"[PASTE CLAUDE PLAN]\" or \"[DESCRIBE FAILURE]\" inside a prompt?",
+              "choices": ["It marks where the student inserts fresh, situation-specific content before pasting the prompt", "It is a bug that should be removed before use", "It tells the agent to generate random text at that point", "It indicates an optional section that can be deleted"],
+              "correct_answer": ["It marks where the student inserts fresh, situation-specific content before pasting the prompt"],
+              "type": "multiple_choice",
+              "explanation": "These bracketed placeholders appear throughout the course's plan-review, fix, and correction prompts."
+            },
+            {
+              "question_text": "Why does the course consistently cap instruction-file line counts (e.g. AGENTS.md under 80 lines)?",
+              "choices": ["Long instruction files get reloaded into context on every turn, wasting tokens on repeated content", "GitHub rejects files over a certain line count", "Word processors cannot render longer files", "It is a hard technical limit of the Claude Code tool"],
+              "correct_answer": ["Long instruction files get reloaded into context on every turn, wasting tokens on repeated content"],
+              "type": "multiple_choice",
+              "explanation": "This is the course's explicit \"thin files\" reasoning, stated in both the Session 3 pre-work and live-class lessons."
+            },
+            {
+              "question_text": "What do the course's escalation prompts (e.g. \"Unblock · Email confirmation\", \"Unblock · Auth redirects\") have in common?",
+              "choices": ["They ask the agent for the fastest safe fix to a specific, named blocker, rather than a general troubleshooting request", "They always require switching to a different AI tool", "They instruct the agent to ignore the blocker and continue", "They are only used once per course, never repeated"],
+              "correct_answer": ["They ask the agent for the fastest safe fix to a specific, named blocker, rather than a general troubleshooting request"],
+              "type": "multiple_choice",
+              "explanation": "Each names the exact symptom (e.g. \"Supabase email confirmation is blocking test login\") so the agent's answer is targeted, not generic."
+            },
+            {
+              "question_text": "Why do several prompts explicitly say \"Do not duplicate the PRD\" or \"Do not paste the feature list into either file\" when creating AGENTS.md/CLAUDE.md?",
+              "choices": ["To keep each document as a single source of truth instead of copies that can drift out of sync", "Because duplicated content crashes the build script", "Because AGENTS.md has a strict character limit enforced by Git", "Because the PRD is considered confidential"],
+              "correct_answer": ["To keep each document as a single source of truth instead of copies that can drift out of sync"],
+              "type": "multiple_choice",
+              "explanation": "AGENTS.md is meant to route the agent to the right docs, not restate their content — duplication risks the two going out of sync."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Plan → Build → Verify & the Review Loop",
+          "questions": [
+            {
+              "question_text": "What is the four-step build loop taught from the very first pre-work lesson?",
+              "choices": ["Plan, Build, Verify, Update progress", "Design, Prototype, Test, Launch", "Ideate, Code, Deploy, Celebrate", "Sketch, Approve, Build, Archive"],
+              "correct_answer": ["Plan, Build, Verify, Update progress"],
+              "type": "multiple_choice",
+              "explanation": "This loop repeats, unchanged in shape, from Session 1's earliest teaching through every later build sprint."
+            },
+            {
+              "question_text": "Why is an agent switched into a dedicated \"Plan mode\" before a feature is built, rather than building immediately?",
+              "choices": ["So the student can review the intended approach before any files are changed", "Plan mode is required by the GitHub CLI to create a branch", "It makes the agent run faster", "It is only used for AI-feature prompts, never regular features"],
+              "correct_answer": ["So the student can review the intended approach before any files are changed"],
+              "type": "multiple_choice",
+              "explanation": "Plan-mode prompts consistently include \"Do not edit files\" — the plan is reviewed and approved before Build mode starts."
+            },
+            {
+              "question_text": "What is the core reason the course insists a different agent (or a fresh thread) reviews a plan or PR than the one that wrote it?",
+              "choices": ["The same context that produced the work is poorly positioned to catch its own mistakes", "Reviewing in the same thread is technically impossible", "It is required to keep GitHub CLI authenticated", "Fresh threads run faster than long-running ones"],
+              "correct_answer": ["The same context that produced the work is poorly positioned to catch its own mistakes"],
+              "type": "multiple_choice",
+              "explanation": "Stated as a hard rule in Session 3: \"Do not let the same context approve itself.\""
+            },
+            {
+              "question_text": "In the course's plan-review prompts, what three verdicts can a reviewing agent return?",
+              "choices": ["APPROVE, APPROVE WITH NOTES, BLOCK", "PASS, FAIL, PENDING", "YES, NO, MAYBE", "MERGE, HOLD, REJECT"],
+              "correct_answer": ["APPROVE, APPROVE WITH NOTES, BLOCK"],
+              "type": "multiple_choice",
+              "explanation": "This exact three-way scale recurs across every plan-review prompt in the course."
+            },
+            {
+              "question_text": "What severity scale does the course's code-review (post-build, pre-merge) prompts use?",
+              "choices": ["P0 (blocks merge) through P3 (optional polish)", "1-star through 5-star", "Low, Medium, High only", "Blocker, Nice-to-have"],
+              "correct_answer": ["P0 (blocks merge) through P3 (optional polish)"],
+              "type": "multiple_choice",
+              "explanation": "Introduced in Session 3's Codex code-review prompt and reused in later review prompts."
+            },
+            {
+              "question_text": "What is the purpose of a dedicated \"UX gate\" prompt, distinct from the plan/architecture review?",
+              "choices": ["It checks a screen specifically for one job, one primary action, and nothing smuggled in — a different failure mode than scope or bugs", "It replaces the need for a code review entirely", "It only runs after the app is deployed to production", "It checks page-load speed and nothing else"],
+              "correct_answer": ["It checks a screen specifically for one job, one primary action, and nothing smuggled in — a different failure mode than scope or bugs"],
+              "type": "multiple_choice",
+              "explanation": "The course is explicit: \"Architecture review and UX review are not the same thing.\""
+            },
+            {
+              "question_text": "What must happen if a UX gate returns BLOCK, per the course's rule?",
+              "choices": ["The screen spec must be fixed and the gate re-run before building continues", "The finding is noted but building continues anyway", "The whole feature is cancelled permanently", "The student overrides it and proceeds regardless"],
+              "correct_answer": ["The screen spec must be fixed and the gate re-run before building continues"],
+              "type": "multiple_choice",
+              "explanation": "\"If BLOCK, do not build until the screen spec is fixed\" — this appears verbatim in multiple UX-gate prompts."
+            },
+            {
+              "question_text": "In the sprint loop, what step directly follows a successful Build step?",
+              "choices": ["Verify — the student checks the done_when condition themselves in the running app", "Immediately merging to main with no review", "Deleting the feature branch", "Writing the PRD"],
+              "correct_answer": ["Verify — the student checks the done_when condition themselves in the running app"],
+              "type": "multiple_choice",
+              "explanation": "Verification is explicitly a student action, not something the agent self-certifies."
+            },
+            {
+              "question_text": "Why does a \"Fix\" prompt (e.g. \"Fix S3-F1\", \"Fix workflow failure\") typically include a \"[DESCRIBE FAILURE]\" placeholder rather than just saying \"fix the bug\"?",
+              "choices": ["A concrete symptom description keeps the fix targeted instead of triggering a broad, unscoped rewrite", "The agent cannot fix anything without an exact stack trace", "It is required syntax for the GitHub CLI", "It prevents the agent from creating a new branch"],
+              "correct_answer": ["A concrete symptom description keeps the fix targeted instead of triggering a broad, unscoped rewrite"],
+              "type": "multiple_choice",
+              "explanation": "These prompts also add \"Fix only [X]\" to keep the fix scoped to the one broken feature."
+            },
+            {
+              "question_text": "What is the mini-sprint protocol's five-step shape, as taught in Session 2?",
+              "choices": ["Plan mode, Review the plan, Build, Verify, Update tracking", "Design, Build, Ship, Market, Support", "Idea, Prototype, Test, Launch, Iterate", "Read, Write, Test, Deploy, Document"],
+              "correct_answer": ["Plan mode, Review the plan, Build, Verify, Update tracking"],
+              "type": "multiple_choice",
+              "explanation": "\"Learn it once, apply it four times\" — this shape repeats identically for each of the four Session 2 features."
+            },
+            {
+              "question_text": "What happens to a feature's tracking docs (feature list JSON and progress.md) only after verification succeeds?",
+              "choices": ["Its `passes` flag is set to true and the change is recorded", "They are deleted to save space", "They are locked from future edits permanently", "Nothing — tracking docs are updated before verification, not after"],
+              "correct_answer": ["Its `passes` flag is set to true and the change is recorded"],
+              "type": "multiple_choice",
+              "explanation": "\"Do not set passes to true unless done_when is actually satisfied\" is the recurring hard rule."
+            },
+            {
+              "question_text": "Why does the course use a separate agent thread for reviewing a PR rather than continuing the same conversation that built the feature?",
+              "choices": ["A fresh thread has no prior bias toward defending decisions it already made", "Continuing the same thread is technically disallowed by GitHub CLI", "Fresh threads are billed differently", "It is purely a stylistic choice with no functional benefit"],
+              "correct_answer": ["A fresh thread has no prior bias toward defending decisions it already made"],
+              "type": "multiple_choice",
+              "explanation": "This is the same principle behind the \"same context cannot approve itself\" hard rule, applied to PR review specifically."
+            },
+            {
+              "question_text": "What review lens does the Security Lab's \"Fix Verifier\" prompt add on top of the course's normal code-review checks?",
+              "choices": ["Confirming the original exploit no longer works and no new privilege or data exposure was introduced", "Checking only that the code compiles without errors", "Checking that the commit message follows the correct format", "Checking that the PR description is grammatically correct"],
+              "correct_answer": ["Confirming the original exploit no longer works and no new privilege or data exposure was introduced"],
+              "type": "multiple_choice",
+              "explanation": "This extends the plan/code review pattern specifically to security fixes, closing the loop with a re-run of the original reproduction steps."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Branches, Commits & Pull Requests",
+          "questions": [
+            {
+              "question_text": "What does the course define a \"branch\" as?",
+              "choices": ["A parallel copy of your code where you try a change without breaking the main version", "A backup of the entire repository stored offline", "A separate GitHub account for each feature", "A folder inside node_modules"],
+              "correct_answer": ["A parallel copy of your code where you try a change without breaking the main version"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact vocabulary-card definition from the Session 1 pre-work lesson."
+            },
+            {
+              "question_text": "What is a \"Pull Request\" defined as in the course?",
+              "choices": ["The proposal to bring a branch's change in, opened so it can be reviewed before it merges", "A request sent to GitHub support for account help", "An automatic nightly backup of the repo", "A request to delete an old branch"],
+              "correct_answer": ["The proposal to bring a branch's change in, opened so it can be reviewed before it merges"],
+              "type": "multiple_choice",
+              "explanation": "Exact vocabulary-card definition, reused unchanged from Session 1 through Session 4."
+            },
+            {
+              "question_text": "What naming convention do the course's feature branches consistently follow?",
+              "choices": ["feature/<feature-id>-<short-kebab-case-description>", "A random UUID with no readable meaning", "The student's first name plus a date stamp", "main-v2, main-v3, main-v4, incrementing"],
+              "correct_answer": ["feature/<feature-id>-<short-kebab-case-description>"],
+              "type": "multiple_choice",
+              "explanation": "e.g. feature/S3-F1-edit-task-title-priority, feature/S3-H2-contact-detail-ai-followup — always this shape."
+            },
+            {
+              "question_text": "What merge strategy is specified across nearly every \"Merge\" prompt in the course?",
+              "choices": ["Squash merge", "Rebase and merge", "A plain merge commit", "Fast-forward only, with squash disabled"],
+              "correct_answer": ["Squash merge"],
+              "type": "multiple_choice",
+              "explanation": "Every merge prompt from Session 2 onward specifies squash merge, keeping main's history to one commit per feature."
+            },
+            {
+              "question_text": "What two actions consistently follow a squash merge in the course's prompts?",
+              "choices": ["Switch back to main and pull the latest", "Delete the entire repository", "Immediately deploy to production with no verification", "Create a new branch with the same name"],
+              "correct_answer": ["Switch back to main and pull the latest"],
+              "type": "multiple_choice",
+              "explanation": "This keeps the local main in sync before the next feature branch is created."
+            },
+            {
+              "question_text": "Why does the course say \"Do not merge the PR yet\" immediately after opening one?",
+              "choices": ["A merge should only happen after a separate review has passed", "GitHub CLI cannot merge and open a PR in the same session", "It is illegal to merge your own PR on GitHub", "Merging immediately deletes the branch"],
+              "correct_answer": ["A merge should only happen after a separate review has passed"],
+              "type": "multiple_choice",
+              "explanation": "Opening the PR and reviewing it are treated as separate steps precisely to prevent self-approval."
+            },
+            {
+              "question_text": "What CLI tool does the course use for creating repos, opening PRs, and merging — instead of the GitHub website?",
+              "choices": ["GitHub CLI (gh)", "git push --force", "The Vercel dashboard", "cURL against the GitHub REST API by hand"],
+              "correct_answer": ["GitHub CLI (gh)"],
+              "type": "multiple_choice",
+              "explanation": "\"Use GitHub CLI as the default path\" appears throughout, with browser-based fallback only if authentication blocks the CLI."
+            },
+            {
+              "question_text": "What is a \"baseline commit,\" as used before Session 3's feature-branch work begins?",
+              "choices": ["A clean commit of just the workflow-setup files, with no app code changes, so every branch starts from the same starting point", "The very first commit ever made to the repository", "A commit made directly on the deployed production branch", "A commit that reverts all previous work"],
+              "correct_answer": ["A clean commit of just the workflow-setup files, with no app code changes, so every branch starts from the same starting point"],
+              "type": "multiple_choice",
+              "explanation": "This isolates instruction-file and feature-list setup from any actual product code before branching starts."
+            },
+            {
+              "question_text": "What does the course instruct an agent to do if it encounters uncommitted changes at the start of a session, before touching anything?",
+              "choices": ["Explain what they are in plain English and wait for the student's decision", "Silently discard them and start fresh", "Automatically commit them with a generic message", "Force-push over them"],
+              "correct_answer": ["Explain what they are in plain English and wait for the student's decision"],
+              "type": "multiple_choice",
+              "explanation": "\"Do not discard anything. Tell me whether they look like completed work, generated files, or accidental changes. Wait for my decision.\""
+            },
+            {
+              "question_text": "How does the course define \"Code review\" on its vocabulary card?",
+              "choices": ["A second pass on a change before it merges, by a person or another agent", "The act of writing the original code", "A test suite that runs automatically on every commit", "A meeting where the whole team discusses the roadmap"],
+              "correct_answer": ["A second pass on a change before it merges, by a person or another agent"],
+              "type": "multiple_choice",
+              "explanation": "Exact vocabulary-card definition from the pre-work lesson."
+            },
+            {
+              "question_text": "What does the course explicitly forbid an agent from doing to git history without approval?",
+              "choices": ["Rewriting it (e.g. after a leaked secret) without explicit human sign-off", "Creating any new branches at all", "Writing commit messages in English", "Pushing to a feature branch"],
+              "correct_answer": ["Rewriting it (e.g. after a leaked secret) without explicit human sign-off"],
+              "type": "multiple_choice",
+              "explanation": "\"Do not rewrite git history without explicit approval\" is stated directly in the leaked-secret remediation prompt."
+            },
+            {
+              "question_text": "What GitHub CLI-related fallback pattern recurs whenever authentication or permissions might block a CLI action?",
+              "choices": ["The agent explains the exact human authorization step needed and waits", "The agent silently switches to the GitHub website and continues unattended", "The agent skips that step entirely with no explanation", "The agent asks the student for their GitHub password"],
+              "correct_answer": ["The agent explains the exact human authorization step needed and waits"],
+              "type": "multiple_choice",
+              "explanation": "This exact fallback phrasing (\"tell me the exact human authorization step needed and wait\") recurs for GitHub CLI, Vercel CLI, and Supabase CLI blockers alike."
+            },
+            {
+              "question_text": "What does \"Merge\" mean, per the course's vocabulary card?",
+              "choices": ["Accepting a pull request and bringing the change into the main code", "Deleting a branch after it is no longer needed", "Combining two unrelated repositories into one", "Running a database migration"],
+              "correct_answer": ["Accepting a pull request and bringing the change into the main code"],
+              "type": "multiple_choice",
+              "explanation": "Exact vocabulary-card definition."
+            },
+            {
+              "question_text": "Why might a student be told to \"stop after PR creation and review\" rather than merging, if time is short?",
+              "choices": ["A reviewed-but-unmerged PR is still meaningful progress that can be completed later, without rushing the merge decision", "Merging always fails if done under time pressure", "GitHub CLI has a daily merge quota", "PRs automatically expire after 24 hours"],
+              "correct_answer": ["A reviewed-but-unmerged PR is still meaningful progress that can be completed later, without rushing the merge decision"],
+              "type": "multiple_choice",
+              "explanation": "This appears in the Session 3 live-class agent-switch drill as an explicit time-management fallback."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Safety, Secrets & RLS in Prompts",
+          "questions": [
+            {
+              "question_text": "What key does virtually every Supabase-setup prompt in the course explicitly forbid requesting or using?",
+              "choices": ["The Supabase secret key (service_role)", "The publishable/anon key", "The project's URL", "The project's region identifier"],
+              "correct_answer": ["The Supabase secret key (service_role)"],
+              "type": "multiple_choice",
+              "explanation": "\"Never ask for or use the Supabase secret key\" recurs from Session 2 through the Security Lab."
+            },
+            {
+              "question_text": "What does Row Level Security (RLS) enforce, as tested throughout the course's prompts?",
+              "choices": ["Authenticated users can only select, insert, update, and delete their own rows", "All users can read all data but not modify it", "Only the app's admin can log in at all", "Data is encrypted at rest, regardless of who queries it"],
+              "correct_answer": ["Authenticated users can only select, insert, update, and delete their own rows"],
+              "type": "multiple_choice",
+              "explanation": "This exact RLS scope is requested in every Supabase-setup prompt, from Cloud Task Board through the Lightweight CRM."
+            },
+            {
+              "question_text": "What file must stay out of GitHub, per repeated instructions across the course?",
+              "choices": [".env.local", "package.json", "README.md", "next.config.js"],
+              "correct_answer": [".env.local"],
+              "type": "multiple_choice",
+              "explanation": "Checked explicitly in readiness-check prompts (\".env.local is ignored by git\") from Session 2 onward."
+            },
+            {
+              "question_text": "What must happen first, per the course, if a secret is discovered committed to a repo?",
+              "choices": ["Stop all feature work and create a safe remediation plan before doing anything else", "Immediately force-push a fix to erase it from history", "Wait until the next scheduled release to address it", "Delete the GitHub repository entirely"],
+              "correct_answer": ["Stop all feature work and create a safe remediation plan before doing anything else"],
+              "type": "multiple_choice",
+              "explanation": "\"A leaked secret is not a normal bug\" — this is treated as a dedicated, escalated prompt path in both Session 4 and the Security Lab."
+            },
+            {
+              "question_text": "What does the course recommend regarding an exposed secret, citing GitHub's own guidance?",
+              "choices": ["Revoke or rotate the exposed secret first — history cleanup is a separate decision", "Ignore it unless the app has real users", "Only rotate the key if asked to by a client", "Delete the commit but keep the same secret value active"],
+              "correct_answer": ["Revoke or rotate the exposed secret first — history cleanup is a separate decision"],
+              "type": "multiple_choice",
+              "explanation": "Stated directly in the Release Readiness lesson's leaked-secret remediation prompt."
+            },
+            {
+              "question_text": "In the safety-audit prompt, what two environment variables should the public/browser Supabase client use?",
+              "choices": ["NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or legacy anon key)", "SUPABASE_SERVICE_ROLE_KEY and DATABASE_URL", "OPENAI_API_KEY and VERCEL_TOKEN", "GITHUB_TOKEN and NPM_TOKEN"],
+              "correct_answer": ["NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or legacy anon key)"],
+              "type": "multiple_choice",
+              "explanation": "This exact pair is checked by the Session 4 safety-gate audit prompt."
+            },
+            {
+              "question_text": "Where must an LLM API key live, per the Lightweight CRM's AI-feature constraints?",
+              "choices": ["A server-side environment variable, never in client code, never committed", "In the component's props, passed from the server on every render", "Hardcoded as a fallback in case the environment variable is missing", "In the Supabase publishable key field"],
+              "correct_answer": ["A server-side environment variable, never in client code, never committed"],
+              "type": "multiple_choice",
+              "explanation": "This exact constraint is repeated across the bootstrap prompt, the build prompt, and the review prompt for S3-H2."
+            },
+            {
+              "question_text": "What must production environment variables exist on before a deploy is considered release-ready?",
+              "choices": ["Vercel", "The student's local .env.local file only", "A shared Google Doc", "The GitHub repository's README"],
+              "correct_answer": ["Vercel"],
+              "type": "multiple_choice",
+              "explanation": "Every deploy prompt from Session 2 through Session 4 checks that required env vars exist in Vercel before a production deploy."
+            },
+            {
+              "question_text": "What does the course's Security Lab call it when a security check relies only on hiding a UI element?",
+              "choices": ["A suggestion, not security", "A best practice", "Defense in depth", "A zero-day mitigation"],
+              "correct_answer": ["A suggestion, not security"],
+              "type": "multiple_choice",
+              "explanation": "\"A hidden button does not mean a closed endpoint\" — the lab insists on server-side or database-layer enforcement."
+            },
+            {
+              "question_text": "What manual test does the course use to verify RLS is actually working, rather than trusting the agent's report?",
+              "choices": ["Log in as two different test users and try to access each other's records directly through the API", "Read the RLS policy source code and assume it is correct if it compiles", "Ask the agent \"is RLS enabled?\" and accept a yes/no answer", "Check whether the login page has a password field"],
+              "correct_answer": ["Log in as two different test users and try to access each other's records directly through the API"],
+              "type": "multiple_choice",
+              "explanation": "This hands-on cross-user test appears in both the Session 4 safety gate and the Security Lab's Module 03 checkpoint."
+            },
+            {
+              "question_text": "What fallback does the course specify when Supabase CLI setup is blocked?",
+              "choices": ["A generated SQL script the student pastes into the Supabase dashboard SQL Editor", "Skipping the database entirely for that feature", "Switching the whole project to Firebase", "Asking a classmate to run the CLI on their machine"],
+              "correct_answer": ["A generated SQL script the student pastes into the Supabase dashboard SQL Editor"],
+              "type": "multiple_choice",
+              "explanation": "This CLI-first, dashboard-fallback pattern is consistent from Session 2's Cloud Task Board through the Lightweight CRM homework."
+            },
+            {
+              "question_text": "What does the course's forbidden-scope list consistently exclude regarding admin or role-based access?",
+              "choices": ["Building new database tables or admin dashboards unless required to fix a real release blocker", "Any use of Supabase Auth whatsoever", "Deploying to Vercel with environment variables set", "Writing a PRD before building"],
+              "correct_answer": ["Building new database tables or admin dashboards unless required to fix a real release blocker"],
+              "type": "multiple_choice",
+              "explanation": "Session 4 explicitly restricts new tables/admin surfaces to only when a genuine release blocker requires them."
+            },
+            {
+              "question_text": "What kind of environment variable check appears at the very start of Session 4's readiness check prompt?",
+              "choices": ["Confirming .env.local is ignored by git", "Confirming the Vercel account has billing enabled", "Confirming the student has read every prior lesson", "Confirming the GitHub repo is set to private"],
+              "correct_answer": ["Confirming .env.local is ignored by git"],
+              "type": "multiple_choice",
+              "explanation": "This check runs before any release-gate work begins, alongside confirming AGENTS.md, CLAUDE.md, and the feature list exist."
+            }
+          ]
+        },
+        {
+          "lesson_name": "CLI-First Workflow & Fallback Patterns",
+          "questions": [
+            {
+              "question_text": "What is the course's stated default rule about how an agent should complete a task, whenever possible?",
+              "choices": ["Use the CLI before asking for manual browser/dashboard steps", "Always ask the student to do it manually first", "Use the browser dashboard by default, CLI only as backup", "Avoid CLI tools entirely in favor of GUIs"],
+              "correct_answer": ["Use the CLI before asking for manual browser/dashboard steps"],
+              "type": "multiple_choice",
+              "explanation": "This is one of the course's global \"Saqr Academy Working Agreements,\" applied consistently from Session 2 onward."
+            },
+            {
+              "question_text": "Which three CLI tools recur most often across the course's build, deploy, and setup prompts?",
+              "choices": ["GitHub CLI, Vercel CLI, Supabase CLI", "Docker CLI, kubectl, Terraform", "npm, Yarn, pnpm", "curl, wget, ssh"],
+              "correct_answer": ["GitHub CLI, Vercel CLI, Supabase CLI"],
+              "type": "multiple_choice",
+              "explanation": "These three appear in nearly every session's tool-check and deploy prompts."
+            },
+            {
+              "question_text": "What must a readiness-check prompt do if a required tool or file is missing?",
+              "choices": ["Explain the exact blocker and wait — not edit files, create branches, or deploy", "Automatically install whatever is missing without asking", "Proceed anyway and hope for the best", "Abandon the session and restart from scratch"],
+              "correct_answer": ["Explain the exact blocker and wait — not edit files, create branches, or deploy"],
+              "type": "multiple_choice",
+              "explanation": "Every session's opening \"Tool & project check\" prompt explicitly forbids taking action beyond diagnosis if something's missing."
+            },
+            {
+              "question_text": "What CLI command does the course use to check whether GitHub CLI is authenticated?",
+              "choices": ["gh auth status", "gh whoami", "gh check", "gh login --status"],
+              "correct_answer": ["gh auth status"],
+              "type": "multiple_choice",
+              "explanation": "Used consistently in every tool-readiness check across the course."
+            },
+            {
+              "question_text": "What CLI command does the course use to check whether Vercel CLI is authenticated?",
+              "choices": ["vercel whoami", "vercel auth status", "vercel check", "vercel me"],
+              "correct_answer": ["vercel whoami"],
+              "type": "multiple_choice",
+              "explanation": "This command returning a username is treated as the pass condition."
+            },
+            {
+              "question_text": "What is the course's stated fallback rule when browser-only or manual dashboard steps are truly required?",
+              "choices": ["They are fallback paths only — used when CLI authentication, permissions, or service limits block the agent", "They should always be used instead of the CLI for reliability", "They are never allowed under any circumstance", "They replace the CLI entirely starting in Session 3"],
+              "correct_answer": ["They are fallback paths only — used when CLI authentication, permissions, or service limits block the agent"],
+              "type": "multiple_choice",
+              "explanation": "Stated as an explicit \"Operating principle\" in multiple homework lessons."
+            },
+            {
+              "question_text": "Why does the course prefer `npx supabase` or a local dev dependency over a global npm install for the Supabase CLI?",
+              "choices": ["It avoids polluting the student's global environment and keeps the tool version pinned per-project", "Global installs are technically impossible on Windows", "npx is required by GitHub Actions", "It makes deployment to Vercel faster"],
+              "correct_answer": ["It avoids polluting the student's global environment and keeps the tool version pinned per-project"],
+              "type": "multiple_choice",
+              "explanation": "\"Use npx supabase or a local dev dependency. Do not use global npm install for Supabase CLI\" appears in multiple setup prompts."
+            },
+            {
+              "question_text": "What must a deploy prompt confirm about the working tree before a production deploy?",
+              "choices": ["That git status is clean", "That the local .env.local file has been deleted", "That the student has manually tested every API route by hand", "That the app has no open GitHub issues"],
+              "correct_answer": ["That git status is clean"],
+              "type": "multiple_choice",
+              "explanation": "Nearly every deploy prompt from Session 2 through 4 checks git status is clean before deploying."
+            },
+            {
+              "question_text": "What information does an agent give the student after successfully deploying, per the course's deploy prompts?",
+              "choices": ["The live URL and a short verification checklist", "Only a success/failure boolean with no further detail", "The full server logs with no summary", "A link to the Vercel billing page"],
+              "correct_answer": ["The live URL and a short verification checklist"],
+              "type": "multiple_choice",
+              "explanation": "Every deploy prompt in the course ends by asking for the live URL plus steps to verify it."
+            },
+            {
+              "question_text": "What is the exact required content of the \"reject out-of-scope CLI package suggestion\" pattern regarding drag-and-drop?",
+              "choices": ["Use native browser drag-and-drop plus fallback move buttons — no installed libraries", "Install the most popular npm drag-and-drop library available", "Skip drag-and-drop and use only keyboard navigation", "Use a paid third-party drag-and-drop SaaS"],
+              "correct_answer": ["Use native browser drag-and-drop plus fallback move buttons — no installed libraries"],
+              "type": "multiple_choice",
+              "explanation": "This constraint recurs verbatim (or near-verbatim) across every board app in the course."
+            },
+            {
+              "question_text": "What is the course's default assumption about who runs terminal commands like `git status` or `vercel whoami`?",
+              "choices": ["The agent runs them, and the student authorises/verifies the outcome", "The student always types every command by hand", "Neither — these commands are avoided entirely", "A dedicated DevOps teaching assistant runs them"],
+              "correct_answer": ["The agent runs them, and the student authorises/verifies the outcome"],
+              "type": "multiple_choice",
+              "explanation": "\"If the agent can carry out a task, the student should not be asked to do it manually\" is a course-wide operating principle."
+            },
+            {
+              "question_text": "When a database migration is required mid-build (e.g. for the Lightweight CRM's AI feature), what does the course ask the agent to do before applying it?",
+              "choices": ["Create the smallest safe migration and explain it before applying", "Apply it immediately without explanation to save time", "Skip the migration and use a JSON file instead", "Ask a different student to review it first"],
+              "correct_answer": ["Create the smallest safe migration and explain it before applying"],
+              "type": "multiple_choice",
+              "explanation": "This appears in the S3-H2 build prompt as a specific safeguard around mid-build schema changes."
+            }
+          ]
+        },
+        {
+          "lesson_name": "Security Audit Prompt Design",
+          "questions": [
+            {
+              "question_text": "What is the Security Lab's threat-model prompt explicitly told NOT to do yet?",
+              "choices": ["Fix anything — it should only produce a prioritized map of risk", "Read the database schema", "Name any attack surfaces", "List external services and secrets"],
+              "correct_answer": ["Fix anything — it should only produce a prioritized map of risk"],
+              "type": "multiple_choice",
+              "explanation": "\"Do not fix anything yet. Produce a prioritized threat model with file references where possible.\""
+            },
+            {
+              "question_text": "What six things must the threat-model prompt return?",
+              "choices": ["Sensitive assets, roles/trust boundaries, external services/secrets, attack surfaces, top 10 abuse cases, highest-risk flows to test", "A complete rewrite of the authentication system", "A cost estimate for a security consultant", "Just a single pass/fail security score"],
+              "correct_answer": ["Sensitive assets, roles/trust boundaries, external services/secrets, attack surfaces, top 10 abuse cases, highest-risk flows to test"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact six-item return list from the \"Prompt · Threat model\" block."
+            },
+            {
+              "question_text": "What seven checks does the Supabase audit prompt run through?",
+              "choices": ["RLS enabled everywhere, cross-user policy checks, admin-table exposure, no service_role in frontend, minimal anon/authenticated permissions, owner-based storage access, cross-user access tests exist", "Only whether Supabase billing is set up correctly", "Only whether the database has any tables at all", "Only whether migrations are named consistently"],
+              "correct_answer": ["RLS enabled everywhere, cross-user policy checks, admin-table exposure, no service_role in frontend, minimal anon/authenticated permissions, owner-based storage access, cross-user access tests exist"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact seven-point checklist inside the \"Prompt · Supabase audit\" block."
+            },
+            {
+              "question_text": "What eight vulnerability classes does the API security review prompt look for?",
+              "choices": ["Missing auth, missing ownership/role checks, client-side-only authorization, ID tampering, missing validation, unsafe error messages, missing rate limits, unverified webhooks", "Only slow response times", "Only missing TypeScript types", "Only outdated npm dependencies"],
+              "correct_answer": ["Missing auth, missing ownership/role checks, client-side-only authorization, ID tampering, missing validation, unsafe error messages, missing rate limits, unverified webhooks"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact eight-item list in the \"Prompt · API security review\" block."
+            },
+            {
+              "question_text": "What six abuse categories does the AI abuse test prompt try to identify?",
+              "choices": ["Overriding instructions, extracting hidden prompts, cross-user data via AI responses, unsafe tool calls, revealing secrets/logs, excessive cost/background work", "Only whether the AI responds in the correct language", "Only whether the AI's response time is under 2 seconds", "Only whether the AI uses polite phrasing"],
+              "correct_answer": ["Overriding instructions, extracting hidden prompts, cross-user data via AI responses, unsafe tool calls, revealing secrets/logs, excessive cost/background work"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact six-item list from \"Prompt · AI abuse test.\""
+            },
+            {
+              "question_text": "What seven attack categories does the Agentic Pen Test prompt cover?",
+              "choices": ["Unauthenticated access, cross-user data access, ID tampering, file/storage abuse, privilege bypass, prompt injection, replay/repeated requests", "Only DNS misconfiguration", "Only outdated SSL certificates", "Only CSS injection"],
+              "correct_answer": ["Unauthenticated access, cross-user data access, ID tampering, file/storage abuse, privilege bypass, prompt injection, replay/repeated requests"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact seven-item list from \"Prompt · Agentic pen test.\""
+            },
+            {
+              "question_text": "What environment boundary does the Agentic Pen Test prompt explicitly enforce?",
+              "choices": ["Stay within the local/test environment; do not attack third-party systems", "Test only against the production URL for realism", "Test any publicly accessible website for practice", "No boundary is specified — students choose their own target"],
+              "correct_answer": ["Stay within the local/test environment; do not attack third-party systems"],
+              "type": "multiple_choice",
+              "explanation": "This restriction is stated in bold in the lesson and repeated inside the prompt itself."
+            },
+            {
+              "question_text": "What five things does the Fix Verifier prompt confirm?",
+              "choices": ["Exploit no longer works, fix is server-side/database-layer, UI wasn't the only change, regression tests cover it, no new exposure was introduced", "Only that the code passes a linter", "Only that the commit message is well-formatted", "Only that the PR has at least one comment"],
+              "correct_answer": ["Exploit no longer works, fix is server-side/database-layer, UI wasn't the only change, regression tests cover it, no new exposure was introduced"],
+              "type": "multiple_choice",
+              "explanation": "This is the exact five-item confirmation list from \"Prompt · Fix verifier.\""
+            },
+            {
+              "question_text": "What three possible verdicts does the Fix Verifier prompt return?",
+              "choices": ["Fixed, partially fixed, not fixed", "Pass, fail, retry", "Critical, high, low", "Approved, blocked, pending"],
+              "correct_answer": ["Fixed, partially fixed, not fixed"],
+              "type": "multiple_choice",
+              "explanation": "This three-way verdict is distinct from the earlier APPROVE/BLOCK plan-review scale, reflecting a different review purpose."
+            },
+            {
+              "question_text": "What ten sections does the Final Audit Report prompt require?",
+              "choices": ["Scope, auth/authz findings, Supabase/RLS findings, API findings, AI-specific findings, secrets/env findings, storage findings, fixed today, still open, recommended next actions", "Only an executive summary with no detail", "Only a bulleted list of every file changed", "Only a timeline of when each audit module was run"],
+              "correct_answer": ["Scope, auth/authz findings, Supabase/RLS findings, API findings, AI-specific findings, secrets/env findings, storage findings, fixed today, still open, recommended next actions"],
+              "type": "multiple_choice",
+              "explanation": "This exact ten-item structure is specified in \"Prompt · Final audit report.\""
+            },
+            {
+              "question_text": "What severity scale does the Final Audit Report prompt specify?",
+              "choices": ["Critical, High, Medium, Low, Informational", "P0 through P3", "Red, Amber, Green", "1 through 10 numeric score"],
+              "correct_answer": ["Critical, High, Medium, Low, Informational"],
+              "type": "multiple_choice",
+              "explanation": "Every finding in the report needs evidence, impact, and a recommended fix, scored on this five-point scale."
+            },
+            {
+              "question_text": "Why does the Security Lab tell students not to trust an agent's own severity rating on a pen-test finding without checking it?",
+              "choices": ["Because the student, not the agent, is ultimately accountable for judging real-world risk", "Because agents cannot assign severity ratings at all", "Because severity ratings are randomly generated", "Because only Codex is allowed to assign severity, never Claude"],
+              "correct_answer": ["Because the student, not the agent, is ultimately accountable for judging real-world risk"],
+              "type": "multiple_choice",
+              "explanation": "This mirrors the course's broader \"student directs, agent executes, student verifies\" principle applied to security work specifically."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
