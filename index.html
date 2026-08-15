@@ -1414,6 +1414,15 @@ function openTeacher(lessonId){
   if(S.teacherLessonId!==lessonId){S.teacherMessages=[];S.teacherError=null;S.teacherDraft='';}
   S.teacherOpen=true;S.teacherLessonId=lessonId;
   render();
+  // The panel renders after the full lesson body, which can be thousands of
+  // pixels tall — without this, clicking the button at the top of a long
+  // lesson silently opens a panel far below the fold with nothing visibly
+  // happening. behavior:'auto' (instant), not 'smooth' — smooth scroll is
+  // unreliable right after a DOM mutation in the same tick, and confirmed
+  // to silently no-op here; an instant jump over tens of thousands of
+  // pixels is also just the better UX than a long, distracting animation.
+  const panel=document.querySelector('.teacher-panel');
+  if(panel)panel.scrollIntoView({behavior:'auto',block:'start'});
 }
 function closeTeacher(){S.teacherOpen=false;render();}
 async function sendTeacherMessage(){
