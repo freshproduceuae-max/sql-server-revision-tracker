@@ -5,9 +5,11 @@
     { "src": "quiz-bank.json", "use": "@vercel/static" },
     { "src": "projects/**", "use": "@vercel/static" },
     { "src": "business-analysis/**", "use": "@vercel/static" },
-    { "src": "data-validation-lab/schemas/**", "use": "@vercel/static" }
+    { "src": "data-validation-lab/schemas/**", "use": "@vercel/static" },
+    { "src": "api/tutor.js", "use": "@vercel/node" }
   ],
   "routes": [
+    { "src": "/api/tutor", "dest": "/api/tutor.js" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]

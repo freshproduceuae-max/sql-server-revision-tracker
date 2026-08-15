@@ -132,6 +132,26 @@ button{font-family:inherit;cursor:pointer;}
 .unit-body{background:var(--surface);padding:24px 20px 6px;}
 .unit-body .path{margin-top:0;padding:0;max-width:none;}
 .unit-body .unit{margin-bottom:8px;}
+
+/* ── The Teacher ── */
+.teacher-panel{margin-top:36px;border-radius:16px;border:2px solid var(--border);background:var(--surface);overflow:hidden;}
+.teacher-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#7C4DFF;color:#fff;}
+.teacher-head-lbl{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;}
+.teacher-head-sub{font-size:12px;font-weight:700;opacity:.85;margin-top:2px;}
+.teacher-close{background:rgba(255,255,255,.22);border:none;color:#fff;width:28px;height:28px;border-radius:8px;cursor:pointer;font-weight:800;}
+.teacher-scroll{max-height:420px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;}
+.teacher-empty{color:var(--text-lo);font-size:13.5px;font-style:italic;}
+.teacher-msg{display:flex;}
+.teacher-msg.user{justify-content:flex-end;}
+.teacher-bubble{max-width:80%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap;}
+.teacher-msg.user .teacher-bubble{background:#7C4DFF;color:#fff;border-bottom-right-radius:4px;}
+.teacher-msg.assistant .teacher-bubble{background:var(--track-bg);color:var(--text-hi);border-bottom-left-radius:4px;}
+.teacher-thinking{opacity:.7;font-style:italic;}
+.teacher-error{margin:0 18px 12px;padding:10px 14px;border-radius:10px;background:#FFE5E5;color:#B00020;font-size:13px;font-weight:600;}
+.teacher-input-row{display:flex;gap:10px;padding:14px 18px;border-top:2px solid var(--border);}
+.teacher-input-row textarea{flex:1;resize:none;height:44px;padding:10px 12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--text-hi);font-family:inherit;font-size:14px;}
+.teacher-send{background:#7C4DFF;color:#fff;border:none;padding:0 20px;border-radius:10px;font-weight:800;cursor:pointer;}
+.teacher-send:disabled,.teacher-input-row textarea:disabled{opacity:.5;cursor:not-allowed;}
 .node-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .node-btn{border:none;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
 .node-btn.is-next::before,.node-btn.is-next::after{
@@ -555,7 +575,12 @@ let S={completed:{},streak:1,mdContent:{},mdLoading:{},mdError:{},
        projIndex:null,projLoading:false,projError:false,
        projMd:{},projMdLoading:{},projMdError:{},
        baIndex:null,baLoading:false,baError:false,
-       backupMsg:null,resetArm:false};
+       backupMsg:null,resetArm:false,
+       // "The Teacher" — an AI tutor chat scoped to one Credit Risk lesson at
+       // a time. Never persisted: closing the panel or navigating away drops
+       // the conversation on purpose, same as the rest of this app's
+       // never-see-a-half-finished-session posture.
+       teacherOpen:false,teacherLessonId:null,teacherMessages:[],teacherLoading:false,teacherError:null,teacherDraft:''};
 const mdCache={};
 
 function loadState(){
@@ -1375,6 +1400,98 @@ function getHashRoute(){
   return {view:'main',track:DEFAULT_TRACK};
 }
 
+/* ── The Teacher ──
+   A Socratic AI tutor scoped to one Credit Risk lesson at a time, backed by
+   api/tutor.js. Opening a different lesson's Teacher panel resets the
+   conversation — this is meant to be a focused memorization session on the
+   material in front of the student, not a general-purpose chatbot. */
+function htmlToPlainText(html){
+  const div=document.createElement('div');
+  div.innerHTML=html;
+  return (div.textContent||'').replace(/\n{3,}/g,'\n\n').trim();
+}
+function openTeacher(lessonId){
+  if(S.teacherLessonId!==lessonId){S.teacherMessages=[];S.teacherError=null;S.teacherDraft='';}
+  S.teacherOpen=true;S.teacherLessonId=lessonId;
+  render();
+}
+function closeTeacher(){S.teacherOpen=false;render();}
+async function sendTeacherMessage(){
+  const ta=document.getElementById('teacher-input');
+  if(!ta)return;
+  const message=ta.value.trim();
+  if(!message||S.teacherLoading)return;
+  const lessonId=S.teacherLessonId;
+  // mdCache holds the already-converted HTML (see loadLesson), not the raw
+  // markdown — strip tags client-side rather than re-fetching, so the model
+  // gets clean prose instead of HTML noise.
+  const lessonMarkdown=htmlToPlainText(mdCache[lessonId]||'');
+  const flat=isDvId(lessonId)?dvFlat:(isBaId(lessonId)?buildBaFlat():buildFlat());
+  const entry=flat.find(n=>n.id===lessonId);
+  const lessonTitle=entry?entry.data.title:'';
+  S.teacherMessages.push({role:'user',content:message});
+  S.teacherLoading=true;S.teacherError=null;S.teacherDraft='';
+  ta.value='';
+  render();
+  try{
+    const res=await fetch('/api/tutor',{
+      method:'POST',
+      headers:{'content-type':'application/json','x-app-tag':'analyst-academy-teacher-v1'},
+      body:JSON.stringify({
+        lessonTitle,lessonMarkdown,
+        history:S.teacherMessages.slice(0,-1),
+        message
+      })
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||!data.reply){
+      S.teacherError=data.error||'The Teacher is unavailable right now.';
+      S.teacherMessages.pop();
+      S.teacherDraft=message; // don't make a network hiccup cost the student their typed answer
+    }else{
+      S.teacherMessages.push({role:'assistant',content:data.reply});
+    }
+  }catch(e){
+    S.teacherError='Could not reach the Teacher — check your connection.';
+    S.teacherMessages.pop();
+    S.teacherDraft=message;
+  }
+  S.teacherLoading=false;
+  render();
+  const box=document.getElementById('teacher-scroll');
+  if(box)box.scrollTop=box.scrollHeight;
+}
+function teacherKeydown(ev){
+  if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();sendTeacherMessage();}
+}
+function renderTeacherPanel(lessonId,lessonTitle){
+  const isThisLesson=S.teacherLessonId===lessonId;
+  const messages=isThisLesson?S.teacherMessages:[];
+  const loading=isThisLesson&&S.teacherLoading;
+  const error=isThisLesson?S.teacherError:null;
+  const draft=isThisLesson?S.teacherDraft:'';
+  return `
+  <div class="teacher-panel">
+    <div class="teacher-head">
+      <div>
+        <div class="teacher-head-lbl">🎓 The Teacher</div>
+        <div class="teacher-head-sub">Memorization tutor · ${esc(lessonTitle)}</div>
+      </div>
+      <button class="teacher-close" onclick="closeTeacher()">✕</button>
+    </div>
+    <div class="teacher-scroll" id="teacher-scroll">
+      ${messages.length===0&&!loading?`<div class="teacher-empty">Ask The Teacher to quiz you on this lesson, or say "start" and let it lead.</div>`:''}
+      ${messages.map(m=>`<div class="teacher-msg ${m.role}"><div class="teacher-bubble">${esc(m.content)}</div></div>`).join('')}
+      ${loading?`<div class="teacher-msg assistant"><div class="teacher-bubble teacher-thinking">Thinking…</div></div>`:''}
+    </div>
+    ${error?`<div class="teacher-error">${esc(error)}</div>`:''}
+    <div class="teacher-input-row">
+      <textarea id="teacher-input" placeholder="Answer, ask a question, or say 'start'…" onkeydown="teacherKeydown(event)" ${loading?'disabled':''}>${esc(draft)}</textarea>
+      <button class="teacher-send" onclick="sendTeacherMessage()" ${loading?'disabled':''}>Send</button>
+    </div>
+  </div>`;
+}
+
 /* ── Quiz session ──
    Question flow adapted from the Studying Assistant quiz module: select → check →
    coloured feedback with explanation → next, with a running streak. */
@@ -1837,10 +1954,12 @@ function renderApp(){
         <div style="font-size:12px;font-weight:800;opacity:.85;text-transform:uppercase;letter-spacing:.6px;">${kicker}</div>
         <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;margin-top:4px;">${esc(entry.data.title)}</div>
       </div>
+      ${(!dv&&!ba)?`<button onclick="openTeacher('${esc(route.id)}')" style="background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;">🎓 Ask the Teacher</button>`:''}
       <button onclick="S.completed['${route.id}']?delete S.completed['${route.id}']:S.completed['${route.id}']=true;saveCompleted(S.completed);render();" style="background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;">${isComplete?'✓ Completed':'Mark complete'}</button>
     </div>
     <div style="max-width:900px;margin:0 auto;padding:40px 28px;">
       ${lessonContent}
+      ${(!dv&&!ba&&S.teacherOpen&&S.teacherLessonId===route.id)?renderTeacherPanel(route.id,entry.data.title):''}
     </div>
     `;
   }
