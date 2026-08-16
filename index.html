@@ -576,8 +576,9 @@ let S={completed:{},streak:1,mdContent:{},mdLoading:{},mdError:{},
        projMd:{},projMdLoading:{},projMdError:{},
        baIndex:null,baLoading:false,baError:false,
        backupMsg:null,resetArm:false,
-       // "The Teacher" — an AI tutor chat scoped to one Credit Risk lesson at
-       // a time. Never persisted: closing the panel or navigating away drops
+       // "The Teacher" — an AI tutor chat scoped to one lesson at a time,
+       // across every track with lesson pages (Credit Risk, DV, BA). Never
+       // persisted: closing the panel or navigating away drops
        // the conversation on purpose, same as the rest of this app's
        // never-see-a-half-finished-session posture.
        teacherOpen:false,teacherLessonId:null,teacherMessages:[],teacherLoading:false,teacherError:null,teacherDraft:''};
@@ -1401,8 +1402,10 @@ function getHashRoute(){
 }
 
 /* ── The Teacher ──
-   A Socratic AI tutor scoped to one Credit Risk lesson at a time, backed by
-   api/tutor.js. Opening a different lesson's Teacher panel resets the
+   A Socratic AI tutor scoped to one lesson at a time, backed by api/tutor.js.
+   Works across every track with lesson pages (Credit Risk, DV, BA) — Quiz
+   Practice has no lesson pages, so it never reaches this. Opening a
+   different lesson's Teacher panel resets the
    conversation — this is meant to be a focused memorization session on the
    material in front of the student, not a general-purpose chatbot. */
 function htmlToPlainText(html){
@@ -1963,12 +1966,12 @@ function renderApp(){
         <div style="font-size:12px;font-weight:800;opacity:.85;text-transform:uppercase;letter-spacing:.6px;">${kicker}</div>
         <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;margin-top:4px;">${esc(entry.data.title)}</div>
       </div>
-      ${(!dv&&!ba)?`<button onclick="openTeacher('${esc(route.id)}')" style="background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;">🎓 Ask the Teacher</button>`:''}
+      <button onclick="openTeacher('${esc(route.id)}')" style="background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;">🎓 Ask the Teacher</button>
       <button onclick="S.completed['${route.id}']?delete S.completed['${route.id}']:S.completed['${route.id}']=true;saveCompleted(S.completed);render();" style="background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:800;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;">${isComplete?'✓ Completed':'Mark complete'}</button>
     </div>
     <div style="max-width:900px;margin:0 auto;padding:40px 28px;">
       ${lessonContent}
-      ${(!dv&&!ba&&S.teacherOpen&&S.teacherLessonId===route.id)?renderTeacherPanel(route.id,entry.data.title):''}
+      ${(S.teacherOpen&&S.teacherLessonId===route.id)?renderTeacherPanel(route.id,entry.data.title):''}
     </div>
     `;
   }
