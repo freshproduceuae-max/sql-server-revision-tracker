@@ -231,6 +231,105 @@ entry 19.
 
 ---
 
+## Next phase — planned work (paused for token budget, resume Wed midday / Thu)
+
+**Status as of 2026-08-16: paused, not started.** Weekly token budget was ~80%
+spent with the reset landing Wednesday, so this was recorded as a plan instead
+of being built. Resume from here — do not re-derive it from conversation, this
+repo has no memory of prior sessions beyond what is written down.
+
+**Also outstanding right now:** [PR #27](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/27)
+(`docs/lessons-learned-teacher-session`, adds LESSONS-LEARNED entries 25–30 from
+building "The Teacher") is open and unmerged — needs the owner's merge approval
+per the branch/PR rule in `CLAUDE.md`. Check it first when resuming.
+
+### How this came up
+
+The owner pasted a real job posting — "Enterprise Architect · AI & Digital
+Platforms" (Michael Page, UAE) — and asked whether any course content already
+covers it. Answer at the time: partial overlap only, via the existing AI
+Supercourse quiz bank (LLM/RAG/Agentic/MCP/A2A) and the Business Analysis
+track's requirements-traceability lessons; nothing in the app covers multi-cloud
+strategy, enterprise architecture governance, MLOps at scale, or
+microservices/event-driven design as disciplines. `CURRICULUM.md` (a personal,
+non-deployed doc) has an Azure-only data-engineering module, which doesn't
+close the gap either.
+
+Separately in the same session, the owner pointed at a real folder —
+`C:\Projects\Wisdom for AI\System Implementation Security` — containing a
+50-item enterprise Go/No-Go security-control register (built from NIST
+SP 800-53/800-61/800-218/800-204D and OWASP ASVS 5.0). That folder is a
+**personal security-assessment framework, not course source material** — do
+not lift its specific controls or wording into lesson content. Its only
+relevance here is that it independently confirmed the "governance register /
+architecture decision gates" *concept* that Chapter 1 below teaches generically.
+
+### Decision made (owner approved this exact shape — do not re-litigate)
+
+Build a new track, **Enterprise Architecture** (registry id `ea`), matching the
+Business Analysis pattern for lesson pages (full pages, generated from a JSON
+source, original writing) **plus** a Saqr-Academy-style quiz bank merged into
+Quiz Practice. Not a quiz-only course — the owner explicitly chose "full lesson
+pages + quizzes" over "quiz-bank only" when asked.
+
+**6 chapters × 3 lessons = 18 lessons**, one quiz set per chapter (~5–6
+questions each, Saqr Academy shape):
+
+1. **Governance & Target-State Design** — architecture decision records, review
+   boards, standards/guardrails registers
+2. **Multi-Cloud & Hybrid Platform Strategy** — AWS/Azure/GCP decision
+   framework, IaaS/PaaS/SaaS tradeoffs, multi-region design
+3. **APIs, Microservices & Event-Driven Architecture** — service boundaries,
+   sync vs async, event streaming, API gateway patterns
+4. **AI/ML & Data Platform Architecture at Scale** — MLOps (model lifecycle,
+   CI/CD for ML, drift monitoring, feature stores), AI gateway governance —
+   builds on top of the existing AI Supercourse content, does not repeat it
+5. **DevOps & Release Governance at Enterprise Scale** — CI/CD pipeline
+   governance across many teams, environment strategy, deployment gates
+6. **Executive Influence & Architecture Communication** — stakeholder mapping,
+   translating tradeoffs into business language, leading review boards,
+   guiding teams without direct authority (this chapter exists because the
+   owner explicitly asked "any gaps like leadership course or mastery in
+   communication" when scoping — it is not optional, it was asked for by name)
+
+Each lesson uses the same field shape as Business Analysis lessons:
+`title, scenario, question, approach[], outputs[], tools[], pitfall, interview`
+— see `sources/business-analysis.json` for the exact shape and
+`scripts/build-ba-lessons.js` for how it renders. All lesson prose is original;
+nothing is copied from the security-register folder above or any other source.
+
+### Mechanical build checklist (per the "Adding a track" section of `CLAUDE.md`)
+
+Not started — do these in order:
+
+1. **Pre-review the plan with Codex before writing content** — this touches
+   routing and content loading, which `CLAUDE.md` rule 2 requires a pre-build
+   review for. Not yet done.
+2. `sources/enterprise-architecture.json` — 6 chapters × 3 lessons, same shape
+   as `sources/business-analysis.json`
+3. `scripts/build-ea-lessons.js` — clone of `scripts/build-ba-lessons.js`,
+   `EA(\d\d)-T(\d\d)` id pattern, output to `enterprise-architecture/`
+4. `sources/quizzes-enterprise-architecture.json` — Saqr Academy shape
+   (`quiz_name` + `lessons[]`, each a themed question set), then run it through
+   `scripts/build-quiz-bank.js` and `scripts/merge-quiz-banks.js` per the
+   "Rebuilding the quiz bank" section above
+5. `TRACKS` registry entry in `index.html` (id `ea`, no `projPrefix` — keeping
+   this track simple, no checkpoint projects, matching the owner's "simple and
+   proper" framing)
+6. Hero/path body for `ea` in `renderApp`
+7. `contentUrl()` branch for `ea` → `./enterprise-architecture/…` (same-origin,
+   like BA — never cross-branch, that is entry 1)
+8. A loader + its trigger in `render()`
+9. `vercel.json` — add a `builds` entry for `enterprise-architecture/**`, or the
+   SPA catch-all serves `index.html` for every lesson silently (entry 13)
+10. Build, verify a lesson renders and a quiz question answers correctly in a
+    real browser (not just that the build script exits 0 — entry 18), then
+    Codex review with the diff **and** that verification evidence, then
+    branch + PR per rule 7 — never commit straight to
+    `claude/confident-volta-l3e55f`.
+
+---
+
 ## Working with Codex
 
 Codex is the standing reviewer. `LESSONS-LEARNED.md` has a section on how to
