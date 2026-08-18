@@ -1295,3 +1295,49 @@ the actual thing the feature exists to do is completely broken underneath.
 This is the same family as entries 1, 6, 21, 23: confidently reporting a
 state that was never true, this time because the check stopped one layer
 short of the thing it was actually trying to verify.
+
+---
+
+## 32. An error message that tells the user what to do, when nothing in the UI can do it
+
+**Looked like:** the owner ran a real, long tutoring session with The Teacher,
+hit the server's `history too long — start a new session` guard
+(`MAX_HISTORY_MESSAGES=20` in `api/tutor.js`, a deliberate cost cap), and got
+stuck. Closing and reopening the panel changed nothing — the exact same error
+fired on the next Send.
+
+**Actually was:** `closeTeacher()` only sets `S.teacherOpen=false`.
+`openTeacher(lessonId)` only clears `S.teacherMessages` when
+`S.teacherLessonId!==lessonId` — i.e. only when opening on a *different*
+lesson. Closing and reopening the panel on the **same** lesson, which is what
+a student naturally does after an error, left the over-20-message history
+fully intact, so the very next Send hit the identical rejection. The error
+message gave an instruction ("start a new session") that no control in the UI
+could actually carry out without navigating away to an unrelated lesson and
+back — not a fix a student would discover on their own.
+
+**Fix:** added `resetTeacherSession()` and a `↻` button in the panel header
+next to the existing ✕, which clears `teacherMessages`/`teacherError`/
+`teacherDraft` without closing the panel or leaving the lesson.
+
+**Caught in review, not by me:** Codex flagged a real race the first version
+missed — `resetTeacherSession()` could fire while `sendTeacherMessage()` was
+still awaiting a response. The in-flight response would then land *after* the
+reset and mutate the "fresh" session out from under it (append a reply to an
+emptied conversation, or restore a stale draft the student had already moved
+past). Fixed with the same `${loading?'disabled':''}` pattern already used on
+the send button and textarea, **plus** an `if(S.teacherLoading)return;` guard
+inside `resetTeacherSession()` itself — the disabled attribute alone is a
+shallow guard a direct call bypasses, same class of issue as CLAUDE.md rule 4.
+Verified both layers directly: a direct function call while `teacherLoading`
+was forced `true` left the message count unchanged, and the button re-enabled
+once loading cleared.
+
+**Rule:** an error message that names a corrective action is a promise that
+the UI can deliver it. Before shipping any user-facing error string, trace
+whether the app actually has a control that performs what the message says —
+"start a new session" only counts if something in the UI can start one.
+And when adding a reset/undo control to a stateful async flow, always ask
+what happens if it fires while a request for that same state is still in
+flight — the fix generally needs both the visible disabled state and a guard
+inside the function itself, not just one or the other.

@@ -1436,6 +1436,21 @@ function openTeacher(lessonId){
   // where it sits in the DOM, so there is nothing to scroll to.
 }
 function closeTeacher(){S.teacherOpen=false;render();}
+// Closing and reopening on the SAME lesson does not clear teacherMessages —
+// openTeacher() only resets on a lessonId change (see above). Without this,
+// hitting the server's history-too-long cap (MAX_HISTORY_MESSAGES in
+// api/tutor.js) was a genuine dead end: the error told the student to "start
+// a new session" but nothing in the UI could actually do that short of
+// navigating to a different lesson and back. LESSONS-LEARNED entry 32.
+function resetTeacherSession(){
+  // Guarded here too, not just via the button's disabled attribute — a
+  // request in flight when this fires would otherwise still land after the
+  // reset and mutate the "fresh" state sendTeacherMessage() no longer knows
+  // was reset out from under it (push a reply into an emptied conversation,
+  // or restore a stale draft). Codex caught this race during review.
+  if(S.teacherLoading)return;
+  S.teacherMessages=[];S.teacherError=null;S.teacherDraft='';render();
+}
 async function sendTeacherMessage(){
   const ta=document.getElementById('teacher-input');
   if(!ta)return;
@@ -1497,7 +1512,10 @@ function renderTeacherPanel(lessonId,lessonTitle){
         <div class="teacher-head-lbl">🎓 The Teacher</div>
         <div class="teacher-head-sub">Memorization tutor · ${esc(lessonTitle)}</div>
       </div>
-      <button class="teacher-close" onclick="closeTeacher()">✕</button>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="teacher-close" title="Start a new session" onclick="resetTeacherSession()" ${loading?'disabled':''}>↻</button>
+        <button class="teacher-close" title="Close" onclick="closeTeacher()">✕</button>
+      </div>
     </div>
     <div class="teacher-scroll" id="teacher-scroll">
       ${messages.length===0&&!loading?`<div class="teacher-empty">Ask The Teacher to quiz you on this lesson, or say "start" and let it lead.</div>`:''}
