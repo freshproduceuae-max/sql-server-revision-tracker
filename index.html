@@ -140,7 +140,13 @@ button{font-family:inherit;cursor:pointer;}
    persistently (only transient :hover states elsewhere in this file), so
    fixed positioning resolves against the viewport as expected, not some
    ancestor's box. */
-.teacher-panel{position:fixed;right:20px;bottom:20px;width:380px;max-width:calc(100vw - 32px);max-height:min(600px,70vh);display:flex;flex-direction:column;border-radius:16px;border:2px solid var(--border);background:var(--surface);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.28);z-index:60;}
+.teacher-panel{position:fixed;right:20px;bottom:20px;width:380px;max-width:calc(100vw - 32px);max-height:min(600px,70vh);display:flex;flex-direction:column;border-radius:16px;border:2px solid var(--border);background:var(--surface);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.28);z-index:60;transition:width .15s ease,max-height .15s ease;}
+/* Wide mode: the MCQ right/wrong feedback runs several sentences long, and
+   380px wraps it into a tall, cramped column. Toggled per-session (not
+   persisted, not per-lesson) via teacherToggleWide() — a plain preference,
+   not conversation state. */
+.teacher-panel.wide{width:min(900px,calc(100vw - 40px));max-height:min(720px,82vh);}
+@media (max-width:640px){.teacher-wide-toggle{display:none;}}   /* already full-width there — see the panel's own mobile breakpoint below */
 .teacher-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#7C4DFF;color:#fff;flex-shrink:0;}
 .teacher-head-lbl{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;}
 .teacher-head-sub{font-size:12px;font-weight:700;opacity:.85;margin-top:2px;}
@@ -495,6 +501,8 @@ const BA_XP=10;
 /* Quiz bank ships alongside index.html, so it loads from this origin rather than GitHub. */
 const QUIZ_URL='./quiz-bank.json';
 const QUIZ_XP=20;
+/* Pre-generated Teacher MCQ sets — same-origin, same reasoning as QUIZ_URL. */
+const TEACHER_MCQ_URL='./teacher-mcq.json';
 const PROJECT_XP=50;
 
 const UNIT_DEFS=[
@@ -593,7 +601,16 @@ let S={completed:{},streak:1,mdContent:{},mdLoading:{},mdError:{},
        // persisted: closing the panel or navigating away drops
        // the conversation on purpose, same as the rest of this app's
        // never-see-a-half-finished-session posture.
-       teacherOpen:false,teacherLessonId:null,teacherMessages:[],teacherLoading:false,teacherError:null,teacherDraft:''};
+       teacherOpen:false,teacherLessonId:null,teacherMessages:[],teacherLoading:false,teacherError:null,teacherDraft:'',
+       // MCQ-first mode: pre-generated multiple-choice questions (sources/teacher-mcq.json)
+       // cost nothing to run, so a session opens there first and only calls the
+       // real API once the student either finishes the set or types a free-text
+       // message instead of picking an answer — see openTeacher/sendTeacherMessage.
+       teacherMcq:null,teacherMcqLoading:false,teacherMcqError:false,
+       teacherMode:'mcq',teacherMcqIndex:0,teacherMcqSelected:null,teacherMcqDone:false,
+       // Plain UI preference, not conversation state — deliberately not reset
+       // by openTeacher() on a lesson change, unlike everything above it.
+       teacherWide:false};
 const mdCache={};
 
 function loadState(){
@@ -1026,6 +1043,22 @@ async function loadQuizBank(){
     S.quizLoading=false;S.quizError=true;render();
   }
 }
+async function loadTeacherMcq(){
+  if(S.teacherMcq||S.teacherMcqLoading)return;
+  S.teacherMcqLoading=true;S.teacherMcqError=false;render();
+  try{
+    const res=await fetch(TEACHER_MCQ_URL);
+    if(!res.ok)throw new Error('fetch failed');
+    S.teacherMcq=await res.json();
+    S.teacherMcqLoading=false;render();
+  }catch(e){
+    // Not fatal — sendTeacherMessage()/renderTeacherPanel() both fall back to
+    // live chat mode when S.teacherMcq is unavailable, same as a lesson with
+    // no authored MCQ set. A failed fetch here just means every lesson opens
+    // straight into chat instead of the free MCQ warm-up.
+    S.teacherMcqLoading=false;S.teacherMcqError=true;render();
+  }
+}
 function retryQuizBank(){S.quizError=false;loadQuizBank();}
 /* ── Unit accordion state ──
    isUnitOpen: an explicit user toggle always wins; absent one, a unit opens
@@ -1426,8 +1459,16 @@ function htmlToPlainText(html){
   return (div.textContent||'').replace(/\n{3,}/g,'\n\n').trim();
 }
 function openTeacher(lessonId){
-  if(S.teacherLessonId!==lessonId){S.teacherMessages=[];S.teacherError=null;S.teacherDraft='';}
+  if(S.teacherLessonId!==lessonId){
+    S.teacherMessages=[];S.teacherError=null;S.teacherDraft='';
+    // Every fresh lesson opens into the free MCQ warm-up, not straight into a
+    // billed API call — see sendTeacherMessage() and renderTeacherPanel() for
+    // the two ways out of MCQ mode (finishing the set, or typing instead of
+    // clicking an answer).
+    S.teacherMode='mcq';S.teacherMcqIndex=0;S.teacherMcqSelected=null;S.teacherMcqDone=false;
+  }
   S.teacherOpen=true;S.teacherLessonId=lessonId;
+  if(!S.teacherMcq&&!S.teacherMcqLoading)loadTeacherMcq();
   render();
   // No scrollIntoView needed here (LESSONS-LEARNED entry 29 covered a
   // scrollIntoView({behavior:'smooth'}) no-op when the panel was in normal
@@ -1451,11 +1492,37 @@ function resetTeacherSession(){
   if(S.teacherLoading)return;
   S.teacherMessages=[];S.teacherError=null;S.teacherDraft='';render();
 }
+function teacherMcqEntry(lessonId){
+  return S.teacherMcq&&S.teacherMcq.lessons&&S.teacherMcq.lessons[lessonId];
+}
+function teacherMcqSelect(i){
+  if(S.teacherMcqSelected!==null)return;   // already answered this one — ignore further clicks
+  S.teacherMcqSelected=i;
+  render();
+}
+function teacherMcqNext(){
+  const entry=teacherMcqEntry(S.teacherLessonId);
+  if(!entry||S.teacherMcqSelected===null)return;
+  if(S.teacherMcqIndex+1>=entry.questions.length){
+    S.teacherMcqDone=true;render();return;
+  }
+  S.teacherMcqIndex++;S.teacherMcqSelected=null;render();
+}
+// The one deliberate way out of the free MCQ warm-up into the billed live
+// chat — see also sendTeacherMessage(), which does the same switch if the
+// student types a message instead of picking an answer at any point.
+function teacherContinueChat(){S.teacherMode='chat';render();}
+function teacherToggleWide(){S.teacherWide=!S.teacherWide;render();}
 async function sendTeacherMessage(){
   const ta=document.getElementById('teacher-input');
   if(!ta)return;
   const message=ta.value.trim();
   if(!message||S.teacherLoading)return;
+  // Typing a real message — instead of clicking an MCQ choice — is the
+  // explicit signal to leave the free warm-up and start a real, billed
+  // conversation with the live API. See teacherContinueChat() for the other
+  // way out (finishing the MCQ set).
+  if(S.teacherMode==='mcq')S.teacherMode='chat';
   const lessonId=S.teacherLessonId;
   // mdCache holds the already-converted HTML (see loadLesson), not the raw
   // markdown — strip tags client-side rather than re-fetching, so the model
@@ -1505,26 +1572,73 @@ function renderTeacherPanel(lessonId,lessonTitle){
   const loading=isThisLesson&&S.teacherLoading;
   const error=isThisLesson?S.teacherError:null;
   const draft=isThisLesson?S.teacherDraft:'';
+  const mcqEntry=isThisLesson?teacherMcqEntry(lessonId):null;
+  // Three body states: the free MCQ set (mcqEntry exists and mode is still
+  // 'mcq'), a brief loading state while the MCQ file is still in flight, or
+  // chat — which is also the fallback the moment the fetch finishes and this
+  // particular lesson turns out to have no authored MCQ set yet (most
+  // lessons, for now — see HANDOFF "Next phase").
+  const mcqStillLoading=S.teacherMcqLoading&&!S.teacherMcq;
+  const showMcq=isThisLesson&&S.teacherMode==='mcq'&&!!mcqEntry;
+  const showMcqLoading=isThisLesson&&S.teacherMode==='mcq'&&!mcqEntry&&mcqStillLoading;
+  const showChat=isThisLesson&&!showMcq&&!showMcqLoading;
+  let mcqBody='';
+  if(showMcq){
+    const q=mcqEntry.questions[S.teacherMcqIndex];
+    const answered=S.teacherMcqSelected!==null;
+    const isFirstQ=S.teacherMcqIndex===0&&!answered&&!S.teacherMcqDone;
+    if(S.teacherMcqDone){
+      mcqBody=`
+        <div class="teacher-msg assistant"><div class="teacher-bubble">${quizText(mcqEntry.close)}</div></div>
+        <button class="quiz-btn" style="margin-top:6px;" onclick="teacherContinueChat()">💬 Keep talking with The Teacher</button>`;
+    }else{
+      mcqBody=`
+        ${isFirstQ?`<div class="teacher-msg assistant"><div class="teacher-bubble">${quizText(mcqEntry.open)}</div></div>`:''}
+        <div class="teacher-head-sub" style="margin:10px 0 2px;">Question ${S.teacherMcqIndex+1} of ${mcqEntry.questions.length}</div>
+        <div class="quiz-q" style="font-size:15px;margin:4px 0 14px;">${quizText(q.q)}</div>
+        <div class="quiz-choices">
+          ${q.choices.map((c,i)=>{
+            let cls='quiz-choice';
+            if(answered){
+              if(i===q.correct)cls+=' correct';
+              else if(i===S.teacherMcqSelected)cls+=' wrong';
+            }
+            return `<button class="${cls}" ${answered?'disabled':''} onclick="teacherMcqSelect(${i})">${quizText(c)}</button>`;
+          }).join('')}
+        </div>
+        ${answered?`
+          <div class="quiz-fb ${S.teacherMcqSelected===q.correct?'good':'bad'}">
+            <div class="quiz-fb-explain">${quizText(S.teacherMcqSelected===q.correct?q.right:q.wrong)}</div>
+          </div>
+          <button class="quiz-btn next" style="margin-top:12px;" onclick="teacherMcqNext()">${S.teacherMcqIndex+1>=mcqEntry.questions.length?'See how you did':'Next question'}</button>
+        `:''}`;
+    }
+  }
   return `
-  <div class="teacher-panel">
+  <div class="teacher-panel${S.teacherWide?' wide':''}">
     <div class="teacher-head">
       <div>
         <div class="teacher-head-lbl">🎓 The Teacher</div>
-        <div class="teacher-head-sub">Memorization tutor · ${esc(lessonTitle)}</div>
+        <div class="teacher-head-sub">${showMcq?'Warm-up quiz':'Memorization tutor'} · ${esc(lessonTitle)}</div>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="teacher-close teacher-wide-toggle" title="${S.teacherWide?'Shrink':'Widen — answers run long'}" onclick="teacherToggleWide()">${S.teacherWide?'⤡':'⤢'}</button>
         <button class="teacher-close" title="Start a new session" onclick="resetTeacherSession()" ${loading?'disabled':''}>↻</button>
         <button class="teacher-close" title="Close" onclick="closeTeacher()">✕</button>
       </div>
     </div>
     <div class="teacher-scroll" id="teacher-scroll">
-      ${messages.length===0&&!loading?`<div class="teacher-empty">Ask The Teacher to quiz you on this lesson, or say "start" and let it lead.</div>`:''}
-      ${messages.map(m=>`<div class="teacher-msg ${m.role}"><div class="teacher-bubble">${esc(m.content)}</div></div>`).join('')}
-      ${loading?`<div class="teacher-msg assistant"><div class="teacher-bubble teacher-thinking">Thinking…</div></div>`:''}
+      ${showMcqLoading?`<div class="loading" style="padding:24px 0;"><div class="spinner"></div>Loading warm-up questions…</div>`:''}
+      ${showMcq?mcqBody:''}
+      ${showChat?`
+        ${messages.length===0&&!loading?`<div class="teacher-empty">Ask The Teacher to quiz you on this lesson, or say "start" and let it lead.</div>`:''}
+        ${messages.map(m=>`<div class="teacher-msg ${m.role}"><div class="teacher-bubble">${esc(m.content)}</div></div>`).join('')}
+        ${loading?`<div class="teacher-msg assistant"><div class="teacher-bubble teacher-thinking">Thinking…</div></div>`:''}
+      `:''}
     </div>
     ${error?`<div class="teacher-error">${esc(error)}</div>`:''}
     <div class="teacher-input-row">
-      <textarea id="teacher-input" placeholder="Answer, ask a question, or say 'start'…" onkeydown="teacherKeydown(event)" ${loading?'disabled':''}>${esc(draft)}</textarea>
+      <textarea id="teacher-input" placeholder="${showMcq?'Or type a question to chat with The Teacher instead…':'Answer, ask a question, or say \'start\'…'}" onkeydown="teacherKeydown(event)" ${loading?'disabled':''}>${esc(draft)}</textarea>
       <button class="teacher-send" onclick="sendTeacherMessage()" ${loading?'disabled':''}>Send</button>
     </div>
   </div>`;

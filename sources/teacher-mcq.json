@@ -1,0 +1,508 @@
+{
+  "lessons": {
+    "G01-T01": {
+      "open": "Hey — good to see you. You've opened NULL Check, the very first lesson in Completeness, so let's lock in the foundation everything else builds on. Three quick checks, and I'll tell you exactly what you nailed and what to watch for as we go.",
+      "questions": [
+        {
+          "q": "Why does `WHERE Email = NULL` return zero rows, even for records where Email actually is NULL?",
+          "choices": [
+            "'=' comparisons against NULL evaluate to UNKNOWN, not TRUE, so the row is never matched",
+            "SQL Server silently converts NULL to an empty string before comparing",
+            "Email is a reserved word and can't be compared directly",
+            "The query needs a GROUP BY before NULL can be evaluated"
+          ],
+          "correct": 0,
+          "right": "Exactly right — and that's the whole lesson in one sentence. NULL isn't a value you can compare against, it's the absence of one, so '=' can never touch it. You've got the core idea. Onto the next one.",
+          "wrong": "Not quite, but you're close enough that this will click fast. Here's the key: NULL isn't a value — it's the absence of one. So '=' can't compare against it any more than it can compare against nothing at all. Every '=' test against NULL comes back UNKNOWN, not TRUE, which is why the row silently disappears from your results."
+        },
+        {
+          "q": "In the field-level summary query, why does the lesson use UNION ALL instead of plain UNION?",
+          "choices": [
+            "UNION ALL keeps every row, including ones that look identical, instead of silently deduplicating them",
+            "UNION ALL runs faster because it sorts the columns first",
+            "Plain UNION cannot combine three SELECT statements, only two",
+            "UNION ALL is required whenever COUNT(*) appears in a SELECT"
+          ],
+          "correct": 0,
+          "right": "Yes — good instinct there. UNION quietly merges rows that look identical across every column, and if two fields happened to land on the same count and percentage, you'd lose one silently. UNION ALL protects you from that.",
+          "wrong": "Good try, but here's the trap this question is testing for: plain UNION removes rows that are exact duplicates across every column. If two different fields happened to have the same NullCount and NullPct, UNION would silently merge them into one row and you'd lose a field from your report without any error. UNION ALL guarantees every field keeps its own line."
+        },
+        {
+          "q": "Why does the query write `COUNT(*) * 100.0` instead of `COUNT(*) * 100`?",
+          "choices": [
+            "Without the .0, SQL Server performs integer division and the percentage truncates to 0%",
+            "The .0 tells SQL Server to round to the nearest whole number",
+            "It has no effect — both produce identical results",
+            "The .0 is required syntax whenever COUNT(*) is divided by anything"
+          ],
+          "correct": 0,
+          "right": "You caught the integer-division trap — that one bites a lot of people the first time they see it. Multiplying by a bare integer keeps everything in integer math, and a real percentage like 10% would round straight down to 0.",
+          "wrong": "This one's sneaky, so no worries — here's what's actually happening. Multiplying by the plain integer 100 keeps the whole expression in integer arithmetic. A genuine result like 2/20 would truncate to 0 before the percentage even gets calculated. Adding .0 forces SQL Server into decimal math, so the real percentage survives instead of silently becoming 0%."
+        }
+      ],
+      "close": "Solid session — you've got IS NULL vs '=', UNION ALL vs UNION, and the integer-division trap all locked in. Those three ideas alone will save you from three of the most common SQL Server mistakes people make. Ready for Blank / Empty String next, or want to go deeper here first?"
+    },
+    "G01-T02": {
+      "open": "Welcome back — this lesson picks up right where NULL Check left off: your NULL check just passed, but emails are still bouncing. Let's find out why together.",
+      "questions": [
+        {
+          "q": "A migration passes every NULL check, but customers still report bounced emails. What's the most likely cause?",
+          "choices": [
+            "The source system wrote empty strings ('') for missing emails instead of NULL, and IS NULL doesn't catch those",
+            "The Email column has the wrong data type",
+            "NULL checks only work on numeric columns, not text columns",
+            "The migration ran on a weekend, when validation is skipped"
+          ],
+          "correct": 0,
+          "right": "Exactly — and this is the whole reason G01-T02 exists as its own lesson. A blank string is a real, populated value that just happens to be empty. NULL and blank are two completely different problems that look identical to a customer.",
+          "wrong": "Close, but the actual answer is more subtle and worth sitting with: a blank string '' is a real, populated value — it's not the same thing as NULL. IS NULL will never catch it, and = '' will never catch a genuine NULL. Your migration script needs to check for both."
+        },
+        {
+          "q": "Why does the query wrap the empty-string check as `LTRIM(RTRIM(Email)) = ''` instead of just `Email = ''`?",
+          "choices": [
+            "So a value like three spaces ('   '), which isn't literally an empty string, is still caught as effectively blank",
+            "Because SQL Server requires LTRIM/RTRIM before any string comparison",
+            "To make the query run faster by reducing the string length",
+            "LTRIM/RTRIM converts the value to uppercase for comparison"
+          ],
+          "correct": 0,
+          "right": "Right — you're thinking like a data validator now. '   ' isn't literally '' by a strict comparison, but it's just as meaningless. Trimming first catches both cases with one check instead of two.",
+          "wrong": "Here's the nuance this one's testing: a field containing '   ' (spaces) is not literally equal to '' — a strict comparison would miss it. But it's functionally just as empty. Trimming the value first collapses both cases into one check, so you don't need two separate rules."
+        },
+        {
+          "q": "In `LTRIM(RTRIM(ISNULL(Email, '')))`, why does ISNULL need to run before LTRIM?",
+          "choices": [
+            "Calling LTRIM on a real NULL returns NULL, and `NULL = ''` evaluates to UNKNOWN — silently dropping the row from the results",
+            "ISNULL makes the query run in a different execution order for performance",
+            "Without ISNULL, LTRIM would throw a syntax error",
+            "ISNULL converts the column to a different data type required by LTRIM"
+          ],
+          "correct": 0,
+          "right": "Nailed it. This is the same UNKNOWN-vs-TRUE trap from the NULL Check lesson showing up again, one layer deeper — LTRIM(NULL) is NULL, and NULL never equals anything, including ''.",
+          "wrong": "This connects straight back to lesson one, so let's make the link explicit: LTRIM(NULL) returns NULL, not ''. And NULL = '' evaluates to UNKNOWN, the same way NULL = NULL does — so a genuinely-NULL row would silently disappear from your results without ISNULL converting it to '' first."
+        }
+      ],
+      "close": "You've now separated two failure modes that look identical from the outside — NULL and blank — and you know exactly how to catch both together. That distinction alone will save real debugging time later. Onto Placeholder Text when you're ready."
+    },
+    "G01-T03": {
+      "open": "Alright — this one's about the sneakiest category yet: values that LOOK real but actually mean \"we don't know.\" Let's see how sharp your eye is for spotting them.",
+      "questions": [
+        {
+          "q": "Why does the placeholder-detection query wrap every comparison in UPPER() before checking against the blocklist?",
+          "choices": [
+            "So 'N/A', 'n/a', and 'N/a' are all caught by one entry in the list, instead of needing every case variant listed separately",
+            "UPPER() is required syntax whenever IN() is used in SQL Server",
+            "It converts the placeholder text into a numeric code for faster comparison",
+            "Lowercase values are always treated as NULL by SQL Server by default"
+          ],
+          "correct": 0,
+          "right": "Exactly right — one normalized list instead of an endless list of case variants. That's the kind of thing that keeps a validation blocklist maintainable long-term.",
+          "wrong": "Good instinct to think about the blocklist itself — here's the reasoning: people and systems type placeholder text in every case imaginable. Normalizing everything to UPPER() first means one list entry ('N/A') catches every capitalization, instead of the list growing forever to cover 'n/a', 'N/a', and so on."
+        },
+        {
+          "q": "Why is a DOB of 01/01/1900 treated as suspicious rather than a legitimate birth date?",
+          "choices": [
+            "It's the most common date-field placeholder in legacy systems, historically used as a default \"empty\" date",
+            "SQL Server doesn't allow dates before 1900 to be stored",
+            "It's always a data entry typo for the current year",
+            "01/01/1900 is a reserved system date that triggers an error"
+          ],
+          "correct": 0,
+          "right": "Yes — you've spotted the classic sentinel date. That one shows up constantly across legacy systems because it's often the default minimum date value baked into older tools.",
+          "wrong": "This is worth remembering because you'll see it again and again in real data: 01/01/1900 is the most common \"empty date\" default in legacy tools — many systems fall back to it when no real date was ever entered. A living customer with that birth date is a strong tell that the value is a placeholder, not a fact."
+        },
+        {
+          "q": "What is the purpose of checking `Phone LIKE '000%'`, `'999%'`, and `'111%'`?",
+          "choices": [
+            "To catch common fake/placeholder phone numbers like all-zeros or all-repeated-digits without listing every possible variant",
+            "To find phone numbers from a specific country code",
+            "To detect phone numbers that are too short to be valid",
+            "To identify numbers that have already been called before"
+          ],
+          "correct": 0,
+          "right": "Right — you're pattern-matching the way real placeholder data actually shows up. All-zero and all-repeated-digit numbers are the classic \"I need to submit this form\" fake entries.",
+          "wrong": "Here's the pattern behind it: numbers like 0000000000 or 9999999999 are the classic entries people type when a form demands a phone number they don't want to give. The LIKE patterns catch these common fake families efficiently, without needing to list every possible fake number by hand."
+        }
+      ],
+      "close": "Great pattern-recognition work — you're now catching placeholder values that pass every basic completeness check but are quietly meaningless. This is exactly the kind of thing that separates a careful analyst from one who just runs the obvious query. Ready for Whitespace-Only next?"
+    },
+    "G01-T04": {
+      "open": "This lesson is a personal favorite of mine to teach because the bug is so invisible — a field that LOOKS populated but is actually just... spaces. Let's dig in.",
+      "questions": [
+        {
+          "q": "A FirstName field contains three spaces ('   '). Why does `LEN(FirstName)` fail to reveal that it's effectively empty?",
+          "choices": [
+            "LEN() counts every character including spaces, so it returns 3 — the field only looks empty after trimming",
+            "LEN() ignores spaces entirely and would return 0 automatically",
+            "LEN() only works on numeric columns",
+            "Spaces are counted as NULL by SQL Server's LEN function"
+          ],
+          "correct": 0,
+          "right": "Exactly — LEN() is honest about character count, which is exactly the problem. Three spaces really are three characters. You have to trim first to see the truth underneath.",
+          "wrong": "This is the whole twist of the lesson, so let's make it click: LEN('   ') genuinely returns 3 — there ARE three characters there, they're just meaningless ones. The field only reveals itself as empty once you trim the spaces away first and measure what's left."
+        },
+        {
+          "q": "Why does the lesson add a separate \"deep check\" using REPLACE for tabs and carriage returns?",
+          "choices": [
+            "LTRIM and RTRIM only strip space characters — they do not remove tabs (CHAR(9)) or carriage returns (CHAR(13))",
+            "REPLACE runs faster than LTRIM/RTRIM on large tables",
+            "Tabs and carriage returns are illegal characters that must be removed before any query runs",
+            "It's only needed for columns imported from Excel, never from CSV"
+          ],
+          "correct": 0,
+          "right": "You've got it — LTRIM/RTRIM are more limited than most people assume. They only touch ASCII space, so a tab-only or CR-only field would sail right past them undetected.",
+          "wrong": "Here's the gap this catches: LTRIM and RTRIM only strip actual space characters — nothing else. A field that's secretly just a tab (CHAR(9)) or a carriage return (CHAR(13)) would pass a plain LTRIM/RTRIM check as \"non-empty,\" because those functions never touch it. REPLACE strips those too before the real emptiness test runs."
+        },
+        {
+          "q": "In `LEN(LTRIM(RTRIM(ISNULL(FirstName, ''))))`, what breaks if ISNULL is left out for a row where FirstName is truly NULL?",
+          "choices": [
+            "LTRIM(NULL) returns NULL, so LEN(NULL) returns NULL too — which is not equal to 0, so that row would be missed by the whitespace check",
+            "The query would throw a syntax error immediately",
+            "SQL Server would automatically substitute an empty string on its own",
+            "It has no effect — NULL and '' behave identically in LEN()"
+          ],
+          "correct": 0,
+          "right": "Right again — you're seeing this pattern everywhere now, which is exactly the point. NULL propagates through every function it touches until something explicitly converts it.",
+          "wrong": "You've seen this shape twice already in earlier lessons, so let's connect it: LTRIM(NULL) is NULL, and LEN(NULL) is NULL too — never 0. Without ISNULL converting it to '' first, a truly-NULL row would silently slip past a check that's specifically looking for a length of 0."
+        }
+      ],
+      "close": "That's three lessons in a row where you've correctly reasoned through how NULL quietly breaks a naive check — that pattern is going to serve you well for the rest of this group. Ready to move to Partial Record, where we shift from single fields to scoring a whole row?"
+    },
+    "G01-T05": {
+      "open": "New shape of problem here — instead of one bad field, we're scoring an entire record for how complete it is overall. Let's see how the query pulls that off.",
+      "questions": [
+        {
+          "q": "Why does the solution use a CTE (CompletenessScore) instead of writing the 6-field CASE expression directly in both SELECT and WHERE?",
+          "choices": [
+            "Writing it once and referencing FieldsPopulated afterward avoids repeating six CASE WHEN blocks and the risk of the two copies drifting apart",
+            "CTEs are required whenever more than 3 columns are used",
+            "A CTE makes the query run without needing a FROM clause",
+            "CTEs automatically cache results between separate query runs"
+          ],
+          "correct": 0,
+          "right": "Exactly right — and that \"drift\" risk is a real one. If you'd written the six-field expression twice and later changed one copy but forgot the other, your displayed score and your filter would quietly disagree.",
+          "wrong": "Here's the practical reason: that scoring expression is long, and the naive version would need it written twice — once in SELECT, once in WHERE. A CTE computes it once, so both the number you show and the number you filter on are guaranteed to be the same value, not two copies that could silently drift apart."
+        },
+        {
+          "q": "What does `SUM(COUNT(*)) OVER ()` compute in the summary query?",
+          "choices": [
+            "The grand total of all rows across every group, calculated as a window function in the same pass as the per-group counts",
+            "A running total that resets for each new group",
+            "The average number of rows per group",
+            "It throws an error — COUNT(*) cannot be used inside SUM()"
+          ],
+          "correct": 0,
+          "right": "Yes — that's a neat trick once you see it. One pass over the data gives you both each group's count AND the grand total needed for the percentage, no separate subquery required.",
+          "wrong": "This is a genuinely clever technique worth remembering: OVER() with no PARTITION BY tells SQL Server to compute that SUM across the entire result set, not per-group. So every row gets access to the grand total in the same query pass — no second subquery needed just to get a denominator for the percentage."
+        },
+        {
+          "q": "A customer record has 4 out of 6 mandatory fields populated. Per the lesson's thresholds, what status is it given?",
+          "choices": [
+            "Acceptable",
+            "Complete",
+            "Incomplete",
+            "Critical — nearly empty"
+          ],
+          "correct": 0,
+          "right": "Correct — 4 lands right at the bottom edge of the Acceptable band. Good attention to the actual threshold numbers, not just the general idea.",
+          "wrong": "Worth locking in the actual numbers here: 6/6 is Complete, 4-5 is Acceptable, 2-3 is Incomplete, and 0-1 is Critical. A score of exactly 4 lands right at the start of the Acceptable range."
+        }
+      ],
+      "close": "You've now built a full per-record completeness score from scratch, in your head — the CTE pattern, the window-function trick, and the threshold logic all in one lesson. That's a genuinely reusable pattern you'll see again in real work. Conditional Completeness is next, and it builds directly on today's ideas."
+    },
+    "G01-T06": {
+      "open": "This one's a step up in subtlety — fields that are only sometimes required, depending on another field's value. Let's see if you can spot why that breaks a normal schema constraint.",
+      "questions": [
+        {
+          "q": "Why can't a database schema enforce a rule like \"if PaymentMethod is 'Card', CardLastFour must be populated\" the same way it enforces a plain NOT NULL constraint?",
+          "choices": [
+            "Conditional rules depend on the value of another column, which is business logic rather than a fixed structural constraint the schema can express directly",
+            "SQL Server does not support conditional logic of any kind",
+            "NOT NULL constraints can only be applied to numeric columns",
+            "CardLastFour is always optional, so no rule is actually being broken"
+          ],
+          "correct": 0,
+          "right": "Exactly — and that's precisely why these bugs slip through so easily in the wild. A plain NOT NULL is a fixed rule; \"required only sometimes\" depends on another column's live value, which most schemas simply can't express.",
+          "wrong": "Here's the distinction that makes this lesson matter: a NOT NULL constraint says \"always required, no exceptions.\" This rule says \"required only when another column has a specific value\" — that's conditional logic, which typically lives in application code or a validation query, not the schema. That's exactly why it's invisible to a basic NULL check."
+        },
+        {
+          "q": "What is the standard structure for detecting a conditional completeness violation in SQL?",
+          "choices": [
+            "WHEN [trigger condition] AND [dependent field] IS NULL",
+            "WHEN [dependent field] IS NULL OR [trigger condition] IS NULL",
+            "WHERE [trigger condition] IS NOT NULL",
+            "GROUP BY [trigger condition] HAVING [dependent field] IS NULL"
+          ],
+          "correct": 0,
+          "right": "Right — AND is the key word there. You need both halves true at once: the rule has to actually apply, AND the required field has to actually be missing.",
+          "wrong": "Worth getting this shape exactly right, since it's the template for every conditional check: you need AND, not OR. The trigger condition confirms the rule even applies to this row, and the dependent-field NULL check confirms it was actually violated. OR would flag rows where the rule never even applied in the first place."
+        },
+        {
+          "q": "In the Orders example, what does a violation of \"DiscountPct > 0 AND ApprovedBy IS NULL\" actually represent in the business?",
+          "choices": [
+            "A discount was applied to an order without a recorded approver — a potential fraud or process-control risk",
+            "An order that hasn't shipped yet",
+            "A customer who has never placed an order before",
+            "A product that is out of stock"
+          ],
+          "correct": 0,
+          "right": "Yes — and that's worth sitting with for a second, because this is a fraud-control gap, not just a data quality nitpick. Someone gave away money without the required sign-off being on record.",
+          "wrong": "This is the real-world stakes of this rule: it means a discount got applied to an order with no approver on record. That's not just messy data — it's a process-control gap that could represent a discount nobody actually authorized."
+        }
+      ],
+      "close": "You've just connected schema limitations to real business risk — that's exactly the kind of thinking that goes beyond \"can I write the query\" into \"do I understand why it matters.\" Optional Field Population Rate is next, and it's a nice change of pace: less about finding errors, more about measuring what's usable."
+    },
+    "G01-T07": {
+      "open": "Different flavor of question here — not every gap is an error. Sometimes it's just a density question: how usable is this optional field, really? Let's find out.",
+      "questions": [
+        {
+          "q": "How does \"population rate\" differ from a simple NULL rate?",
+          "choices": [
+            "Population rate counts both NULLs and blank strings as missing, giving a more complete picture than a NULL-only count",
+            "Population rate only applies to numeric columns",
+            "They're the same metric with two different names",
+            "Population rate measures how many rows exist in the table, not column completeness"
+          ],
+          "correct": 0,
+          "right": "Exactly — you're combining the lessons from earlier in this group. NULL rate alone tells only half the story; blank strings hide in the other half.",
+          "wrong": "This connects back to G01-T02 directly: a NULL-only check would miss blank strings entirely. A column with 10% NULLs and 5% blanks has 15% genuinely missing data — population rate is the metric that reflects the real, honest number."
+        },
+        {
+          "q": "Why does the column-profile query stack six separate SELECTs with UNION ALL instead of one query that loops over all columns?",
+          "choices": [
+            "Standard SQL cannot dynamically iterate over columns without resorting to dynamic SQL, so stacking explicit SELECTs is the transparent, auditable alternative",
+            "UNION ALL is the only way to use COUNT() in SQL Server",
+            "Looping over columns is against SQL syntax rules entirely",
+            "It's purely a stylistic choice with no functional reason"
+          ],
+          "correct": 0,
+          "right": "Right — verbose but transparent beats clever but opaque here. Anyone can read six stacked SELECTs and verify each one; that's a real advantage when someone else has to trust your validation logic later.",
+          "wrong": "Here's the underlying constraint: plain SQL has no \"for each column\" loop. A dynamic SQL version could generate this automatically, but the explicit UNION ALL version — while it takes more lines — is something any teammate can read and verify column by column without trusting a generated string of SQL."
+        },
+        {
+          "q": "The lesson sets population-rate ratings like 95%+ = Excellent and 60%+ = Acceptable. What does it say about where those specific cutoffs come from?",
+          "choices": [
+            "They're example thresholds — the real cutoffs are business decisions that should be agreed with stakeholders, not universal rules",
+            "They are hard-coded ANSI SQL standards that apply to every table",
+            "They're generated automatically based on the table's row count",
+            "They only apply to the DOB column specifically"
+          ],
+          "correct": 0,
+          "right": "Yes — and that's an important instinct to carry forward. The SQL never changes, but what counts as \"good enough\" absolutely should, depending on who's asking and why.",
+          "wrong": "Worth remembering as you apply this elsewhere: those percentages are illustrative, not universal law. A 60% population rate might be totally fine for a rough marketing segment but completely unacceptable for a regulated field — real thresholds belong to a conversation with the business, not a fixed rule in the query."
+        }
+      ],
+      "close": "Nice shift in thinking there — you separated \"this is broken\" from \"this is usable for what we need,\" which is a distinction a lot of people miss. Missing Expected Row is next, and it's the trickiest one yet in this group: rows that don't exist at all."
+    },
+    "G01-T08": {
+      "open": "This is the one that trips people up the most, because everything you've learned so far assumes a row exists to inspect. What happens when the row itself is the thing that's missing?",
+      "questions": [
+        {
+          "q": "Why can't a standard NULL check ever detect that a cost centre failed to submit its October budget entry?",
+          "choices": [
+            "There's no row at all to inspect — NULL checks examine values inside existing rows, but a missing submission means the row itself never got created",
+            "NULL checks only work on date columns, not budget amounts",
+            "The Transactions table doesn't support NULL checks by design",
+            "October is always excluded from validation queries by default"
+          ],
+          "correct": 0,
+          "right": "Exactly right — and that's the conceptual leap this whole lesson is built around. Every check before this one looked inside a row. This one has to notice the row was never there to begin with.",
+          "wrong": "This is the big shift the whole lesson turns on: every check you've done so far in this group inspects a value inside an existing row. A missing budget submission means there's no row at all — nothing for a NULL check to even look at. You have to build a separate \"expected\" set and compare against it to notice the gap."
+        },
+        {
+          "q": "What role does CROSS JOIN play in this pattern?",
+          "choices": [
+            "It generates every combination of two dimensions (e.g. every month × every branch) to build the full \"expected\" set before comparing against what actually exists",
+            "It removes duplicate rows from the Transactions table",
+            "It's used to speed up the query by skipping unindexed columns",
+            "It converts the Branch column into a numeric ID"
+          ],
+          "correct": 0,
+          "right": "Right — CROSS JOIN is doing the heavy lifting of imagination here, generating the complete \"this is what should exist\" grid before you ever compare it to reality.",
+          "wrong": "Think of CROSS JOIN as building the imaginary complete picture first: every month paired with every branch, whether or not it actually happened. That full grid is the \"expected\" set — the LEFT JOIN afterward is what reveals which of those expected combinations never actually showed up."
+        },
+        {
+          "q": "In the LEFT JOIN pattern for finding missing rows, what does `WHERE a.MonthStart IS NULL` actually mean?",
+          "choices": [
+            "The expected row had no match in the Actual set — meaning that month/branch combination never submitted data",
+            "The MonthStart column itself contains a literal NULL value in the Transactions table",
+            "The query found a formatting error in the date column",
+            "The join failed and returned an error"
+          ],
+          "correct": 0,
+          "right": "Yes — you've got the anti-join pattern down. That NULL isn't data, it's the absence of a match, and that absence is exactly the signal you're hunting for.",
+          "wrong": "This is the classic anti-join trick, worth remembering by name: when a LEFT JOIN finds no matching row on the right side, every right-side column comes back NULL — not because the data is NULL, but because there was nothing to join to. Testing for that NULL is how you detect \"this expected combination never actually happened.\""
+        }
+      ],
+      "close": "That's the hardest concept in this whole group, and you worked through all three layers of it — why NULL checks are blind here, how CROSS JOIN builds the expected picture, and how the anti-join reveals the gap. Genuinely strong work. Truncated Value is next, and it's a lighter one after that."
+    },
+    "G01-T09": {
+      "open": "Back to something more concrete now — values that got cut off mid-string with zero error raised. Let's see if you can spot the tell-tale signs.",
+      "questions": [
+        {
+          "q": "Why can a VARCHAR(100) column silently store a 250-character value as only 100 characters, with no error?",
+          "choices": [
+            "In many SQL Server configurations, string values exceeding a column's length are silently truncated on insert rather than rejected",
+            "SQL Server automatically compresses long strings to fit any column",
+            "VARCHAR columns have no length limit at all",
+            "The 250-character value gets stored in a separate overflow table automatically"
+          ],
+          "correct": 0,
+          "right": "Exactly — and that silence is the whole danger. No error, no warning, just quietly incomplete data sitting there for months until someone notices product names ending mid-word.",
+          "wrong": "Here's what's actually happening under the hood: without ANSI_WARNINGS raising an error (and it's not always on, especially in legacy systems or bulk loads), an over-length string just gets quietly cut down to fit. No error, no warning — the data is simply, permanently incomplete from that point on."
+        },
+        {
+          "q": "Why is a value that lands exactly at a column's maximum length treated as a signal of possible truncation?",
+          "choices": [
+            "It's not proof by itself, but a cluster of values all landing exactly at the boundary is a strong practical indicator that longer originals were cut off",
+            "SQL Server automatically flags any value at the max length as invalid",
+            "It means the column definition itself is wrong",
+            "Values at the exact max length always represent test data that should be deleted"
+          ],
+          "correct": 0,
+          "right": "Right — and notice the careful wording: it's a signal, not proof. One value at the limit could be coincidence; a whole cluster at the exact same boundary is a real pattern.",
+          "wrong": "Worth being precise here — it's a signal, not a guarantee. One value naturally being exactly 50 characters could just be coincidence. But many rows all landing exactly at 50 is a strong pattern suggesting the true values were longer and got sliced off at that boundary."
+        },
+        {
+          "q": "What advantage does querying `sys.columns` for the actual max_length give over hard-coding the number 50 in the query?",
+          "choices": [
+            "The check stays accurate even if the column definition changes or differs between environments, instead of silently checking against a stale hard-coded number",
+            "sys.columns runs faster than any other system view",
+            "It automatically fixes truncated values without needing a rerun",
+            "It's required syntax — VARCHAR columns can't be queried without it"
+          ],
+          "correct": 0,
+          "right": "Yes — and this is a maintainability lesson as much as a SQL one. A hard-coded 50 quietly goes stale the moment someone alters the column; reading the real definition never does.",
+          "wrong": "Think about what happens six months from now: a hard-coded 50 works only until someone alters the column, or the check runs against a different environment with a different size. Reading the real definition from sys.columns keeps the check accurate automatically, with no manual upkeep needed."
+        }
+      ],
+      "close": "You've now got a genuinely practical eye for silent truncation — the boundary-clustering signal especially is something a lot of experienced people miss. Sentinel Default Value is next, and it rhymes with placeholder text from a few lessons back, but with its own twist."
+    },
+    "G01-T10": {
+      "open": "This one connects straight back to Placeholder Text, but goes one layer deeper into why those specific values get chosen. Let's see the pattern.",
+      "questions": [
+        {
+          "q": "What is a \"sentinel value\" in the context of this lesson?",
+          "choices": [
+            "A technically valid value (a real date or number) that a system uses to mean \"unknown,\" chosen because it can't store an actual NULL",
+            "A value that SQL Server automatically rejects on insert",
+            "Any value greater than the column's maximum allowed size",
+            "A column-level security setting that restricts who can edit a field"
+          ],
+          "correct": 0,
+          "right": "Exactly — the key word is technically valid. That's what makes sentinels so much harder to catch than a blank field: they pass right through every check that's just looking for something missing.",
+          "wrong": "Here's the core idea: a sentinel like 01/01/1900 or -1 is a real, storable value — it's just not a real answer. Older systems that couldn't store an actual NULL used a specific \"magic\" value to mean \"we don't know this,\" and that old convention leaks into the data forever."
+        },
+        {
+          "q": "Why might three systems feeding into the same table each have a different sentinel date for \"unknown\"?",
+          "choices": [
+            "Different platforms have different minimum representable dates by design (e.g. SQL Server's minimum DATETIME vs Access's vs Excel's epoch), so each system's default \"empty\" date differs",
+            "Sentinel dates are randomly assigned by SQL Server at import time",
+            "Only one system is allowed to use sentinel values at a time",
+            "Sentinel dates change automatically based on the server's time zone"
+          ],
+          "correct": 0,
+          "right": "Right — this is genuinely useful to know for real migrations. Each platform's own technical minimum becomes its unofficial \"empty date\" convention, and those conventions collide the moment systems start talking to each other.",
+          "wrong": "This is real-world data archaeology, worth remembering: each platform historically defaulted to its own technical minimum — SQL Server's earliest DATETIME, Access's earliest date, Excel's date-serial epoch. When systems built on different platforms feed the same table, their different \"unknown\" conventions collide with real data in different ways."
+        },
+        {
+          "q": "What is the correct fix once a sentinel value has been identified, according to the lesson?",
+          "choices": [
+            "Convert it to a real NULL at ingestion using NULLIF or a CASE WHEN, so downstream NULL-handling logic applies correctly",
+            "Delete every row that contains the sentinel value",
+            "Leave it as-is, since it's already a valid value the column accepts",
+            "Rename the column so the sentinel no longer applies"
+          ],
+          "correct": 0,
+          "right": "Yes — turn it back into what it always secretly meant. Once it's a real NULL, every NULL-handling rule you already have downstream just works correctly, with no special-casing needed.",
+          "wrong": "The fix is to unmask it, not delete it: NULLIF(DOB, '19000101') — or an equivalent CASE WHEN — converts the sentinel back into a genuine NULL. That way, every downstream system's existing NULL-handling logic correctly treats it as missing, without needing to know about that specific legacy convention."
+        }
+      ],
+      "close": "You've now got a real toolkit for the sneakiest completeness bug there is — values that look real, pass every basic check, and only reveal themselves once you know the source system's history. Incomplete Address is next, and it's a nice practical application of the scoring pattern from earlier."
+    },
+    "G01-T11": {
+      "open": "This one brings together the scoring idea from Partial Record and applies it somewhere very concrete: can a parcel actually get delivered to this address?",
+      "questions": [
+        {
+          "q": "Why does the query use CONCAT to build a single \"MissingComponents\" string instead of returning one Y/N column per address field?",
+          "choices": [
+            "It's easier for an operations team to action — they see exactly which components are missing in one readable string instead of scanning across several columns",
+            "CONCAT is required whenever more than 2 columns are compared",
+            "It makes the query run faster by reducing the number of columns returned",
+            "Y/N columns aren't supported for address data in SQL Server"
+          ],
+          "correct": 0,
+          "right": "Exactly — you're thinking about the person who has to use this output, not just the person who wrote the query. That's a real skill, not just a technical one.",
+          "wrong": "Think about who reads this output at 8am with 800 parcels to sort: seeing \"City PostCode\" in one glance is much faster to act on than scanning across four separate Y/N flag columns and mentally piecing together which ones say 'missing'."
+        },
+        {
+          "q": "Why is AddressLine2 deliberately excluded from the completeness score?",
+          "choices": [
+            "It's optional by design (flat number, floor, suite) — flagging its absence would create false positives for every customer who legitimately doesn't need it",
+            "AddressLine2 doesn't exist as a real column in most systems",
+            "Including it would make the query too slow to run",
+            "SQL Server doesn't allow optional fields to be checked for completeness"
+          ],
+          "correct": 0,
+          "right": "Right — and this is an important discipline: not every empty field is a problem. Scoring an optional field as \"missing\" for everyone who legitimately doesn't need it would just create noise.",
+          "wrong": "This is about knowing which fields are actually optional: most addresses genuinely don't need a second line. Scoring it as \"missing\" for every customer without one would flood the results with false positives on a field that was never required in the first place."
+        },
+        {
+          "q": "The lesson says address completeness rules are \"domain-specific.\" What does that mean in practice?",
+          "choices": [
+            "What counts as a \"complete enough\" address depends on the use case — a courier needs PostCode + Country, while marketing might only need City",
+            "Every company must use the exact same 4-field address standard by law",
+            "Address completeness only matters for international customers",
+            "The rules change automatically based on which country the customer is in"
+          ],
+          "correct": 0,
+          "right": "Yes — same instinct you showed back in the population-rate lesson. The mechanics of the query stay the same; what counts as \"good enough\" is a decision made by whoever's going to actually use the data.",
+          "wrong": "This echoes what you saw in Optional Field Population Rate: the required-field set and the score threshold should be configured per use case, not treated as one universal rule. A courier's routing needs (PostCode + Country) are stricter than a marketing segmentation use case, which might only need City."
+        }
+      ],
+      "close": "You've now applied the completeness-scoring pattern to a genuinely practical business problem — dispatch failures cost real money, and this is exactly the kind of check that prevents them. One lesson left in this group: Missing Child Records."
+    },
+    "G01-T12": {
+      "open": "Last one in the Completeness group — and it's a nice bridge into the next topic, since it's about relationships between tables, not just single columns.",
+      "questions": [
+        {
+          "q": "What's the key difference between using NOT EXISTS and LEFT JOIN ... WHERE ... IS NULL to find customers with no orders?",
+          "choices": [
+            "They find the same rows; NOT EXISTS can be faster on large indexed tables since it stops at the first match, while LEFT JOIN materializes the full join first",
+            "NOT EXISTS only works on numeric columns",
+            "LEFT JOIN can never be used to find missing child records",
+            "NOT EXISTS requires a completely different table structure"
+          ],
+          "correct": 0,
+          "right": "Exactly — same result, different performance character. NOT EXISTS can bail out early the moment it finds one match; LEFT JOIN builds the whole join first and filters after.",
+          "wrong": "Good news: both patterns return identical results here, so this is about performance and clarity, not correctness. NOT EXISTS often performs better on large, well-indexed child tables because it can stop scanning as soon as one match is found — the LEFT JOIN version builds out the full join before it ever filters."
+        },
+        {
+          "q": "Why does the lesson call \"a customer with no orders\" a business completeness check rather than a schema violation?",
+          "choices": [
+            "A brand-new customer legitimately exists before placing their first order, so the schema can't and shouldn't forbid that state — it's a business question of how long is too long, not a structural rule",
+            "Schema constraints can only apply to numeric columns",
+            "Customers and Orders are always in different databases",
+            "SQL Server doesn't support foreign key constraints between these tables"
+          ],
+          "correct": 0,
+          "right": "Right — and this echoes something you already worked out back in Conditional Completeness: some rules are structural, and some are genuinely about business timing, not database design.",
+          "wrong": "This connects to the schema-vs-business-logic idea from a few lessons back: a schema constraint would make \"customer without an order\" impossible to create at all — but that's a completely normal state right after sign-up. The real business question isn't \"can this exist\" but \"how many days without an order should trigger outreach.\""
+        },
+        {
+          "q": "What does grouping customers into order bands (0, 1, 2-5, 6+) add beyond just listing the zero-order customers?",
+          "choices": [
+            "It gives business context — showing what percentage of the whole customer base is inactive, not just a raw list with no sense of scale",
+            "It automatically fixes the missing-order problem",
+            "It's required before NOT EXISTS can be used",
+            "It converts the CustomerID column into a different data type"
+          ],
+          "correct": 0,
+          "right": "Yes — a raw list has no sense of scale on its own. Seeing it next to the other bands tells you immediately whether this is a minor edge case or a real chunk of your customer base.",
+          "wrong": "Think about what a bare list of zero-order customers is missing: it doesn't tell you if that's 2% or 40% of the whole base. Seeing it next to the 1-order and 2-5-order bands gives that missing sense of scale — how significant is the inactive segment, really?"
+        }
+      ],
+      "close": "That's the full Completeness group done — twelve lessons, and you've built real instincts for NULLs, blanks, placeholders, sentinels, missing rows, and missing relationships. That's a genuinely strong foundation for everything else in Data Validation. Nicely done."
+    }
+  }
+}
