@@ -1077,3 +1077,163 @@ the user perceives. There, an element existed and could not be seen. Here,
 elements were seen and misrepresented their own importance. Rendering correctly
 is not the same as communicating correctly, and neither is checked by any guard
 in this repo — only by looking, in both themes, at every page a change touches.
+
+---
+
+## 25. `ui` in `renderPath` is a loop index, not an identity — reusing it as one renders nothing
+
+**Looked like:** a scoped accordion built for a single bank/unit rendered zero
+nodes. No error, no console warning — just an empty section where content should
+be.
+
+**Actually was:** `renderPath(units, flat, completed, fi)` groups nodes via
+`flat.filter(n => n.ui === ui)`, where `ui` is **the loop index within the
+specific `units` array passed to that call**, not any other index a node might
+carry. When building a scoped local `flat` array for one bank and stamping it
+with that bank's own global index (its `qi`) instead of `0`, the filter compared
+against a `ui` that no node in the scoped array actually had. This happened
+twice — once in the quiz-only accordion, then nearly again in the
+all-four-tracks generalisation, caught only by testing before shipping.
+
+**Fix:** when building a scoped local array for a single-call render, always
+stamp its nodes `ui: 0` (matching a `units` array of length 1), never a
+semantic/global index from elsewhere in the node.
+
+**Rule:** a field named for its role in one function (`ui` = "index in *this*
+loop") is not safe to reuse as identity elsewhere, even when a same-named field
+happens to exist on the object for another purpose. Grep every call site of a
+filter-by-index function before repurposing the array it filters.
+
+---
+
+## 26. Interpolating a variable into `onclick=` markup must go through `${}` — plain string concat writes dead source text
+
+**Looked like:** clicking a link threw `ReferenceError: route is not defined` in
+the browser console, even though `route` was a real, populated variable at the
+point the markup was generated.
+
+**Actually was:** the `onclick="..."` attribute value was itself inside a
+backtick template literal. One piece of it was built with plain string
+concatenation (`'quizbank/'+route.qi`) instead of `${route.qi}`. Outside a
+`${}` slot, `route.qi` is not evaluated at render time — it is written into the
+output HTML as the literal six characters `route.qi`, to be interpreted only
+when the browser parses and clicks the resulting `onclick` handler, at which
+point `route` is a page-global that does not exist (it was a function-local
+parameter when the string was built).
+
+**Fix:** use `${route.qi}` so the actual value is baked into the HTML string
+during render, matching the interpolation pattern already used elsewhere in the
+same function.
+
+**Rule:** inside any string destined for an `onclick`/`onXxx` attribute, every
+reference to a render-time variable must be inside `${}`. A bare reference
+outside `${}` is not a bug that throws immediately — it silently produces
+syntactically valid but semantically wrong HTML, and only fails later, at click
+time, with an error that points at the click handler rather than the render
+code that actually caused it.
+
+---
+
+## 27. A deep-link handler that never advances the hash re-fires on every unrelated render
+
+**Looked like:** a bank opened via a `#quizbank/N` deep link could never be
+collapsed — clicking to close it, or toggling any other bank, snapped it back
+open immediately.
+
+**Actually was:** the deep-link handler (`if(route.view==='quizbank'){...}`) ran
+unconditionally on every `render()` call for as long as the URL hash stayed
+`#quizbank/N`. Nothing in it ever changed the hash away from the deep-link form,
+so every subsequent render — including one triggered by toggling a *different*
+bank — re-entered the same branch and forced the original bank open again. The
+handler was written to run once, but nothing prevented it from running on every
+paint.
+
+**Fix:** immediately after consuming the deep link, call
+`history.replaceState(null,'','#track/quiz')` to move the URL off the one-shot
+form. `replaceState` was deliberate, not `location.hash = ...` — the latter
+fires `hashchange`, which would re-enter the render loop recursively.
+
+**Rule:** a "run once on load" branch keyed off URL/hash state is not actually
+one-shot unless something in that branch advances the state past the condition
+that let it fire. If the condition can still be true on the next render, it
+will fire on the next render — check every branch guarded by `route.view` for
+whether it mutates its own guard.
+
+---
+
+## 28. Ordering an external-dependency check before input validation masks every validation bug behind one generic error
+
+**Looked like:** while building `api/tutor.js`'s guards, every malformed test
+request — missing message, oversized history, bad role — came back with the
+same generic "not configured yet" 500, making it impossible to tell whether
+input validation was even running.
+
+**Actually was:** the `ANTHROPIC_API_KEY` presence check ran *before* the input
+validation block. In an environment without the key set (true for local
+`vercel dev` without a pulled `.env`), every request short-circuited on the key
+check regardless of what was wrong — or right — about its body, so the actual
+validation logic was never reached to be exercised.
+
+**Fix:** moved the API-key check to immediately before the `fetch()` call to
+Anthropic, after all input validation. Verified via curl: distinct 400s now
+return for missing message, over-length message, non-array history, and an
+invalid history entry role.
+
+**Rule:** order checks so that the cheapest, most-specific failure is reported
+first and an external dependency's availability is checked last, right before
+it's used. A dependency check placed early doesn't just waste one round trip —
+it makes every other guard behind it untestable without that dependency
+present.
+
+---
+
+## 29. `scrollIntoView({behavior:'smooth'})` can silently no-op right after a synchronous DOM mutation
+
+**Looked like:** clicking "Ask the Teacher" on a long lesson page did nothing
+visible — the panel existed in the DOM (confirmed present, `getBoundingClientRect().top`
+~31,800px down the page) but the viewport never moved, no error thrown,
+`window.scrollY` stayed at `0`.
+
+**Actually was:** `openTeacher()` called `render()` (a synchronous, same-tick DOM
+rebuild) and then immediately called
+`panel.scrollIntoView({behavior:'smooth'})` on the freshly-rendered element.
+Ruled out an inner scroll container (checked `overflow-y` on `body`, `html`,
+`#app` — all `visible`) and a thrown exception (wrapped in try/catch, none
+occurred). Confirmed the cause directly: calling `scrollIntoView({behavior:'auto'})`
+on the same already-open panel via the console worked instantly. `smooth` scroll
+is unreliable when invoked immediately after a same-tick synchronous DOM
+mutation in this context — it appears to no-op rather than queue or error.
+
+**Fix:** use `behavior:'auto'` (instant jump) instead of `'smooth'` right after a
+render-triggered DOM insertion. An instant jump over tens of thousands of pixels
+is also better UX here than a long animated scroll would have been.
+
+**Rule:** don't pair `scrollIntoView({behavior:'smooth'})` with a target that was
+just inserted by a synchronous render in the same tick — verify with `auto`
+first, and only reach for `smooth` once the element has existed across at least
+one paint. A silent no-op here doesn't throw, so it will not show up in any
+error-based check — it has to be caught by watching `window.scrollY` actually
+change.
+
+---
+
+## 30. `mdCache` stores rendered HTML, not source markdown — anything needing plain text must strip it back out
+
+**Looked like:** building a plain-text version of lesson content for "The
+Teacher" prompt looked like it should just read the lesson's markdown source
+directly out of the existing cache.
+
+**Actually was:** `mdCache[id]` in this codebase holds the *already-`mdToHtml`-converted
+HTML* for a lesson, not its raw markdown — every other consumer in the app
+wants HTML to render, so that's what the cache was built to hold. There is no
+separately-cached markdown source to read back out.
+
+**Fix:** added `htmlToPlainText(html)`, which writes the cached HTML into a
+detached `<div>`, then reads `.textContent`, to recover plain text for the
+prompt sent to `/api/tutor`.
+
+**Rule:** before assuming a cache holds "the" source data for a piece of
+content, check what actually gets written into it and by which function — a
+cache named after the content (`mdCache`) does not guarantee it holds that
+content in its original form once a conversion step exists in the pipeline
+feeding it.
