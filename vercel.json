@@ -3,6 +3,7 @@
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "quiz-bank.json", "use": "@vercel/static" },
+    { "src": "teacher-mcq.json", "use": "@vercel/static" },
     { "src": "projects/**", "use": "@vercel/static" },
     { "src": "business-analysis/**", "use": "@vercel/static" },
     { "src": "data-validation-lab/schemas/**", "use": "@vercel/static" },
