@@ -1237,3 +1237,61 @@ content, check what actually gets written into it and by which function — a
 cache named after the content (`mdCache`) does not guarantee it holds that
 content in its original form once a conversion step exists in the pipeline
 feeding it.
+
+---
+
+## 31. Widening a feature's scope reached a landmine that its narrower scope had never stepped on
+
+**Looked like:** shipped to production, then the owner reported it directly
+with a screenshot: opened The Teacher on a Data Validation lesson, typed
+"Hi", clicked Send — nothing happened. No reply, no error message, no visible
+reaction at all.
+
+**Actually was:** `sendTeacherMessage()` (a top-level function) read:
+
+```
+const flat=isDvId(lessonId)?dvFlat:(isBaId(lessonId)?buildBaFlat():buildFlat());
+```
+
+`dvFlat` is not a global. It is `const dvFlat=buildDvFlat();`, local to
+`renderApp()` (used there for XP totals and lesson lookups during a render
+pass). `buildFlat()` and `buildBaFlat()` in the other two branches ARE real
+global functions and worked correctly — only the DV branch referenced a name
+that only exists inside a different function's scope. Since this line runs
+synchronously near the top of `sendTeacherMessage()`, **before** its
+`try`/`catch` block starts, it threw `ReferenceError: dvFlat is not defined`
+and the whole async function died silently: no network request, no caught
+error, nothing shown to the user. Confirmed via the browser console, not
+guessed — `read_console_messages` showed the exact `ReferenceError` and its
+stack frame inside `sendTeacherMessage`.
+
+**This bug was not introduced by the change that exposed it.** It existed
+from The Teacher's original build, when the panel was Credit-Risk-only —
+`sendTeacherMessage()` already had this exact line, just never reachable,
+because Credit Risk always took the `buildFlat()` branch. The PR that removed
+the `(!dv&&!ba)` gate (making the panel available on DV/BA lessons, entries
+25-30 territory) is what first made the DV branch of this ternary reachable
+at all — and it broke on the very first real use.
+
+**The gap in verification, named plainly:** the session that widened the
+feature's scope tested that the button appeared and the panel opened with the
+correct title on a DV lesson — both of which work, because that lookup
+(`renderApp()` line ~1949) runs inside `renderApp()`, where `dvFlat` genuinely
+is in scope. It never actually typed a message and clicked Send on a DV
+lesson before shipping. The exact interactive path a real user would use
+first was the one path never exercised.
+
+**Fix:** `buildDvFlat()` instead of `dvFlat` — call the real function, matching
+the pattern already used correctly for the other two branches.
+
+**Rule — the one that generalizes:** widening what tracks/inputs reach an
+existing code path is not a safe operation just because the path "already
+works" for the cases it currently handles. A path only proves itself for the
+inputs that have actually walked through it. When a gate is removed
+specifically to expose a code path to a new input class, the verification
+has to exercise the *real interaction*, not just the surrounding UI state
+(button present, panel opens, correct title) — those can all be true while
+the actual thing the feature exists to do is completely broken underneath.
+This is the same family as entries 1, 6, 21, 23: confidently reporting a
+state that was never true, this time because the check stopped one layer
+short of the thing it was actually trying to verify.

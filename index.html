@@ -1446,7 +1446,7 @@ async function sendTeacherMessage(){
   // markdown — strip tags client-side rather than re-fetching, so the model
   // gets clean prose instead of HTML noise.
   const lessonMarkdown=htmlToPlainText(mdCache[lessonId]||'');
-  const flat=isDvId(lessonId)?dvFlat:(isBaId(lessonId)?buildBaFlat():buildFlat());
+  const flat=isDvId(lessonId)?buildDvFlat():(isBaId(lessonId)?buildBaFlat():buildFlat());
   const entry=flat.find(n=>n.id===lessonId);
   const lessonTitle=entry?entry.data.title:'';
   S.teacherMessages.push({role:'user',content:message});
