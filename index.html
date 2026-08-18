@@ -133,13 +133,19 @@ button{font-family:inherit;cursor:pointer;}
 .unit-body .path{margin-top:0;padding:0;max-width:none;}
 .unit-body .unit{margin-bottom:8px;}
 
-/* ── The Teacher ── */
-.teacher-panel{margin-top:36px;border-radius:16px;border:2px solid var(--border);background:var(--surface);overflow:hidden;}
-.teacher-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#7C4DFF;color:#fff;}
+/* ── The Teacher ──
+   position:fixed, not part of the lesson-page flow — a floating chat widget
+   anchored to the viewport's bottom-right, like the rest of the web treats
+   "chat with support/agent." No ancestor here sets transform/filter/contain
+   persistently (only transient :hover states elsewhere in this file), so
+   fixed positioning resolves against the viewport as expected, not some
+   ancestor's box. */
+.teacher-panel{position:fixed;right:20px;bottom:20px;width:380px;max-width:calc(100vw - 32px);max-height:min(600px,70vh);display:flex;flex-direction:column;border-radius:16px;border:2px solid var(--border);background:var(--surface);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.28);z-index:60;}
+.teacher-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#7C4DFF;color:#fff;flex-shrink:0;}
 .teacher-head-lbl{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;}
 .teacher-head-sub{font-size:12px;font-weight:700;opacity:.85;margin-top:2px;}
-.teacher-close{background:rgba(255,255,255,.22);border:none;color:#fff;width:28px;height:28px;border-radius:8px;cursor:pointer;font-weight:800;}
-.teacher-scroll{max-height:420px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;}
+.teacher-close{background:rgba(255,255,255,.22);border:none;color:#fff;width:28px;height:28px;border-radius:8px;cursor:pointer;font-weight:800;flex-shrink:0;}
+.teacher-scroll{flex:1;min-height:200px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;}
 .teacher-empty{color:var(--text-lo);font-size:13.5px;font-style:italic;}
 .teacher-msg{display:flex;}
 .teacher-msg.user{justify-content:flex-end;}
@@ -147,11 +153,17 @@ button{font-family:inherit;cursor:pointer;}
 .teacher-msg.user .teacher-bubble{background:#7C4DFF;color:#fff;border-bottom-right-radius:4px;}
 .teacher-msg.assistant .teacher-bubble{background:var(--track-bg);color:var(--text-hi);border-bottom-left-radius:4px;}
 .teacher-thinking{opacity:.7;font-style:italic;}
-.teacher-error{margin:0 18px 12px;padding:10px 14px;border-radius:10px;background:#FFE5E5;color:#B00020;font-size:13px;font-weight:600;}
-.teacher-input-row{display:flex;gap:10px;padding:14px 18px;border-top:2px solid var(--border);}
+.teacher-error{margin:0 18px 12px;padding:10px 14px;border-radius:10px;background:#FFE5E5;color:#B00020;font-size:13px;font-weight:600;flex-shrink:0;}
+.teacher-input-row{display:flex;gap:10px;padding:14px 18px;border-top:2px solid var(--border);flex-shrink:0;}
 .teacher-input-row textarea{flex:1;resize:none;height:44px;padding:10px 12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--text-hi);font-family:inherit;font-size:14px;}
 .teacher-send{background:#7C4DFF;color:#fff;border:none;padding:0 20px;border-radius:10px;font-weight:800;cursor:pointer;}
 .teacher-send:disabled,.teacher-input-row textarea:disabled{opacity:.5;cursor:not-allowed;}
+/* Small screens: a corner card doesn't work at 375px wide — go full-width,
+   docked to the bottom, so it reads as a bottom sheet instead of a postage
+   stamp. */
+@media (max-width:640px){
+  .teacher-panel{left:12px;right:12px;bottom:12px;width:auto;max-width:none;max-height:75vh;}
+}
 .node-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .node-btn{border:none;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
 .node-btn.is-next::before,.node-btn.is-next::after{
@@ -1417,15 +1429,11 @@ function openTeacher(lessonId){
   if(S.teacherLessonId!==lessonId){S.teacherMessages=[];S.teacherError=null;S.teacherDraft='';}
   S.teacherOpen=true;S.teacherLessonId=lessonId;
   render();
-  // The panel renders after the full lesson body, which can be thousands of
-  // pixels tall — without this, clicking the button at the top of a long
-  // lesson silently opens a panel far below the fold with nothing visibly
-  // happening. behavior:'auto' (instant), not 'smooth' — smooth scroll is
-  // unreliable right after a DOM mutation in the same tick, and confirmed
-  // to silently no-op here; an instant jump over tens of thousands of
-  // pixels is also just the better UX than a long, distracting animation.
-  const panel=document.querySelector('.teacher-panel');
-  if(panel)panel.scrollIntoView({behavior:'auto',block:'start'});
+  // No scrollIntoView needed here (LESSONS-LEARNED entry 29 covered a
+  // scrollIntoView({behavior:'smooth'}) no-op when the panel was in normal
+  // page flow after a long lesson body). The panel is now position:fixed —
+  // it renders anchored to the viewport regardless of scroll position or
+  // where it sits in the DOM, so there is nothing to scroll to.
 }
 function closeTeacher(){S.teacherOpen=false;render();}
 async function sendTeacherMessage(){
