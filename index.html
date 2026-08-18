@@ -140,7 +140,13 @@ button{font-family:inherit;cursor:pointer;}
    persistently (only transient :hover states elsewhere in this file), so
    fixed positioning resolves against the viewport as expected, not some
    ancestor's box. */
-.teacher-panel{position:fixed;right:20px;bottom:20px;width:380px;max-width:calc(100vw - 32px);max-height:min(600px,70vh);display:flex;flex-direction:column;border-radius:16px;border:2px solid var(--border);background:var(--surface);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.28);z-index:60;}
+.teacher-panel{position:fixed;right:20px;bottom:20px;width:380px;max-width:calc(100vw - 32px);max-height:min(600px,70vh);display:flex;flex-direction:column;border-radius:16px;border:2px solid var(--border);background:var(--surface);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.28);z-index:60;transition:width .15s ease,max-height .15s ease;}
+/* Wide mode: the MCQ right/wrong feedback runs several sentences long, and
+   380px wraps it into a tall, cramped column. Toggled per-session (not
+   persisted, not per-lesson) via teacherToggleWide() — a plain preference,
+   not conversation state. */
+.teacher-panel.wide{width:min(900px,calc(100vw - 40px));max-height:min(720px,82vh);}
+@media (max-width:640px){.teacher-wide-toggle{display:none;}}   /* already full-width there — see the panel's own mobile breakpoint below */
 .teacher-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#7C4DFF;color:#fff;flex-shrink:0;}
 .teacher-head-lbl{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;}
 .teacher-head-sub{font-size:12px;font-weight:700;opacity:.85;margin-top:2px;}
@@ -601,7 +607,10 @@ let S={completed:{},streak:1,mdContent:{},mdLoading:{},mdError:{},
        // real API once the student either finishes the set or types a free-text
        // message instead of picking an answer — see openTeacher/sendTeacherMessage.
        teacherMcq:null,teacherMcqLoading:false,teacherMcqError:false,
-       teacherMode:'mcq',teacherMcqIndex:0,teacherMcqSelected:null,teacherMcqDone:false};
+       teacherMode:'mcq',teacherMcqIndex:0,teacherMcqSelected:null,teacherMcqDone:false,
+       // Plain UI preference, not conversation state — deliberately not reset
+       // by openTeacher() on a lesson change, unlike everything above it.
+       teacherWide:false};
 const mdCache={};
 
 function loadState(){
@@ -1503,6 +1512,7 @@ function teacherMcqNext(){
 // chat — see also sendTeacherMessage(), which does the same switch if the
 // student types a message instead of picking an answer at any point.
 function teacherContinueChat(){S.teacherMode='chat';render();}
+function teacherToggleWide(){S.teacherWide=!S.teacherWide;render();}
 async function sendTeacherMessage(){
   const ta=document.getElementById('teacher-input');
   if(!ta)return;
@@ -1605,13 +1615,14 @@ function renderTeacherPanel(lessonId,lessonTitle){
     }
   }
   return `
-  <div class="teacher-panel">
+  <div class="teacher-panel${S.teacherWide?' wide':''}">
     <div class="teacher-head">
       <div>
         <div class="teacher-head-lbl">🎓 The Teacher</div>
         <div class="teacher-head-sub">${showMcq?'Warm-up quiz':'Memorization tutor'} · ${esc(lessonTitle)}</div>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="teacher-close teacher-wide-toggle" title="${S.teacherWide?'Shrink':'Widen — answers run long'}" onclick="teacherToggleWide()">${S.teacherWide?'⤡':'⤢'}</button>
         <button class="teacher-close" title="Start a new session" onclick="resetTeacherSession()" ${loading?'disabled':''}>↻</button>
         <button class="teacher-close" title="Close" onclick="closeTeacher()">✕</button>
       </div>
