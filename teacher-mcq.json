@@ -1301,6 +1301,678 @@
         }
       ],
       "close": "That's the full Referential Integrity group — nine lessons, and you've gone from a single broken FK all the way through self-referencing loops, cross-database boundaries, and cascades that only partially worked. The throughline across all nine: a foreign key constraint, when it exists at all, only ever answers \"does the parent exist\" — never \"is the relationship still meaningful.\" Everything else needs a query like the ones you just worked through. Strong finish to this group."
+    },
+    "G04-T01": {
+      "open": "Group 4: Format/Pattern — the biggest group in Data Validation, so we'll take it in two sittings. This half starts with the field everyone recognizes instantly when it's broken: email.",
+      "questions": [
+        {
+          "q": "The pattern `%_@__%.__%` is used to validate email structure. What does it actually require?",
+          "choices": [
+            "At least one character before the @, at least two characters after it, a literal dot, and at least two more characters after that dot",
+            "Exactly one character before and after the @ symbol",
+            "The email must contain no more than 10 characters total",
+            "The domain must be a real, resolvable domain name"
+          ],
+          "correct": 0,
+          "right": "Exactly — read left to right: one-or-more chars, @, two-or-more chars (domain start), a dot, two-or-more chars (TLD). That's the minimum shape a real email needs, without claiming to know if the domain is real.",
+          "wrong": "Breaking the pattern down piece by piece: `%_` means one or more characters before the @. `@` is the literal symbol. `__%` means at least two characters after it (the domain). `.` is a literal dot. The final `__%` means at least two more characters (the TLD). Together that's the minimum structural shape of a real email — nothing about whether the domain actually exists."
+        },
+        {
+          "q": "Why does the lesson suggest `LEN(Email) - LEN(REPLACE(Email, '@', '')) > 1` as sometimes better than `Email LIKE '%@%@%'` for catching multiple @ symbols?",
+          "choices": [
+            "It's more readable and correctly handles three or more @ symbols, not just exactly two",
+            "LIKE cannot detect the @ symbol at all",
+            "REPLACE is faster than every other string function in SQL Server",
+            "The two approaches check completely different things"
+          ],
+          "correct": 0,
+          "right": "Right — the REPLACE-and-subtract trick directly counts occurrences, so it scales cleanly to 3, 4, or any number of @ symbols, where the LIKE pattern only really names the two-@ case explicitly.",
+          "wrong": "`LIKE '%@%@%'` explicitly checks for the two-@ case. The REPLACE-based version removes every @ and compares the length difference to the original — that difference IS the @ count, so it correctly flags 3, 4, or more @ symbols without needing a longer and longer LIKE pattern for each additional case."
+        },
+        {
+          "q": "The lesson lists several things this SQL-only email validation does NOT catch. What are they?",
+          "choices": [
+            "Whether the domain actually exists, disposable email providers, unicode characters, and RFC 5321 length limits",
+            "Whether the @ symbol is present",
+            "Whether the email contains spaces",
+            "Whether the email is NULL"
+          ],
+          "correct": 0,
+          "right": "Exactly — this check is entirely structural. It's a strong first filter, but genuine deliverability needs a DNS lookup or an external verification API, which is outside what SQL can do.",
+          "wrong": "The lesson is explicit about the boundary: SQL LIKE validation checks *shape*, not *reality*. It can't tell you if a domain actually exists (needs DNS), catch disposable providers, handle unicode addresses, or enforce RFC 5321's exact length limits (64 chars local-part, 255 total). Those need application-layer or external-API validation — SQL structural checks are the first filter, not the last."
+        }
+      ],
+      "close": "Structural pattern matching is the whole toolkit for this group — it tells you the shape is right, never that the meaning is right. Phone Number Format is next, where \"right shape\" turns out to vary by country in ways email doesn't."
+    },
+    "G04-T02": {
+      "open": "Phone numbers are worse than email for one specific reason: there's no universal symbol like @ to anchor on. Every convention — spaces, dashes, parentheses, country codes — is technically valid somewhere.",
+      "questions": [
+        {
+          "q": "Why does the query strip out `+`, `-`, spaces, and parentheses before counting the digits in a phone number?",
+          "choices": [
+            "It lets length be validated independently of whatever formatting convention the data entry used — the digit count is what actually matters for E.164 range checking",
+            "SQL Server cannot count characters in a string that contains punctuation",
+            "It converts the phone number into a valid E.164 number automatically",
+            "Stripping characters makes the LIKE pattern run faster"
+          ],
+          "correct": 0,
+          "right": "Exactly — 07911 123456 and 07911123456 are the same number with different formatting. Stripping first means the length check works regardless of which formatting convention was used to enter it.",
+          "wrong": "A phone number can be legitimately written with or without spaces, dashes, or parentheses — `07911 123456` and `07911123456` are the same number. Stripping those characters out first means the digit-count check (E.164 allows 7-15 digits) works the same way regardless of which formatting style the data entry used, instead of needing a separate length rule for every formatting variant."
+        },
+        {
+          "q": "What does the pattern `LIKE '%[^0-9+() -]%'` catch?",
+          "choices": [
+            "Any character that is never valid in a phone field — letters, @, #, *, commas, and similar",
+            "Phone numbers that are exactly 10 digits long",
+            "Only phone numbers from outside the UK",
+            "Phone numbers containing a plus sign"
+          ],
+          "correct": 0,
+          "right": "Right — the `[^...]` bracket means \"not in this set.\" Anything outside digits, +, (, ), space, and - gets flagged, which is exactly the set of characters that should never appear in a phone field.",
+          "wrong": "The `[^0-9+() -]` bracket expression means \"any character NOT in this set.\" The allowed set here is digits, +, parentheses, spaces, and hyphens — the characters that legitimately show up in phone number formatting. Anything else (letters, @, #, commas) trips this check, catching garbage values like \"call me on mobile\" or \"N/A\"."
+        },
+        {
+          "q": "Why does the lesson say SQL can verify a phone number's plausibility but not its validity?",
+          "choices": [
+            "A US number and a UK mobile can share the exact same digit count while having completely different real structures — right length doesn't mean right format for that country",
+            "SQL cannot count digits in a phone number at all",
+            "Phone numbers are always exactly 10 digits regardless of country",
+            "Validity checking requires a network connection, which plausibility checking also requires"
+          ],
+          "correct": 0,
+          "right": "Exactly — length is a weak proxy for correctness. Two numbers can pass the exact same digit-count check while belonging to totally different national numbering plans.",
+          "wrong": "The lesson's own example: a 10-digit US number and a 10-digit UK mobile pass the same digit-count check but follow completely different real structures. SQL can confirm \"this has a plausible length and no letters\" — plausibility. It cannot confirm \"this is a real number formatted correctly for its country\" — validity. That needs country-specific format rules, which is a much bigger job than one generic check."
+        }
+      ],
+      "close": "Same lesson as email, one level harder: length and character-set checks get you plausibility, never certainty. Postcode / ZIP Code Format is next, where the country-specific angle becomes the entire point of the lesson."
+    },
+    "G04-T03": {
+      "open": "This one makes the country-specific problem from the last lesson unavoidable — a UK postcode and a US ZIP code don't just look different, they follow completely different structural rules.",
+      "questions": [
+        {
+          "q": "Why must the query filter `WHERE Country = 'UK'` before applying the UK postcode LIKE patterns, rather than checking all postcodes against all patterns at once?",
+          "choices": [
+            "Mixing UK and US postcode patterns in one check produces false positives — a valid US ZIP could accidentally look invalid against UK rules, or vice versa",
+            "SQL Server cannot filter by Country and PostalCode in the same query",
+            "UK and US postcodes always have exactly the same length",
+            "Filtering by country makes the query run in a different database"
+          ],
+          "correct": 0,
+          "right": "Exactly — a country-specific format rule only makes sense applied to that country's data. Apply it universally and you'll flag correct US ZIPs as broken UK postcodes, and vice versa.",
+          "wrong": "The lesson is direct about this: \"country-specific patterns should be separated.\" A UK postcode pattern has no idea what a valid US ZIP looks like, and applying it to US records would flag perfectly valid ZIPs as broken. Filtering by Country first means each pattern only ever gets applied to the data it was actually designed for."
+        },
+        {
+          "q": "What's the practical difference between LIKE and PATINDEX that the lesson highlights?",
+          "choices": [
+            "LIKE returns a true/false match; PATINDEX returns the actual position of the first invalid character, useful when you need to show exactly where a violation occurs",
+            "PATINDEX only works on numeric columns",
+            "LIKE is always faster than PATINDEX for any check",
+            "They are functionally identical with no real difference"
+          ],
+          "correct": 0,
+          "right": "Right — LIKE tells you yes-or-no. PATINDEX tells you yes-or-no AND exactly where. That extra detail matters when a human needs to actually go fix the specific character that's wrong.",
+          "wrong": "LIKE is a boolean check — it tells you whether a pattern matches, nothing more. PATINDEX returns a number — the position of the first character that violates the pattern. That's genuinely more useful when you want to tell someone exactly *where* in the string the problem is, not just that a problem exists somewhere."
+        },
+        {
+          "q": "Why does validating a single UK postcode require several different LIKE patterns OR'd together, instead of just one?",
+          "choices": [
+            "UK postcodes have multiple valid outward-code shapes (AN, ANN, AAN, AANN, ANA, AANA) — a single fixed pattern can't cover all of them at once",
+            "UK postcodes are randomly generated with no consistent structure",
+            "LIKE only supports checking one character position at a time regardless of the pattern",
+            "It's an arbitrary stylistic choice with no structural reason"
+          ],
+          "correct": 0,
+          "right": "Exactly — LIKE patterns are position-by-position and fixed-length, so each of the six real outward-code shapes needs its own explicit pattern. There's no way to express \"2 or 4 letters\" in a single LIKE expression.",
+          "wrong": "UK postcodes genuinely have six different valid outward-code shapes depending on the area (single letter + digit, double letter + digit, letter + digit + letter, and so on). Because LIKE patterns check fixed character positions with no \"variable length\" quantifier, each shape needs its own explicit pattern — which is why the query OR's together six separate LIKE checks instead of using just one."
+        }
+      ],
+      "close": "You've now hit the real limitation of LIKE for this group: no quantifiers, so every valid shape needs its own explicit pattern. Date Format is next — where the danger isn't invalid data at all, it's data that looks perfectly valid and means the wrong thing."
+    },
+    "G04-T04": {
+      "open": "This lesson is different from the others so far — the scary case here isn't a string that fails to parse, it's one that parses successfully into the WRONG date, silently.",
+      "questions": [
+        {
+          "q": "Why does the lesson insist on TRY_CAST/TRY_CONVERT instead of plain CAST/CONVERT when validating a column full of date strings?",
+          "choices": [
+            "CAST throws an error and halts the entire query the moment it hits one unparseable value; TRY_CAST returns NULL for that row and lets the rest of the query keep running",
+            "TRY_CAST is simply a faster version of CAST with no functional difference",
+            "CAST cannot convert strings to DATE under any circumstances",
+            "TRY_CAST automatically fixes ambiguous dates"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is the whole reason TRY_ variants exist. One bad row with plain CAST kills the whole query; with TRY_CAST that one row just becomes NULL and everything else still runs.",
+          "wrong": "This is a hard practical distinction: plain `CAST(value AS DATE)` throws a runtime error the instant it meets a string it can't parse — the entire query stops. `TRY_CAST` returns NULL for that one row instead and keeps going, letting you validate every row in one pass rather than having the whole query die on the first bad value."
+        },
+        {
+          "q": "Why is `01/02/2024` fundamentally ambiguous, and what does the lesson say is the only real fix?",
+          "choices": [
+            "It's a valid date under both DD/MM/YYYY and MM/DD/YYYY conventions with different meanings each way — the only safe fix is standardizing all dates to ISO 8601 (YYYY-MM-DD) at the point of entry",
+            "It's ambiguous because the year is written with only 4 digits",
+            "SQL Server always interprets it as MM/DD/YYYY with no ambiguity",
+            "The fix is to delete any date matching this pattern"
+          ],
+          "correct": 0,
+          "right": "Exactly — this isn't a parsing failure, it's a parsing *success* into two different possible dates. Since SQL Server has no way to know which convention was intended, the lesson's fix is prevention at the source: store dates in the one format that's never ambiguous.",
+          "wrong": "01 and 02 are both valid day-or-month values, so `01/02/2024` genuinely means two different real dates depending on convention — 1 February or 2 January — and there's no way for SQL Server to guess which one is correct without external context. The lesson's answer isn't a smarter parsing trick, it's eliminating the ambiguity entirely: standardize everything to ISO 8601 (YYYY-MM-DD) at the point of entry, which reads the same way under every convention."
+        },
+        {
+          "q": "What does the Step 4 pattern — COALESCE over several TRY_CONVERT calls with different style codes — actually accomplish?",
+          "choices": [
+            "It attempts the most likely date format first and falls back through alternates, documenting which format code actually succeeded for each row",
+            "It always converts every date to the current date",
+            "It deletes rows that fail every conversion attempt",
+            "It only works for dates already in ISO 8601 format"
+          ],
+          "correct": 0,
+          "right": "Right — COALESCE returns the first non-NULL value, so trying ISO first, then British, then US, then a fourth style means you get the best guess from whichever format actually worked, plus a record of which one it was.",
+          "wrong": "COALESCE returns the first non-NULL argument it's given. Chaining several TRY_CONVERT attempts — ISO, then British DD/MM/YYYY, then US MM/DD/YYYY, then DD-MM-YYYY — means the query tries the most likely format first and falls through to the next one only if that attempt failed. The companion CASE expression then records which specific format actually succeeded, which is essential for a migration where you need to know how much of the ambiguity was actually resolved."
+        }
+      ],
+      "close": "Dates are the first lesson in this group where the failure mode is silent corruption, not an obvious error — worth remembering as the sharpest example of why \"it parsed\" isn't the same as \"it parsed correctly.\" Numeric String Format is next, and it has the exact same ambiguity trap with commas instead of slashes."
+    },
+    "G04-T05": {
+      "open": "Same shape of danger as the date lesson, different character. A comma in a number can mean two completely different things depending on which country wrote it.",
+      "questions": [
+        {
+          "q": "Why is `19,99` genuinely ambiguous in a way SQL cannot resolve on its own?",
+          "choices": [
+            "It could be 19.99 written with a European decimal comma, or it could be 1,999 with the comma as a thousands separator — both are real conventions, and nothing in the string itself says which one applies",
+            "The comma is always a syntax error in SQL Server strings",
+            "SQL Server always interprets a comma as a decimal point automatically",
+            "It's only ambiguous if the column also contains letters"
+          ],
+          "correct": 0,
+          "right": "Exactly — same shape of problem as the DD/MM date ambiguity: two real, valid conventions produce the same string with wildly different meanings. Resolving it needs to know the data's locale, which SQL has no way to infer.",
+          "wrong": "This mirrors the date-format ambiguity exactly: `19,99` is a perfectly valid European way of writing 19.99 (comma as decimal separator), AND it's a perfectly valid way of writing part of 1,999 (comma as thousands separator). The lesson is explicit that this must be resolved by knowing the data's locale — not by guessing in SQL, because guessing wrong is worse than not converting at all."
+        },
+        {
+          "q": "The lesson's own Step 3 example shows `19,99` being cleaned into `1999` after naive comma-removal, producing a ParsedPrice of `1999.0000`. What does this demonstrate?",
+          "choices": [
+            "Exactly the danger the Explanation warns about — blindly stripping the comma assumed it was a thousands separator, silently turning a real €19.99 price into a wildly wrong 1999, roughly 100x too high",
+            "That the cleaning logic in Step 3 is completely correct and needs no caution",
+            "That commas should never appear in any numeric column under any circumstances",
+            "That TRY_CAST always fails on values containing commas"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is a cautionary example built right into the lesson, not an endorsement. It shows precisely what \"guessing wrong\" costs: a price 100x too high, generated by code that ran without any error at all.",
+          "wrong": "This is the lesson demonstrating its own warning in action: if `19,99` actually meant 19.99 (European decimal), naively stripping the comma turns it into `1999` — a price roughly 100 times too high, and the conversion succeeds with no error thrown. It's a live example of exactly the locale-guessing danger the Explanation section warns about, not a recommended approach."
+        },
+        {
+          "q": "Why does the lesson say to validate AFTER cleaning a numeric string, not just before?",
+          "choices": [
+            "A string like '19.99 incl. VAT' still fails to cast to DECIMAL even after removing the currency symbol, because the trailing text is still there — cleaning one problem doesn't guarantee the value is now valid",
+            "Validating after cleaning is always unnecessary and wastes a query step",
+            "SQL Server automatically validates every value after any REPLACE function runs",
+            "Cleaning always produces a valid numeric value with no exceptions"
+          ],
+          "correct": 0,
+          "right": "Right — cleaning one specific problem (a currency symbol) doesn't mean every problem is gone. \"19.99 incl. VAT\" still has trailing text after the £ is stripped, and only re-checking after cleaning catches that.",
+          "wrong": "The lesson's example: removing the £ from '£19.99' does leave a castable '19.99' — but removing the £ from '19.99 incl. VAT' still leaves '19.99 incl. VAT', which is still not a valid number. Cleaning addresses one specific pattern; it doesn't guarantee every other problem is gone too. Re-validating after cleaning is what actually confirms the value is now usable, not just less obviously broken."
+        }
+      ],
+      "close": "The comma-ambiguity trap here is the same lesson as DD/MM dates, wearing different clothes — and worth remembering together. IBAN / Bank Account Number Format is next, where format rules get genuinely more complex: country-specific length, not just country-specific separators."
+    },
+    "G04-T06": {
+      "open": "IBANs raise the stakes: 30+ countries, each with its own length and structure, plus a real cryptographic check-digit algorithm that SQL genuinely cannot compute on its own.",
+      "questions": [
+        {
+          "q": "Why does the query normalize the IBAN — strip spaces, convert to uppercase — before running any structural check at all?",
+          "choices": [
+            "IBANs are often written with spaces for readability (GB29 NWBK...); validating the raw, unnormalized form would incorrectly flag a perfectly valid IBAN as wrong length or wrong pattern",
+            "Uppercase letters are invalid in a real IBAN",
+            "Normalizing an IBAN automatically verifies its check digits",
+            "SQL Server cannot compare strings that contain spaces under any circumstances"
+          ],
+          "correct": 0,
+          "right": "Exactly — a spaced-out IBAN like 'GB29 NWBK...' is completely valid, just formatted for human readability. Checking length or pattern against the raw spaced version would wrongly reject it.",
+          "wrong": "People commonly write IBANs with spaces every 4 characters for readability — that's a valid, common convention, not an error. If you ran the length check against the raw string, a correct IBAN with spaces would fail for having the \"wrong\" length. Stripping spaces and uppercasing first means the structural checks are always applied to the normalized form, which is what actually determines validity."
+        },
+        {
+          "q": "Why can't the real IBAN check-digit algorithm (mod-97) be directly computed with standard SQL Server integer arithmetic?",
+          "choices": [
+            "The algorithm requires converting the rearranged IBAN into a number up to 34 digits long and taking it modulo 97 — SQL Server integers overflow at 19 digits, well short of that",
+            "SQL Server has no MOD or modulo function at all",
+            "The algorithm only works on IBANs shorter than 10 characters",
+            "Mod-97 is a made-up algorithm that doesn't actually exist"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is a genuine numeric limitation, not a missing feature. A 34-digit number is simply too large for SQL Server's native integer types, which is why the lesson says this specific check needs a CLR function or application code instead.",
+          "wrong": "The real IBAN check-digit rule (ISO 7064, mod-97-10) needs the rearranged IBAN converted into a number that can be up to 34 digits long, then taken modulo 97. SQL Server's native integer types overflow at 19 digits — nowhere near enough. That's a hard numeric ceiling, which is exactly why the lesson says this specific validation needs a CLR function or application-layer code rather than plain T-SQL."
+        },
+        {
+          "q": "What does the lesson identify as the most reliable structural test available in plain SQL, short of the full check-digit algorithm?",
+          "choices": [
+            "Whether the normalized IBAN's length matches the expected length for its declared country code (e.g. GB and DE both expect 22 characters, FR expects 27)",
+            "Whether the IBAN contains at least one number",
+            "Whether the IBAN is longer than 5 characters",
+            "Whether the IBAN was entered in lowercase"
+          ],
+          "correct": 0,
+          "right": "Right — country-specific expected length is the strongest signal SQL can reasonably check without a full mod-97 implementation. It won't catch every typo, but it catches a large share of real errors cheaply.",
+          "wrong": "Since the full check-digit algorithm is out of reach for plain SQL, the lesson's practical fallback is comparing the normalized IBAN's actual length against the expected length for its declared country code — GB and DE should both be 22 characters, FR should be 27, and so on. It's not a complete validation, but it's the strongest structural signal available without a CLR function or external validator."
+        }
+      ],
+      "close": "IBANs are the first lesson in this group where SQL genuinely hits a wall — some validation just isn't possible in plain T-SQL, and knowing where that wall is matters as much as knowing the patterns that work. National ID / Tax Reference Format is next, with a similar \"structure isn't the whole story\" theme."
+    },
+    "G04-T07": {
+      "open": "This one makes explicit something the last few lessons hinted at: getting the shape right is necessary, but for some fields it's genuinely not enough.",
+      "questions": [
+        {
+          "q": "Why does the lesson say a correct LIKE pattern match is 'necessary but not sufficient' for validating a UK National Insurance Number?",
+          "choices": [
+            "HMRC has additional business rules beyond the basic shape — forbidden first/second letters, forbidden two-letter prefixes, and a restricted suffix — that a structural pattern alone cannot express",
+            "LIKE patterns cannot check letters, only digits",
+            "NINOs don't actually have any defined structure at all",
+            "The pattern match is sufficient and the extra checks are unnecessary"
+          ],
+          "correct": 0,
+          "right": "Exactly — `AB123456C` can match the basic AA999999A shape perfectly while still being invalid, because HMRC forbids specific letters and prefixes that a generic pattern has no way to know about.",
+          "wrong": "The LIKE pattern `[A-Z][A-Z][0-9][0-9][0-9][0-9][0-9][0-9][A-D]` confirms the NINO has the right basic shape — but HMRC layers extra rules on top: certain first letters are forbidden (D, F, I, Q, U, V), certain second letters are forbidden, certain two-letter prefix combinations are banned entirely, and the suffix must be A-D. A value can satisfy the shape and still violate one of these business rules, which is why they need separate checks after the structural one passes."
+        },
+        {
+          "q": "Why does the query select both the original NationalID and the normalized (no-spaces) version, rather than just overwriting with the normalized form?",
+          "choices": [
+            "The normalized form is used for validation and storage consistency, but the original form may still be needed for display purposes or an audit trail",
+            "SQL Server requires every column to be selected in both forms",
+            "The normalized form is always invalid and only exists for comparison",
+            "There is no real reason — it's an arbitrary stylistic choice"
+          ],
+          "correct": 0,
+          "right": "Right — validation needs the clean, consistent form, but the original as entered can matter for showing the user what they typed or for an audit record of the raw input.",
+          "wrong": "The lesson notes this directly: normalize (strip spaces) for validation because that's the consistent form the pattern rules expect, but keep the original around too, since it may be needed for display purposes or an audit trail of exactly what was entered. Validating on one form doesn't mean you have to discard the other."
+        },
+        {
+          "q": "Why does the lesson recommend also running a uniqueness check on NINOs, in addition to format validation?",
+          "choices": [
+            "A NINO can have a perfectly valid format and still be duplicated across two different employee records — that's a different class of error format validation alone can't catch",
+            "Format validation and uniqueness checking are the exact same SQL query",
+            "NINOs are never used as identifiers, so uniqueness is irrelevant",
+            "Running both checks together is required by SQL Server syntax rules"
+          ],
+          "correct": 0,
+          "right": "Exactly — format-valid and unique are two independent properties. A NINO can pass every structural and business rule check and still be accidentally assigned to two different people, which format validation was never designed to catch.",
+          "wrong": "The lesson connects this directly back to the Uniqueness group: if NINOs are used as a unique identifier, a value can be perfectly well-formatted (right shape, right prefix rules, right suffix) and still be a duplicate assigned to two different employees. That's a completely separate failure mode from format — one checks \"is this shaped correctly,\" the other checks \"does this appear more than once,\" and you need both."
+        }
+      ],
+      "close": "This lesson is the clearest statement yet of a theme running through this whole group: structure and business rules are two different checks, and passing one says nothing about the other. URL / URI Format is next, applying the same idea to web addresses."
+    },
+    "G04-T08": {
+      "open": "URLs bring back the \"SQL can check shape, not reality\" theme from the very first lesson in this group — but with a genuinely dangerous twist: a single invisible character can break HTTP routing entirely.",
+      "questions": [
+        {
+          "q": "Why can SQL only verify a URL's structure, not whether the URL actually works?",
+          "choices": [
+            "Confirming a URL resolves to a real, reachable page requires making an actual HTTP request — something SQL cannot do; it can only check the shape (scheme, domain, dot)",
+            "SQL Server has a built-in HTTP client that is simply disabled by default",
+            "URLs cannot be stored as strings in SQL Server",
+            "Structural validation and resolution checking are exactly the same thing"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is the same shape-vs-reality boundary from the email lesson, applied to URLs. Format validation and link checking (does it return a 200) are two different tools for two different questions.",
+          "wrong": "Format validation confirms a URL LOOKS like a URL — has a scheme, a domain with a dot, no broken characters. Confirming it actually WORKS — returns a 200 status instead of a 404 — requires making a real HTTP request, which is entirely outside what a SQL query can do. The lesson is explicit that both checks matter but need different tools: SQL for structure, a separate link-checking process for reachability."
+        },
+        {
+          "q": "Why does the lesson treat a raw space inside a URL as a serious structural problem, not just untidy formatting?",
+          "choices": [
+            "A raw space breaks HTTP routing because space is a delimiter in the HTTP request line — a valid URL must have spaces percent-encoded as %20 instead",
+            "Spaces are cosmetically ugly but have no functional effect on a URL",
+            "SQL Server cannot store any string containing a space character",
+            "A space in a URL always causes a syntax error when the query runs"
+          ],
+          "correct": 0,
+          "right": "Right — this isn't a style preference, it's a protocol-level problem. HTTP itself uses space as a delimiter, so an unencoded space in a URL can genuinely break how the request gets parsed and routed.",
+          "wrong": "This is a real functional problem, not cosmetics: the HTTP protocol uses a raw space character as a delimiter within the request line itself. A URL with an unencoded space in it can break how a server parses the request. The correct representation is the percent-encoded form (%20) — which is exactly why `LIKE '% %'` is flagged as a real structural violation, not just messy formatting."
+        },
+        {
+          "q": "Why does the lesson's Step 5 separately count HTTP vs HTTPS URLs, rather than treating any working scheme as equally fine?",
+          "choices": [
+            "HTTP vs HTTPS is a security concern on top of being a format concern — an HTTP URL is structurally valid but represents a security downgrade worth flagging to the security team",
+            "HTTP URLs are always structurally invalid and should be deleted",
+            "SQL Server cannot distinguish between the two schemes",
+            "It's purely a cosmetic count with no operational purpose"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is a case where format-valid and business-acceptable diverge. An HTTP URL passes every structural check and still represents something worth separately tracking and eventually fixing.",
+          "wrong": "An `http://` URL is perfectly valid structurally — it has a scheme, a domain, everything the format check requires. But every externally-facing URL should use HTTPS for security reasons, so the lesson deliberately tracks the two separately: format-valid doesn't mean security-acceptable, and Step 5 surfaces that gap as its own metric for the security team to act on."
+        }
+      ],
+      "close": "URLs bring the shape-vs-reality theme back explicitly, plus a genuine security angle on top of pure format. Currency Amount Format is next — a lesson where the number itself can be perfectly valid and still be wrong by a factor of 100."
+    },
+    "G04-T09": {
+      "open": "This lesson's danger doesn't come from an invalid character or a bad shape at all — every value here is a perfectly legal number. The problem is which unit it's actually measured in.",
+      "questions": [
+        {
+          "q": "What does a suspiciously large amount (e.g. over £100,000 for what should be an everyday transaction) most likely indicate, per the lesson?",
+          "choices": [
+            "A minor-unit import error — the source system sent the amount in pence/cents but it was never divided by 100 before being stored as if it were pounds/dollars",
+            "The customer made an unusually large legitimate purchase",
+            "A rounding error in the last decimal place",
+            "The Amount column has the wrong data type"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is the scenario's core failure mode. Processor B's minor-unit amounts (pence) landed in the same column as major-unit amounts (pounds) with no conversion, making every one of those values look 100x too large.",
+          "wrong": "Per the scenario: one payment processor sent amounts in minor units (pence/cents — £19.99 becomes 1999), and that conversion to major units (dividing by 100) never happened. A value that's implausibly large relative to a normal transaction range is the tell-tale sign of exactly this kind of unit mismatch, not a genuinely huge legitimate purchase."
+        },
+        {
+          "q": "What does the check `Amount <> ROUND(Amount, 2)` actually test for?",
+          "choices": [
+            "Whether the amount has more precision than 2 decimal places — meaning rounding it to 2dp would actually change its value",
+            "Whether the amount is negative",
+            "Whether the amount is exactly zero",
+            "Whether the amount is stored as a string instead of a number"
+          ],
+          "correct": 0,
+          "right": "Right — if rounding to 2dp doesn't change the value, the two sides are equal and nothing is flagged. If they differ, the original had real precision beyond 2dp that got lost in rounding — exactly what the check is hunting for.",
+          "wrong": "If an amount already has 2 or fewer decimal places, rounding it to 2dp gives back the exact same value — the two sides of the `<>` are equal, so nothing is flagged. If the amount has more precision (like 19.990000), rounding it changes the value, and the inequality catches that. This is a direct test for \"does this value carry more precision than the currency should have.\""
+        },
+        {
+          "q": "Why can't a single precision rule (like \"always 2 decimal places\") apply across every currency in the table?",
+          "choices": [
+            "Different currencies have genuinely different decimal precision by definition — JPY uses 0 decimal places, GBP/USD use 2, and some cryptocurrencies use 8 or more",
+            "SQL Server only supports 2 decimal places for any DECIMAL column",
+            "All currencies actually use exactly the same precision, so one rule is fine",
+            "Precision rules only matter for negative amounts"
+          ],
+          "correct": 0,
+          "right": "Exactly — precision itself is currency-specific, not a universal constant. Applying a flat 2dp rule to JPY (which should be whole numbers) or crypto (which needs far more precision) would flag perfectly correct values as errors.",
+          "wrong": "The lesson lists real examples: Japanese Yen has 0 decimal places by definition (there's no such thing as half a yen in normal transactions), GBP and USD use 2, Bahraini Dinar uses 3, and cryptocurrencies commonly use 8 or more. A single hard-coded \"always 2dp\" rule would incorrectly flag valid JPY amounts and incorrectly pass invalid crypto amounts — precision has to be looked up per currency, not assumed globally."
+        }
+      ],
+      "close": "This is the sharpest example yet of a value being individually valid and collectively wrong — every number here parses fine, and the problem only shows up when you know what unit it's supposed to be in. IP Address Format is next, back to more familiar structural territory."
+    },
+    "G04-T10": {
+      "open": "Back to structural validation, with a genuinely clever trick: reusing a function built for something completely different because it happens to fit the shape perfectly.",
+      "questions": [
+        {
+          "q": "Why is PARSENAME — a function designed for four-part object names like server.database.schema.table — a natural fit for validating an IPv4 address?",
+          "choices": [
+            "An IPv4 address is also exactly four dot-separated parts, so PARSENAME works identically on it and returns NULL automatically if there aren't exactly 4 parts",
+            "PARSENAME was specifically built by Microsoft for IP address validation",
+            "PARSENAME only works on numeric strings, which is why it fits IP addresses",
+            "IP addresses and object names use a completely different separator character"
+          ],
+          "correct": 0,
+          "right": "Exactly — it's a repurposed tool, not a coincidence. PARSENAME just extracts dot-separated segments and hands back NULL if the count is wrong, which happens to be exactly the shape of an IPv4 address.",
+          "wrong": "PARSENAME's actual job is splitting a four-part dotted name into its segments — but an IPv4 address is coincidentally the exact same shape: four dot-separated parts. Feed it an IP address and PARSENAME extracts each octet the same way it would extract a table name, and critically, it returns NULL automatically if there aren't exactly four parts — which doubles as a free structural check."
+        },
+        {
+          "q": "Why is `LIKE '%.%.%.%'` alone not enough to fully validate an IPv4 address?",
+          "choices": [
+            "It confirms there are four dot-separated parts, but says nothing about whether each part is actually a valid number between 0 and 255",
+            "LIKE cannot detect dots in a string at all",
+            "This pattern only matches IPv6 addresses, not IPv4",
+            "It's actually sufficient on its own and no further check is needed"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly the structure-vs-range gap the lesson names directly: 192.168.999.1 passes this LIKE check perfectly while having an octet value that's completely invalid.",
+          "wrong": "The lesson gives the exact counter-example: `192.168.999.1` passes `LIKE '%.%.%.%'` — it genuinely has four dot-separated parts — but 999 is not a valid octet value (max is 255). LIKE confirms structure only; PARSENAME plus TRY_CAST is what's needed on top to confirm each individual octet actually falls in the valid 0-255 range."
+        },
+        {
+          "q": "Why would a private IP range (10.x.x.x, 192.168.x.x) showing up as the SourceIP in a public-facing authentication log be worth investigating?",
+          "choices": [
+            "It may indicate a reverse proxy not forwarding the real client IP, internal testing traffic leaking into production logs, or a misconfigured logging pipeline",
+            "Private IP ranges are always invalid IPv4 addresses",
+            "It always means the log data has been tampered with maliciously",
+            "Private IPs cannot technically appear in any database column"
+          ],
+          "correct": 0,
+          "right": "Exactly — a private IP in a public-facing log isn't a format error, it's a signal something upstream is misconfigured. The lesson names three plausible causes, none of which is \"the IP itself is invalid.\"",
+          "wrong": "A private IP address is perfectly valid as an IP address — the issue is context, not format. If it's showing up as the source of a public-facing authentication attempt, that's suspicious because internet traffic shouldn't originate from a private range. The lesson names three real possible causes: a reverse proxy failing to forward the actual client IP, internal test traffic mixed into production logs, or a genuinely misconfigured logging pipeline."
+        }
+      ],
+      "close": "The PARSENAME trick is a nice reminder that a tool built for one job can solve a structurally-identical problem in a completely different domain. Product Code / SKU Format is next — a case where the organization defines its own structure from scratch."
+    },
+    "G04-T11": {
+      "open": "Unlike email or IP addresses, this format isn't a universal standard — it's a rule the organization made up itself. Which means the validation has to encode business decisions, not just general structure.",
+      "questions": [
+        {
+          "q": "Why is a fixed-length LIKE pattern (like `[A-Z][A-Z][A-Z]-[A-Z][A-Z][A-Z]-[0-9][0-9][0-9][0-9][0-9][0-9]`) well suited to validating a SKU specifically?",
+          "choices": [
+            "A SKU has a fixed total length and fixed-length segments, so each character position can be explicitly validated, making the rule precise and easy to read position by position",
+            "LIKE patterns can only be used on columns shorter than 20 characters",
+            "SKUs never contain any digits, only letters",
+            "Fixed-length patterns are required by SQL Server syntax for any VARCHAR column"
+          ],
+          "correct": 0,
+          "right": "Exactly — when every character position has a known, fixed rule (3 letters, hyphen, 3 letters, hyphen, 6 digits), a LIKE pattern can spell that out explicitly and precisely, position by position.",
+          "wrong": "A SKU like `ELC-MOB-000042` has a completely fixed shape: 3 letters, a hyphen, 3 more letters, another hyphen, then exactly 6 digits. Because every position has a known, fixed rule, a LIKE pattern can validate each position explicitly and precisely — this is exactly the situation where LIKE patterns are the most reliable, since there's no ambiguity about length or position to worry about."
+        },
+        {
+          "q": "Why does Step 2 decompose the ProductCode into separate named segments (CategoryCode, SubCategoryCode, SequenceNumber) instead of just reporting a single 'pattern mismatch' message?",
+          "choices": [
+            "It produces a specific, actionable error message (e.g. 'Sub-category: must be 3 uppercase letters') instead of a vague one, which is essential when someone actually needs to go fix the data",
+            "SQL Server requires every LIKE pattern to be broken into separate segments to run at all",
+            "Decomposing the code automatically corrects it to the right format",
+            "It has no practical benefit over a single pattern-mismatch message"
+          ],
+          "correct": 0,
+          "right": "Right — \"pattern mismatch\" tells you something's wrong. \"Sub-category: must be 3 uppercase letters\" tells you exactly what and where, which is what an import team actually needs to fix real data.",
+          "wrong": "A generic \"pattern mismatch\" message tells you something is wrong but not what. By checking each segment separately — category letters, first hyphen, sub-category letters, second hyphen, sequence digits — the query can say exactly which piece failed and why, which the lesson calls \"essential when the import team needs to fix the data.\" Specificity turns a vague error into an actionable one."
+        },
+        {
+          "q": "Why is a code like `ZZZ-ZZZ-000001` — which passes the structural LIKE pattern perfectly — still potentially wrong?",
+          "choices": [
+            "The LIKE pattern only validates structure (3 letters, hyphen, 3 letters, hyphen, 6 digits) — it says nothing about whether 'ZZZ' is actually an approved category code from the organization's real list",
+            "ZZZ is a reserved keyword in SQL Server that always causes an error",
+            "Six-digit sequences starting with 000001 are never valid",
+            "The pattern actually rejects this code, so it wouldn't pass in the first place"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is structure vs. semantics again, the same theme from the NINO lesson. ZZZ is structurally three uppercase letters, which is all the LIKE pattern checks. Whether ZZZ is an actual approved category is a completely separate business-rule question.",
+          "wrong": "`ZZZ-ZZZ-000001` genuinely satisfies the structural rule — three letters, hyphen, three letters, hyphen, six digits. But whether 'ZZZ' is one of the organization's real, approved category codes (ELC, CLO, FUR, etc.) is a business rule the structural pattern has no way to check. That's exactly why Step 3 adds a separate lookup against the approved category list — structure and semantics are two different questions."
+        }
+      ],
+      "close": "Same structure-vs-semantics idea as NINOs, applied to a code the business invented itself rather than a national standard. Case Convention Violation is next — a different kind of format problem entirely, where the characters are all correct and only their capitalization is wrong."
+    },
+    "G04-T12": {
+      "open": "New angle entirely — every character in these values is technically correct. The only thing wrong is which case it's in, and that turns out to be enough to break deduplication completely.",
+      "questions": [
+        {
+          "q": "How does the test `FirstName = UPPER(FirstName)` correctly detect an ALL-CAPS value?",
+          "choices": [
+            "If a string is already entirely uppercase, converting it to uppercase again produces an identical string, so the comparison is true only when the original was already all caps",
+            "UPPER() always returns a different string than its input, so the comparison is always false",
+            "This test only works on strings shorter than 10 characters",
+            "It checks whether the string contains any letters at all"
+          ],
+          "correct": 0,
+          "right": "Exactly — UPPER() is idempotent on already-uppercase text, so the comparison only comes back true when nothing changed, which only happens when the original was already fully uppercase.",
+          "wrong": "If `FirstName` is 'JOHN', then `UPPER(FirstName)` is also 'JOHN' — no change, so the comparison is true. If `FirstName` is 'John', `UPPER(FirstName)` becomes 'JOHN' — different from the original, so the comparison is false. The test only comes back true in the specific case where uppercasing the string didn't change anything, which means it was already fully uppercase."
+        },
+        {
+          "q": "Why does the Title Case approximation formula (`UPPER(LEFT(name,1)) + LOWER(SUBSTRING(name,2,...))`) fail on a name like MCDONALD?",
+          "choices": [
+            "It only uppercases the very first letter and lowercases everything else, so MCDONALD becomes Mcdonald instead of the correct McDonald with an internal capital D",
+            "The formula only works on names shorter than 5 characters",
+            "SUBSTRING cannot process names containing the letter C",
+            "MCDONALD is not a real name and would be rejected entirely"
+          ],
+          "correct": 0,
+          "right": "Right — the formula has no concept of internal capitalization rules. It blindly applies \"first letter up, everything else down,\" which is wrong for names like McDonald, MacArthur, or O'Brien that need a capital somewhere in the middle.",
+          "wrong": "The formula is deliberately simple: capitalize position 1, lowercase everything from position 2 onward. For a straightforward name like 'john' → 'John' that works fine. But 'MCDONALD' has a legitimate internal capital (the D in McDonald) that this formula has no way to know about — it just sees \"everything after position 1\" and lowercases it all, producing 'Mcdonald' instead of the correct 'McDonald'."
+        },
+        {
+          "q": "Why do codes (like country or status) and personal names follow opposite case conventions, and why does that matter for validation?",
+          "choices": [
+            "Codes are conventionally ALL CAPS (GB, ACTIVE) while names are conventionally Title Case (John) — so the SAME check (\"is this all uppercase?\") means something completely different depending on which column type it's applied to",
+            "There is no real difference and both should use the exact same validation rule",
+            "Country codes are always exactly 2 characters, which is unrelated to case",
+            "Names should always be stored in ALL CAPS for consistency with codes"
+          ],
+          "correct": 0,
+          "right": "Exactly — the SAME test (all-uppercase) is a PASS for a country code and a FAIL for a person's name. Applying one universal case rule across every text column would get half of them backwards.",
+          "wrong": "Country codes and status values are conventionally ALL CAPS ('GB', 'ACTIVE') — that's correct and expected. Personal names are conventionally Title Case ('John') — ALL CAPS there is the violation. This means \"is this value all uppercase\" is a PASS condition for one column type and a FAIL condition for another — you can't apply one blanket case rule across every text column, you have to know which convention that specific column is supposed to follow."
+        }
+      ],
+      "close": "Case conventions are a reminder that \"correct\" depends entirely on what kind of value a column holds — the same test flips from pass to fail depending on context. Leading/Trailing Whitespace is next, the most invisible format problem in this entire group."
+    },
+    "G04-T13": {
+      "open": "This might be the sneakiest lesson in the whole group — the bug is a character you cannot see, in a place most query tools won't even show you it's there.",
+      "questions": [
+        {
+          "q": "Why does `Email <> LTRIM(RTRIM(Email))` correctly detect whitespace padding?",
+          "choices": [
+            "If a string has no leading or trailing spaces, trimming it produces an identical string, so the comparison is only true when trimming actually removed something",
+            "LTRIM and RTRIM always return an empty string",
+            "This comparison only works on columns shorter than 50 characters",
+            "It detects whitespace anywhere in the string, not just at the edges"
+          ],
+          "correct": 0,
+          "right": "Exactly — same idempotence idea as the case-check lesson, applied to whitespace instead of case. Trimming a clean string changes nothing; trimming a padded one does, and that difference is exactly what the comparison catches.",
+          "wrong": "If `Email` is 'john@example.com' with no padding, trimming it gives back the exact same string — the comparison is false, nothing flagged. If `Email` is ' john@example.com' with a leading space, trimming removes that space, producing a shorter string that's now different from the original — the comparison is true. The test only fires when trimming actually changed something, which only happens when there was padding to remove."
+        },
+        {
+          "q": "Why are non-breaking spaces (CHAR 160) invisible to LTRIM and RTRIM specifically?",
+          "choices": [
+            "LTRIM and RTRIM only strip the ASCII space character (CHAR 32) — CHAR 160 is a visually identical but technically different character that these functions don't touch",
+            "LTRIM and RTRIM only work on the first 10 characters of a string",
+            "Non-breaking spaces don't actually exist as real characters in text",
+            "CHAR 160 is automatically converted to CHAR 32 by SQL Server before any function runs"
+          ],
+          "correct": 0,
+          "right": "Right — this is a specific, narrow gap: LTRIM/RTRIM target exactly one character code (32), and CHAR 160 looks identical to a human but is a completely different character that slides right past them.",
+          "wrong": "LTRIM and RTRIM are built to strip a specific character: ASCII space, CHAR 32. The non-breaking space (CHAR 160 — `&nbsp;` in HTML) looks visually identical to a regular space but is a different character code entirely, so these functions simply don't recognize it as something to trim. It sails through untouched, which is exactly why the lesson needs a separate CHAR(160) check in Step 3."
+        },
+        {
+          "q": "What does Step 4 — a self-join comparing trimmed, lowercased email values — reveal that Step 1 alone would miss?",
+          "choices": [
+            "Pairs of records that are stored as different values but represent the exact same entity once whitespace is removed — the root cause of the split-account scenario in the lesson",
+            "Records where the Email column is completely NULL",
+            "The total count of all customers in the table",
+            "Records where the email domain doesn't have a valid TLD"
+          ],
+          "correct": 0,
+          "right": "Exactly — Step 1 tells you which individual rows have whitespace. Step 4 tells you something more specific and more actionable: which pairs of rows are secretly duplicates of each other because of that whitespace.",
+          "wrong": "Step 1 flags individual rows that have leading or trailing whitespace — useful, but it doesn't tell you the consequence. Step 4 joins the table to itself on the trimmed, lowercased email and finds pairs of rows that differ as stored but match once cleaned — which is exactly the split-account bug from the scenario: 'john@example.com' and ' john@example.com' as two separate customer records that are actually the same person."
+        }
+      ],
+      "close": "Whitespace is the clearest case in this group of \"invisible in the query tool, catastrophic in production\" — the value looks fine on screen and breaks every comparison anyway. Special / Control Character in Text Field is next, going even further into characters you genuinely cannot see at all."
+    },
+    "G04-T14": {
+      "open": "If whitespace was invisible, this lesson is about characters that are truly invisible — not just visually similar to something else, but literally zero-width or non-printing.",
+      "questions": [
+        {
+          "q": "Why does detecting control characters (CHAR 1 through CHAR 8, for example) require PATINDEX combined with CHAR(), instead of a literal character range typed directly into a LIKE pattern?",
+          "choices": [
+            "LIKE's bracket range syntax needs the CHAR() function to build a range using actual control-character codes, since you can't type an unprintable character literally into a pattern string",
+            "PATINDEX is simply a faster version of LIKE with no functional difference",
+            "Control characters cannot be detected by any SQL Server function",
+            "LIKE only supports checking for letters and digits, never any other character type"
+          ],
+          "correct": 0,
+          "right": "Exactly — you can't type CHAR(1) as a literal character in your SQL source code the way you can type 'A'. Building the range dynamically with CHAR() is how you reference an unprintable character at all.",
+          "wrong": "You can't literally type an unprintable control character into your SQL source code the way you'd type a letter or digit. `PATINDEX('%[' + CHAR(1) + '-' + CHAR(8) + ']%', col)` builds the bracket range as a string at runtime using the CHAR() function to reference those specific unprintable codes — that's the only way to express \"match any character in this control-character range\" when the range itself contains characters you can't type directly."
+        },
+        {
+          "q": "Why is a BOM (Byte Order Mark) character at the start of a field dangerous, given that it's completely invisible?",
+          "choices": [
+            "It becomes an invisible extra character at the very start of the string, causing exact string comparisons to silently fail — 'Widget A' no longer equals a BOM-prefixed 'Widget A' even though they look identical",
+            "The BOM character actively deletes the rest of the string it's attached to",
+            "SQL Server automatically rejects any field starting with a BOM",
+            "BOM characters only ever appear at the end of a string, never the start"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is the same invisible-but-breaks-comparison problem as whitespace and non-breaking spaces, in its purest form. Nothing about the BOM is visible in a query tool, but it's a real extra character that string equality checks will catch.",
+          "wrong": "A BOM is a zero-width character (U+FEFF) that some files place at the start to declare their encoding. When it lands as the first character of a database field, it's invisible to the eye in most tools but is a genuinely different character from a nonexistent one — so an exact-match comparison between 'Widget A' and BOM+'Widget A' fails, even though they render identically on screen. It's the same class of problem as whitespace padding, just harder to spot."
+        },
+        {
+          "q": "What does a doubled HTML entity like `&amp;amp;` reveal about how the data got into that state?",
+          "choices": [
+            "An HTML-encoding function was applied to text that was already HTML-encoded, encoding the ampersand a second time",
+            "The original text simply contained the literal characters '&amp;amp;' typed by a user",
+            "It indicates the field was decoded twice, not encoded",
+            "It's a random data corruption with no identifiable cause"
+          ],
+          "correct": 0,
+          "right": "Right — `&amp;amp;` is what you get when `&` gets encoded to `&amp;` once, and then something encodes that ALREADY-encoded text a second time, turning the `&` inside `&amp;` into `&amp;` too.",
+          "wrong": "This is a specific, diagnosable pattern: a plain `&` gets HTML-encoded once into `&amp;` — correct so far. But if an encoding function runs a SECOND time on text that's already encoded, it encodes the `&` inside `&amp;` again, producing `&amp;amp;`. The lesson notes the visible symptom is the entity text literally appearing on the rendered page (users see \"&amp;\" instead of \"&\") — a clear signal of a two-pass encoding bug in the pipeline."
+        }
+      ],
+      "close": "Between whitespace, non-breaking spaces, and BOM characters, you've now got a genuine toolkit for the class of bug that's completely invisible in a query result grid. Boolean / Flag Field Format is next — a much more visible problem, but one that silently breaks WHERE clauses in a different way."
+    },
+    "G04-T15": {
+      "open": "Different kind of danger here: nothing is invisible, nothing fails to parse. The problem is that four different teams each picked their own perfectly reasonable way to write \"yes\" and \"no.\"",
+      "questions": [
+        {
+          "q": "Why does `WHERE IsActive = 1` silently miss records stored as 'Y', 'true', or 'yes', instead of raising an error?",
+          "choices": [
+            "The comparison only matches rows where the value is literally the integer 1 — 'Y', 'true', and 'yes' are different values entirely, so they're excluded from the result set with no error, no warning, nothing",
+            "SQL Server automatically converts 'Y' and 'true' to 1 before comparing, so nothing should actually be missed",
+            "The query would fail to run at all if the column contains mixed representations",
+            "IsActive = 1 only works correctly on tables with fewer than 100 rows"
+          ],
+          "correct": 0,
+          "right": "Exactly — and this silence is exactly why the lesson calls it one of the most dangerous classes of error. The query runs successfully, returns a plausible-looking result set, and simply never includes the rows stored under a different true/false convention.",
+          "wrong": "`WHERE IsActive = 1` only matches rows where the stored value is literally the integer 1. A row storing 'Y', 'true', or 'yes' simply doesn't equal 1 — it's excluded from the results, with the query running successfully and returning no error at all. That silence is what makes this dangerous: the query looks like it worked, the results look plausible, and there's nothing to alert you that a chunk of valid data was quietly left out."
+        },
+        {
+          "q": "Why does the lesson insist on profiling all distinct values (Step 2) before writing any UPDATE to normalize the column?",
+          "choices": [
+            "Profiling first reveals the full picture of every variant actually present, preventing an obscure value like 'T' or 'enabled' from being missed by an UPDATE that only anticipated the common cases",
+            "SQL Server requires a SELECT to run before any UPDATE statement for syntax reasons",
+            "Profiling automatically fixes the data without needing an UPDATE at all",
+            "It has no real benefit over writing the UPDATE directly"
+          ],
+          "correct": 0,
+          "right": "Right — a normalization UPDATE is only as good as its coverage. Profiling first is what tells you whether your UPDATE's IN-list actually covers every variant that exists, instead of just the ones you happened to think of.",
+          "wrong": "The risk the lesson names directly: writing a normalization UPDATE without profiling first means you might handle 'Y', 'yes', and 'true' but completely miss an obscure variant like 'T' or 'enabled' that also exists in the data. Profiling every distinct value first — Step 2 — shows you the full contamination picture, so the eventual fix actually covers everything that's really there instead of just the cases you assumed."
+        },
+        {
+          "q": "What long-term fix does the lesson recommend after the column has been normalized to 0/1?",
+          "choices": [
+            "Change the column's data type to BIT, which only accepts 0 and 1 and prevents future format drift back into mixed representations",
+            "Delete the column entirely and never store this information again",
+            "Add a comment to the column explaining what values are allowed",
+            "Rename the column so future developers know to be careful with it"
+          ],
+          "correct": 0,
+          "right": "Exactly — normalizing the existing data fixes today's problem; changing the column type is what stops the same drift from happening again the next time a new team or integration touches this column.",
+          "wrong": "Normalizing the existing rows to 0/1 fixes the data that already exists, but doesn't stop a fourth team or a future integration from introducing yet another convention next year. The lesson's long-term recommendation is changing the column's type to BIT (`ALTER TABLE ... ALTER COLUMN IsActive BIT NOT NULL`), which structurally only accepts 0 and 1 — making the drift this lesson describes impossible to reintroduce at the schema level."
+        }
+      ],
+      "close": "One more lesson to close out this half — a full-circle look at enumerated values, one more time, with a sharper business-rule angle."
+    },
+    "G04-T16": {
+      "open": "Last lesson before the halfway break. Same theme as the boolean lesson — a value outside the approved set — but this time the approved set has more than two options, which changes how you validate it.",
+      "questions": [
+        {
+          "q": "Why does the query use a table variable (`@ApprovedDepts`) holding the approved department list, instead of hard-coding the list directly inside every WHERE clause?",
+          "choices": [
+            "It separates the approved values from the validation logic — adding or removing an approved value means changing it in one place, not hunting down every WHERE clause that repeats the list",
+            "Table variables run faster than any other SQL Server construct",
+            "A hard-coded IN list is not valid SQL syntax",
+            "Table variables are required whenever more than 3 values need checking"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is a maintainability decision, not a performance one. One list, referenced everywhere it's needed, means one place to update when the business adds a new department.",
+          "wrong": "If the approved list were hard-coded into every WHERE clause across five different queries, adding a new department would mean finding and editing all five. Storing it once in `@ApprovedDepts` and referencing that in every check means there's exactly one place to update — the validation logic itself doesn't need to change when the business adds or removes an approved value."
+        },
+        {
+          "q": "Why does the lesson insist on profiling all distinct Department values (Step 2) before fixing any of them?",
+          "choices": [
+            "Profiling first reveals the full picture — without it, you might fix the obvious 'IT' but completely miss a less obvious invalid variant like 'Information Technology'",
+            "SQL Server requires a profiling step before any UPDATE can run",
+            "Profiling automatically corrects every invalid value without needing a fix",
+            "There is no real benefit — it's an optional convenience step"
+          ],
+          "correct": 0,
+          "right": "Right — same principle as the boolean-flag lesson, applied here: without seeing every distinct value first, you're guessing at what needs fixing instead of knowing.",
+          "wrong": "This is the same lesson as the boolean-flag check, applied to a bigger set of options: without profiling every distinct value that actually exists, you're fixing based on assumption. You might catch the obvious 'IT' but never notice 'Information Technology' sitting in the same column as a completely separate invalid variant, because you never looked at the full list of what's really there."
+        },
+        {
+          "q": "What long-term, database-level fix does the lesson recommend for an enumerated column like Department?",
+          "choices": [
+            "A CHECK constraint that restricts the column to only the approved values, preventing any future invalid value from ever being inserted",
+            "Deleting the Department column entirely from the table",
+            "Converting the column to store department names as pure numbers",
+            "Renaming the column so it's harder for other teams to write to it"
+          ],
+          "correct": 0,
+          "right": "Exactly — same pattern as the BIT-type recommendation for booleans: fix the existing data, then change the schema itself so the same class of drift can't happen again.",
+          "wrong": "Just like the boolean lesson recommended converting to BIT to prevent future drift, this lesson recommends a `CHECK` constraint — `CHECK (Department IN ('Sales','Marketing',...))` — which stops any future INSERT or UPDATE from ever storing a value outside the approved list. Cleaning up today's bad data fixes the past; the CHECK constraint is what prevents the same problem from quietly recurring."
+        }
+      ],
+      "close": "That's the halfway point of Format/Pattern — 16 lessons down, 16 to go. You've now covered universal formats (email, phone, dates), country-specific structures (postcodes, IBANs, NINOs), organization-defined codes (SKUs), and the invisible/silent failure modes (whitespace, control characters, boolean and enum drift). Second half picks up next session."
     }
   }
 }
