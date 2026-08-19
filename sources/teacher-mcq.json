@@ -6385,6 +6385,426 @@
         }
       ],
       "close": "That completes the G10 data type and storage set. Across the ten lessons, the recurring pattern is to validate the meaning of stored values, not just their syntax or immediate display."
+    },
+    "G11-T01": {
+      "open": "Welcome to Profiling — you've opened Column Completeness Profile, the technique that answers the most basic data quality question there is: how much of this column is actually populated? Three questions, and I'll flag anything worth revisiting.",
+      "questions": [
+        {
+          "q": "Why does the profile query count empty strings separately from NULLs when computing a column's \"truly populated\" count?",
+          "choices": [
+            "Without the distinction, a column full of empty strings would show 100% population while being effectively empty",
+            "SQL Server throws an error if NULL and empty string are counted together in the same SUM",
+            "Empty strings always indicate a data entry error, so they must be reported as a separate error category",
+            "COUNT(*) cannot distinguish NULL from empty string without an explicit CASE expression"
+          ],
+          "correct": 0,
+          "right": "Exactly — that's the whole point of the distinction. Population rate has to mean \"has a real value,\" and an empty string isn't one, even though it isn't NULL either.",
+          "wrong": "Close, but here's the trap: if you only check IS NOT NULL, a column stuffed with empty strings looks 100% populated — every row technically has a value, just not a useful one. Counting empty strings separately, and excluding them from the \"truly populated\" count, is what catches that."
+        },
+        {
+          "q": "Why does this profile build column-level NULL counts with UNION ALL across per-column SELECTs, rather than querying a system view?",
+          "choices": [
+            "SQL Server has no built-in system view that gives column-level NULL counts for user tables directly",
+            "UNION ALL is required by SQL Server whenever COUNT(*) appears more than once in a script",
+            "System views only work for temporary tables, not permanent ones",
+            "UNION ALL runs faster than any system view query regardless of table size"
+          ],
+          "correct": 0,
+          "right": "Right — there's genuinely no shortcut here. SQL Server tracks a lot of metadata about columns, but per-column NULL counts on user data isn't one of them, so UNION ALL (or dynamic SQL) is the practical option.",
+          "wrong": "Not quite — the real reason is simpler than a performance tradeoff. SQL Server just doesn't ship a system view that reports column-level NULL counts for your data. You either write dynamic SQL to generate the per-column checks, or hand-write them with UNION ALL like this query does."
+        },
+        {
+          "q": "What does `NULLIF(TotalRows, 0)` protect against in the population percentage formula?",
+          "choices": [
+            "A division-by-zero error when profiling a table that has no rows",
+            "Rounding errors when TotalRows is a very large number",
+            "Negative percentages when NullRows exceeds PopulatedRows",
+            "SQL Server treating TotalRows as a string instead of a number"
+          ],
+          "correct": 0,
+          "right": "Yes — the classic NULLIF-as-a-guard pattern. Divide by zero in SQL Server and you get an error, not infinity or NULL, so this quietly turns that error into a NULL result instead.",
+          "wrong": "Here's what it's actually guarding: if TotalRows is 0 (an empty table), `PopulatedRows / TotalRows` would be a division by zero, which SQL Server raises as an error rather than silently producing NULL or infinity. `NULLIF(TotalRows, 0)` swaps the 0 for NULL first, so the division returns NULL instead of blowing up the whole query."
+        }
+      ],
+      "close": "Population rate, the NULL-vs-empty-string distinction, and the NULLIF-against-zero guard — that's completeness profiling in a nutshell. Next up: Value Distribution, where we look at what's actually inside the populated cells."
+    },
+    "G11-T02": {
+      "open": "Now that you know how populated a column is, let's look at what's in it — Value Distribution Analysis. This is where you catch dominant values, rare ones, and the sneaky encoding variants that break downstream joins.",
+      "questions": [
+        {
+          "q": "What does `SUM(COUNT(*)) OVER ()` compute in this query, and why is it needed alongside `GROUP BY Country`?",
+          "choices": [
+            "It computes the grand total row count across all groups, letting each group's row compute its own percentage of the whole without a second query",
+            "It re-runs the GROUP BY a second time to double-check the count is correct",
+            "It replaces GROUP BY entirely — the query would work identically without GROUP BY Country",
+            "It counts only the rows where Country is NULL, as a data quality check"
+          ],
+          "correct": 0,
+          "right": "Exactly — that's the window-function trick for percentages. `SUM(COUNT(*)) OVER ()` with an empty window sees every group's count and sums them, so every row can divide its own count by the true grand total in a single pass.",
+          "wrong": "Here's the mechanism: `GROUP BY Country` produces one row per country with its own `COUNT(*)`. `SUM(COUNT(*)) OVER ()` — with no PARTITION BY — then adds up every group's count into a single grand total, and attaches that same total to every row. That's what lets each row compute `COUNT(*) / grand_total` for a real percentage, without a separate subquery to get the total first."
+        },
+        {
+          "q": "Why is a singleton value (a value that appears exactly once) in a categorical column considered worth flagging?",
+          "choices": [
+            "It could be a legitimate rare case, but it's just as likely to be a misspelling, typo, or variant of a more common value",
+            "SQL Server automatically treats any value appearing once as invalid data",
+            "Singletons always indicate the column should be dropped from the table entirely",
+            "A singleton means the column has reached its maximum allowed cardinality"
+          ],
+          "correct": 0,
+          "right": "Right — a singleton isn't proof of an error, but it's a strong candidate for one. When everything else in the column repeats dozens of times and one value shows up exactly once, that asymmetry is worth a human look.",
+          "wrong": "The lesson's own example makes this concrete: \"Germany\" appearing once in a Country column where every other country appears dozens of times could be one legitimate customer — or it could be a typo, a stray test record, or a legacy value from an old import. A singleton isn't automatically wrong, but it's exactly the kind of value that blends into a distribution report and gets missed without an explicit flag."
+        },
+        {
+          "q": "What does very high cardinality (distinct values close to the total row count) typically indicate about a column's role?",
+          "choices": [
+            "The column is functioning as an identifier or free-text field, not a category",
+            "The column definitely contains duplicate data that needs cleaning",
+            "The column should always be converted to a BIT or boolean type",
+            "The column's data type is incorrectly set to VARCHAR"
+          ],
+          "correct": 0,
+          "right": "Yes — near-unique values are the signature of an identifier or unstructured free text, not something you'd ever GROUP BY meaningfully. Low cardinality is the categorical signal; high cardinality is the opposite end of that spectrum.",
+          "wrong": "Cardinality sits on a spectrum: low cardinality (a handful of repeating values) signals a categorical column — good for GROUP BY and one-hot encoding. High cardinality, where nearly every row has a distinct value, signals an identifier column (like a primary key) or free text — neither of which behaves like a category. It's not a defect signal on its own; it's a classification signal that tells you how the column should be treated downstream."
+        }
+      ],
+      "close": "Distribution shape, singletons, and cardinality as a role-classifier — you've got the core distribution toolkit. Next: Numeric Column Statistics, where we put actual numbers on the spread."
+    },
+    "G11-T03": {
+      "open": "Time to get quantitative — Numeric Column Statistics. Same idea as before, but now we're computing min, max, mean, median, and percentiles to describe a column's shape precisely.",
+      "questions": [
+        {
+          "q": "Why does this query need `SELECT DISTINCT` (or a CTE) after computing `PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY TotalAmount) OVER ()`?",
+          "choices": [
+            "The empty OVER() window applies the percentile calculation to every row in the result set, so the same median value is repeated on every single row",
+            "PERCENTILE_CONT only works correctly when combined with SELECT DISTINCT",
+            "Without DISTINCT, SQL Server rounds the percentile value incorrectly",
+            "DISTINCT is required syntax whenever WITHIN GROUP is used, regardless of context"
+          ],
+          "correct": 0,
+          "right": "Exactly — `OVER ()` with nothing inside it is a window over the entire result set, so it computes one percentile value and stamps it onto every row. DISTINCT (or wrapping it in a CTE) is what collapses that back down to a single summary row.",
+          "wrong": "Here's the mechanism: `PERCENTILE_CONT(...) OVER ()` is a window function, and an empty `OVER ()` means the window is the whole result set. So it calculates the median once, but attaches that same value to every row that comes out of the query — you'd get one row per original row, all showing the identical median. `SELECT DISTINCT` (or a CTE that isolates it) collapses those duplicate rows down to the single summary value you actually want."
+        },
+        {
+          "q": "When a distribution shows Mean > Median, what does that indicate?",
+          "choices": [
+            "The distribution is right-skewed — a few high-value outliers are pulling the mean upward",
+            "The distribution is left-skewed — a few low-value outliers are pulling the mean downward",
+            "The data contains a calculation error, since mean and median should always be equal",
+            "The distribution is perfectly symmetric and no further investigation is needed"
+          ],
+          "correct": 0,
+          "right": "Right — Mean > Median is the textbook signature of right skew. A handful of very large values drag the average up, while the median (the middle value) stays put because it doesn't care how extreme the outliers are, only how many there are.",
+          "wrong": "It's the opposite of left-skew. The median is the middle value — it's unaffected by how extreme the outliers are. The mean, by contrast, is sensitive to magnitude: a few very high values pull it upward without moving the median at all. So Mean > Median specifically means there's a right-hand tail of high values dragging the average above the typical (middle) value — that's right-skew, exactly what the lesson's loan-amount example shows with a £9,999,999 outlier."
+        },
+        {
+          "q": "In the IQR outlier fence method, what is the formula for the upper (high) outlier boundary?",
+          "choices": [
+            "Q3 + 1.5 × IQR",
+            "Q3 + IQR",
+            "Mean + 1.5 × StdDev",
+            "Q1 + 1.5 × IQR"
+          ],
+          "correct": 0,
+          "right": "Correct — the classic Tukey fence. Q3 plus one and a half interquartile ranges marks the upper boundary; anything past it is flagged as a high outlier.",
+          "wrong": "The Tukey fence formula is `Q3 + 1.5 × IQR` for the upper boundary (and `Q1 − 1.5 × IQR` for the lower one). Don't confuse this with the Z-score method (`Mean + N × StdDev`) — they're two different techniques with different formulas, and the lesson uses IQR specifically because it holds up better on skewed distributions where Z-scores can underperform."
+        }
+      ],
+      "close": "Percentiles collapsing to one row without DISTINCT, mean-vs-median as a skew signal, and the IQR fence formula — solid numeric-statistics foundation. Next: Cardinality and Uniqueness, digging deeper into what distinct-value counts tell you."
+    },
+    "G11-T04": {
+      "open": "Back to cardinality, but this time with a sharper focus — Cardinality and Uniqueness Check. We're using distinct-value counts to answer a very practical question: could this column be a primary key, and should it be indexed?",
+      "questions": [
+        {
+          "q": "What test in this query confirms that a column has no duplicate values and could serve as a primary key?",
+          "choices": [
+            "TotalRows = DistinctValues — every row has a value not shared by any other row",
+            "DistinctValues = 1 — the column contains exactly one repeated value",
+            "The column's data type is INT rather than VARCHAR",
+            "UniquenessRatioPct is greater than 50%"
+          ],
+          "correct": 0,
+          "right": "Exactly right. If the count of rows equals the count of distinct values, there are zero duplicates by definition — that's a genuine candidate-key test, not just a high-uniqueness heuristic.",
+          "wrong": "The query's own PKCandidate logic spells this out: `TotalRows = DistinctValues` means there are zero duplicates — every single row has a value nothing else shares. A high UniquenessRatioPct like 90% is a strong signal but doesn't rule out duplicates entirely; only equality between the two counts (or equivalently, `TotalRows - DistinctValues = 0`) proves it."
+        },
+        {
+          "q": "What does `DistinctValues = 2` for a column typically indicate?",
+          "choices": [
+            "The column is functioning as a binary flag or boolean, and should probably be stored as BIT rather than VARCHAR or INT",
+            "The column has a data integrity error and needs immediate correction",
+            "The column is a candidate primary key",
+            "The column contains exactly two NULL values"
+          ],
+          "correct": 0,
+          "right": "Right — two distinct values is the signature of a flag column. If it's currently stored as text or a number, that's worth flagging for a type change to BIT/BOOLEAN.",
+          "wrong": "The lesson calls this out explicitly: exactly two distinct values is the classic shape of a binary/boolean column — something like IsActive, where the only real states are true/false or yes/no. It's a modelling insight, not a data quality alarm: the fix, if any, is usually a type change (to BIT in SQL Server) rather than a data correction."
+        },
+        {
+          "q": "Why does Step 4 use `COUNT(*) OVER (PARTITION BY Country)` combined with DISTINCT, instead of a plain `GROUP BY Country`?",
+          "choices": [
+            "It produces one row per distinct value with its frequency attached, in a single query without a separate GROUP BY aggregation step",
+            "PARTITION BY is required by SQL Server whenever COUNT(*) is used with a WHERE clause",
+            "GROUP BY cannot be combined with ORDER BY in the same query",
+            "Window functions always execute faster than GROUP BY regardless of table size"
+          ],
+          "correct": 0,
+          "right": "Yes — that's the compact pattern. `COUNT(*) OVER (PARTITION BY Country)` tags every row with its group's frequency without collapsing rows, and `SELECT DISTINCT` then trims it down to one row per value.",
+          "wrong": "It's really about combining two things in one pass: `COUNT(*) OVER (PARTITION BY Country)` attaches each row's group frequency without collapsing the result set (unlike GROUP BY, which would collapse it), and `SELECT DISTINCT` then picks out one representative row per value. The lesson describes this as a compact single-query approach for low-cardinality value frequency — functionally similar to a GROUP BY result, but built as a window function pattern instead."
+        }
+      ],
+      "close": "Candidate-key testing, binary-column detection, and the window-function frequency pattern — cardinality's practical uses are locked in. Next: Pattern Frequency Analysis, where we look at the *shape* of string values instead of their count."
+    },
+    "G11-T05": {
+      "open": "Onto Pattern Frequency Analysis — this is about the structural shape of string data. Phone numbers, postcodes, product codes: same underlying value, wildly different formats, and this technique surfaces exactly how many formats you're really dealing with.",
+      "questions": [
+        {
+          "q": "Why does this query use LIKE with character classes (like `[0-9]` and `[A-Z]`) to classify patterns, instead of a regex replace function?",
+          "choices": [
+            "SQL Server doesn't have a built-in regex replacement function, unlike some other database systems such as PostgreSQL",
+            "LIKE patterns are always faster to execute than regex, regardless of the database engine",
+            "Character classes are required whenever a CASE expression is used in SQL Server",
+            "Regex functions in SQL Server only work on NVARCHAR(MAX) columns"
+          ],
+          "correct": 0,
+          "right": "Right — this one's a genuine SQL Server gap. Other engines like PostgreSQL ship `regexp_replace` out of the box; SQL Server doesn't, so LIKE with character classes is the practical workaround for structural pattern matching.",
+          "wrong": "The lesson states this directly: SQL Server lacks a built-in regex replacement function that other systems (PostgreSQL's `regexp_replace`, for instance) provide natively. So instead of writing one regex per pattern, this query approximates pattern extraction using `LIKE` with character-class wildcards (`[0-9]` for any digit, `[A-Z]` for any letter), tested as a sequence of CASE conditions."
+        },
+        {
+          "q": "What's a limitation of using `LEN(Phone)` as a pattern proxy, compared to the full structural pattern extraction in Step 1?",
+          "choices": [
+            "Two values with the same length can have completely different structures — an 11-character value could be a local number or an international one with different separators",
+            "LEN() cannot be used inside a GROUP BY clause in SQL Server",
+            "LEN() only counts alphabetic characters, ignoring digits entirely",
+            "LEN() requires the column to be cast to INT before it can be measured"
+          ],
+          "correct": 0,
+          "right": "Exactly — length collapses a lot of real structural difference into one number. It's a fast first pass, not a substitute for actually knowing what the format looks like.",
+          "wrong": "The lesson names this limitation explicitly: length loses structural information. An 11-character value could be `07700900123` (no separators) or a different 11-character international format — LEN() can't tell them apart even though their actual structure is quite different. It's useful as a quick, cheap first pass to spot the spread, but it's not a substitute for the pattern-template approach in Step 1 when you need to know the actual format."
+        },
+        {
+          "q": "Why are the CASE WHEN pattern checks in this query ordered from most-specific to least-specific?",
+          "choices": [
+            "The first matching CASE condition wins, so a broad catch-all pattern placed early would incorrectly match values that should hit a more specific pattern later",
+            "SQL Server requires CASE conditions to be listed in a fixed alphabetical order",
+            "More specific patterns always execute faster than general ones",
+            "It has no effect on the result — CASE evaluates all branches and picks the best match automatically"
+          ],
+          "correct": 0,
+          "right": "Right — CASE is first-match-wins, not best-match-wins. Ordering specific-to-general is what guarantees a value that fits a narrow pattern doesn't get swallowed by a looser one listed earlier.",
+          "wrong": "CASE WHEN evaluates its conditions top to bottom and stops at the first one that's true — it does not find the \"best\" match among all of them. If a general catch-all pattern were listed before a specific one, values that should be classified by the specific pattern would get matched by the general one first and never reach the more precise check. Ordering specific-to-general is what makes the classification accurate."
+        }
+      ],
+      "close": "The regex gap, length as an imperfect proxy, and CASE's first-match-wins behaviour — pattern analysis is now in your toolkit. Next: Temporal Profile, where the same idea gets applied across time instead of across format."
+    },
+    "G11-T06": {
+      "open": "Let's look at data across time — Temporal Profile. Volume, value, and gaps, all changing month to month. This is where seasonal patterns and silent data outages both hide.",
+      "questions": [
+        {
+          "q": "Why must period-over-period calculations here use `ORDER BY Yr, Mo` rather than just `ORDER BY Mo`?",
+          "choices": [
+            "Ordering by month alone would incorrectly place January of a later year before February of an earlier year, since it ignores which year each month belongs to",
+            "SQL Server requires at least two columns in every ORDER BY clause used with LAG()",
+            "ORDER BY Mo would cause a syntax error when combined with the LAG() window function",
+            "Ordering by year and month runs faster than ordering by month alone"
+          ],
+          "correct": 0,
+          "right": "Exactly right — the lesson calls this out as a common mistake. Month alone has no sense of which year it belongs to, so multi-year data needs the year in the ORDER BY to stay chronological.",
+          "wrong": "The lesson names this as a common mistake directly: `ORDER BY Mo` treats month 1 (January) as always coming first, regardless of year — so January 2025 would sort before February 2024, which is chronologically backwards. `ORDER BY Yr, Mo` sorts by year first, then month within each year, which is what correctly orders data spanning multiple years."
+        },
+        {
+          "q": "What does DayCoveragePct measure, and what does a value well below expectation indicate?",
+          "choices": [
+            "The percentage of days within the date range that actually have at least one order — a low value indicates data gaps",
+            "The percentage of orders that were delivered on the same day they were placed",
+            "The percentage of customers who placed more than one order in the date range",
+            "The percentage of the table's rows that have a non-NULL OrderDate"
+          ],
+          "correct": 0,
+          "right": "Right — it's a temporal-completeness measure, days-with-orders divided by total days in the range. A low value (below what the business pattern would explain) is the signal for a gap.",
+          "wrong": "DayCoveragePct is `COUNT(DISTINCT days with orders) / total days in range × 100` — it's the temporal equivalent of column completeness, but measuring days instead of rows. The lesson notes that 100% means orders every single day, while something like 60% could be perfectly normal for a weekday-only business (5 of 7 days). The signal to watch for is a value below what the business's normal pattern would explain — that's what points to an actual gap, like the 15-day outage in the live scenario."
+        },
+        {
+          "q": "What does `NULLIF(LAG(MonthlyTotal) OVER (...), 0)` guard against in the month-over-month percentage change formula?",
+          "choices": [
+            "A division-by-zero error when the previous month's total was exactly zero",
+            "Negative percentages when the current month is lower than the previous month",
+            "SQL Server rounding the percentage to the wrong number of decimal places",
+            "LAG() returning a value from more than one row back"
+          ],
+          "correct": 0,
+          "right": "Yes — same NULLIF-as-a-guard pattern you've seen before. If the prior month had zero total, dividing by it would raise an error, so NULLIF swaps that zero for NULL first.",
+          "wrong": "It's the same protective pattern as elsewhere in this course: the MoM percentage change divides by the previous month's total. If that previous month happened to have a total of exactly 0 (say, a month with zero orders), the division would raise an error rather than returning a sensible result. `NULLIF(..., 0)` converts that 0 to NULL first, so the division safely returns NULL instead of failing the whole query — negative percentages, by contrast, are a perfectly valid and expected result when a month genuinely drops."
+        }
+      ],
+      "close": "Multi-year ordering, day coverage as temporal completeness, and the zero-guard on percentage change — you can now profile data across time as rigorously as across columns. Next: Cross-Column Correlation, where we look at how columns relate to *each other*."
+    },
+    "G11-T07": {
+      "open": "Single-column profiling has its limits — Cross-Column Correlation Profile looks at how pairs of columns behave together, and what combinations should never happen at all.",
+      "questions": [
+        {
+          "q": "What does `AVG(AVG(TotalAmount)) OVER ()` compute in Step 1, and why does it let each row compare itself to it without a separate subquery?",
+          "choices": [
+            "It computes the grand mean across all Status groups, and the window function attaches that single value to every row alongside each row's own group average",
+            "It computes the average of the average twice, which is mathematically identical to just AVG(TotalAmount) with no benefit",
+            "It only works correctly when the GROUP BY clause contains exactly one column",
+            "It recalculates TotalAmount using a different rounding rule than the inner AVG(TotalAmount)"
+          ],
+          "correct": 0,
+          "right": "Exactly — the outer AVG() OVER() takes each group's already-aggregated average and averages those together into one grand mean, then stamps it onto every output row via the window function.",
+          "wrong": "This is a nested aggregate-over-window pattern: the inner `AVG(TotalAmount)` computes each Status group's own average (because of `GROUP BY Status`). The outer `AVG(...) OVER ()` then averages those group averages together into a single grand mean, and — because it's a window function — attaches that same grand-mean value to every row in the result. That's what lets each Status row compare its own average against the overall average, all in one query with no separate subquery needed to compute the grand mean first."
+        },
+        {
+          "q": "In Step 4, what does a non-zero count for the \"Delivered before ordered\" check indicate?",
+          "choices": [
+            "A genuine data integrity failure — an impossible state that should always return zero in valid data",
+            "A normal seasonal pattern that requires no further investigation",
+            "A rounding error in the DeliveryDate column's data type",
+            "An expected result whenever a customer cancels and reorders the same product"
+          ],
+          "correct": 0,
+          "right": "Right — this check should always be zero by definition. Any non-zero count means something logically impossible got into the data, which is exactly what the lesson calls it: an integrity failure.",
+          "wrong": "The lesson is explicit about this: \"Delivered before ordered\" describes something that cannot happen in a valid order lifecycle — you can't deliver something before you ordered it. So this check should always return 0. Any non-zero count is a genuine data integrity failure: either a date entry error, or a clock mismatch between the systems that record order dates and delivery dates."
+        },
+        {
+          "q": "What does it mean when NULLs in one column consistently co-occur with NULLs in another column (structural clustering), rather than being spread randomly?",
+          "choices": [
+            "It points to a specific upstream cause — a batch load gap, a conditional field, or a data source that systematically omits related fields together",
+            "It means the two columns are duplicates of each other and one should be dropped",
+            "It means the table needs an additional CHECK constraint to prevent NULLs",
+            "It has no analytical significance beyond confirming both columns allow NULL values"
+          ],
+          "correct": 0,
+          "right": "Right — structural clustering is a real signal, not noise. When NULLs consistently travel together across columns, that pattern usually traces back to one upstream cause affecting both fields at once.",
+          "wrong": "Random NULLs (spread independently across rows) usually mean ordinary, unrelated missingness. Structural NULL clustering — where NULL in column A reliably shows up alongside NULL in column B — is a different signal entirely: it points to a shared upstream cause, like a batch load that failed to populate a group of related fields together, or a conditional field that's only ever populated alongside another one. It's a clue about *why* the data is missing, not just *that* it is."
+        }
+      ],
+      "close": "The grand-mean-over-window trick, impossible combinations as always-zero checks, and structural NULL clustering as an upstream clue — cross-column profiling done. Next: Data Density and Sparsity, zooming out to the whole-table view."
+    },
+    "G11-T08": {
+      "open": "Data Density and Sparsity Profile — this is about deciding which columns are even worth keeping. A table can have 47 columns and only 16 of them carrying real information.",
+      "questions": [
+        {
+          "q": "What's the difference between the column-level density in Step 1 and the row-level completeness score in Step 2?",
+          "choices": [
+            "Step 1 asks \"how many rows have a value in this column?\"; Step 2 asks \"how many columns have a value in this row?\" — and both perspectives can hide problems the other one catches",
+            "Step 1 and Step 2 compute the exact same metric, just with different column names for the output",
+            "Step 1 only works on numeric columns, while Step 2 only works on text columns",
+            "Step 2 replaces Step 1 entirely and makes the column-level check redundant"
+          ],
+          "correct": 0,
+          "right": "Exactly right, and the lesson makes the case for why you need both: a column can look 80% dense overall while those NULLs all cluster in the same handful of rows — something only the row-level view reveals.",
+          "wrong": "They're genuinely different lenses on the same data: Step 1 profiles each column independently (what fraction of *rows* have a value in this column?). Step 2 profiles each row (what fraction of *columns* are populated for this specific row?). The lesson's own point is that a column can look 80% dense and healthy at the column level, while those particular NULLs are concentrated in 5 rows that are also missing 6 other fields — a batch-import failure that column-level density alone wouldn't surface."
+        },
+        {
+          "q": "Why does the query's BusinessAlert flag a NULL in a mandatory field like OrderID differently from a NULL in an optional field like Notes?",
+          "choices": [
+            "A NULL mandatory field represents a data integrity failure, while sparse population of an optional field is often by design, not an error",
+            "SQL Server enforces different NULL rules for mandatory versus optional columns automatically",
+            "Mandatory fields cannot technically contain NULL values, so the check is purely defensive and never actually fires",
+            "Optional fields are always text columns, and text columns cannot be checked for NULL the same way as numeric ones"
+          ],
+          "correct": 0,
+          "right": "Right — same missingness, very different meaning depending on the field's role. That's exactly why the check treats them differently instead of applying one blanket density threshold to everything.",
+          "wrong": "The distinction is about what the field is *supposed* to be. OrderID, CustomerID, TotalAmount — these are supposed to always have a value; any NULL there is a genuine integrity problem. Notes and AttachmentPath, by contrast, are optional by design — most orders legitimately have no notes attached. Applying the same density expectation to both would either raise false alarms on optional fields or miss real problems in mandatory ones, so the check treats them as two different classes."
+        },
+        {
+          "q": "What does a column landing in the \"VERY SPARSE: <10% populated\" tier suggest about its fitness for a migration?",
+          "choices": [
+            "It's a candidate for archiving rather than migrating, since it's carrying almost no usable information",
+            "It should always be migrated first, ahead of denser columns, because sparse data needs special handling",
+            "It indicates the column has an incorrect data type that must be fixed before profiling can continue",
+            "It means the column is a good candidate for a new primary key"
+          ],
+          "correct": 0,
+          "right": "Right — that's exactly the migration-planning use of the density tiers: dense columns migrate first, sparse ones get individually investigated, and columns near 0% are candidates to archive rather than carry forward.",
+          "wrong": "The lesson's own migration scenario spells this out: columns under 10% population carry almost no information, and the five-tier system exists precisely to separate them out. The dense columns (≥80%) migrate first with confidence; the sparse-but-not-empty ones (10–49%) need individual investigation to understand why; and the very sparse ones are strong candidates for archiving rather than carrying forward into a new system."
+        }
+      ],
+      "close": "Column density versus row completeness, why mandatory and optional fields get different alerts, and sparse columns as archive candidates — you can now assess a whole table's data health. Next: Outlier and Anomaly Profile, where we hunt for the values that don't belong."
+    },
+    "G11-T09": {
+      "open": "Outlier and Anomaly Profile — three different detection methods, because no single one catches everything. This is where fraud, data entry errors, and genuine extreme values get told apart.",
+      "questions": [
+        {
+          "q": "Why does this profile combine Z-score, IQR fence, and round-number detection instead of relying on Z-score alone?",
+          "choices": [
+            "Each method has its own blind spot — for example, Z-score is sensitive to the very outliers it's trying to detect, since they inflate the standard deviation and make themselves look less extreme",
+            "SQL Server does not support the STDEV function required for Z-score calculations",
+            "Z-score can only be computed on columns with fewer than 100 rows",
+            "IQR and round-number detection are required by regulation for financial data, while Z-score is optional"
+          ],
+          "correct": 0,
+          "right": "Exactly — Z-score's blind spot is a real, well-known problem: the outliers themselves distort the standard deviation, which is the very thing the method uses to judge how extreme they are. Combining methods with different blind spots is what makes the profile reliable.",
+          "wrong": "The lesson explains each method's specific weakness: Z-score assumes a normal distribution and is undermined by the outliers it's trying to catch, because they inflate the standard deviation and make themselves look statistically less extreme. IQR fences are more robust to skewed distributions but can miss outliers in very dispersed data. Round-number detection catches an entirely different class of anomaly — data-entry artefacts — that neither statistical method touches. Combining all three, and counting how many flag each record, produces a priority list no single method could."
+        },
+        {
+          "q": "What data quality issue does round-number clustering (many transaction amounts landing at exactly £10,000) commonly signal?",
+          "choices": [
+            "Fictitious invoices structured to stay under an approval threshold, manual entry of round estimates, or currency conversion errors",
+            "A completely healthy dataset, since round numbers are the most common outcome in any financial system",
+            "A missing foreign key constraint between the transactions table and the customers table",
+            "An indexing problem that is artificially duplicating certain transaction amounts"
+          ],
+          "correct": 0,
+          "right": "Right — round-number clustering is a genuine anomaly signal in financial data, and the lesson names all three of its usual causes: threshold-gaming, manual round-number entry, and conversion errors.",
+          "wrong": "The lesson lists the specific causes: financial amounts clustering at exact round numbers far more often than genuine continuous data would produce can indicate fictitious invoices deliberately kept below a single-approval threshold, an operator manually entering a round estimate instead of an exact figure, or a currency conversion applied with the wrong exchange rate. It's flagged because real transaction amounts — prices, taxes, discounts combined — essentially never land on perfectly round numbers by chance at that frequency."
+        },
+        {
+          "q": "Why does `CROSS JOIN UniqueStats` work correctly here without multiplying the row count of the result?",
+          "choices": [
+            "UniqueStats is built from a `SELECT DISTINCT` over statistics that are identical for every row (mean, IQR bounds), so it contains exactly one row before the join",
+            "CROSS JOIN in SQL Server automatically deduplicates the result set after the join completes",
+            "The query uses an INNER JOIN internally, so CROSS JOIN is just an alias with no real effect",
+            "UniqueStats is a temporary table that SQL Server limits to a maximum of one row by default"
+          ],
+          "correct": 0,
+          "right": "Exactly — a CROSS JOIN's row count is (left rows) × (right rows). Because UniqueStats has exactly one row (thanks to the DISTINCT collapsing identical values), that multiplication is a no-op, and every original row keeps its own row while gaining the shared stats as extra columns.",
+          "wrong": "A CROSS JOIN normally multiplies row counts — but only if both sides have more than one row. UniqueStats is built with `SELECT DISTINCT` over a statistics window function that returns the same mean, Q1, Q3, and IQR value for every row of the original table — so after DISTINCT collapses those identical repeated values, UniqueStats contains exactly one row. Cross-joining against a single row doesn't multiply anything; it just attaches those shared statistics as extra columns onto every row of the original table, which is exactly what per-row scoring needs."
+        }
+      ],
+      "close": "Three detection methods with three different blind spots, round numbers as a fraud signal, and the single-row CROSS JOIN trick — that's a complete outlier toolkit. One more to go: Schema Change and Drift Detection."
+    },
+    "G11-T10": {
+      "open": "Last one in this group — Schema Change and Drift Detection. Everything so far profiled data as it is right now; this technique compares it against what it *used* to look like, which is how you catch silent upstream changes before they corrupt a model.",
+      "questions": [
+        {
+          "q": "When a categorical column's distinct value count increases compared to the stored baseline, what does that most likely indicate?",
+          "choices": [
+            "A new value has been introduced upstream that wasn't present when the baseline was captured",
+            "The table has grown in row count, which always increases cardinality proportionally",
+            "A data type change occurred, converting the column from VARCHAR to a larger type",
+            "The baseline itself was calculated incorrectly and needs to be regenerated"
+          ],
+          "correct": 0,
+          "right": "Right — rising cardinality against a fixed baseline means something new showed up that the baseline never accounted for, exactly like the \"ARCHIVED\" status appearing after the CRM upgrade in the live scenario.",
+          "wrong": "The lesson's own example is the clearest explanation: a new order status, \"ARCHIVED\", appeared after a source system upgrade — one that wasn't in the baseline profile. When distinct count goes up compared to baseline, an upstream system introduced a new category. (Going the other direction — cardinality decreasing — means values were removed, merged, or filtered out instead; both directions are meaningful, just in opposite ways.)"
+        },
+        {
+          "q": "Why is the whitelist approach in Step 3 (checking for values NOT IN a known-good set) described as stricter than a standard referential integrity check against a lookup table?",
+          "choices": [
+            "It also catches new values that were added directly to the lookup table itself, which a standard FK check would treat as valid since the lookup table now contains them",
+            "Referential integrity checks cannot be run against VARCHAR columns, only numeric ones",
+            "The whitelist approach runs faster because it avoids a JOIN operation entirely",
+            "A referential integrity check only works on the Orders table, never on Customers"
+          ],
+          "correct": 0,
+          "right": "Exactly — that's the real gap a standard FK check has. If someone adds a new value straight into the lookup table, referential integrity happily accepts it as valid, even though nobody from data governance ever reviewed it. The whitelist, defined independently, doesn't have that blind spot.",
+          "wrong": "A referential integrity check validates that a value exists somewhere in a lookup table — but if a new value gets added directly to that lookup table (bypassing any review process), the FK check will pass it as perfectly valid, because as far as the database is concerned, it now legitimately exists there. A hardcoded whitelist, defined independently of the live lookup table, doesn't have that blind spot: any value not explicitly reviewed and included in the whitelist gets flagged, even if it's already sitting in the lookup table."
+        },
+        {
+          "q": "Why does the lesson describe the 15% drift threshold for mean and median as \"illustrative\" rather than a universal constant?",
+          "choices": [
+            "The right threshold depends on the domain — a B2B business with seasonal spikes needs a wider threshold than one with tightly controlled, stable data",
+            "15% is a SQL Server system default that can never be changed",
+            "Drift thresholds only apply to the TotalAmount column and no other numeric column",
+            "The threshold is only accurate when the table has exactly 20 rows, as in this example"
+          ],
+          "correct": 0,
+          "right": "Right — thresholds have to match the domain's real variation pattern, not a fixed number. The lesson gives concrete examples on both ends: 30–40% seasonal swings that are perfectly normal for some businesses, versus a much tighter 5% for tightly controlled data.",
+          "wrong": "The lesson gives explicit examples of why one number can't fit every case: financial data in a B2B context with genuine seasonal variation (like a Q4 spike) might normally swing 30–40%, which would make a 15% threshold fire constantly on completely healthy data. Tightly controlled inventory counts, by contrast, might warrant a much tighter 5% threshold to catch real problems early. The right threshold has to be tuned to the specific column's known, expected variation pattern — 15% here is just a reasonable starting point for illustration, not a rule that applies everywhere."
+        }
+      ],
+      "close": "Baseline-vs-current comparison, the whitelist's edge over referential integrity, and domain-tuned drift thresholds — that closes out Profiling. Ten techniques down: completeness, distribution, statistics, cardinality, patterns, time, correlation, density, outliers, and drift. You've built a genuinely complete profiling toolkit."
     }
   }
 }

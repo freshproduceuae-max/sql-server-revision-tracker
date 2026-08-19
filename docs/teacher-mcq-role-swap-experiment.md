@@ -160,7 +160,9 @@ pairing: Codex reviewing Claude's proposed fix, and both getting it wrong
 under the same failure mode (reasoning from training data instead of
 checking a source of truth).
 
-**The G11 authoring/review-arrangement decision remains open.** This
-document records what happened in G06–G10; it does not recommend continuing
-or discontinuing the role-swap. That choice is the owner's, to be made
-explicitly before G11 starts — see `HANDOFF.md`'s work queue.
+**The G11 authoring/review-arrangement decision has been made — see
+`docs/teacher-mcq-reverse-pilot-g11.md`.** The owner chose to pilot the
+reverse arrangement (Claude authors, Codex reviews) on G11 only, not to
+continue this role-swap. This document is kept historically intact as the
+record of what happened in G06–G10; it is not updated further by that
+pilot.

@@ -114,6 +114,23 @@ thinking from off top of your head... I'm not your supervisor like Codex. I'm
 the creative director... a presentation or a shorter preview of everything we
 need to approve concisely."*
 
+**During a Claude–Codex review, run it silently end to end.** No
+intermediate updates for Codex starting/running, polling status, partial
+findings, files being read, commands/retries/routine corrections, or
+"continuing with the next item." Finish the whole sequence — Claude's
+authorized work, Codex's independent review, Claude's independent
+assessment of any findings/edits, disagreement resolution via tests or
+primary documentation, all validation, final verdict (`PASS` /
+`PASS_WITH_FIXES` / `BLOCK`) — before saying anything. Then reply with one
+short executive brief only: verdict, outcome, comparison to relevant prior
+work, pros, cons/risks, recommendation, what's next, and the one decision
+(if any) needed — a small table or under 10 bullets, not prose. Commands,
+transcripts, findings, token records, and audit evidence stay in the
+designated files; don't reproduce them in chat unless asked. Interrupt
+before the verdict only for: a material scope decision, a destructive or
+external action needing authorization, a genuine blocker, an unresolved
+Claude–Codex disagreement, or a serious quality/security/production risk.
+
 ---
 
 ## Layout
