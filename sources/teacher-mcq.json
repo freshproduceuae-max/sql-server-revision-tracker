@@ -503,6 +503,426 @@
         }
       ],
       "close": "That's the full Completeness group done — twelve lessons, and you've built real instincts for NULLs, blanks, placeholders, sentinels, missing rows, and missing relationships. That's a genuinely strong foundation for everything else in Data Validation. Nicely done."
+    },
+    "G02-T01": {
+      "open": "Welcome to Group 2 — Uniqueness. Completeness asked \"is the data there?\" This group asks a different question: \"does it appear more than once when it shouldn't?\" Let's start with the simplest case: rows that are exact copies of each other.",
+      "questions": [
+        {
+          "q": "Why does the GROUP BY in this query deliberately exclude CustomerID, the surrogate key, when looking for exact duplicate rows?",
+          "choices": [
+            "Because CustomerID is unique by definition, so grouping on it would never find a group with more than one row — the goal is content duplicates, not key duplicates",
+            "Because CustomerID is a reserved column name in SQL Server",
+            "Because surrogate keys cannot be used in GROUP BY clauses",
+            "Because it would make the query run slower"
+          ],
+          "correct": 0,
+          "right": "Exactly — and this is the whole trick of the lesson in one line. Group on the surrogate key and every group has exactly one row, always, because that's what a surrogate key guarantees. You have to group on the business columns instead to find rows that are really the same.",
+          "wrong": "Here's the reasoning: CustomerID is auto-generated and unique by design — every row already has its own value, so grouping on it would put every single row in its own group of one, and HAVING COUNT(*) > 1 would never fire. The whole point is to find rows that are duplicates in content, so the GROUP BY has to run on the business columns (name, email, phone, etc.), not the key that's guaranteed unique."
+        },
+        {
+          "q": "`ROW_NUMBER() OVER (PARTITION BY ... ORDER BY CustomerID ASC)` is used to rank rows within each duplicate group. What does RowRank = 1 represent?",
+          "choices": [
+            "The row with the lowest CustomerID in that duplicate group — treated as the original to keep",
+            "The row that was most recently updated",
+            "A random row selected for deletion",
+            "The row with the most populated fields"
+          ],
+          "correct": 0,
+          "right": "Right — ORDER BY CustomerID ASC inside the PARTITION means the earliest-created row always lands at rank 1, and everything ranked 2 or higher in that same group is a candidate for deletion.",
+          "wrong": "The ORDER BY inside PARTITION BY controls the ranking: ASC on CustomerID means the row with the smallest (earliest) ID gets RowRank 1 in each duplicate group, treated as the master record to keep. Every other row in that same group — RowRank 2, 3, and so on — is a duplicate candidate."
+        },
+        {
+          "q": "The lesson's explanation insists on \"always SELECT before DELETE.\" What is that step actually protecting against?",
+          "choices": [
+            "Running the DELETE against the wrong set of rows without ever having verified which IDs would actually be removed",
+            "SQL Server syntax errors in the DELETE statement",
+            "Slow query performance on large tables",
+            "Losing the CustomerID column's data type"
+          ],
+          "correct": 0,
+          "right": "Yes — and this a habit worth keeping for life, not just this lesson. A DELETE is one keystroke away from a SELECT that filters the same rows. Running the SELECT first and actually reading the row count and the IDs is the only real safeguard before something irreversible runs.",
+          "wrong": "The point isn't syntax or performance — it's irreversibility. A DELETE with the wrong WHERE clause removes real data with no undo. Running the equivalent SELECT first, and actually looking at which rows and how many would be affected, is the only way to catch a mistake before it's permanent instead of after."
+        }
+      ],
+      "close": "Good start on Uniqueness — you've got the core distinction locked in: group on content, not on the key that's guaranteed unique, and always look before you delete. Duplicate Primary Key is next, and it's a sharper version of the same idea."
+    },
+    "G02-T02": {
+      "open": "This lesson asks what happens when the thing that's SUPPOSED to guarantee uniqueness — the primary key itself — has been bypassed.",
+      "questions": [
+        {
+          "q": "What does `COUNT(*) - COUNT(DISTINCT ProductID)` actually tell you?",
+          "choices": [
+            "The exact number of extra (duplicate) rows sitting on top of what a truly unique key would produce",
+            "The total number of products in the table",
+            "The number of NULL values in ProductID",
+            "The average number of duplicates per product"
+          ],
+          "correct": 0,
+          "right": "Exactly — COUNT(*) counts every row, COUNT(DISTINCT ProductID) counts each value once, and the gap between them is precisely how many duplicate rows exist. Zero gap means the column behaves as a real key, constraint or no constraint.",
+          "wrong": "Break it into its two halves: COUNT(*) is every row in the table. COUNT(DISTINCT ProductID) is how many unique key values exist. Subtract one from the other and what's left is exactly the number of extra rows beyond what a truly unique key would have — the duplicate count, with no need for a separate GROUP BY."
+        },
+        {
+          "q": "Inside the duplicate-ranking CTE, why does the lesson use `ORDER BY (SELECT NULL)` instead of ordering by a real column?",
+          "choices": [
+            "It signals there is no reliable basis for choosing which duplicate row to keep — that decision needs a human or a business rule, not a sort",
+            "It is required syntax whenever ROW_NUMBER() is used",
+            "It makes the query run without a PARTITION BY clause",
+            "It automatically picks the row with the highest price"
+          ],
+          "correct": 0,
+          "right": "Right — it's a deliberate statement, not a placeholder. `ORDER BY (SELECT NULL)` means \"I'm not claiming any of these rows is more correct than another,\" which is honest when the duplicate rows genuinely have no natural tiebreaker.",
+          "wrong": "This one is about honesty in the query, not mechanics: `ORDER BY (SELECT NULL)` means there's no column that meaningfully decides which duplicate is the \"real\" one — different prices on the same ProductID don't tell you which price is correct. Rather than picking arbitrarily and hiding that choice, the query flags that a human decision is needed."
+        },
+        {
+          "q": "What real operational mistake caused the 7 duplicate ProductCode rows in the lesson's scenario?",
+          "choices": [
+            "Constraints were disabled for a bulk load (NOCHECK CONSTRAINT) and never re-enabled afterward",
+            "The ProductCode column was accidentally deleted and recreated",
+            "Two different databases were merged without any migration script",
+            "SQL Server has a known bug that duplicates primary keys under heavy load"
+          ],
+          "correct": 0,
+          "right": "Yes — a very common real-world cause. Disabling constraints to speed up a bulk load is a normal DBA move; forgetting the re-enable step afterward is what turns it into a live bug.",
+          "wrong": "Per the lesson: a DBA ran `ALTER TABLE ... NOCHECK CONSTRAINT ALL` to speed up a bulk load — a legitimate technique — but never re-enabled the constraint afterward. With the PK constraint off, nothing stopped duplicate ProductCodes from being inserted, and they were, silently."
+        }
+      ],
+      "close": "You've now seen that a primary key is only as strong as whether its constraint is actually enforced right now — not whether one was ever defined. Duplicate Natural / Business Key is next: what happens when the surrogate key is fine but the real-world identifier isn't."
+    },
+    "G02-T03": {
+      "open": "This lesson makes a distinction that trips up a lot of people the first time they see it: your primary key can be perfectly unique while your data is still full of duplicates. Let's see why.",
+      "questions": [
+        {
+          "q": "What is the difference between a surrogate key and a natural key, and why doesn't surrogate-key uniqueness guarantee natural-key uniqueness?",
+          "choices": [
+            "A surrogate key (like an auto-increment ID) is system-generated and always unique by construction; a natural key (like Email) is a real-world identifier the system never enforces uniqueness on unless you explicitly check it",
+            "They are two names for the same concept",
+            "A natural key is always numeric and a surrogate key is always text",
+            "Surrogate keys are only used in NoSQL databases"
+          ],
+          "correct": 0,
+          "right": "Exactly right — and this is the core idea of the whole lesson. CustomerID being unique tells you nothing about whether Email is unique, because the database never promised that for Email in the first place.",
+          "wrong": "Here's the distinction: CustomerID is a surrogate key — the system generates it and guarantees it's unique, that's its whole job. Email is a natural key — a real-world identifier that's supposed to be unique in the business sense, but nothing in the schema enforces that unless a separate constraint or check exists. One being unique says nothing about the other."
+        },
+        {
+          "q": "What does adding `COUNT(*) OVER (PARTITION BY Email)` inside the CTE give you, that a separate subquery would have taken an extra step to produce?",
+          "choices": [
+            "TotalSharing — the count of how many customers share that email, available on every row in the same pass, without a second query",
+            "The total number of rows in the entire Customers table",
+            "A random sample of duplicate rows",
+            "The average CustomerID per email"
+          ],
+          "correct": 0,
+          "right": "Right — a window function computes that count alongside every row in the same query, so you can filter on it (WHERE TotalSharing > 1) and display it, without a separate COUNT subquery joined back in.",
+          "wrong": "Without the window function, you'd need a separate subquery to count how many rows share each email, then join that count back to the main query. `COUNT(*) OVER (PARTITION BY Email)` computes and attaches that count to every row directly, in the same single pass — that's the efficiency window functions buy you here."
+        },
+        {
+          "q": "The lesson ranks the earliest CustomerID as the \"original\" record to keep. According to the explanation, is that ranking a hard rule?",
+          "choices": [
+            "No — it's a starting point; the real decision depends on which record has more complete data, was more recently active, or which system is authoritative, and a human or business rule makes the final call",
+            "Yes — the earliest record is always legally the correct one to keep",
+            "No — the newest record should always be kept instead",
+            "The ranking is chosen at random each time the query runs"
+          ],
+          "correct": 0,
+          "right": "Exactly — the query surfaces the candidates and a sensible default ordering, but it doesn't claim to know which record is actually \"right.\" That's explicitly left as a human or business-rule decision.",
+          "wrong": "The lesson is direct about this: \"the convention of keeping the lowest CustomerID is a starting point — not a rule.\" The validation query's job is to surface which records are candidates; deciding which one is actually correct depends on data completeness, recency, or which system is the source of truth — a call for a human, not the query."
+        }
+      ],
+      "close": "The surrogate-vs-natural-key distinction you just built is one you'll use constantly — a clean primary key tells you nothing about whether the data underneath it is trustworthy. Near-Duplicate (Fuzzy Match) is next, where even the natural key itself isn't spelled the same way twice."
+    },
+    "G02-T04": {
+      "open": "So far every duplicate has been an exact match on some column. This lesson is different — what if the same person was entered twice, just spelled slightly differently each time?",
+      "questions": [
+        {
+          "q": "In the self-join pattern `FROM Customers A JOIN Customers B ON ... AND A.CustomerID < B.CustomerID`, why is the `<` condition there?",
+          "choices": [
+            "Without it, every matching pair would appear twice — once as (A,B) and once as (B,A) — the less-than condition keeps each pair to a single row",
+            "It filters out customers who joined more recently",
+            "It's required to make SOUNDEX() work correctly",
+            "It excludes customers with a CustomerID below 100"
+          ],
+          "correct": 0,
+          "right": "Exactly — a self-join naturally produces both (1,11) and (11,1) for the same pair, since the join has no sense of direction. `A.CustomerID < B.CustomerID` breaks that symmetry so each real pair shows up exactly once.",
+          "wrong": "Think about what a self-join without that condition produces: every matching pair would show up twice, as (1,11) and again as (11,1) — same people, same match, listed twice. Requiring A's ID to be strictly less than B's ID keeps only one direction of each pair, so duplicates in the *output* don't multiply on top of the duplicates you're trying to find."
+        },
+        {
+          "q": "What does the `DIFFERENCE()` function's score of 0 to 4 actually measure?",
+          "choices": [
+            "How similar two strings' SOUNDEX codes are — 4 means the codes are identical (sounds the same), 0 means no similarity",
+            "The number of characters that differ between two strings",
+            "How many rows match a given WHERE condition",
+            "The alphabetical distance between two strings"
+          ],
+          "correct": 0,
+          "right": "Right — DIFFERENCE() compares SOUNDEX codes, not raw strings. A score of 4 is the strongest phonetic similarity signal, and 3 or 4 is generally treated as a strong duplicate candidate.",
+          "wrong": "DIFFERENCE() doesn't compare the letters directly — it compares the SOUNDEX codes of two strings and scores how similar those codes are, from 0 (no similarity) to 4 (essentially identical sounding). It's a similarity score layered on top of SOUNDEX, not a separate string-distance measure."
+        },
+        {
+          "q": "According to the lesson, what is the correct next step after SOUNDEX/DIFFERENCE surface a list of near-duplicate candidates?",
+          "choices": [
+            "Narrow by a second corroborating attribute, then have a human review or automated scoring confirm the match before any MERGE happens",
+            "Immediately delete every candidate pair automatically",
+            "Ignore the candidates since phonetic matching is never reliable",
+            "Merge all candidates without review since SOUNDEX is exact"
+          ],
+          "correct": 0,
+          "right": "Yes — candidates are a starting point, not a verdict. The lesson is explicit that phonetic matches need a second attribute and human or automated confirmation before anything gets merged.",
+          "wrong": "The lesson spells out the process directly: (1) generate candidates via phonetic matching, (2) narrow using a second corroborating attribute like matching DOB or postcode, (3) get human review or automated scoring to actually confirm the match, (4) only then MERGE. SOUNDEX and DIFFERENCE are heuristics — they suggest, they don't decide."
+        }
+      ],
+      "close": "You've now got the full fuzzy-matching workflow, not just the SQL — generate candidates, narrow with a second signal, confirm before acting. Phonetic Duplicate (SOUNDEX Match) is next, going one level deeper into how SOUNDEX actually encodes a name."
+    },
+    "G02-T05": {
+      "open": "Let's go one level deeper into SOUNDEX itself — not just using it, but understanding what it actually does and where it breaks down.",
+      "questions": [
+        {
+          "q": "SOUNDEX matching on last name alone tends to produce a lot of false positives (e.g. every \"Smith\" variant matching every other \"Smith\" variant). What does this lesson add to cut that down?",
+          "choices": [
+            "Requiring the same first-name initial and the same country alongside the SOUNDEX match, narrowing the candidate list while still catching the real cases",
+            "Switching from SOUNDEX to an exact string match instead",
+            "Removing the JOIN entirely and using a WHERE clause only",
+            "Only checking customers created in the last 30 days"
+          ],
+          "correct": 0,
+          "right": "Exactly — SOUNDEX alone casts a wide net on purpose. Adding a second and third condition (first initial, country) is what turns a noisy candidate list into something actually usable.",
+          "wrong": "SOUNDEX by itself is deliberately loose — it's built to catch phonetic variants, which means it also catches a lot of unrelated people who just happen to have similar-sounding last names. Requiring the first-name initial to match too, and the country to match, dramatically narrows the false positives while keeping the real matches."
+        },
+        {
+          "q": "Per the lesson's explanation of the SOUNDEX algorithm, what does it deliberately ignore when encoding a name?",
+          "choices": [
+            "Vowels, and the letters H and W",
+            "The first letter of the name",
+            "Numbers embedded in the name",
+            "Capitalization"
+          ],
+          "correct": 0,
+          "right": "Right — SOUNDEX keeps the first letter as-is, then encodes the consonants that follow into digit groups, skipping vowels and H/W entirely. That's exactly why phonetically similar spellings can still collapse to the same code.",
+          "wrong": "Per the algorithm described in the lesson: SOUNDEX keeps the first letter of the name, then walks through the rest encoding consonants into digit groups (B/F/P/V=1, C/G/J/K/Q/S/X/Z=2, D/T=3, L=4, M/N=5, R=6) — vowels and the letters H and W are skipped entirely during that encoding."
+        },
+        {
+          "q": "Why does the lesson call SOUNDEX a poor fit for multilingual datasets?",
+          "choices": [
+            "SOUNDEX was designed specifically for English names and performs poorly on Arabic, Chinese, Hindi, or other non-English names",
+            "SOUNDEX only works with names shorter than 4 characters",
+            "SOUNDEX cannot be used on any column that allows NULL values",
+            "SOUNDEX requires a separate license for non-English datasets"
+          ],
+          "correct": 0,
+          "right": "Yes — it's baked into how the algorithm was designed, not a technical limitation you can configure around. The lesson points at METAPHONE or Levenshtein-distance approaches (e.g. via Python's jellyfish) as better fits for multilingual data.",
+          "wrong": "SOUNDEX's encoding rules were built around English phonetics and spelling conventions specifically — so it simply doesn't model how names sound or vary in other languages well. For multilingual datasets the lesson points at alternatives like METAPHONE or Levenshtein-distance libraries (e.g. Python's jellyfish) instead."
+        }
+      ],
+      "close": "You've now got a real, working knowledge of SOUNDEX — not just calling the function, but knowing what it encodes, what it ignores, and where it stops being useful. Composite Key Duplicate is next: uniqueness that only reveals itself when you combine two or three columns together."
+    },
+    "G02-T06": {
+      "open": "New shape of problem: sometimes no single column is unique, and no single column being checked alone will ever catch the bug. Let's see why.",
+      "questions": [
+        {
+          "q": "In the payroll scenario, checking CustomerID alone or TransactionDate alone would find nothing wrong. Why does the composite (CustomerID, TransactionDate, Amount) reveal the duplicate that neither column alone can?",
+          "choices": [
+            "Each individual column is expected to repeat many times normally — the problem only exists in the specific combination of all three appearing together more than once",
+            "SQL Server cannot check single columns for duplicates at all",
+            "TransactionDate is stored as text, so it can't be grouped on its own",
+            "CustomerID and Amount are the same data type, causing a conflict"
+          ],
+          "correct": 0,
+          "right": "Exactly — the same customer appearing many times is completely normal, and the same date appearing many times is completely normal. The bug only exists in the specific combination happening twice, which is invisible to any single-column check.",
+          "wrong": "This is the central idea of composite keys: CustomerID repeating is fine (customers make many transactions), and TransactionDate repeating is fine (lots of transactions happen on the same day). The actual problem — this customer having the same amount twice on the same date — only becomes visible when you group on all three columns together, not any one of them alone."
+        },
+        {
+          "q": "What does `PARTITION BY CustomerID, TransactionDate, Amount` inside ROW_NUMBER() actually do?",
+          "choices": [
+            "Restarts the row numbering for every unique combination of those three values, so any combination appearing more than once gets rows numbered 2, 3, etc.",
+            "Sorts the entire table by CustomerID only",
+            "Deletes rows where any of the three columns is NULL",
+            "Merges the three columns into a single new column"
+          ],
+          "correct": 0,
+          "right": "Right — PARTITION BY with multiple columns groups on the combination of all of them, and ROW_NUMBER restarts at 1 within each group. Anything at rank 2 or higher shares an identical combination with an earlier row.",
+          "wrong": "PARTITION BY with several columns listed treats the *combination* of those values as the grouping key — every row sharing the same CustomerID, TransactionDate, and Amount together gets numbered starting from 1 within that specific group. A second occurrence of the same combination gets rank 2, which is exactly the duplicate."
+        },
+        {
+          "q": "The lesson notes that maybe two $250 charges on the same day are legitimate (morning and evening). What does this tell you about defining a composite key?",
+          "choices": [
+            "What columns together form \"the key\" is a business decision, not a fixed SQL rule — the query pattern stays the same, only the GROUP BY columns change based on that decision",
+            "Composite keys should never include a monetary amount column",
+            "SQL Server automatically detects the correct composite key for any table",
+            "Two transactions on the same day are always an error regardless of amount"
+          ],
+          "correct": 0,
+          "right": "Exactly — the SQL technique is reusable, but which columns actually define \"shouldn't repeat\" is a call only the business can make, not something the query can determine on its own.",
+          "wrong": "The lesson is explicit: \"what constitutes a composite key is a business decision.\" The SQL pattern — GROUP BY the chosen columns, HAVING COUNT(*) > 1 — never changes. What changes is which columns you decide belong in that GROUP BY, and that decision has to come from understanding the business process, not from the query itself."
+        }
+      ],
+      "close": "You've now separated the SQL technique (which never changes) from the business decision of which columns define uniqueness (which always does). Conditional Duplicate is next — uniqueness that only applies to a subset of rows, not the whole table."
+    },
+    "G02-T07": {
+      "open": "Here's a rule that sounds contradictory at first: a customer can have two contracts, just not two of the same kind at the same time. Let's see how a WHERE clause turns \"sometimes unique\" into something checkable.",
+      "questions": [
+        {
+          "q": "What single addition turns a normal duplicate check into a conditional uniqueness check?",
+          "choices": [
+            "A WHERE clause (e.g. WHERE IsActive = 1) placed before the GROUP BY, restricting the duplicate check to only the subset of rows the uniqueness rule actually applies to",
+            "Replacing GROUP BY with ORDER BY",
+            "Adding a UNIQUE constraint with no WHERE clause",
+            "Using SELECT DISTINCT instead of GROUP BY"
+          ],
+          "correct": 0,
+          "right": "Exactly — the WHERE clause is what makes it conditional. Filter to only active rows first, then GROUP BY within that subset, and historical or cancelled rows never enter the check at all.",
+          "wrong": "The key move is filtering *before* grouping: adding `WHERE IsActive = 1` (or `WHERE Status = 'Active'`) restricts the entire duplicate check to only the rows where the uniqueness rule actually applies. Historical records outside that condition are excluded from the check entirely, which is exactly what makes the rule conditional rather than universal."
+        },
+        {
+          "q": "Why can't a plain UNIQUE constraint enforce \"only one active role per department,\" and what SQL feature can?",
+          "choices": [
+            "A standard UNIQUE constraint applies across all rows unconditionally; a filtered unique index (CREATE UNIQUE INDEX ... WHERE IsActive = 1) enforces uniqueness only within the active subset",
+            "UNIQUE constraints only work on numeric columns",
+            "SQL Server has no way to enforce conditional uniqueness at the database level",
+            "A CHECK constraint should be used instead of any index"
+          ],
+          "correct": 0,
+          "right": "Right — a plain UNIQUE constraint has no concept of \"only when a condition is true,\" it just blocks any duplicate value everywhere. A filtered unique index with its own WHERE clause is what actually enforces conditional uniqueness at the database level.",
+          "wrong": "A standard UNIQUE constraint has no awareness of conditions — it blocks duplicates everywhere in the table, full stop, which would make historical/inactive rows impossible to keep. The database-level fix is a filtered unique index — `CREATE UNIQUE INDEX ... ON Employees (Department, EmployeeID) WHERE IsActive = 1` — which only enforces uniqueness among the rows matching that WHERE clause."
+        },
+        {
+          "q": "In the CTE, the PARTITION BY only sees rows where IsActive = 1 was already applied. What does this mean for historical (non-active) rows?",
+          "choices": [
+            "They are excluded from the CTE entirely, so the ranking and duplicate check never considers them at all — only active rows compete for rank within their partition",
+            "They are included but always ranked last",
+            "They cause the query to throw an error",
+            "They are automatically converted to active rows"
+          ],
+          "correct": 0,
+          "right": "Exactly — filtering happens before the window function runs, so the ranking logic literally never sees the historical rows. They're not ranked low, they're not in the data at all by the time PARTITION BY runs.",
+          "wrong": "Because the WHERE IsActive = 1 filter is applied inside the CTE before the ROW_NUMBER() window function runs, the historical rows are gone by the time PARTITION BY does its work — they're not part of the partition, not ranked, not considered at all. Only rows that passed the active filter compete for rank within their group."
+        }
+      ],
+      "close": "Conditional uniqueness — filter first, then group — is a pattern you'll reuse constantly once you notice how many real-world rules are secretly \"unique, but only among the active/current rows.\" Cross-Table Duplicate is next: what happens when the same entity lives in two completely different tables."
+    },
+    "G02-T08": {
+      "open": "Every duplicate so far has lived inside one table. This lesson asks: what if the same real person exists in two different tables entirely, under two different keys?",
+      "questions": [
+        {
+          "q": "Why does the query wrap both sides of the email comparison in `UPPER(LTRIM(RTRIM(...)))` before joining the two tables?",
+          "choices": [
+            "To prevent purely cosmetic differences — case, leading/trailing spaces — from causing genuine matches to be missed, since two systems rarely store the same email identically",
+            "Because JOIN clauses require all text columns to be uppercase",
+            "To make the query run faster on large tables",
+            "Because email addresses cannot contain lowercase letters"
+          ],
+          "correct": 0,
+          "right": "Exactly — two independently-built systems will format the same email slightly differently more often than not. Normalizing both sides the same way before comparing is what catches the real matches that case or whitespace would otherwise hide.",
+          "wrong": "This is about matching across two systems that were never designed to agree on formatting: one system might store 'John@Email.com', the other 'john@email.com '. Neither difference means the emails are actually different — normalizing both sides with UPPER(LTRIM(RTRIM(...))) before comparing prevents those cosmetic differences from causing a real match to be missed."
+        },
+        {
+          "q": "In this cross-table pattern, what does an INNER JOIN between the two tables on the matching key actually return?",
+          "choices": [
+            "Only the rows that exist in both tables — exactly the intersection needed to find entities present in both",
+            "Every row from both tables, with NULLs where there's no match",
+            "Only rows that exist in the first table but not the second",
+            "A random sample of rows from each table"
+          ],
+          "correct": 0,
+          "right": "Right — INNER JOIN keeps only rows with a match on both sides, which is precisely the definition of \"exists in both tables\" that cross-table duplicate detection needs.",
+          "wrong": "INNER JOIN returns only the rows where the join condition matches on both sides — the intersection of the two tables. That's exactly what \"who appears in both tables\" needs: LEFT JOIN would instead give you everything from one side plus NULLs where there's no match, which answers a different question."
+        },
+        {
+          "q": "The lesson explicitly says finding someone in both Customers and Employees \"is not always an error.\" What does it identify as a legitimate reason for the overlap?",
+          "choices": [
+            "An employee who is also a customer of the company — a normal, expected business scenario",
+            "A database backup that accidentally duplicated all rows",
+            "A bug in the JOIN syntax that always produces false matches",
+            "Two employees who happen to share the same manager"
+          ],
+          "correct": 0,
+          "right": "Yes — the lesson is careful to distinguish this from a bug. An employee who's also a customer is completely normal; the query's real value is checking whether their details agree across the two systems, not flagging the overlap itself as wrong.",
+          "wrong": "Per the lesson: \"an employee who is also a customer is a legitimate business case — it's expected.\" The cross-table match by itself isn't the problem; what the query goes on to check is whether the details are *consistent* between the two records — a name or DOB mismatch is the actual thing worth investigating, not the overlap."
+        }
+      ],
+      "close": "You've now handled duplicates within a table, within a filtered subset, and across two entirely separate tables. Duplicate with Different Surrogate Key is next — the case where even the ID itself is no protection at all."
+    },
+    "G02-T09": {
+      "open": "Here's an uncomfortable fact this lesson wants you to sit with: a perfectly enforced, unique primary key can still let a table fill up with duplicates. Let's see how.",
+      "questions": [
+        {
+          "q": "The lesson states plainly: a unique PK does NOT mean no duplicates. What does a PK constraint actually guarantee, and what does it say nothing about?",
+          "choices": [
+            "It guarantees every row has a unique identifier; it says nothing about whether the row's actual content (name, price, category) duplicates another row's content",
+            "It guarantees the table has no more than 1000 rows",
+            "It guarantees every column in the row is non-NULL",
+            "It guarantees the table cannot be joined to another table"
+          ],
+          "correct": 0,
+          "right": "Exactly — a PK constraint's entire job is preventing two rows from sharing the same ID value. It has no opinion at all about whether the content in those rows is otherwise identical.",
+          "wrong": "A PK constraint on ProductID only prevents two rows from both being ProductID = P001 — that's its complete job. It cannot and does not prevent two rows with different auto-generated IDs from having identical ProductName, Category, and Price. Unique identity and unique content are two completely separate guarantees."
+        },
+        {
+          "q": "What does `CHECKSUM(col1, col2, col3)` do, and what limitation does the lesson flag about it?",
+          "choices": [
+            "It generates an integer hash fingerprinting the combined column values so identical content produces identical checksums — but it has a small collision risk where different content can occasionally produce the same hash",
+            "It counts how many columns are NULL in a row",
+            "It permanently deletes rows with matching checksums",
+            "It only works on integer columns, never text"
+          ],
+          "correct": 0,
+          "right": "Right — CHECKSUM is a fast fingerprint for finding likely content duplicates, but it's not collision-proof. For anything where a false match would be costly, the lesson points at HASHBYTES('SHA2_256', ...) instead.",
+          "wrong": "CHECKSUM combines several column values into a single integer hash — rows with identical content produce identical checksums, which is a fast way to spot candidate duplicates. The catch the lesson flags: it has a small collision risk, where two genuinely *different* rows could occasionally produce the same checksum by chance. For higher-stakes deduplication, HASHBYTES('SHA2_256', ...) is the collision-resistant alternative."
+        },
+        {
+          "q": "What is the root-cause fix the lesson recommends for a pipeline that keeps creating reload duplicates?",
+          "choices": [
+            "Replace the INSERT-only pipeline with MERGE, which updates existing matching rows instead of always inserting new ones",
+            "Add more auto-increment columns to the table",
+            "Run the pipeline less frequently",
+            "Disable the primary key constraint entirely"
+          ],
+          "correct": 0,
+          "right": "Yes — the actual bug lives in the pipeline logic, not the table. INSERT-only means every run creates new rows regardless of whether the data already exists; MERGE checks first and updates instead of blindly inserting.",
+          "wrong": "The lesson identifies the root cause directly: an INSERT-only pipeline creates a new row every time it runs, whether or not that data already exists. MERGE is the fix — it checks whether a matching row already exists (by a real key like ProductCode) and updates it if so, only inserting when the row is genuinely new."
+        }
+      ],
+      "close": "You've now seen the sharpest version of \"unique key, duplicate data\" this group has to offer. Soft-Delete Duplicate is next — the last lesson in this group, and it combines conditional uniqueness with a pattern you'll see in almost every real production system."
+    },
+    "G02-T10": {
+      "open": "Last lesson in Uniqueness. Soft deletes are everywhere in real systems — let's see how they can quietly let a duplicate slip through even when everyone did almost everything right.",
+      "questions": [
+        {
+          "q": "Why can't a standard UNIQUE constraint on Email work in a table that uses soft deletes?",
+          "choices": [
+            "A re-subscribed customer's old, soft-deleted row still holds their email, so a standard UNIQUE constraint would block the new row from ever being inserted",
+            "Soft-deleted tables cannot have any constraints at all",
+            "Email columns are never allowed to have UNIQUE constraints in SQL Server",
+            "It would work fine — there is no actual problem"
+          ],
+          "correct": 0,
+          "right": "Exactly — the old row never physically leaves the table, it just gets flagged. A plain UNIQUE constraint doesn't care about that flag, so it would block a legitimate re-subscription from ever being created.",
+          "wrong": "Here's the conflict: in a soft-delete system, a cancelled customer's row is never removed — it's just flagged IsActive = 0 and kept forever as history. If Email had a plain UNIQUE constraint, that old flagged row would still occupy the email value, and the customer's genuine re-subscription (a new row with the same email) would be rejected as a duplicate, even though it's exactly what should happen."
+        },
+        {
+          "q": "In Step 4's classification, what does \"Expected: Active + history\" mean for a given email?",
+          "choices": [
+            "Exactly one active record plus one or more soft-deleted records — the normal, correct pattern after a cancel-then-resubscribe cycle, not a bug",
+            "The customer's data is corrupted and needs manual repair",
+            "The email appears in both the Customers and Employees tables",
+            "The record has never been modified since creation"
+          ],
+          "correct": 0,
+          "right": "Right — this is the state the system is supposed to produce after a normal cancel-and-return. It's specifically distinguished from the actual bug (multiple active records), which is the real problem.",
+          "wrong": "This classification means: exactly one row where IsActive = 1 (the current subscription) plus one or more rows where IsActive = 0 (cancelled history) — which is precisely what a correctly-working cancel-then-resubscribe flow should produce. The lesson's whole point is distinguishing this normal state from the actual bug: two rows both flagged active at once."
+        },
+        {
+          "q": "What real operational impact does the bug (two active records for the same customer) actually cause?",
+          "choices": [
+            "Every operation that filters WHERE IsActive = 1 runs twice for that customer — two emails sent, two payments taken, two role assignments granted",
+            "The customer's account is permanently locked",
+            "The database refuses to accept any new inserts",
+            "It has no real impact since the data is only used for reporting"
+          ],
+          "correct": 0,
+          "right": "Yes — this is why the severity is rated Critical. Every downstream process that trusts \"IsActive = 1 means exactly one row\" silently runs twice for this customer, and nothing throws an error to reveal it.",
+          "wrong": "Because so much application logic filters on WHERE IsActive = 1 and assumes that returns one row per entity, having two active rows means every one of those operations quietly executes twice for the same customer — two billing emails, two payment attempts, two role grants — with no error anywhere to flag that something's wrong."
+        }
+      ],
+      "close": "That's the full Uniqueness group — ten lessons, and you've gone from exact-copy rows all the way to soft-delete edge cases, with the fuzzy-matching and conditional-uniqueness patterns in between. Those cover the two biggest ideas in this whole group: sometimes uniqueness only applies to a subset of rows, and sometimes what looks like the same thing twice isn't spelled the same way at all. Strong session."
     }
   }
 }
