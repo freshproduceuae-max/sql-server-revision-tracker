@@ -1973,6 +1973,679 @@
         }
       ],
       "close": "That's the halfway point of Format/Pattern — 16 lessons down, 16 to go. You've now covered universal formats (email, phone, dates), country-specific structures (postcodes, IBANs, NINOs), organization-defined codes (SKUs), and the invisible/silent failure modes (whitespace, control characters, boolean and enum drift). Second half picks up next session."
+    },
+    "G04-T17": {
+      "open": "Time itself is a format problem, not just dates. This lesson covers the same TRY_CAST discipline you've been using, applied to the clock instead of the calendar.",
+      "questions": [
+        {
+          "q": "Why does the lesson use TRY_CAST(value AS TIME) rather than a string pattern match to validate time values?",
+          "choices": [
+            "TRY_CAST lets SQL Server's own time parser decide validity — it correctly accepts genuinely valid formats and rejects impossible ones (like 25:99) without you hand-writing every acceptable pattern",
+            "TRY_CAST is the only function that can read a VARCHAR column",
+            "Pattern matching cannot detect any time-shaped string",
+            "TRY_CAST automatically converts 12-hour times to 24-hour format"
+          ],
+          "correct": 0,
+          "right": "Right — letting the engine's real parser be the judge catches genuinely impossible times without you maintaining a brittle pattern list.",
+          "wrong": "A LIKE pattern like '[0-2][0-9]:[0-5][0-9]' would let '29:15' through, because it only checks digit shape, not whether 29 is a valid hour. TRY_CAST hands the string to SQL Server's actual time parser, which understands that hours only go to 23 and minutes only to 59 — it rejects '25:99' as unparseable rather than as a pattern mismatch."
+        },
+        {
+          "q": "What makes 12-hour vs 24-hour time notation a validation risk even when every value TRY_CASTs successfully?",
+          "choices": [
+            "A bare '7:30' without AM/PM is ambiguous — TRY_CAST will happily accept it, but the underlying meaning (morning or evening) is lost, which is a silent semantic error, not a parsing error",
+            "TRY_CAST rejects all 12-hour format values automatically",
+            "24-hour format is not supported by the TIME data type",
+            "SQL Server always assumes 12-hour times are PM"
+          ],
+          "correct": 0,
+          "right": "Exactly — a value can pass TRY_CAST and still be wrong in meaning. Format validity and semantic correctness are two different questions.",
+          "wrong": "'7:30' parses cleanly as a TIME value, so TRY_CAST reports success either way — but whether it means 7:30 AM or 7:30 PM is genuinely unknown without an AM/PM marker or a documented convention. This is the same lesson as always: successful parsing tells you the shape is valid, not that the meaning is unambiguous."
+        },
+        {
+          "q": "What is the practical fix the lesson recommends once ambiguous or inconsistent time formats are found?",
+          "choices": [
+            "Normalize every value to one consistent format (typically 24-hour HH:MM) at the point of storage, so downstream consumers never have to guess which convention a given row used",
+            "Delete every row containing a time value",
+            "Store times only as free-text strings so the ambiguity is preserved for later review",
+            "Convert all times to the DATE data type instead of TIME"
+          ],
+          "correct": 0,
+          "right": "Correct — normalize once, at the boundary, so every downstream query and report can rely on one unambiguous convention.",
+          "wrong": "Once you've found mixed 12-hour and 24-hour values, the fix is normalization: pick one convention (24-hour HH:MM is the least ambiguous) and convert every value to it at load time. That way no downstream query has to re-derive whether a given '7:30' meant morning or evening — the ambiguity is resolved once, not repeatedly."
+        }
+      ],
+      "close": "Time formats look simple until AM/PM ambiguity sneaks in. Same principle as every format lesson so far: successful parsing isn't the same as unambiguous meaning."
+    },
+    "G04-T18": {
+      "open": "Colour codes look like a UI-only concern, but they're a format validation problem with real variants to handle — same discipline, new domain.",
+      "choices_note": "",
+      "questions": [
+        {
+          "q": "Why does the validation need to handle 3-digit hex shorthand (e.g. #FFF) separately from the full 6-digit form (#FFFFFF)?",
+          "choices": [
+            "Both are valid CSS colour representations — a validator that only checks for exactly 6 hex digits after the # will wrongly reject legitimate 3-digit shorthand values",
+            "3-digit hex codes are never valid and should always be rejected",
+            "SQL Server's TRY_CAST automatically expands 3-digit codes to 6-digit",
+            "3-digit and 6-digit hex codes represent different colour models entirely"
+          ],
+          "correct": 0,
+          "right": "Right — both notations are legitimate, so a validator that assumes only one length is a validator with a blind spot.",
+          "wrong": "#FFF and #FFFFFF are both valid, standard ways to express the same colour — 3-digit shorthand expands each digit (FFF becomes FFFFFF, one repeat per digit). A pattern that only accepts exactly 6 hex characters after the # would flag every legitimate shorthand value as invalid, which is a false positive, not a real data quality issue."
+        },
+        {
+          "q": "What does an 8-digit hex value like #FF5733AA represent that a 6-digit validator would misclassify as invalid?",
+          "choices": [
+            "The extra two digits are an alpha (transparency) channel — the value is valid, just carrying more information than a plain RGB colour",
+            "It is always a typo and should be rejected outright",
+            "It represents a colour in a completely different, non-hex system",
+            "The extra digits are a checksum that must be verified separately"
+          ],
+          "correct": 0,
+          "right": "Exactly — the alpha channel is a legitimate extension, not corruption, so the validation logic needs to recognize and strip it rather than reject the whole value.",
+          "wrong": "The trailing two hex digits in an 8-digit code (#RRGGBBAA) encode alpha/transparency, which is standard in contexts like CSS and design tools. Treating every 8-digit value as invalid throws away legitimate data — the correct handling is to recognize the 8-digit form and strip the alpha pair before further processing, not reject it."
+        },
+        {
+          "q": "Why does the lesson also check for RGB-function syntax and CSS colour names (e.g. rgb(255,0,0), 'red'), not just hex patterns?",
+          "choices": [
+            "A colour field can legitimately be populated by different upstream systems using different valid notations — a validator that only recognizes hex misses genuinely valid values expressed a different way",
+            "RGB function syntax and colour names are always invalid and should be flagged for cleanup",
+            "SQL Server cannot store any colour format except hex",
+            "CSS colour names are a deprecated format no longer used anywhere"
+          ],
+          "correct": 0,
+          "right": "Correct — different valid notations from different sources is a recurring format lesson: check for what's actually valid, not just the one shape you expected.",
+          "wrong": "If one upstream system exports 'rgb(255,0,0)' and another exports '#FF0000' and a third exports 'red', all three are legitimate representations of the same underlying colour concept. A validator scoped only to hex patterns would misclassify the other two as errors, when the real issue (if any) is inconsistency of representation, not invalidity."
+        }
+      ],
+      "close": "Colour formats have more legitimate variants than they first appear — shorthand, alpha channel, function syntax, named colours. Recognizing all the valid forms is as important as rejecting the invalid ones."
+    },
+    "G04-T19": {
+      "open": "JSON fields bring a two-layer validation problem: is the text even valid JSON, and separately, does it have the fields your application expects?",
+      "questions": [
+        {
+          "q": "What is the most common cause of JSON validation failure the lesson highlights, and why is it easy to miss?",
+          "choices": [
+            "Single-quoted JSON exported from Python dictionaries — it looks like JSON at a glance but Python's dict repr uses single quotes, which strict JSON requires to be double quotes",
+            "JSON values are always too long to fit in a SQL Server column",
+            "SQL Server cannot store any text that contains curly braces",
+            "JSON fields must always be NULL to be considered valid"
+          ],
+          "correct": 0,
+          "right": "Right — visually it reads as JSON, which is exactly why it's easy to miss; ISJSON() catches what eyeballing the string would not.",
+          "wrong": "Python's dict-to-string conversion produces something like {'key': 'value'} — single quotes, not double. It looks like JSON to a human skimming it, but strict JSON syntax requires double quotes, so ISJSON() correctly flags it as invalid. This is exactly the kind of error that passes a casual visual check but fails a real parser."
+        },
+        {
+          "q": "Why is ISJSON() only the first check, not the last, when validating a JSON field?",
+          "choices": [
+            "ISJSON() confirms the text is syntactically valid JSON, but says nothing about whether it contains the specific fields the application actually needs — that requires a separate schema-level check with JSON_VALUE()",
+            "ISJSON() is deprecated and should never be used",
+            "ISJSON() already validates both syntax and required fields, so no further check is needed",
+            "ISJSON() can only be run once per table and must be cached"
+          ],
+          "correct": 0,
+          "right": "Exactly — syntax validity and schema completeness are two different questions, and passing the first tells you nothing about the second.",
+          "wrong": "A string like '{\"foo\":\"bar\"}' passes ISJSON() perfectly — it's syntactically valid JSON — but if the application expects a 'customerId' field and it's missing, the record is still unusable. ISJSON() only answers 'is this parseable as JSON,' not 'does this JSON have what I need.' That second question needs JSON_VALUE() checks against the specific required keys."
+        },
+        {
+          "q": "What distinction does the lesson draw between syntax validation and schema validation for JSON data?",
+          "choices": [
+            "Syntax validation asks whether the text can be parsed as JSON at all; schema validation asks whether the parsed structure has the required fields with the expected types — a value can pass one and fail the other",
+            "Syntax and schema validation are two names for the exact same check",
+            "Schema validation must always run before syntax validation",
+            "SQL Server merges syntax and schema validation into a single automatic step"
+          ],
+          "correct": 0,
+          "right": "Correct — the two checks answer different questions, so both are needed for a complete picture.",
+          "wrong": "Syntax validation (ISJSON()) is purely about well-formedness — braces balanced, quotes correct, commas in the right places. Schema validation is about content — does this valid JSON actually contain 'orderId' as a number, 'status' as a known string, and so on. A record can be syntactically perfect JSON and still be missing everything the application needs, which is why both checks matter."
+        }
+      ],
+      "close": "JSON validation is two questions stacked: can it be parsed, and does it have what you need. ISJSON() only answers the first."
+    },
+    "G04-T20": {
+      "open": "XML has its own version of the same story — a value can be well-formed and still miss the structure your application depends on.",
+      "questions": [
+        {
+          "q": "Why does the lesson use TRY_CAST(value AS XML) instead of just checking for the presence of angle brackets?",
+          "choices": [
+            "TRY_CAST invokes SQL Server's real XML parser, which correctly rejects malformed XML (unclosed tags, mismatched elements) that a simple bracket check would miss entirely",
+            "Angle brackets are not valid characters in SQL Server strings",
+            "TRY_CAST AS XML always succeeds regardless of the input",
+            "Checking for angle brackets is faster and equally reliable"
+          ],
+          "correct": 0,
+          "right": "Right — a real parser catches structural problems that a superficial character check simply can't see.",
+          "wrong": "A string like '<order><id>5</order>' contains angle brackets but has a mismatched closing tag — malformed XML. A LIKE check for '<%' and '%>' would let it through since the brackets are present; TRY_CAST AS XML actually attempts to parse the document structure and correctly fails on the mismatch."
+        },
+        {
+          "q": "What does an unescaped '&' character in an XML value typically indicate, and why does it matter?",
+          "choices": [
+            "In XML, & must be escaped as &amp; — a raw, unescaped & breaks the parse because XML reserves that character for entity references, so its presence signals the source data wasn't properly XML-encoded",
+            "The & character is always ignored by XML parsers and causes no issue",
+            "Unescaped & characters are automatically converted by SQL Server before storage",
+            "& is a reserved character only in JSON, not XML"
+          ],
+          "correct": 0,
+          "right": "Exactly — XML reserves & for entity syntax, so a bare ampersand is a parsing hazard, not a stylistic quirk.",
+          "wrong": "XML uses & to begin entity references like &amp; or &lt;. A literal, unescaped & in element content (e.g. 'Smith & Sons' pasted in directly) breaks the parser because it expects an entity reference to follow. Its presence is a reliable signal that the source system didn't properly XML-encode its output before storing the value."
+        },
+        {
+          "q": "Beyond parsing successfully, what does the lesson say a complete XML validation should also verify?",
+          "choices": [
+            "That the expected root element and required child elements are actually present — a value can be well-formed XML and still be missing the structure the application depends on",
+            "That the XML file is stored as a physical file rather than a database value",
+            "That every XML value is under 10 characters long",
+            "That the XML uses only lowercase tag names"
+          ],
+          "correct": 0,
+          "right": "Correct — well-formedness and structural completeness are separate checks, same pattern as the JSON lesson right before this one.",
+          "wrong": "'<root></root>' is perfectly well-formed XML but empty — no useful content. A thorough validation checks structure as well as syntax: does the expected root element exist, and are the child elements the application needs (like <orderId> or <customerName>) actually present. This mirrors the JSON lesson's syntax-vs-schema distinction applied to XML."
+        }
+      ],
+      "close": "XML validation follows the same two-layer pattern as JSON: parse first, then verify the structure actually has what you need."
+    },
+    "G04-T21": {
+      "open": "Delimiter consistency is a quiet but real 1NF violation — multiple values crammed into one field, and worse, using inconsistent separators to do it.",
+      "questions": [
+        {
+          "q": "Why does mixing comma, semicolon, and pipe delimiters within the same column across different rows create a real problem, beyond being untidy?",
+          "choices": [
+            "Any single downstream parsing rule (split on comma, split on pipe) will correctly handle only some rows and silently mis-split or fail to split the rest, because it can't guess which delimiter a given row used",
+            "SQL Server rejects any column containing more than one type of punctuation",
+            "Mixed delimiters cause the column's data type to change automatically",
+            "It only affects display formatting, never the actual parsed values"
+          ],
+          "correct": 0,
+          "right": "Right — a single splitting rule can only be correct for the delimiter it expects; every other row silently breaks in a different, harder-to-notice way.",
+          "wrong": "If a downstream script splits on comma, rows delimited by semicolon or pipe won't split at all — the whole string is treated as one value. This isn't a cosmetic issue: it silently produces wrong results (one long unsplit string instead of several distinct values) for every row that used a different delimiter than the one the script expected."
+        },
+        {
+          "q": "What does the LEN(x) - LEN(REPLACE(x, delimiter, '')) pattern actually calculate, and why is that useful here?",
+          "choices": [
+            "It counts how many times a specific delimiter character appears in the string — comparing counts across different delimiters reveals which one (if any) a given row actually uses",
+            "It calculates the total character length of the string, ignoring the delimiter entirely",
+            "It always returns zero regardless of the input",
+            "It replaces the delimiter with a space and returns the new string"
+          ],
+          "correct": 0,
+          "right": "Exactly — the length difference before and after stripping the delimiter is literally the delimiter's occurrence count, which is the whole diagnostic.",
+          "wrong": "REPLACE(x, delimiter, '') removes every occurrence of the delimiter, shortening the string by exactly one character per occurrence. Subtracting that shortened length from the original length gives you the count of that delimiter in the string. Running this for comma, semicolon, and pipe separately tells you which delimiter (or delimiters) a given row is actually using."
+        },
+        {
+          "q": "Why does the lesson frame delimiter-mixed multi-value fields as a First Normal Form (1NF) violation, not just a formatting inconsistency?",
+          "choices": [
+            "1NF requires that each column hold a single atomic value — a field holding multiple values separated by any delimiter already violates that, and inconsistent delimiters compound the problem by making even mechanical extraction unreliable",
+            "1NF only applies to numeric columns, so this framing is technically incorrect",
+            "1NF violations are always fixed automatically by SQL Server's storage engine",
+            "The delimiter mixing has nothing to do with 1NF and is purely cosmetic"
+          ],
+          "correct": 0,
+          "right": "Correct — the atomicity violation exists the moment multiple values share one field; inconsistent delimiters just make the resulting mess harder to reverse.",
+          "wrong": "1NF's core rule is atomic values — one value per cell. A field like 'red,blue;green' already breaks that rule by holding three colours in one column. The inconsistent delimiters on top of that don't cause the 1NF violation, but they do make the eventual fix (splitting into proper rows or a linked table) much harder, since there's no single reliable separator to split on."
+        }
+      ],
+      "close": "Delimiter consistency checks are really about finding 1NF violations hiding in plain sight — and confirming that even mechanical extraction is possible before you attempt it."
+    },
+    "G04-T22": {
+      "open": "Bank routing identifiers follow real algorithms, not just shape — and this lesson shows one that fits SQL Server's native math and contrasts with one (IBAN) that doesn't.",
+      "questions": [
+        {
+          "q": "What structural pattern does a UK BACS sort code follow, and why does that pattern alone not guarantee validity?",
+          "choices": [
+            "It's NN-NN-NN, six digits in three pairs — but matching that shape only confirms the format looks right, not that the sort code is actually assigned to a real bank branch",
+            "UK sort codes have no consistent structure at all",
+            "The NN-NN-NN pattern guarantees the sort code is valid and currently in use",
+            "Sort codes are always exactly 10 digits long"
+          ],
+          "correct": 0,
+          "right": "Right — pattern matching is a shape check; whether a code maps to a real, active branch is a different, external question entirely.",
+          "wrong": "A pattern check for NN-NN-NN confirms a value has the right shape (six digits, hyphen-separated in pairs) but says nothing about whether that specific sort code was ever actually issued to a real bank branch. Format validity and real-world existence are separate questions — the same distinction that comes up throughout this group."
+        },
+        {
+          "q": "How does the US ABA routing number's check digit calculation work, and why does it fit natively in SQL Server's INT arithmetic?",
+          "choices": [
+            "It's a 9-digit weighted sum using repeating weights of 3, 7, 1, with the total required to be divisible by 10 — small enough numbers throughout that standard INT math handles it without overflow",
+            "It requires a 34-digit modulus that exceeds SQL Server's native integer range",
+            "ABA routing numbers have no check digit at all",
+            "The check digit calculation requires floating-point division exclusively"
+          ],
+          "correct": 0,
+          "right": "Exactly — nine digits times single-digit weights stays comfortably within INT range, unlike IBAN's much larger modulus requirement.",
+          "wrong": "The ABA check digit multiplies each of the 9 digits by a repeating weight pattern (3,7,1,3,7,1,3,7,1) and sums the results; a valid routing number's weighted sum is divisible by 10 with no remainder. Because the routing number is only 9 digits and the weights are small, the whole calculation stays well within SQL Server's native INT range — no special handling needed, unlike IBAN's mod-97 check over up to 34 digits."
+        },
+        {
+          "q": "Why does the lesson explicitly contrast the ABA check digit with the IBAN check digit covered earlier in this group?",
+          "choices": [
+            "It illustrates that not every check-digit algorithm has the same computational cost — IBAN's mod-97 over up to 34 digits overflows native SQL Server INT math and needs CLR or app-layer handling, while ABA's fits natively",
+            "IBAN and ABA use identical algorithms, so the comparison is purely stylistic",
+            "ABA numbers are always invalid when compared against IBAN rules",
+            "The contrast shows that check digits are never worth validating in SQL"
+          ],
+          "correct": 0,
+          "right": "Correct — the two examples together show that whether a check-digit algorithm is practical in pure T-SQL depends on the actual numbers involved, not on some universal rule.",
+          "wrong": "IBAN's check digit uses a mod-97 calculation over a string that, once expanded, can be up to 34 digits long — that exceeds what SQL Server's native 19-digit INT ceiling can hold, requiring CLR integration or application-layer validation. ABA's routing number check digit, by contrast, involves only 9 digits and small weights, fitting comfortably in native T-SQL math. The pairing makes concrete that 'can this be validated in plain SQL' is a real, algorithm-specific question."
+        }
+      ],
+      "close": "Routing number validation is a reminder that check-digit algorithms differ in computational weight — some fit native SQL math, others genuinely don't."
+    },
+    "G04-T23": {
+      "open": "UUIDs look uniform but arrive in several legitimate variants — this lesson is about recognizing all of them before flagging anything as broken.",
+      "questions": [
+        {
+          "q": "Why does the lesson check for compact (no-hyphen), braced, and prefixed UUID variants separately, rather than relying on one canonical pattern?",
+          "choices": [
+            "Different systems export UUIDs in different but equally legitimate forms — a validator scoped to only the canonical hyphenated format would misclassify valid values from other sources as invalid",
+            "Only the canonical hyphenated form is ever valid; all other variants are always errors",
+            "SQL Server's UNIQUEIDENTIFIER type only accepts the compact no-hyphen form",
+            "Braced and prefixed UUIDs represent a completely different identifier standard, unrelated to UUID"
+          ],
+          "correct": 0,
+          "right": "Right — recognizing the legitimate variants before judging validity is the same principle as the colour-format lesson: check for what's actually valid, not just one expected shape.",
+          "wrong": "A UUID might arrive as the canonical '550e8400-e29b-41d4-a716-446655440000', or compact with no hyphens, or wrapped in braces like some systems export it, or prefixed with a label. All represent the same underlying identifier concept in different valid notations. Treating only the canonical hyphenated form as valid would flag legitimate values from other exporting systems as errors."
+        },
+        {
+          "q": "What does hyphen-insertion normalization accomplish once a compact (no-hyphen) UUID variant is identified?",
+          "choices": [
+            "It rewrites the value into the standard 8-4-4-4-12 hyphenated grouping, so every UUID in the dataset follows one consistent, comparable representation regardless of how it originally arrived",
+            "It deletes the hyphens from every UUID in the table to make them uniform",
+            "It converts the UUID into a completely different identifier format",
+            "It changes the underlying value the UUID represents"
+          ],
+          "correct": 0,
+          "right": "Exactly — normalization standardizes representation without changing the underlying identity, so every downstream comparison works consistently.",
+          "wrong": "A 32-character no-hyphen string represents the exact same identifier as its hyphenated equivalent — normalization just re-inserts hyphens at the standard 8-4-4-4-12 character positions so every UUID in the table follows the same representation. This matters because string comparisons and joins on UUID values need consistent formatting to match correctly."
+        },
+        {
+          "q": "What is the general validation principle this lesson reinforces, consistent with the colour-code lesson earlier in the group?",
+          "choices": [
+            "Recognizing legitimate format variants is as important as rejecting genuinely invalid values — flagging a correctly-formed but differently-styled value as an error is a false positive, not a real data quality finding",
+            "Every identifier field should reject anything that isn't in exactly one fixed format",
+            "UUIDs and colour codes follow completely unrelated validation rules with no shared lesson",
+            "Format variants should always be treated as errors requiring immediate deletion"
+          ],
+          "correct": 0,
+          "right": "Correct — this is the throughline across several Format/Pattern lessons: a validator that doesn't know all the legitimate shapes will manufacture false positives out of perfectly good data.",
+          "wrong": "Just like the colour-code lesson (hex shorthand, alpha channel, RGB function syntax, named colours), this UUID lesson shows that a field can have several legitimate representations. A validator that only recognizes one canonical shape isn't finding real data quality issues when it flags the others — it's generating false positives from its own incomplete understanding of what 'valid' looks like."
+        }
+      ],
+      "close": "Same principle as the colour-code lesson, applied to identifiers: know every legitimate variant before you start flagging things as wrong."
+    },
+    "G04-T24": {
+      "open": "Filenames and file paths carry format rules borrowed from the filesystem, not the database — and this lesson is about detecting characters that are illegal at the OS level, even though SQL Server would happily store them.",
+      "questions": [
+        {
+          "q": "Why can SQL Server successfully store a filename string containing characters like * or ? even though those characters are invalid in a real Windows filename?",
+          "choices": [
+            "SQL Server treats filenames as ordinary text — it has no awareness of filesystem naming rules, so it will store any string regardless of whether the operating system would accept it as an actual filename",
+            "SQL Server automatically strips illegal filename characters before storing the value",
+            "Filenames are a special SQL Server data type with built-in OS-level validation",
+            "Windows and SQL Server share an identical set of character restrictions"
+          ],
+          "correct": 0,
+          "right": "Right — the database layer and the filesystem layer enforce completely different rules, and successful storage in one says nothing about validity in the other.",
+          "wrong": "SQL Server's VARCHAR/NVARCHAR columns accept essentially any text — there's no filesystem-awareness built into string storage. A filename value like 'report*.pdf' stores without complaint even though Windows would reject '*' as an illegal filename character. This is exactly why filename validation needs its own explicit character-set check, separate from whatever SQL Server allows to be stored."
+        },
+        {
+          "q": "What distinguishes a UNC path from a regular local file path, and why does the pattern check need to account for it separately?",
+          "choices": [
+            "A UNC path starts with a double backslash to reference a network location (\\\\server\\share\\file), which is a structurally different prefix than a local drive-letter path — a validator expecting only local paths would misclassify valid network paths as errors",
+            "UNC paths are never valid and should always be rejected",
+            "UNC and local paths use identical prefixes and require no separate handling",
+            "UNC paths can only be validated using the DATE data type"
+          ],
+          "correct": 0,
+          "right": "Exactly — the leading double-backslash structure is a real, distinct valid pattern that needs its own recognition, not rejection.",
+          "wrong": "A local path looks like 'C:\\Users\\file.txt'; a UNC path looks like '\\\\server\\share\\file.txt' — no drive letter, just a double backslash leading to a server and share name. Both are legitimate ways to reference a file, but they have genuinely different structures, so a pattern built only around drive-letter paths would incorrectly flag valid UNC paths as malformed."
+        },
+        {
+          "q": "In real T-SQL, how many backslashes are needed in a string literal to represent a single literal backslash character?",
+          "choices": [
+            "Just one — T-SQL string literals have no backslash-escaping convention, so a single backslash in the source string is written as a single backslash in the literal, unlike C or regex syntax",
+            "Two backslashes, exactly like C string literals or regular expressions",
+            "Four backslashes, to account for double-escaping at both the client and server layers",
+            "Backslashes cannot appear in T-SQL string literals under any circumstances"
+          ],
+          "correct": 0,
+          "right": "Right — T-SQL string literals are not backslash-escaped, so a UNC prefix pattern is written with single backslashes, not doubled ones.",
+          "wrong": "T-SQL has no backslash-escaping convention the way C or regular expressions do — a backslash in a T-SQL string literal is just a backslash, written once. A LIKE pattern intended to match a UNC path's leading double backslash needs exactly two literal backslash characters in the pattern (matching the two in \\\\server), not four or some doubled/escaped form borrowed from another language's syntax."
+        }
+      ],
+      "close": "Filename and path validation borrows its rules from the filesystem, not SQL Server — and the T-SQL string literal syntax itself needs care, since it doesn't escape backslashes the way other languages do."
+    },
+    "G04-T25": {
+      "open": "Barcodes carry a real mathematical check digit, same family of algorithm as the routing number lesson but with its own weighting scheme.",
+      "questions": [
+        {
+          "q": "How does the EAN-13 check digit calculation work?",
+          "choices": [
+            "Each of the first 12 digits is multiplied by an alternating weight of 1 and 3, the products are summed, and the check digit is whatever value makes that total a multiple of 10",
+            "The check digit is simply the sum of all 13 digits divided by 2",
+            "EAN-13 barcodes have no check digit — the 13th digit is just sequential data",
+            "The check digit is calculated using the mod-97 algorithm, identical to IBAN"
+          ],
+          "correct": 0,
+          "right": "Right — alternating 1/3 weights summed to a multiple-of-10 target is the documented EAN-13 algorithm.",
+          "wrong": "EAN-13's check digit uses alternating weights of 1 and 3 across the first 12 digits (position 1 weight 1, position 2 weight 3, and so on), sums the weighted products, and the correct check digit is whichever single digit brings that sum to the next multiple of 10. It's a distinct algorithm from IBAN's mod-97, even though both are check-digit schemes."
+        },
+        {
+          "q": "Why is a UPC-A code treated as valid EAN-13 data when a leading zero is prepended?",
+          "choices": [
+            "UPC-A is a 12-digit code that is a strict subset of EAN-13 — prepending a zero converts it into a valid 13-digit EAN-13 representation of the exact same product identifier, which is a standard, documented compatibility mechanism",
+            "UPC-A and EAN-13 are entirely unrelated numbering systems that happen to look similar",
+            "Adding a leading zero to any 12-digit number always produces an invalid EAN-13 code",
+            "UPC-A codes must be converted to EAN-13 using the same weighting as IBAN's mod-97"
+          ],
+          "correct": 0,
+          "right": "Exactly — the leading-zero convention is a documented, deliberate compatibility bridge between the two standards, not a coincidence.",
+          "wrong": "UPC-A (used mainly in North America) is 12 digits; EAN-13 (used more broadly internationally) is 13. By design, prepending a single zero to a UPC-A code produces its exact EAN-13 equivalent — same product, same check-digit relationship, just padded to the wider standard's length. This is intentional interoperability, not a coincidence of format."
+        },
+        {
+          "q": "Why does the lesson flag placeholder barcodes like '999999999999' or all-same-digit sequences as suspicious, separately from the check-digit calculation?",
+          "choices": [
+            "A placeholder value can pass the check-digit math by coincidence (or be deliberately constructed to pass it) while still not corresponding to any real, assigned product — mathematical validity and real-world assignment are two different questions",
+            "All-same-digit barcodes always fail the check-digit calculation, so this is a redundant check",
+            "SQL Server automatically rejects any barcode with repeated digits",
+            "Placeholder barcodes are a category that only exists in test databases, never production"
+          ],
+          "correct": 0,
+          "right": "Correct — a barcode can satisfy the algorithm and still be a placeholder value, same distinction as pattern-valid-but-not-really-assigned that comes up with sort codes and UUIDs.",
+          "wrong": "A test or placeholder value like all-9s or all-0s can be constructed (or coincidentally happen) to pass a mod-10 check-digit calculation while never having been actually assigned to a real product by a barcode registry. The check-digit test only confirms the math is internally consistent — it says nothing about whether the code was ever really issued, so placeholder patterns need a separate, explicit check."
+        }
+      ],
+      "close": "Barcode validation is check-digit math plus a separate reality check for placeholder values — passing the algorithm and being a real, assigned code are different things."
+    },
+    "G04-T26": {
+      "open": "Credit card format validation runs the Luhn algorithm and a range check together — and the lesson is upfront that its implementation is a simplified teaching version, not a hidden bug.",
+      "questions": [
+        {
+          "q": "How does the Luhn algorithm determine whether a card number is internally consistent?",
+          "choices": [
+            "Starting from the rightmost digit, every second digit is doubled (subtracting 9 if the result exceeds 9), then all digits are summed — a valid number produces a total that's a multiple of 10",
+            "It multiplies every digit by its position number and checks for a prime total",
+            "It checks that all 16 digits are unique with no repeats",
+            "It sums only the first and last digits and compares them to a fixed value"
+          ],
+          "correct": 0,
+          "right": "Right — double every second digit from the right, adjust for values over 9, sum everything, and a multiple of 10 confirms internal consistency.",
+          "wrong": "Luhn works from the rightmost digit leftward, doubling every second digit; if doubling produces a two-digit result (10-18), 9 is subtracted to bring it back to a single digit. All digits (doubled and undoubled) are then summed, and a valid card number produces a sum divisible by 10 with no remainder."
+        },
+        {
+          "q": "The lesson's Solution Query hard-codes 16 digit positions for the Luhn calculation. Is this a bug the lesson missed?",
+          "choices": [
+            "No — the lesson explicitly acknowledges this is a simplification 'for clarity,' since most major card schemes use 16 digits, even though some real-world card numbers are shorter or longer",
+            "Yes — this is a genuine, unflagged defect that should be reported for correction",
+            "No — all credit card numbers are always exactly 16 digits with no exceptions",
+            "Yes — Luhn's algorithm mathematically requires exactly 16 digits to function at all"
+          ],
+          "correct": 0,
+          "right": "Correct — the lesson is self-aware about this simplification, which is different from an undetected error; always check what a lesson claims about its own scope before flagging something as a bug.",
+          "wrong": "The lesson itself states the 16-position hard-coding is a simplification chosen for clarity, not an oversight — some real card numbers (like 15-digit Amex) fall outside that assumption. This matters because it's a deliberately scoped teaching example, not a silent defect; a lesson stating its own limitations is different from one making an unflagged, incorrect claim."
+        },
+        {
+          "q": "Why does IIN/BIN prefix range checking matter as a separate validation layer from the Luhn check?",
+          "choices": [
+            "Luhn confirms internal mathematical consistency but doesn't verify the number belongs to a real card scheme — the IIN/BIN prefix range check confirms the leading digits match a known issuer range (Visa, Mastercard, etc.), which Luhn alone cannot tell you",
+            "IIN/BIN checks are redundant with Luhn and check exactly the same thing",
+            "The IIN/BIN prefix determines whether the card number passes the Luhn checksum",
+            "IIN/BIN ranges only apply to debit cards, never credit cards"
+          ],
+          "correct": 0,
+          "right": "Exactly — Luhn is a checksum, not a scheme identifier; the prefix range is what tells you whether the number even looks like it belongs to a recognized issuer.",
+          "wrong": "A number can satisfy the Luhn checksum (mathematically self-consistent) while starting with a prefix that doesn't correspond to any real card scheme's assigned range. Luhn and IIN/BIN range checking test two different things — internal consistency versus plausible real-world issuance — and a thorough validation needs both, since passing one says nothing about the other."
+        }
+      ],
+      "close": "Luhn plus IIN/BIN range checking is two separate questions: is the number internally consistent, and does it look like it belongs to a real issuer. The lesson's 16-digit simplification is stated up front, not hidden."
+    },
+    "G04-T27": {
+      "open": "PATINDEX earns its own lesson because it answers a different question than LIKE — position, not just yes/no — and that distinction drives a two-step diagnostic pattern used across this whole group.",
+      "questions": [
+        {
+          "q": "What is the fundamental difference between what LIKE and PATINDEX each return?",
+          "choices": [
+            "LIKE returns a boolean (does the string match the pattern, yes or no), while PATINDEX returns the starting position of the first match — this makes PATINDEX useful for locating where a problem is, not just whether one exists",
+            "LIKE and PATINDEX are two names for the exact same function with identical return values",
+            "PATINDEX returns a boolean, while LIKE returns a numeric position",
+            "LIKE only works on numeric columns, while PATINDEX only works on text columns"
+          ],
+          "correct": 0,
+          "right": "Right — that return-type difference (boolean vs. position) is exactly why the two functions serve different purposes in the same validation pipeline.",
+          "wrong": "LIKE is a filter — it answers 'does this string match this pattern' as true or false, used in a WHERE clause to include or exclude rows. PATINDEX answers a more specific question — 'at what character position does the pattern first match' — returning 0 if there's no match, or the 1-based starting position if there is. That extra information is exactly what LIKE can't give you."
+        },
+        {
+          "q": "Why does the lesson recommend using LIKE to filter rows first, then PATINDEX to diagnose the specific values within that filtered set?",
+          "choices": [
+            "Filtering first with the cheaper boolean LIKE narrows the dataset to only the rows that actually need diagnosis, and then PATINDEX's position information tells you exactly where in each of those specific values the problem sits",
+            "PATINDEX cannot run without a LIKE clause preceding it in the same query",
+            "LIKE and PATINDEX must always be used in the exact same WHERE clause together",
+            "This two-step order has no practical benefit and is purely a stylistic preference"
+          ],
+          "correct": 0,
+          "right": "Exactly — filter cheaply and broadly first, then spend the more detailed diagnostic effort only on the rows that actually failed the filter.",
+          "wrong": "Running PATINDEX against every row to get positional detail is more work than you need when most rows are fine. Using LIKE first narrows down to just the problem rows (a simple yes/no filter), and then PATINDEX is applied only to that smaller, already-suspect set to pinpoint exactly where the invalid content sits — filter broadly and cheaply, then diagnose precisely where it matters."
+        },
+        {
+          "q": "What does a negated character class like [^0-9] inside a PATINDEX or LIKE pattern actually match?",
+          "choices": [
+            "Any single character that is NOT one of the digits 0 through 9 — the caret inside the brackets inverts the character class from 'match any of these' to 'match anything except these'",
+            "It matches literally any character, including digits, with no restriction at all",
+            "It matches only the digits 0 through 9, identical to [0-9] without the caret",
+            "It causes the pattern to match only if the entire string is empty"
+          ],
+          "correct": 0,
+          "right": "Right — the caret inverts the class, so [^0-9] finds the first character that breaks a 'digits only' expectation, which is exactly the diagnostic PATINDEX is built for.",
+          "wrong": "Inside a character class, a leading caret (^) inverts the meaning — [0-9] matches any digit, but [^0-9] matches any character that is NOT a digit. Combined with PATINDEX, '%[^0-9]%' finds the position of the first non-digit character in a string, which is exactly the kind of pinpoint diagnostic PATINDEX is designed for after LIKE has already flagged the row as suspect."
+        }
+      ],
+      "close": "LIKE filters, PATINDEX diagnoses — filter first with the cheaper boolean check, then use PATINDEX's position information only on the rows that need a closer look."
+    },
+    "G04-T28": {
+      "open": "String length has two failure directions, not one — too short can mean incomplete data, too long can mean silent truncation, and both matter.",
+      "questions": [
+        {
+          "q": "Why does the lesson treat a product name of 1-2 characters as a data quality concern, even though it passes a NOT NULL check?",
+          "choices": [
+            "A 1-2 character name is rarely a genuine, complete product name — it passes NOT NULL because it has content, but that content is almost certainly incomplete, which NOT NULL alone cannot detect",
+            "SQL Server treats any string under 3 characters as automatically NULL internally",
+            "Short strings always indicate a data type mismatch, never a completeness issue",
+            "NOT NULL checks already catch and reject strings shorter than 3 characters"
+          ],
+          "correct": 0,
+          "right": "Right — NOT NULL only confirms something was stored, not that what was stored is a complete, meaningful value.",
+          "wrong": "A ProductName of 'A' passes any NOT NULL constraint without issue — there's content there. But a 1-character product name is almost never a real, intentional value; it's far more likely the result of a truncated import or an incomplete entry. This is exactly why LEN()-based too-short checks bridge format validation and completeness validation: NULL checks alone can't catch a value that exists but is meaninglessly short."
+        },
+        {
+          "q": "Why is a large cluster of rows with a string at exactly 255 characters a strong truncation signal, specifically when the column was previously VARCHAR(255)?",
+          "choices": [
+            "It's implausible that many independent, naturally-written values would happen to be exactly the same length by coincidence — clustering at a former column's exact width strongly suggests values were cut off at that old limit",
+            "255 characters is a value SQL Server always rejects, so this pattern is impossible to occur",
+            "VARCHAR(255) columns automatically pad every value with spaces up to 255 characters",
+            "This pattern indicates the data was entered correctly with no truncation risk at all"
+          ],
+          "correct": 0,
+          "right": "Exactly — the statistical implausibility of many unrelated values sharing one exact length is the real tell, not the number itself.",
+          "wrong": "Naturally varying product names would produce a spread of lengths, not a spike at one specific number. When many rows sit at exactly 255 characters — the exact width of a column that used to be VARCHAR(255) — the far more likely explanation is that longer original values were silently cut off at that old column boundary before the column was widened, leaving artifacts of the truncation behind."
+        },
+        {
+          "q": "What is the practical difference between LEN() and DATALENGTH() that Step 5 uses to detect trailing space padding?",
+          "choices": [
+            "LEN() excludes trailing spaces from its character count, while DATALENGTH() counts every byte including trailing spaces — a positive difference between the two reveals hidden trailing whitespace",
+            "LEN() and DATALENGTH() always return identical results for every string type",
+            "DATALENGTH() only works on numeric columns, never on string columns",
+            "LEN() counts bytes while DATALENGTH() counts characters, the reverse of the actual behavior"
+          ],
+          "correct": 0,
+          "right": "Right — LEN() ignoring trailing spaces while DATALENGTH() counts every byte is exactly the gap that exposes hidden padding.",
+          "wrong": "LEN('abc   ') returns 3 because it ignores trailing spaces, while DATALENGTH('abc   ') returns 6 (for VARCHAR) because it counts every stored byte, spaces included. Subtracting LEN from DATALENGTH gives you the count of trailing spaces — a value greater than 0 reveals padding that a simple LEN()-based length check would otherwise hide completely."
+        }
+      ],
+      "close": "String length validation runs in both directions — too short signals incomplete data, too long signals truncation risk — and DATALENGTH vs LEN exposes padding that length checks alone would miss."
+    },
+    "G04-T29": {
+      "open": "Mojibake is what happens when the right bytes get read with the wrong assumption about their encoding — this lesson is about recognizing the fingerprint it leaves behind.",
+      "questions": [
+        {
+          "q": "Why does the character 'Ã' appearing repeatedly in name fields strongly suggest a UTF-8-as-Latin-1 encoding error, specifically?",
+          "choices": [
+            "UTF-8 encodes many accented characters as multi-byte sequences starting with 0xC3, and when that byte is misread as Latin-1, 0xC3 displays as 'Ã' — so its repeated appearance is a distinctive fingerprint of exactly this specific mismatch",
+            "'Ã' is a character that only ever appears in correctly-encoded French text",
+            "'Ã' indicates the data was encrypted rather than encoded incorrectly",
+            "Any appearance of an accented character always indicates a database corruption issue"
+          ],
+          "correct": 0,
+          "right": "Right — the 0xC3-becomes-Ã mapping is specific enough to that exact mismatch that its presence reliably points to the cause, not just to 'something is wrong.'",
+          "wrong": "German 'ü' encodes in UTF-8 as the two bytes 0xC3 0xBC. If those bytes are read using Latin-1 instead of UTF-8, 0xC3 displays as 'Ã' and 0xBC displays as '¼', producing 'Ã¼' where 'ü' should be. Because 0xC3 is the first byte of many UTF-8 multi-byte sequences, seeing 'Ã' repeatedly is a specific, reliable fingerprint of this particular UTF-8-as-Latin-1 misread, not a generic sign of corruption."
+        },
+        {
+          "q": "Why does the lesson say SQL string functions cannot reliably 'un-mojibake' corrupted text, even when the corruption pattern is recognized?",
+          "choices": [
+            "Fixing mojibake correctly requires knowing the exact original source encoding, which is generally not recoverable from the corrupted string alone — REPLACE() can patch specific known patterns but can't generalize across every language and encoding combination",
+            "SQL Server has a built-in function that automatically reverses any mojibake corruption without configuration",
+            "Mojibake corruption is always irreversible and the affected rows must be permanently deleted",
+            "REPLACE() can fully and reliably reverse mojibake for any language once the pattern is identified"
+          ],
+          "correct": 0,
+          "right": "Exactly — the original byte sequence information is genuinely lost once corrupted, which is why REPLACE() only patches specific known cases rather than solving the problem generally.",
+          "wrong": "A targeted fix like REPLACE(FirstName, 'Ã¼', 'ü') can patch one specific known corruption pattern for one specific character, but mojibake spans many languages and encoding combinations, and reversing it generally requires knowing exactly what the original encoding was — information the corrupted string itself doesn't reliably carry. The lesson's real recommendation is to fix the encoding at the ETL/import layer and re-extract from source, not to patch symptoms in SQL."
+        },
+        {
+          "q": "What is the correct long-term fix the lesson recommends for a systemic mojibake problem affecting many languages?",
+          "choices": [
+            "Re-extract the data from the source system using the correct encoding (UTF-8) and re-import it — fixing the ETL/import configuration rather than attempting to reverse the corruption after the fact in SQL",
+            "Apply REPLACE() patches in SQL for every possible corrupted character combination across all affected languages",
+            "Convert all affected columns from NVARCHAR to VARCHAR to prevent future encoding issues",
+            "Delete all customer records containing any non-ASCII character to avoid the risk entirely"
+          ],
+          "correct": 0,
+          "right": "Correct — go back to the source and fix the encoding at the point of extraction; SQL-side patching is a workaround, not a real fix.",
+          "wrong": "Since the original byte information needed to reliably reverse mojibake generally isn't recoverable from the corrupted string, the correct fix is upstream: re-extract from the source system specifying the correct encoding (UTF-8), for example adding CODEPAGE settings to a BULK INSERT, and re-import cleanly. Patching corrupted values after the fact in SQL is, at best, a targeted workaround for specific known cases — not a systemic solution."
+        }
+      ],
+      "close": "Mojibake detection is about recognizing the fingerprint of a specific encoding mismatch — and the real fix lives at the ETL layer, not in SQL string patches."
+    },
+    "G04-T30": {
+      "open": "Splitting a full name into parts looks trivial until you hit the real variety of how people's names are actually structured.",
+      "questions": [
+        {
+          "q": "Why does splitting a full name on the first space produce a wrong result for a name like 'John Michael Smith'?",
+          "choices": [
+            "The first-space split only separates the string into two pieces — 'John' and 'Michael Smith' — folding the middle name into what becomes the LastName field, when the actual last name is just 'Smith'",
+            "First-space splitting works correctly for any name with more than two words",
+            "'John Michael Smith' cannot be stored as a string in SQL Server at all",
+            "The split fails with an error rather than producing an incorrect result"
+          ],
+          "correct": 0,
+          "right": "Right — splitting on the first space only ever produces two pieces, so any middle name gets swept into the second piece along with the actual last name.",
+          "wrong": "Splitting on the first space finds the space after 'John' and cuts there, giving FirstName = 'John' and everything after it, 'Michael Smith', as LastName. The middle name 'Michael' gets folded into the last name field instead of being handled separately — the algorithm has no way to distinguish a three-part name from a two-part one using only the position of the first space."
+        },
+        {
+          "q": "Why does a LastName field containing a space (like 'Michael Smith') serve as a reliable signal of a likely mis-split, in most Western naming conventions?",
+          "choices": [
+            "In most Western naming systems a last name is conventionally a single word, so a space inside the stored LastName value usually indicates an extra name component (often a middle name) was absorbed during an earlier splitting step",
+            "SQL Server automatically rejects any LastName value containing a space character",
+            "A space in LastName always means the data was manually corrected by a user",
+            "LastName fields can never legitimately contain a space under any circumstances"
+          ],
+          "correct": 0,
+          "right": "Exactly — it's a useful heuristic precisely because the convention (single-word last name) is common enough that violations of it are worth a second look, while acknowledging real exceptions exist.",
+          "wrong": "The lesson does note real exceptions exist ('de la Cruz', 'van der Berg'), but for most Western records, a single-word last name is the norm. When LastName contains a space in a system that stores first and last name separately, it's a strong practical signal — not a certainty — that a middle name or additional given name ended up folded into the wrong field during an earlier split."
+        },
+        {
+          "q": "Why do mononyms (single-name people, like 'Cher') present a genuine data quality challenge rather than just an edge case to ignore?",
+          "choices": [
+            "Systems built around a FirstName/LastName split have no natural slot for a person with only one name — they end up rejecting the record, leaving a field blank, or duplicating the single name into both fields, and all three patterns need to be recognized as legitimate, not corrected away",
+            "Mononyms are always a data entry mistake and should be corrected to add a fabricated last name",
+            "SQL Server has a dedicated data type specifically for storing mononyms correctly",
+            "Mononym records should always be deleted since they cannot be validated"
+          ],
+          "correct": 0,
+          "right": "Correct — the schema's own assumption (everyone has two name parts) is what creates the problem; the fix is recognizing the valid patterns mononyms produce, not treating them as broken data.",
+          "wrong": "A person with a single legal name doesn't fit a schema built on the assumption that everyone has both a first and last name. Depending on how the system handles that mismatch, you might see an empty LastName, a rejected/failed import, or the same name duplicated into both fields. None of these is 'wrong' data needing correction — they're legitimate patterns a validator needs to recognize as arising from mononyms, not treat as errors to fix."
+        }
+      ],
+      "close": "Name splitting is deceptively hard — middle names, hyphenation, prefixes, suffixes, and mononyms all break a naive first-space split in different ways."
+    },
+    "G04-T31": {
+      "open": "Decimal precision mismatches are a silent-failure risk — SQL Server rounds quietly when a value doesn't fit the declared scale, with no error raised.",
+      "questions": [
+        {
+          "q": "Why does storing 123.456789 into a DECIMAL(18,4) column produce a silent data quality problem rather than a visible error?",
+          "choices": [
+            "SQL Server rounds the value to fit the declared scale (4 decimal places) without raising any error, so the precision loss happens invisibly — the only way to detect it is comparing the stored value back against the original source",
+            "SQL Server rejects the INSERT outright with an overflow error, making the problem immediately visible",
+            "DECIMAL(18,4) columns automatically expand their scale to accommodate any value inserted",
+            "The extra digits are stored in a separate hidden column automatically"
+          ],
+          "correct": 0,
+          "right": "Right — silent rounding with no error is exactly what makes this a data quality risk rather than a bug you'd catch in testing.",
+          "wrong": "DECIMAL(18,4) declares a fixed scale of 4 decimal places. Inserting 123.456789 doesn't error — SQL Server just rounds it to 123.4568 and stores that, with no warning that precision was lost. Because there's no error to catch, the only way to detect this after the fact is to compare the stored value against the original source value, which requires having kept that source or a higher-precision staging copy."
+        },
+        {
+          "q": "Why might a round integer amount like 12345 in a GBP transaction column be a data quality red flag rather than a perfectly normal value?",
+          "choices": [
+            "If the column is meant to store major-unit currency (pounds, not pence) and the value has no decimal component at all, it may actually be a minor-unit value (12345 pence = £123.45) that was imported without being converted to major units",
+            "Integer amounts are always invalid for any currency and must be rejected outright",
+            "GBP transactions can never legitimately be a whole-pound amount",
+            "SQL Server cannot store DECIMAL values without a fractional component"
+          ],
+          "correct": 0,
+          "right": "Exactly — a suspiciously round major-unit amount raises the question of whether it's really pence that never got divided by 100, which is a unit-conversion error, not a formatting one.",
+          "wrong": "GBP, like USD and EUR, has a minor unit (pence) — most transaction amounts naturally have a decimal component. A round integer like 12345 with no cents is plausible occasionally, but it's also exactly what an unconverted minor-unit import would look like (12345 pence, never divided by 100 to become £123.45). It's a signal worth investigating, not proof of an error, but proof requires checking against the expected unit for that currency."
+        },
+        {
+          "q": "Why does checking for MIN and MAX decimal places within the same currency (Step 5's HAVING clause) reveal a real problem?",
+          "choices": [
+            "If a single currency's transactions show both 0 and 2 decimal places across different rows, it strongly suggests some rows came from a minor-unit source and others from a major-unit source — a mixed-unit import within what should be one consistent currency",
+            "A currency should always have exactly one decimal place, so any variation at all is automatically an error",
+            "MIN and MAX decimal places should always be identical for every currency by mathematical necessity",
+            "This check only detects rounding errors, not unit inconsistencies"
+          ],
+          "correct": 0,
+          "right": "Correct — inconsistency within a single currency, not any one value in isolation, is what points to a mixed-source import problem.",
+          "wrong": "A currency like GBP should consistently show 2 decimal places if amounts are properly stored in major units (pounds and pence). If some GBP rows show 0 decimal places (integers) and others show 2, that inconsistency — not either pattern alone — is the real signal: it suggests different rows entered the system through different paths, some already converted to major units and others still in minor units, producing a mixed and inconsistent dataset within a single currency."
+        }
+      ],
+      "close": "Precision mismatches are silent by nature — no error, just a quietly wrong number. Comparing to source values and checking for scale consistency within a currency are the only ways to catch them."
+    },
+    "G04-T32": {
+      "open": "The last lesson of Batch 2 — free text fields that quietly become structured data storage because no proper column ever existed for what people needed to record.",
+      "questions": [
+        {
+          "q": "Why does structured data (order IDs, emails, amounts) tend to accumulate inside a free-text Notes column over time, according to the lesson?",
+          "choices": [
+            "When users need to record specific information but no dedicated column exists for it, they use whatever free-text field is available — and an informal convention (like 'Order #NNNN') can develop without ever becoming a real structured column",
+            "Free-text columns automatically convert any structured-looking data into proper separate fields over time",
+            "It only happens when a database administrator manually copies data into the wrong column",
+            "Structured data in Notes fields is always the result of a single data entry error, not an accumulated pattern"
+          ],
+          "correct": 0,
+          "right": "Right — the schema gap is the root cause: no proper field means users improvise with the nearest available free-text one, and habits calcify into informal conventions.",
+          "wrong": "The lesson frames this as a schema gap problem: agents needed to record an order reference or a customer email, but no dedicated column existed, so they wrote it into the free-text Notes field instead. Over time this becomes an informal, inconsistent convention — 'Order #', 'OrderID:', or just the bare number — because it was never formalized into an actual structured field."
+        },
+        {
+          "q": "Why does the lesson treat PII embedded in a free-text Notes field (like a date of birth) as a compliance risk, specifically, beyond being a general data quality issue?",
+          "choices": [
+            "PII stored in an uncontrolled free-text column bypasses the access controls, retention policies, and audit trails that would normally be applied to a dedicated PII column, so it exists outside the governance the organization intends to enforce",
+            "PII in free text is only a formatting inconsistency with no compliance implications at all",
+            "SQL Server automatically applies PII protections to any VARCHAR column regardless of its declared purpose",
+            "Compliance risk only applies to PII stored in dedicated columns, never in free text"
+          ],
+          "correct": 0,
+          "right": "Exactly — a dedicated PII column would carry the org's access controls and audit trail by design; free text carries none of that, so the same sensitive data is effectively unprotected.",
+          "wrong": "A properly designated DateOfBirth column would typically have specific access restrictions, retention rules, and audit logging applied to it as a matter of policy. When that same date of birth is instead buried inside an unstructured Notes field, none of those controls apply — anyone with read access to Notes can see it, with no audit trail specific to that sensitive data. That's why the lesson elevates PII-in-notes above ordinary format inconsistency."
+        },
+        {
+          "q": "Why does the lesson describe the nested PATINDEX extraction approach in Step 2 as 'fragile and format-dependent'?",
+          "choices": [
+            "The extraction logic is built around specific known patterns (like '#' followed by digits) — it works when the data follows that exact convention but breaks silently or extracts wrong values when the format varies even slightly",
+            "PATINDEX cannot be nested inside another PATINDEX call under any circumstances",
+            "The extraction always fails completely and never returns any usable data",
+            "Fragile in this context means the extraction runs correctly but very slowly"
+          ],
+          "correct": 0,
+          "right": "Correct — the extraction is only as good as its assumption about the exact input pattern, and free text is exactly where that assumption breaks down.",
+          "wrong": "The Step 2 extraction assumes a specific pattern — '#' immediately followed by digits, for instance — and locates the start and end of the number using nested PATINDEX calls. That works fine when every agent typed the reference the same way, but breaks the moment the format varies ('Order #' vs 'OrderID:' vs just the bare number inline), which is exactly the kind of inconsistency free-text fields accumulate over years of ad hoc use."
+        }
+      ],
+      "close": "That closes out Format/Pattern — 32 lessons covering everything from simple email regex checks to encoding artifacts and structured data trapped in free text. The throughline across all of them: a value passing one narrow check doesn't mean it's actually correct, complete, or in the right place."
     }
   }
 }
