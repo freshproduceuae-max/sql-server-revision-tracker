@@ -320,6 +320,12 @@ rules for the duration of this experiment:
 
 ## Definition of done — Teacher MCQ content groups
 
+**PR review by Codex** (when used) follows `docs/codex-pr-review-workflow.md`
+— fresh isolated worktree, blind independent review, Claude reviews any
+Codex-proposed patch before it reaches the PR. That is the one authoritative
+copy; `_audit/codex-pr-reviews/PR-<n>/` holds only raw per-run evidence, never
+a second copy of the procedure.
+
 A group is not complete merely because its questions build successfully.
 Before calling a group done:
 
