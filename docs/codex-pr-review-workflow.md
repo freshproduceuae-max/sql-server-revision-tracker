@@ -77,8 +77,12 @@ May: inspect the full diff and repo files, run non-destructive tests, find
 factual/technical/security/schema/regression/documentation problems, make
 minimal directly-relevant fixes **inside its isolated worktree only**.
 
-Must not: commit, push, modify the original checkout, update the remote PR,
-merge, deploy, start unrelated work, touch G11/Teacher-MCQ content.
+Must not commit, push, modify the original checkout, update the remote PR,
+merge, deploy, start unrelated work, or edit files outside the authorized
+PR scope. Teacher-MCQ/G11 content may be reviewed and minimally corrected
+only when that content is explicitly within the PR being reviewed and the
+owner has authorized the review. The no-G11 restriction applied
+specifically to the PR #46 pilot.
 
 ## 6. Required final report
 
@@ -109,11 +113,11 @@ Record and report **all five** of these fields separately, both in
 `manifest.txt` and in any summary to the user. Never substitute one for
 another and never present a subset as if it were the total:
 
-- **total input tokens** — everything the model received this turn/run,
-  cached or not
-- **cached-input tokens** — the subset of total input served from cache
-- **new input = total input − cached input** — the actual fresh-processing
-  cost; this is the number to compare across runs, *not* total input
+- **total input tokens** — measures everything supplied to the model this
+  turn/run, cached or not
+- **cached-input tokens** — the reused portion of total input
+- **new input = total input − cached input** — the uncached portion of
+  total input
 - **output tokens**
 - **reasoning tokens** — call out explicitly whether the API/tool already
   includes reasoning tokens inside the output-token total for that specific
@@ -122,10 +126,28 @@ another and never present a subset as if it were the total:
   inflates the apparent cost. For `codex exec --json`, `reasoning_output_tokens`
   is a breakdown *within* `output_tokens`, not additional to it.
 
-**Do not describe raw total-input as "the cost."** Pilot run (PR #46):
-284,952 total input tokens, of which 243,200 were cached → **~41,752 new
-input tokens**, 4,429 output tokens (2,070 of which were reasoning, already
-inside that 4,429 — not additional).
+**New input alone does not represent monetary cost, plan-limit consumption,
+context-window use, or overall efficiency** — it is one of five figures, not
+a summary of the run. Do not describe it as "the actual cost" or treat it as
+the sole number worth comparing. Report all five fields separately every
+time.
+
+**Comparing runs:** only compare like-for-like — same model, same
+configuration, same extraction method. A new-input figure from one run
+compared against a total-input or "tokens used" figure from another is not a
+valid comparison even if both numbers are token counts.
+
+**Financial cost, if needed, is a separate calculation**, not a token count:
+multiply cached-input tokens by the applicable cached-input rate,
+new-input tokens by the applicable uncached-input rate, and output tokens by
+the applicable output rate, then sum — and only when those rates are
+actually known for the model/tier in use. Do not infer a dollar cost from
+token counts alone.
+
+Pilot run (PR #46): 284,952 total input tokens, of which 243,200 were
+cached → 41,752 new input tokens, 4,429 output tokens (2,070 of which were
+reasoning, already inside that 4,429 — not additional). No per-token
+pricing was looked up for this run, so no dollar figure is stated.
 
 **Comparability warning:** the ~41.7k new-input figure for PR #46 is **not
 directly comparable** to the "tokens used" figures recorded for the G07–G10
