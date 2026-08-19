@@ -120,6 +120,7 @@ went wrong once.
 | `node scripts/build-projects.js` | checkpoint coverage breaks, or a checkpoint waits on an id the app cannot complete |
 | `node scripts/build-ba-lessons.js` | `business-analysis/index.json` and the markdown on disk disagree about any lesson id |
 | `node scripts/merge-quiz-banks.js …` | a free-text question survives, an answer is missing from its choices, or an option looks truncated |
+| `node scripts/check-handoff-progress.js` | HANDOFF.md's stated progress (completed group, lesson/question counts, remaining scope) disagrees with `sources/teacher-mcq.json`, the built `teacher-mcq.json`, or the real file inventory under `data-validation-lab/methods/` |
 
 `check-docs-sync.js` is safe to run from any worktree — it locates the live docs
 via git rather than assuming the repo's parent directory. `--fix` makes the root
@@ -233,25 +234,80 @@ entry 19.
 
 ## Work queue — what is actually outstanding
 
-**Updated 2026-08-19.** Read this before starting anything. This repo has no
-memory of prior sessions beyond what is written down here.
+<!-- HANDOFF-PROGRESS:START (machine-generated, see scripts/check-handoff-progress.js) -->
 
-Everything through PR #31 is merged and deployed. No open PRs. The Teacher
-ships with: all three lesson tracks, a floating panel, a session reset, and an
-MCQ-first warm-up covering **one** lesson group.
+```json
+{
+  "completedThroughGroup": "G10",
+  "completedLessons": 152,
+  "completedQuestions": 456,
+  "remainingGroups": [
+    "G11",
+    "G12",
+    "G13",
+    "G14",
+    "G15",
+    "G16",
+    "G17",
+    "G18",
+    "G19"
+  ],
+  "remainingTechniques": 84,
+  "remainingExercises": 15,
+  "remainingItemsTotal": 99,
+  "fullTrackTotalItems": 251,
+  "_note": "84 remaining techniques + 15 remaining exercises = 99 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
+  "latestMergedPR": 44,
+  "latestMergedPRCheckStatus": "verified",
+  "lastVerified": "2026-08-19T18:41:41.556Z"
+}
+```
+
+<!-- HANDOFF-PROGRESS:END -->
+
+
+**Do not trust the prose below at face value.** Before relying on it, run
+`node scripts/check-handoff-progress.js` — it derives the real state from
+`sources/teacher-mcq.json`, the built `teacher-mcq.json`, and the actual
+`data-validation-lab/methods/` file inventory, and fails loudly if this
+document has drifted. This exact section went stale for six merged PRs
+(#31 → #44) before anyone caught it — see
+`docs/teacher-mcq-role-swap-experiment.md` for the incident and the fix.
+
+**Teacher MCQ warm-ups — Data Validation.** G01–G10 complete: 152 lessons,
+456 questions, live in production. Remaining: G11–G19 (84 techniques across
+9 groups) plus the 15 worked exercises (`M01-E1` … `M10-E1`) — **99 items
+left**, not started. The full Data Validation track is 251 items total
+(236 techniques + 15 exercises); 99 remaining is not the same number as
+251 total — don't conflate them.
+
+**The G06–G10 batch was built under a Codex-authors/Claude-reviews role-swap
+trial** — method, per-group results, token measurements, and the honest
+read on what it did and didn't prove are in
+`docs/teacher-mcq-role-swap-experiment.md`. **The next decision — which
+authoring/review arrangement to use for G11 onward — has not been made.**
+A new session must not silently assume the role-swap continues; that choice
+belongs to the owner, and needs to be made explicitly before G11 starts.
+
+Everything through PR #44 is merged and deployed. No open PRs against
+Teacher MCQ content. The Teacher ships with: all three lesson tracks, a
+floating panel, a session reset, and an MCQ-first warm-up covering
+**G01–G10 of Data Validation**.
 
 | # | Item | Scope | Gated on |
 |---|---|---|---|
-| 1 | Teacher MCQs — rest of Data Validation | 18 groups + 15 exercises (~239 lessons) | nothing |
+| 1 | Teacher MCQs — rest of Data Validation | G11–G19 (84 techniques, 9 groups) + 15 worked exercises = 99 items remaining | Owner's G11 authoring-arrangement decision (see above) |
 | 2 | Teacher MCQs — Credit Risk | 47 modules + 7 case studies | nothing |
 | 3 | Teacher MCQs — Business Analysis | 42 lessons | nothing |
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
 | 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing |
 
-Items 1–3 and 6 are **content only** — no infrastructure, no new data surface,
-following patterns already shipped and reviewed. They are not blocked by
-anything and can proceed immediately.
+Items 2, 3 and 6 are **content only** — no infrastructure, no new data
+surface, following patterns already shipped and reviewed. They are not
+blocked by anything and can proceed immediately. Item 1 is also content-only
+but is gated on the owner's explicit G11 workflow decision, not on any
+technical dependency.
 
 ### Which phase each item belongs to
 
