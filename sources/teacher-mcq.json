@@ -2646,6 +2646,889 @@
         }
       ],
       "close": "That closes out Format/Pattern — 32 lessons covering everything from simple email regex checks to encoding artifacts and structured data trapped in free text. The throughline across all of them: a value passing one narrow check doesn't mean it's actually correct, complete, or in the right place."
+    },
+    "G05-T01": {
+      "open": "New group: Range/Boundary. Every lesson here asks the same underlying question — is this value inside the bounds it's supposed to be in? First up: values below a minimum.",
+      "questions": [
+        {
+          "q": "Why does the lesson use strict less-than (HourlyRate < @MinWage) rather than less-than-or-equal to flag minimum wage violations?",
+          "choices": [
+            "An employee paid exactly at the minimum wage is compliant — the violation only exists once the rate drops below the threshold, so equality to the minimum must not be flagged",
+            "SQL Server does not support the <= operator for DECIMAL comparisons",
+            "Using < instead of <= makes the query run faster with no change in meaning",
+            "The minimum wage threshold itself is never a value any employee can legally be paid"
+          ],
+          "correct": 0,
+          "right": "Right — being exactly at the minimum is compliant, so the violation condition is strictly below it, not at-or-below.",
+          "wrong": "The business rule is 'no rate below £10.42' — an employee paid exactly £10.42 satisfies that rule. Using <= would incorrectly flag every employee paid exactly at minimum wage as a violation, when they're actually compliant. Strict < correctly captures only genuine violations."
+        },
+        {
+          "q": "Why does the lesson declare @MinWage as a variable instead of writing 10.42 directly into each WHERE clause?",
+          "choices": [
+            "Parameterizing the threshold means it only needs to be updated in one place when minimum wage changes, rather than hunting down every hard-coded occurrence across the query",
+            "SQL Server rejects decimal literals used directly in a WHERE clause",
+            "Variables execute faster than literal values in every case",
+            "DECLARE is required syntax before any comparison operator can be used"
+          ],
+          "correct": 0,
+          "right": "Right — same maintainability principle that shows up across this whole course: one place to update beats scattered hard-coded values.",
+          "wrong": "If 10.42 were typed directly into every condition across multiple queries, next year's minimum wage change would require finding and editing every occurrence. Declaring @MinWage once means updating a single line — the query logic itself doesn't need to change."
+        },
+        {
+          "q": "Why does the lesson treat negative Transaction Amounts as a separate case from the below-minimum-wage check, rather than applying the same £10.42 threshold logic?",
+          "choices": [
+            "Different columns have different valid minimums based on their own business meaning — a transaction amount's domain minimum is 0, not £10.42, so each column's threshold must be established independently",
+            "Negative transaction amounts are always a SQL Server storage error, never a data quality issue",
+            "Transaction amounts and hourly rates use the same DECIMAL precision, so the same threshold applies automatically",
+            "The below-minimum-wage check already covers Transactions because both use the < operator"
+          ],
+          "correct": 0,
+          "right": "Exactly — every column has its own valid range grounded in its own business meaning; there's no single universal threshold to reuse across unrelated fields.",
+          "wrong": "£10.42 is meaningful only for HourlyRate — it's the minimum wage. For a transaction amount, the meaningful minimum is 0 (a transaction can't have a negative amount in this system's model, or if it can, that's a different business rule about refunds). Each field's valid range is derived from what that field represents, not copied from another field."
+        }
+      ],
+      "close": "Below-minimum checks use strict less-than because the threshold itself is compliant. Every field needs its own threshold, grounded in its own business meaning — there's no universal minimum to reuse."
+    },
+    "G05-T02": {
+      "open": "The mirror image of the last lesson — values above a maximum, using strict greater-than for the same reason: the boundary itself is still valid.",
+      "questions": [
+        {
+          "q": "Why does the lesson use strict greater-than (TotalAmount > @MaxOrderValue) rather than greater-than-or-equal to flag orders above the maximum?",
+          "choices": [
+            "An order at exactly the £50,000 limit is compliant — the business rule 'the maximum is £50,000' means £50,000 is permitted and only values above it are violations",
+            "SQL Server evaluates > faster than >= for DECIMAL columns",
+            "TotalAmount can never equal exactly 50000.00 due to floating-point rounding",
+            "Above-maximum checks always use a different comparison operator than below-minimum checks"
+          ],
+          "correct": 0,
+          "right": "Right — 'the maximum is £50,000' means £50,000 itself is allowed; only exceeding it is a violation, mirroring the below-minimum lesson's logic.",
+          "wrong": "'The maximum order value is £50,000' means orders up to and including £50,000 are fine — only orders exceeding that figure violate the rule. Using >= would incorrectly flag a perfectly valid £50,000 order as a violation."
+        },
+        {
+          "q": "Why does the lesson distinguish 'physically/logically impossible' maximums (like SpO2 > 100%) from 'business rule' maximums (like an order > £50,000) when deciding how to remediate?",
+          "choices": [
+            "A physically impossible value should be nulled or rejected outright, while a business-rule violation may still be a real, legitimate transaction that just needs manual approval — the two require different responses, not the same fix",
+            "Both types of maximum violations should always be deleted from the database immediately",
+            "Physical maximums are enforced automatically by SQL Server's DECIMAL data type, so only business maximums need checking",
+            "Business rule maximums are never real violations and can safely be ignored"
+          ],
+          "correct": 0,
+          "right": "Exactly — a value above a physical limit is definitionally wrong, while a value above a business limit might be a legitimate case needing sign-off, not data-cleanup.",
+          "wrong": "An SpO2 reading of 999% cannot exist in reality — it's corrupted data that should be nulled or rejected. A £75,000 order, though above the £50k threshold, might be a genuine large order that simply needs manager approval before processing — it's not necessarily wrong data. Treating both cases the same way (as errors to be purged) would incorrectly discard legitimate large orders."
+        },
+        {
+          "q": "What does the distribution banding in Step 5 (grouping orders into 'Normal', 'Medium', 'High', 'Above maximum' bands) reveal that a simple list of violations does not?",
+          "choices": [
+            "The shape of the whole distribution — whether the maximum-exceeding records are rare isolated outliers or a large chunk of the data, which changes whether the fix is 'correct these specific errors' or 'reconsider whether the limit itself is right'",
+            "Distribution banding calculates the exact dollar amount lost to each violation",
+            "It replaces the need for the WHERE TotalAmount > @MaxOrderValue check entirely",
+            "Banding only works when there are zero violations present in the data"
+          ],
+          "correct": 0,
+          "right": "Correct — seeing the full shape (not just the flagged rows) tells you whether you're looking at isolated errors or a limit that no longer fits the business.",
+          "wrong": "If 80% of orders sit in the 'Normal' band and only one outlier sits in 'Above maximum,' that one record is very likely a data entry error. If 20% of orders sit above the maximum, the £50,000 limit itself may be outdated and need review by the business, not the data. A list of violations alone doesn't show this context — the full distribution does."
+        }
+      ],
+      "close": "Above-maximum checks mirror below-minimum ones — strict greater-than, since the limit itself is compliant. But the fix differs: physically impossible values get corrected or discarded, business-rule violations might just need approval."
+    },
+    "G05-T03": {
+      "open": "Future dates that shouldn't be future — and a detective trick for figuring out exactly how they got that way.",
+      "questions": [
+        {
+          "q": "Why does the lesson use CAST(GETDATE() AS DATE) instead of comparing directly against GETDATE() when checking for future dates?",
+          "choices": [
+            "GETDATE() includes the current time component, so comparing a DATE column directly to it can produce inconsistent results near midnight — casting to DATE strips the time, giving a clean date-to-date comparison",
+            "GETDATE() only works inside stored procedures, never in a plain SELECT statement",
+            "CAST(GETDATE() AS DATE) returns a different, more accurate current date than GETDATE() alone",
+            "DATE columns cannot be compared to any datetime value without an explicit CAST"
+          ],
+          "correct": 0,
+          "right": "Right — stripping the time component avoids implicit-conversion oddities when comparing a pure date column to the current instant.",
+          "wrong": "GETDATE() returns the full current date AND time. Comparing a DATE column (which has no time component) to a DATETIME value can behave unexpectedly right around midnight due to implicit conversion rules. CAST(GETDATE() AS DATE) produces a clean 'today' date value with no time component, making the date-to-date comparison reliable and predictable."
+        },
+        {
+          "q": "How does the century-flip check in Step 5 (subtracting 100 years from a future DateOfBirth) work as a diagnostic, and what is it actually testing?",
+          "choices": [
+            "It tests whether the future date minus 100 years lands in a plausible historical birth-year range — if so, that's strong evidence the original 2-digit year was meant to be interpreted as the earlier century, not the current one",
+            "It automatically corrects every future DateOfBirth by subtracting exactly 100 years with no further verification needed",
+            "It checks whether the customer's account was created more than 100 years ago",
+            "It verifies that DateOfBirth values are stored using the DATETIME2 data type instead of DATE"
+          ],
+          "correct": 0,
+          "right": "Exactly — it's a plausibility test, not an automatic fix: does subtracting a century land somewhere a real birth year could plausibly be?",
+          "wrong": "A 2-digit year like '24' is ambiguous — it could mean 1924 or 2024 depending on the import script's pivot-year assumption. If a DateOfBirth appears in the future, subtracting 100 years and checking whether that lands within a plausible birth-year range (1900 to today) is strong circumstantial evidence the century was misinterpreted during import — but it's a diagnostic signal to investigate, not an automatic correction to apply blindly."
+        },
+        {
+          "q": "Why does the lesson emphasize that 'not all future dates are invalid' — for example, contrasting OrderDate with a hypothetical DeliveryDate column?",
+          "choices": [
+            "The same DATE data type and the same 'future date' condition require completely different validation rules depending on what the specific column represents in the business — a planned delivery date is expected to be in the future, an order placement date is not",
+            "Future dates are always invalid in every column of every table without exception",
+            "DeliveryDate columns use a different SQL data type than OrderDate columns, which is why the rule differs",
+            "This distinction only matters for tables that store financial transaction data"
+          ],
+          "correct": 0,
+          "right": "Correct — the business meaning of the column determines the valid range, not the data type; the same technical check needs different judgment depending on what's being checked.",
+          "wrong": "OrderDate represents when an order was placed — that should always be in the past or present, never the future. A planned DeliveryDate, by contrast, is naturally expected to be in the future at the time the order is created. Both columns store the exact same DATE data type, but the correct validation rule is opposite in each case — always specify the column's business meaning before applying a blanket future-date check."
+        }
+      ],
+      "close": "Future-date checks need the time component stripped for reliable comparison, and the same future-date condition means completely different things depending on what the column represents."
+    },
+    "G05-T04": {
+      "open": "Dates too far in the past — and the recurring trick of recognizing a sentinel default dressed up as real data.",
+      "questions": [
+        {
+          "q": "Why does the lesson treat 1900-01-01 as almost always a sentinel default rather than a genuine historical date?",
+          "choices": [
+            "1900-01-01 is a well-known placeholder value used by many legacy systems and matches SQL Server's own historical minimum default for certain datetime types, so its repeated appearance is a strong signal of 'unknown date' rather than a real one",
+            "SQL Server physically cannot store any date before 1900-01-01 in any datetime column",
+            "1900-01-01 is the date SQL Server was first released, which is why systems default to it",
+            "Legacy systems always use 1900-01-01 to represent the current date at import time"
+          ],
+          "correct": 0,
+          "right": "Right — its role as a common legacy placeholder, not any storage limitation, is why it should be treated as a sentinel rather than a real historical fact.",
+          "wrong": "Many legacy systems and SQL Server's own SMALLDATETIME minimum use 1900-01-01 as the default when no real date is known. When this exact value shows up in real data — especially clustered, not scattered randomly — it's a strong signal the field's true value was never actually captured, not that something genuinely happened on January 1st, 1900."
+        },
+        {
+          "q": "Why does the lesson also flag 1753-01-01 specifically, distinct from the 1900-01-01 sentinel?",
+          "choices": [
+            "1753-01-01 is SQL Server's DATETIME data type's own historical minimum value (tied to when Britain adopted the Gregorian calendar) — its appearance in data is a technical artifact of that specific data type's default, not a business event",
+            "1753-01-01 represents the date the company was legally founded, which is why it appears in records",
+            "1753-01-01 and 1900-01-01 are the same sentinel value expressed in two different date formats",
+            "1753 is simply an alternate spelling convention some import tools use for the year 1900"
+          ],
+          "correct": 0,
+          "right": "Exactly — it's a distinct, data-type-specific artifact (DATETIME's own floor), separate from the more common 1900-01-01 sentinel.",
+          "wrong": "SQL Server's DATETIME type has a hard minimum of 1753-01-01 (the year Britain adopted the Gregorian calendar) — different from SMALLDATETIME's 1900-01-01 minimum. A record with exactly this value is almost always an artifact of that specific column's default/minimum being written instead of a real value, not an intentional business date."
+        },
+        {
+          "q": "Why does Step 3's year-by-year volume distribution catch problems that a simple threshold check (WHERE TransactionDate < @GoLiveDate) might present less clearly?",
+          "choices": [
+            "Grouping by year and looking at the shape of the distribution makes an anomalous spike — like a cluster of records all dated 1900 or 1985 — immediately visible without inspecting rows individually, showing the scale and pattern of the problem at a glance",
+            "The year-by-year distribution automatically deletes any year outside the operational range",
+            "A threshold check like WHERE TransactionDate < @GoLiveDate cannot be written in T-SQL at all",
+            "Volume distribution and threshold checks return exactly the same information in a different column order"
+          ],
+          "correct": 0,
+          "right": "Correct — seeing volume-by-year surfaces the pattern (a suspicious spike at a sentinel year, or a scattering of genuine migration data) that a flat list of violating rows doesn't make as immediately visible.",
+          "wrong": "A plain WHERE clause returns a list of violating rows, but doesn't show whether those rows cluster suspiciously (many records all at exactly 1900, suggesting a sentinel) or spread naturally across years (suggesting genuine historical migration data). Grouping by year and counting makes that pattern visible at a glance, which helps distinguish 'this is a sentinel default' from 'this is real pre-go-live data that was legitimately migrated.'"
+        }
+      ],
+      "close": "Sentinel dates like 1900-01-01 and 1753-01-01 are technical artifacts of legacy systems and SQL Server's own data type minimums — recognizing them, and seeing their distribution pattern, is key to telling sentinel from genuine historical data."
+    },
+    "G05-T05": {
+      "open": "A derived value — one calculated from other columns — can violate a business rule even when every underlying field individually looks fine.",
+      "questions": [
+        {
+          "q": "Why is DATEDIFF(YEAR, DateOfBirth, GETDATE()) alone not sufficient to calculate a person's accurate integer age?",
+          "choices": [
+            "DATEDIFF(YEAR, ...) only counts how many calendar year boundaries were crossed — it doesn't know whether the birthday has actually occurred yet this year, so it can overstate age by up to a year until adjusted",
+            "DATEDIFF(YEAR, ...) returns a decimal value that must be rounded down using FLOOR()",
+            "DATEDIFF only works correctly for dates before the year 2000",
+            "GETDATE() cannot be used as the second argument to DATEDIFF under any circumstances"
+          ],
+          "correct": 0,
+          "right": "Right — DATEDIFF(YEAR,...) counts calendar-year boundaries crossed, not whether the birthday itself has actually happened yet, so it needs the CASE adjustment to become a true age.",
+          "wrong": "DATEDIFF(YEAR, dob, today) counts how many January 1sts occurred between the two dates — it doesn't check whether the person's actual birthday this year has passed. Someone born December 31, 2005 would show as one year older than their true age on, say, January 2 of the current year, even though their birthday hasn't occurred yet. The CASE expression subtracting 1 when the birthday hasn't passed corrects this."
+        },
+        {
+          "q": "Why does the lesson insist that derived values (like calculated Age) need their own explicit validation, separate from validating the underlying stored fields?",
+          "choices": [
+            "A stored field can pass its own individual validation (DateOfBirth is a real, valid date) while the value calculated from it still violates a business rule (the resulting age is under 18) — field-level validity doesn't guarantee derived-value validity",
+            "Derived values are always calculated incorrectly by SQL Server and therefore never need checking",
+            "SQL Server automatically validates every derived value the moment it's calculated in a SELECT statement",
+            "Only stored columns can ever be invalid — calculated expressions are mathematically guaranteed to be correct"
+          ],
+          "correct": 0,
+          "right": "Exactly — validating the raw stored field is not the same question as validating what gets calculated from it; both need explicit checks.",
+          "wrong": "A DateOfBirth of 2010-03-15 is a perfectly valid date — it passes any date-format or range check on the DateOfBirth column itself. But the age derived from it (16) violates the separate business rule that credit customers must be 18+. The underlying field being valid says nothing about whether a value calculated from it satisfies a business constraint — that requires its own explicit check."
+        },
+        {
+          "q": "Why does a negative value from DATEDIFF(DAY, OrderDate, DeliveryDate) represent a physical impossibility rather than just an unusual data point?",
+          "choices": [
+            "A negative result means DeliveryDate falls chronologically before OrderDate — meaning an item was delivered before it was ever ordered, which cannot happen in reality regardless of how fast shipping is",
+            "Negative DATEDIFF results are a normal, expected part of how SQL Server calculates date differences",
+            "The negative sign only indicates the two dates are in different calendar years, not an actual ordering problem",
+            "DATEDIFF cannot actually return negative values, so this scenario would raise an error instead"
+          ],
+          "correct": 0,
+          "right": "Right — a negative day count literally means delivery preceded the order, an impossible sequence regardless of how quick a business's fulfillment is.",
+          "wrong": "DATEDIFF(DAY, OrderDate, DeliveryDate) < 0 means DeliveryDate is chronologically earlier than OrderDate — the item was delivered before it was ordered. No matter how efficient a shipping operation is, this sequence cannot happen in the real world; it indicates one of the two dates was entered incorrectly, or the values belong to two different, unrelated orders."
+        }
+      ],
+      "close": "Derived values — age, duration, calculated totals — need their own validation even when every underlying stored field is individually valid. A valid DateOfBirth can still produce an invalid age."
+    },
+    "G05-T06": {
+      "open": "Percentages and rates have a domain-specific range (usually 0-100), plus a sneaky convention mismatch: is 0.20 meant to be twenty percent, or twenty percent of a percent?",
+      "questions": [
+        {
+          "q": "Why does a CommissionRate value of 0.25, in a column where most other values range from 10 to 30, raise suspicion of a convention mismatch rather than being read as a valid 0.25% rate?",
+          "choices": [
+            "The surrounding values in the same column suggest the storage convention is whole-number percentages (like 25 meaning 25%) — a lone value sitting in the 0-1 range likely represents a decimal fraction (0.25 meaning 25%) that was stored using the wrong convention for this column",
+            "SQL Server automatically converts any value between 0 and 1 into a percentage on storage",
+            "0.25% is always an invalid commission rate under any circumstances",
+            "The DECIMAL data type cannot store values below 1 in the same column as values above 1"
+          ],
+          "correct": 0,
+          "right": "Right — the surrounding distribution (mostly 10-30, whole-number style) is what makes an isolated 0-1 value suspicious as a convention mismatch, not an inherent property of the number itself.",
+          "wrong": "If every other value in the column is a whole number between roughly 10 and 30 (consistent with 'store 20 to mean 20%'), a single value of 0.25 breaks that pattern. It's much more likely someone entered 0.25 meaning '25% as a decimal fraction' — using the wrong convention for this particular column — than that 0.25% (a quarter of one percent) was genuinely intended as a commission rate. The surrounding data is the evidence, not the number in isolation."
+        },
+        {
+          "q": "Why does a VAT rate of 200 (versus the intended 20) matter more than a typical range violation — what specific business impact does the lesson highlight?",
+          "choices": [
+            "The billing engine divides by 100 to convert the stored rate into a multiplier, so a rate of 200 instead of 20 doesn't just fail a range check — it directly triples every affected invoice's tax calculation before anyone notices",
+            "A VAT rate of 200 causes SQL Server to reject the INSERT statement with a runtime error",
+            "VAT rates above 100 are technically valid in some countries, so this is not actually an error",
+            "The billing engine ignores VATRate values above 100 and substitutes a default of 0"
+          ],
+          "correct": 0,
+          "right": "Exactly — the range violation isn't just abstractly wrong, it directly propagates into a concrete, quantifiable financial error (tripled invoices) through the billing engine's own calculation logic.",
+          "wrong": "The billing engine computes VAT as OrderTotal × (VATRate / 100). With the intended rate of 20, that's a 0.20 multiplier (correct 20% VAT). With the erroneous 200, that becomes a 2.00 multiplier — the invoice is calculated at triple the intended VAT-inclusive amount. This concrete downstream consequence (real invoices going out wrong, not just an abstract data quality flag) is why the lesson emphasizes catching this specific error pattern before billing runs."
+        },
+        {
+          "q": "Why does the lesson use NOT IN (0, 5, 20) for UK VAT rates instead of a range check like NOT BETWEEN 0 AND 20?",
+          "choices": [
+            "UK VAT only has three specific legally valid rates (0%, 5%, 20%) — a value like 7.5% or 15% would pass a BETWEEN 0 AND 20 range check despite not being a real, legally valid UK VAT rate, so an enumerated check is more precise here",
+            "BETWEEN cannot be used with integer values in T-SQL, only with DECIMAL columns",
+            "NOT IN and NOT BETWEEN always return identical results for any set of values",
+            "UK VAT rates change too frequently for an enumerated list to ever be practical"
+          ],
+          "correct": 0,
+          "right": "Right — a real-world enumerated set (0, 5, 20) is more precise than a numeric range when the domain only actually permits specific discrete values, not a continuum.",
+          "wrong": "A BETWEEN 0 AND 20 range check would let a rate like 15% or 7.5% through as 'valid,' even though UK VAT law only recognizes exactly three rates: 0%, 5%, and 20%. Since the valid values are a specific enumerated set rather than any number along a continuum, an IN-list check is the precise tool — it catches non-standard values a range check would miss."
+        }
+      ],
+      "close": "Percentages need both a plausible range check and awareness of storage convention mismatches (0.20 vs 20) — and where the valid values are a specific enumerated set rather than a continuum, an IN-list check beats a range check."
+    },
+    "G05-T07": {
+      "open": "Negative quantities in fields that represent physical counts — and an important nuance about when zero is fine and when it isn't.",
+      "questions": [
+        {
+          "q": "Why does the lesson use StockQuantity >= 0 (non-negative, zero allowed) but Quantity > 0 (strictly positive, zero not allowed) as two different constraints in the same lesson?",
+          "choices": [
+            "Zero has a different business meaning in each context — zero stock is a perfectly valid state (the product is out of stock), while an order line item with zero quantity represents a line that shouldn't exist at all",
+            "SQL Server requires different comparison operators depending on which table a column belongs to",
+            "StockQuantity and Quantity are stored using different data types, forcing different comparison logic",
+            "Both constraints are actually identical; the difference is only cosmetic naming"
+          ],
+          "correct": 0,
+          "right": "Right — the difference is entirely about what zero means in each specific business context, not a technical SQL distinction.",
+          "wrong": "Zero stock is a real, valid, common state — a product being out of stock is normal and expected. But an order line item with Quantity = 0 doesn't represent 'zero of this product was ordered' in any meaningful sense — it's a data anomaly (perhaps a deleted line that wasn't actually removed). Same underlying SQL Server numeric behavior, but the correct boundary (>= 0 vs > 0) depends entirely on what the specific column represents."
+        },
+        {
+          "q": "Why does the lesson explicitly caution that negative stock might be a deliberate business design in some systems, rather than always being an error?",
+          "choices": [
+            "Some double-entry ledger inventory models intentionally use negative values to represent a committed-but-not-yet-received quantity — before flagging all negative stock as broken data, the validator needs to confirm whether this system actually uses negative stock as a real business concept",
+            "Negative stock values are always a SQL Server bug that must be reported to Microsoft",
+            "This caution only applies to inventory systems that use the FLOAT data type instead of INT",
+            "The lesson states negative stock is never valid under any circumstances, with no exceptions"
+          ],
+          "correct": 0,
+          "right": "Exactly — a general validation rule (negative stock = error) can be legitimately wrong for a specific business's design; confirm the actual meaning before treating every negative as broken data.",
+          "wrong": "Some inventory systems deliberately allow negative stock to represent a ledger-style commitment (e.g., stock has been sold/promised but not yet physically received or counted). This is a real, intentional design choice in some systems, not a universal error. The lesson explicitly warns to verify whether this particular system treats negative stock as a valid business concept before blanket-flagging every negative value as a data quality violation."
+        },
+        {
+          "q": "In Step 5, why does the formula StockQuantity + 2 * ABS(StockQuantity) estimate a plausible corrected value, specifically for a sign-flip error?",
+          "choices": [
+            "If a value should have been positive but was entered with a flipped sign (e.g., -50 instead of +50), adding twice its absolute value cancels the negative and produces the intended positive magnitude — this only makes sense as a correction for that specific error pattern, not a general-purpose fix",
+            "This formula always returns exactly zero regardless of the input value",
+            "The formula corrects any type of stock quantity error, not just sign flips",
+            "ABS(StockQuantity) alone is sufficient and the multiplication by 2 is unnecessary"
+          ],
+          "correct": 0,
+          "right": "Right — the formula is a targeted correction for one specific, plausible error pattern (a sign flip), not a general-purpose repair for any kind of stock discrepancy.",
+          "wrong": "If an operator meant to enter +50 but typed -50, the current stored value is -50. ABS(-50) = 50, and -50 + 2×50 = 50, which is the value that would have been stored if the sign had been correct in the first place. This only makes sense as a correction under the specific hypothesis that the error was a flipped sign — the DBA must verify that hypothesis before applying it, since a different kind of error (e.g., wrong quantity typed entirely) wouldn't be fixed by this formula."
+        }
+      ],
+      "close": "Non-negative vs strictly-positive depends entirely on what zero means for that specific column — and 'negative stock is always wrong' isn't a universal truth, since some systems use it deliberately."
+    },
+    "G05-T08": {
+      "open": "Statistical outlier detection — using the shape of the data itself, rather than a fixed threshold, to spot values that don't belong.",
+      "questions": [
+        {
+          "q": "Why does the lesson caution that the 3-sigma rule will flag roughly 30 'outliers' by pure chance in a dataset of 10,000 normally-distributed transactions?",
+          "choices": [
+            "In a true normal distribution, about 0.3% of values naturally fall beyond ±3 standard deviations from the mean just by random chance — so a large enough dataset will always produce some 3-sigma flags that are not actual errors, just the expected tail of the distribution",
+            "The 3-sigma rule only works correctly on datasets smaller than 1,000 rows",
+            "STDEV() in SQL Server becomes progressively less accurate as the row count increases",
+            "3-sigma outliers are always fraud and require no further human investigation"
+          ],
+          "correct": 0,
+          "right": "Right — the 0.3% tail-probability of a normal distribution means some 3-sigma flags are simply expected statistical noise, not necessarily errors.",
+          "wrong": "For a genuinely normal distribution, about 0.3% of all values naturally fall beyond three standard deviations from the mean — that's just how the normal curve's tails work, with no error involved. In a 10,000-row dataset, 0.3% is roughly 30 rows that will be flagged purely by chance. This is why the lesson stresses adjusting the sigma threshold based on how many false positives are tolerable, rather than treating every 3-sigma flag as a confirmed error."
+        },
+        {
+          "q": "Why does the lesson recommend IQR-based outlier detection over Z-score (standard deviation) based detection specifically for right-skewed financial transaction data?",
+          "choices": [
+            "The mean and standard deviation themselves get pulled upward by the same large outlier values they're supposed to help detect, distorting what counts as 'typical' — IQR (based on the median-adjacent Q1/Q3 quartiles) resists this distortion because it's not calculated from the extreme values",
+            "IQR-based detection is always faster to compute in T-SQL than STDEV-based detection",
+            "Z-score detection only works when a dataset contains fewer than 100 rows",
+            "IQR and Z-score always produce mathematically identical outlier flags for any dataset"
+          ],
+          "correct": 0,
+          "right": "Exactly — the very outliers you're trying to detect distort the mean and standard deviation used to detect them, which is precisely the weakness IQR avoids.",
+          "wrong": "Financial transaction amounts are typically right-skewed — many small transactions, a few very large ones. Those large values pull the mean upward and inflate the standard deviation, making both less representative of what's 'typical.' The IQR (Q3 minus Q1) is calculated from the middle 50% of the data and is much less affected by extreme values at the tails, making it a more robust outlier fence for this kind of skewed distribution."
+        },
+        {
+          "q": "Why does the rolling 30-day comparison in Step 4 potentially flag a transaction as an outlier that the all-time Z-score in Step 1 would not (or vice versa)?",
+          "choices": [
+            "A value's 'unusualness' depends on the baseline it's measured against — a transaction that looks normal compared to years of historical data might be highly unusual compared to the business's more recent, lower-volume activity, and context-sensitive baselines catch anomalies that all-time baselines miss",
+            "The rolling 30-day window always produces exactly the same Z-score as the all-time calculation, so the two checks are redundant",
+            "STDEV() cannot be computed over a 30-day window, only over an entire table's history",
+            "Step 4 is a syntax error and does not actually execute correctly in SQL Server"
+          ],
+          "correct": 0,
+          "right": "Right — the baseline you measure against changes what counts as unusual, so a recent-window comparison surfaces anomalies an all-time comparison would dilute away.",
+          "wrong": "If a business's transaction volumes have shifted (say, trending lower recently), a value that was routine for the all-time historical average might be a significant deviation from what's been typical in just the last 30 days. Comparing against a recent, rolling baseline is more operationally relevant because it reflects the business's current context rather than being diluted by potentially outdated historical patterns."
+        }
+      ],
+      "close": "Statistical outlier detection needs the right baseline (all-time can dilute recent shifts) and the right method (IQR resists the distortion that skewed data causes to mean/stddev-based Z-scores)."
+    },
+    "G05-T09": {
+      "open": "Geographic coordinates have hard physical bounds — but the sneakiest error here is one where both individual values stay perfectly valid.",
+      "questions": [
+        {
+          "q": "Why are latitude (-90 to 90) and longitude (-180 to 180) described as hard physical limits rather than business rules or conventions?",
+          "choices": [
+            "These bounds come from the actual geometry of Earth itself — there is no physical location on the planet's surface with a latitude beyond ±90° or a longitude beyond ±180°, so any value outside these ranges cannot represent a real point regardless of business context",
+            "These ranges are an arbitrary convention set by GPS device manufacturers that could change with a firmware update",
+            "SQL Server's FLOAT data type physically cannot store values outside these specific ranges",
+            "These bounds only apply to coordinates within the United Kingdom, not globally"
+          ],
+          "correct": 0,
+          "right": "Right — these are limits imposed by the actual shape of the Earth, not a policy choice that could vary by business or system.",
+          "wrong": "Latitude measures position between the South Pole (-90°) and North Pole (+90°); longitude measures position around the globe up to the International Date Line (±180°). These aren't business conventions that could reasonably differ from system to system — they're fixed by the physical geometry of the planet, so any value outside them is a definitive error, not a debatable business rule."
+        },
+        {
+          "q": "Why is a latitude/longitude swap (Step 3) described as 'insidious' compared to an out-of-physical-bounds value (Step 1)?",
+          "choices": [
+            "In a swap, both the latitude and longitude values individually remain within their valid physical ranges — the error only becomes visible when you know the expected regional context (e.g., UK coordinates should have latitude near 51, not near -0.1), so a simple range check on each column alone won't catch it",
+            "Swapped coordinates always produce a SQL Server runtime error when queried",
+            "A swap is actually easier to detect than an out-of-bounds value because both are always exactly the same magnitude",
+            "Latitude/longitude swaps can only occur in databases that don't use the FLOAT data type"
+          ],
+          "correct": 0,
+          "right": "Exactly — both values pass their individual range checks, so detecting a swap requires domain knowledge about what values are expected in that context, not just a bounds check.",
+          "wrong": "If London's latitude 51.5 gets stored in the Longitude column and longitude -0.09 gets stored in the Latitude column, both values are still perfectly valid — -0.09 is a valid latitude and 51.5 is a valid longitude, individually. A simple 'is this within -90 to 90 / -180 to 180' check passes both columns. Catching the swap requires knowing the business's expected geographic region (UK coordinates should look a certain way) and comparing the actual values against that expectation — pure range validation alone is blind to this error."
+        },
+        {
+          "q": "Why does the lesson treat the coordinate (0, 0) as a likely sentinel value rather than a genuine customer location, given that (0, 0) is technically a valid point?",
+          "choices": [
+            "(0, 0) is a real but geographically implausible location for this business's customers (it's a point in the Gulf of Guinea, west of Gabon) — geocoding systems commonly default to (0, 0) when a lookup fails, making its appearance in customer data a strong signal of a failed geocode rather than a real address",
+            "SQL Server automatically rejects any coordinate pair where both values are exactly zero",
+            "(0, 0) falls outside the valid latitude and longitude ranges and would be caught by the physical bounds check alone",
+            "The coordinate (0, 0) is mathematically impossible to represent using the FLOAT data type"
+          ],
+          "correct": 0,
+          "right": "Right — it's technically a valid coordinate but a business-implausible one; failed geocoders commonly default to it, which is why its appearance is treated as a red flag, not proof of a real location.",
+          "wrong": "(0, 0) is a real, valid point on Earth — it just happens to be in open ocean off the coast of Gabon, an implausible place for, say, a UK food delivery customer to actually live. Because geocoding software commonly falls back to (0, 0) when it can't resolve a real address, this specific coordinate pair showing up in customer records is treated the same way as a sentinel default date — as a signal that geocoding failed, not that the customer really lives there."
+        }
+      ],
+      "close": "Latitude/longitude have hard physical bounds, but the trickiest errors — swaps and sentinel (0,0) values — pass individual range checks and need domain context to catch."
+    },
+    "G05-T10": {
+      "open": "Date ranges that go the wrong way — a start after an end is a physical impossibility, and the scale of the problem tells you what kind of error you're looking at.",
+      "questions": [
+        {
+          "q": "Why does the lesson treat a large percentage of inverted date ranges (like 50% of records) differently from a small percentage (like 5%)?",
+          "choices": [
+            "A small percentage of inversions is consistent with isolated, individual data entry mistakes, while a very large percentage points to a systematic cause — most likely a column mapping error in an import or migration process that affected the whole batch, not one-off human error",
+            "A percentage above 10% causes SQL Server to automatically reject the entire import",
+            "Both percentages always indicate exactly the same root cause and require identical remediation",
+            "The percentage of inversions has no bearing on diagnosing the root cause, only on how urgently it must be fixed"
+          ],
+          "correct": 0,
+          "right": "Right — the scale of the problem is itself diagnostic evidence: scattered isolated errors versus a systematic import bug leave very different footprints in the percentage.",
+          "wrong": "If only 5% of records show inverted dates, that pattern is consistent with individual data entry slip-ups happening here and there. But if 50% of records are inverted, that's far too widespread to be random human error — it strongly suggests a systematic cause, like a CSV import that swapped the column mapping for StartDate and EndDate across the entire batch. The percentage itself is diagnostic information about the likely root cause, which shapes how the fix should be approached (correct one column mapping vs. investigate many individual records)."
+        },
+        {
+          "q": "Why does the lesson say a same-day date range (StartDate = EndDate) needs business context to judge, rather than being flagged the same way as an inverted range?",
+          "choices": [
+            "Whether start equals end is valid depends entirely on what the dates represent — a same-day order-and-delivery is plausible (same-day delivery), while an employee hired and terminated on the same day is unusual and worth investigating, so the business meaning of the specific columns determines the right response",
+            "Same-day ranges are always invalid and should be treated identically to inverted ranges in every context",
+            "SQL Server treats StartDate = EndDate as a syntax error, unlike StartDate > EndDate",
+            "Same-day date ranges can only occur due to a database backup and restore operation"
+          ],
+          "correct": 0,
+          "right": "Exactly — equal start and end dates aren't inherently wrong; whether they make sense depends entirely on what's being measured.",
+          "wrong": "An order placed and delivered the same day is completely plausible — same-day delivery is a real service many businesses offer. But an employee hired and terminated on the exact same day is unusual enough to warrant a closer look. Same underlying condition (StartDate = EndDate) but the correct interpretation — 'fine' vs. 'worth investigating' — depends on the specific business meaning of the columns involved, unlike an inverted range which is a genuine impossibility in any context."
+        },
+        {
+          "q": "What does a CHECK constraint like CHECK (DeliveryDate >= OrderDate) accomplish that a validation SELECT query on existing data cannot?",
+          "choices": [
+            "A CHECK constraint prevents any future row from ever being inserted or updated with an inverted date range, enforcing the rule going forward at the database level — a SELECT query can only ever detect violations that already exist, it can't stop new ones from being created",
+            "A CHECK constraint automatically corrects every existing inverted date range already in the table",
+            "SELECT queries and CHECK constraints accomplish exactly the same thing, just with different syntax",
+            "CHECK constraints can only be applied to columns that store character data, not date columns"
+          ],
+          "correct": 0,
+          "right": "Right — one is a detective control for what's already wrong, the other is a preventive control stopping new violations from being created at all.",
+          "wrong": "A validation SELECT query finds existing violations in data that's already in the table — it's purely diagnostic, run after the fact. A CHECK constraint is enforced by SQL Server at write time: any INSERT or UPDATE that would violate DeliveryDate >= OrderDate is rejected outright, before it ever becomes a stored row. The two are complementary, not interchangeable — the SELECT finds historical damage, the CHECK constraint prevents new damage from occurring at all."
+        }
+      ],
+      "close": "Inverted date ranges are always physically impossible, but same-day ranges need business context — and CHECK constraints prevent future violations in a way that validation queries on existing data never can."
+    },
+    "G05-T11": {
+      "open": "Overlapping date ranges — where two records claim to both be valid at the same moment for the same entity, breaking any lookup that expects exactly one answer.",
+      "questions": [
+        {
+          "q": "According to Allen's Interval Algebra overlap condition used in the lesson (A.from < B.to AND A.to > B.from), why does using strict less-than rather than less-than-or-equal matter for how touching ranges are treated?",
+          "choices": [
+            "With strict less-than, two ranges that exactly touch (one ends the instant the other begins, A.to = B.from) are correctly classified as NOT overlapping — they're adjacent, not simultaneously valid, which matches the real business meaning of a clean handoff between periods",
+            "Strict less-than makes the overlap check run faster than an equivalent less-than-or-equal check, with no difference in results",
+            "Using < instead of <= means the query will always return zero rows regardless of the actual data",
+            "The choice between < and <= is purely stylistic and produces identical results for every possible pair of date ranges"
+          ],
+          "correct": 0,
+          "right": "Right — strict less-than is what correctly excludes touching-but-not-overlapping ranges, treating a clean handoff as valid rather than a conflict.",
+          "wrong": "If Record A ends exactly when Record B begins (A.EffectiveTo = B.EffectiveFrom), that's a clean handoff — one period ending right as the next begins, with no actual simultaneous validity. Using strict < in both conditions of the overlap formula correctly excludes this touching case from being flagged as an overlap. If <= were used instead, every clean back-to-back transition would be incorrectly flagged as overlapping, generating false positives for a completely normal pattern."
+        },
+        {
+          "q": "Why does the lesson recommend the self-join approach (Step 1) for 'paranoid' validation but the LAG window function approach (Step 2) for routine checking?",
+          "choices": [
+            "The self-join compares every pair of records regardless of their order, catching overlaps between non-consecutive records too, while LAG only compares each record to its immediate chronological predecessor — faster for the common case but blind to overlaps between records that aren't adjacent in sequence",
+            "LAG and the self-join always return completely different, non-overlapping sets of results with no common ground",
+            "The self-join only works on tables with fewer than 100 rows, making LAG mandatory for larger tables",
+            "LAG cannot be used with PARTITION BY, so it can never compare records for the same employee"
+          ],
+          "correct": 0,
+          "right": "Exactly — the self-join checks every possible pair (thorough but more expensive), while LAG only checks each record against its immediate neighbor (fast, but can miss non-adjacent overlaps).",
+          "wrong": "The self-join in Step 1 pairs up every combination of records for the same entity and checks each pair for overlap — this catches overlaps even between records that aren't next to each other in date order (e.g., record 1 and record 3 overlapping while record 2 sits elsewhere). LAG only ever compares a record to the one immediately before it in EffectiveFrom order, which catches the most common case (consecutive records overlapping) efficiently but would miss a rarer non-consecutive overlap pattern."
+        },
+        {
+          "q": "Why does a payroll system silently applying the 'first match' when a point-in-time salary lookup returns two overlapping rows represent a non-deterministic bug rather than just an inconvenience?",
+          "choices": [
+            "Without a defined tiebreaker, which row counts as the 'first match' can depend on factors like query execution plan or physical row order, meaning the same lookup could return a different (and different-in-value) result at different times, rather than reliably and predictably picking one",
+            "SQL Server always returns overlapping rows in a fixed, guaranteed order that never changes across query executions",
+            "The bug only affects reporting queries and has no impact on any calculation that uses the returned value",
+            "Overlapping salary rows are actually impossible to create in a properly normalized database schema"
+          ],
+          "correct": 0,
+          "right": "Right — without explicit ordering, 'the first row returned' isn't a stable, predictable choice, so the same lookup can silently give different answers on different runs.",
+          "wrong": "SQL Server does not guarantee row order unless a query explicitly specifies ORDER BY — 'the first row returned' by an unordered query can vary depending on execution plan choices, indexing, or other factors invisible to the person running it. So a payroll calculation that just grabs whichever overlapping row comes back first isn't reliably picking the 'old' or 'new' salary consistently — it's effectively arbitrary, which is what makes it a genuine bug rather than just an oddity."
+        }
+      ],
+      "close": "Overlapping date ranges break point-in-time lookups by making the 'first match' arbitrary and unpredictable — strict inequality correctly treats touching ranges as fine, only genuine simultaneous validity as a problem."
+    },
+    "G05-T12": {
+      "open": "The flip side of overlaps: gaps — where a continuous series should exist but some expected records are simply missing.",
+      "questions": [
+        {
+          "q": "Why is a recursive CTE used to generate the calendar of expected dates in Step 1, rather than just listing the dates that already exist in the Transactions table?",
+          "choices": [
+            "The whole point is to compare what SHOULD exist (every date between the first and last transaction date) against what actually exists — generating the expected calendar independently, then LEFT JOINing to find the dates with no matching data, is what reveals which dates are missing",
+            "Recursive CTEs are required by SQL Server syntax any time DATEADD is used in a query",
+            "Listing existing dates from the Transactions table would already show every missing date directly, making the recursive CTE unnecessary",
+            "The recursive CTE recovers the actual data for the missing dates from a backup automatically"
+          ],
+          "correct": 0,
+          "right": "Right — you can't find what's missing by only looking at what's present; the calendar has to be generated independently of the data to serve as the complete reference to compare against.",
+          "wrong": "A missing date, by definition, has no corresponding row in the Transactions table — so simply listing dates present in that table can never reveal a date that isn't there. The recursive CTE independently generates every calendar date that SHOULD exist between the first and last transaction date, and only by LEFT JOINing that independently-generated calendar against the actual data (and checking for NULL matches) can the gaps become visible."
+        },
+        {
+          "q": "Why does the lesson caution that a gap analysis needs to distinguish 'business calendar gaps' from 'true data gaps' by including DATENAME(WEEKDAY, ...) in the output?",
+          "choices": [
+            "A missing Saturday or Sunday might be entirely expected if the business doesn't operate on weekends, while a missing Tuesday during a normal working week is a genuine anomaly worth investigating — showing the day of week lets an analyst filter out expected non-trading days from real gaps",
+            "DATENAME(WEEKDAY, ...) is required syntax for any query that uses a recursive CTE",
+            "Every missing date is always a genuine data quality issue regardless of which day of the week it falls on",
+            "Weekend dates cannot be generated by a recursive CTE and must be excluded from the calendar entirely"
+          ],
+          "correct": 0,
+          "right": "Exactly — a weekend gap and a weekday gap mean very different things for most businesses, and showing the day of week lets the analyst tell them apart at a glance.",
+          "wrong": "If a business doesn't process transactions on weekends, a 'missing' Saturday or Sunday in the calendar isn't actually a data problem — it's expected. But a missing Tuesday during a normal operating week likely does indicate something genuinely went wrong (like the failed nightly batch job in the scenario). Including the day name in the output lets an analyst quickly filter out the expected non-trading-day gaps and focus attention on the genuinely anomalous ones."
+        },
+        {
+          "q": "Why does the LEAD-based approach in Step 2 (finding customer order gaps > 90 days) use a business-defined threshold rather than flagging every single gap between consecutive orders?",
+          "choices": [
+            "Not every series needs to be continuous with no gaps at all — customers naturally order at irregular intervals, so the threshold defines what counts as an unusually long gap worth flagging, versus normal variation in how often a given customer happens to place orders",
+            "LEAD() cannot return a value unless a fixed numeric threshold is specified in the query",
+            "A 90-day threshold is a universal SQL Server default that applies to every gap-detection query automatically",
+            "Flagging every gap between orders would cause the query to fail with a division-by-zero error"
+          ],
+          "correct": 0,
+          "right": "Right — customer ordering is naturally irregular, so the threshold defines what counts as an unusually long silence worth flagging, not every normal gap between purchases.",
+          "wrong": "Unlike a daily closing-price series (which genuinely should have a record every single trading day), individual customers order at irregular, naturally varying intervals — some order weekly, some quarterly. Flagging every single gap between a customer's orders would produce enormous noise, since gaps of days or weeks are completely normal customer behavior. The 90-day threshold is a business-defined judgment call about what constitutes an unusually long silence worth investigating, distinct from the daily-continuity expectation used for something like trading data."
+        }
+      ],
+      "close": "Detecting gaps requires generating the expected series independently and comparing against actual data — and distinguishing expected gaps (weekends, irregular customer behavior) from genuine anomalies needs business context, not just a blanket 'every gap is a problem' rule."
+    },
+    "G05-T13": {
+      "open": "KPI thresholds — where the right comparison point is often relative to the group's own average, not some fixed number that doesn't adapt as conditions change.",
+      "questions": [
+        {
+          "q": "Why does the lesson prefer a relative threshold (percentage of the quarterly average) over an absolute threshold (like 'flag if target < £50,000') for KPI breach detection?",
+          "choices": [
+            "The absolute value that counts as 'normal' varies by quarter and by group — a fixed dollar threshold would be wrong for a quarter where the typical target is £200,000, while a relative threshold automatically adjusts to whatever the current group's baseline actually is",
+            "Absolute thresholds are technically impossible to write in T-SQL syntax",
+            "Relative thresholds always produce identical results to absolute thresholds for any dataset",
+            "A relative threshold requires fewer lines of SQL code than an absolute one, which is the only real advantage"
+          ],
+          "correct": 0,
+          "right": "Right — a relative threshold automatically rescales itself to whatever the group's actual current baseline is, which a fixed number can never do.",
+          "wrong": "A fixed threshold like 'flag if target is below £50,000' works fine only if that number stays meaningful over time — but if the typical quarterly target grows to £200,000, a fixed £50,000 threshold becomes far too lenient (or, in an earlier period, far too strict). A relative threshold (like 'more than 20% below this quarter's average') automatically recalibrates to whatever the current group's actual typical value is, making it robust to changes in scale over time."
+        },
+        {
+          "q": "Why does the lesson explicitly connect KPI threshold breaches to underlying data quality issues, rather than treating every breach as a genuine performance problem?",
+          "choices": [
+            "A KPI can look artificially good or bad due to data errors — like duplicate transactions inflating an average or missing records deflating a total — so a breach might reflect a data quality problem rather than a real change in performance, and distinguishing the two matters before acting on the number",
+            "Data quality issues can only ever make a KPI look artificially worse than reality, never better",
+            "KPI breaches are always caused exclusively by genuine performance changes, never by data issues",
+            "SQL Server automatically corrects for duplicate transactions before calculating any AVG() function"
+          ],
+          "correct": 0,
+          "right": "Exactly — a KPI breach could mean the business genuinely changed, or it could mean the data feeding the KPI is wrong; treating every breach as the former risks reacting to a data bug instead of reality.",
+          "wrong": "The lesson's own scenario shows a store with an apparently inflated £142 basket size that turns out to be a single high-value corporate purchase skewing the average — not a genuine trend. Duplicate transactions could inflate a KPI upward; missing records could deflate it downward. Since a KPI breach can stem from either a real performance change or an underlying data quality issue, validating the data feeding the KPI is a necessary step before drawing conclusions from the breach itself."
+        },
+        {
+          "q": "Why does the lesson use a window function (AVG(TargetAmount) OVER (PARTITION BY Year, Quarter)) as an alternative to a separate CTE for computing the group average?",
+          "choices": [
+            "The window function computes the group average without collapsing the individual rows, so each row can still show its own TargetAmount alongside the group's average in the same result set — a plain GROUP BY aggregate would collapse rows and lose row-level detail",
+            "Window functions always execute faster than any CTE, regardless of the query's complexity",
+            "A CTE cannot reference AVG() under any circumstances, making the window function mandatory",
+            "PARTITION BY is required syntax whenever GROUP BY appears anywhere in the same query"
+          ],
+          "correct": 0,
+          "right": "Right — the window function keeps every individual row intact while still attaching the group-level average to it, which a collapsing GROUP BY aggregate can't do in the same step.",
+          "wrong": "A traditional GROUP BY aggregate collapses multiple rows into one summary row per group, losing the individual TargetID-level detail. AVG(TargetAmount) OVER (PARTITION BY Year, Quarter) calculates the same group average, but without collapsing anything — every individual row keeps its own TargetAmount while also carrying the computed group average alongside it in the same row, enabling a direct per-row comparison against the group baseline within a single query."
+        }
+      ],
+      "close": "KPI thresholds work best as relative comparisons to the group's own current baseline, and a breach needs interrogating for a data quality root cause before it's treated as a genuine performance signal."
+    },
+    "G05-T14": {
+      "open": "Off-by-one errors at exact boundary values — the classic case where whether > or >= is used changes the outcome for values sitting exactly on the line.",
+      "questions": [
+        {
+          "q": "Why does the lesson say BETWEEN is the wrong choice for defining adjacent, non-overlapping commission tiers (like £100k–£200k and £200k–£300k)?",
+          "choices": [
+            "BETWEEN is inclusive on both ends, so a value of exactly £200,000 would satisfy BOTH 'BETWEEN 100000 AND 200000' and 'BETWEEN 200000 AND 300000' simultaneously — creating an ambiguous double-match at every tier boundary",
+            "BETWEEN can only be used with integer values, not DECIMAL columns like TargetAmount",
+            "BETWEEN and >= AND < always produce mathematically identical results for any pair of boundary values",
+            "SQL Server deprecated the BETWEEN keyword and it should never be used in any modern query"
+          ],
+          "correct": 0,
+          "right": "Right — BETWEEN's inclusive-on-both-ends behavior means a boundary value like exactly £200,000 satisfies two adjacent BETWEEN ranges at once, which is exactly the ambiguity the tier design needs to avoid.",
+          "wrong": "BETWEEN 100000 AND 200000 includes both 100000 and 200000. If a second tier is defined as BETWEEN 200000 AND 300000, it also includes 200000. A TargetAmount of exactly £200,000 would then match both tier definitions simultaneously — an ambiguous double-classification. The lesson's correct pattern instead uses >= for the lower bound and < for the upper bound of each tier, so each boundary value belongs to exactly one tier, not two."
+        },
+        {
+          "q": "Why does the lesson emphasize testing exactly at boundary values, one unit below, and one unit above as the most important test cases for any range/tier logic?",
+          "choices": [
+            "Off-by-one boundary bugs specifically manifest at those precise points — a value comfortably in the middle of a tier will pass regardless of whether > or >= was used, so only the values right at the edge actually reveal whether the boundary logic is correct",
+            "Testing only the middle of each range is sufficient because boundary values never occur in real data",
+            "SQL Server requires exactly three test cases to be run before any CHECK constraint can be created",
+            "Values one unit below and above a boundary always produce identical results regardless of the comparison operator used"
+          ],
+          "correct": 0,
+          "right": "Right — boundary bugs are invisible everywhere except right at the edge, which is exactly why testing the edge (not the middle) is what actually catches them.",
+          "wrong": "A value comfortably in the middle of Tier 2, like £150,000, would be correctly classified whether the code used > or >=, BETWEEN or explicit inequalities — the bug is invisible there. But a value of exactly £100,000 (the boundary itself) behaves differently depending on which comparison operator was actually used — this is precisely where an off-by-one error surfaces. Testing at, just below, and just above each boundary is what actually exercises and reveals this class of bug; testing only mid-range values would miss it entirely."
+        },
+        {
+          "q": "Why does the lesson's Step 4 check for values falling into 'no commission tier' at all, given that Tier 1, Tier 2, and Tier 3 as defined should mathematically cover every possible number?",
+          "choices": [
+            "Verifying that gap-free coverage actually holds in the real implemented logic (rather than just assuming it from the design intent) catches subtle boundary-definition mistakes — an incorrectly written tier boundary could silently create a gap that the intended design never meant to have",
+            "SQL Server automatically assigns any unmatched value to a default 'no tier' category, making the check purely cosmetic",
+            "Every TargetAmount value in the dataset is guaranteed to already be NULL, which is what Step 4 is really testing",
+            "Gaps in tier coverage can only occur when the TargetAmount column allows negative values"
+          ],
+          "correct": 0,
+          "right": "Exactly — the check verifies the actual implemented logic behaves as gap-free as intended, rather than trusting that design intent was correctly translated into working SQL.",
+          "wrong": "In principle, '< T1', '>= T1 AND < T2', '>= T2' should mathematically cover every real number with no gaps. But that's the design intent — the actual written SQL could still have a subtle bug (a typo in a boundary value, a missing AND clause) that creates an unintended gap where some value satisfies none of the CASE branches. Step 4 verifies the real, as-implemented behavior actually achieves the gap-free coverage the design intended, rather than assuming correctness from the design alone."
+        }
+      ],
+      "close": "Off-by-one boundary bugs live specifically at the edge values — BETWEEN's double-inclusive behavior can create ambiguous overlaps at tier boundaries, and testing exactly at, below, and above each boundary is what actually catches these errors."
+    },
+    "G05-T15": {
+      "open": "Invalid enumerated values — where a column can only legally hold one of a fixed, known set of values, and anything else is wrong regardless of how plausible it looks.",
+      "questions": [
+        {
+          "q": "Why does the lesson warn that NOT IN returns no rows at all if the reference list itself contains a NULL value?",
+          "choices": [
+            "SQL's three-valued logic means comparing any value to NULL produces UNKNOWN rather than TRUE or FALSE — if even one NULL is present in the NOT IN list, the entire NOT IN condition can evaluate to UNKNOWN for every row, silently suppressing all results instead of raising an error",
+            "NOT IN automatically converts every NULL in its list into the string 'NULL', causing a data type mismatch error",
+            "This only affects NOT IN when used with numeric columns, never with VARCHAR columns like Status",
+            "SQL Server physically prevents any list used with NOT IN from containing a NULL value"
+          ],
+          "correct": 0,
+          "right": "Right — SQL's three-valued logic quietly turns the whole comparison into UNKNOWN when a NULL sneaks into the list, silently suppressing all rows rather than throwing an error.",
+          "wrong": "In SQL, comparing anything to NULL doesn't return TRUE or FALSE — it returns UNKNOWN. NOT IN internally works like a chain of <> comparisons, and if the list contains a NULL, at least one of those comparisons for every row becomes UNKNOWN, which propagates through the whole condition and can cause it to filter out everything rather than working as intended. This is a well-known, dangerous NOT IN gotcha — the lesson's caution to 'ensure the reference set excludes NULLs' is what avoids this silent failure."
+        },
+        {
+          "q": "Why is a CHECK constraint alone not sufficient to guarantee an enum column has no invalid values, according to the lesson?",
+          "choices": [
+            "A CHECK constraint only prevents NEW invalid values from being written going forward — any invalid values that already existed in the table before the constraint was added remain there untouched, so historical data still needs a separate validation query to find and clean up",
+            "CHECK constraints in SQL Server only apply to numeric columns, never to VARCHAR status columns",
+            "A CHECK constraint automatically deletes any row that already violates it the moment the constraint is created",
+            "CHECK constraints and validation SELECT queries are functionally identical and either one alone is fully sufficient"
+          ],
+          "correct": 0,
+          "right": "Right — a CHECK constraint is a going-forward guard; it does nothing to already-existing invalid data that predates it.",
+          "wrong": "Adding CHECK (Status IN (...)) to a table stops any future INSERT or UPDATE from writing an invalid Status value — but it has no effect on rows that were already invalid before the constraint existed. Those historical violations remain in the table exactly as they were. Both tools are needed together: the validation query finds and helps clean up existing bad data, and the CHECK constraint prevents new bad data from being introduced afterward."
+        },
+        {
+          "q": "Why does the lesson recommend a domain reference table with a foreign key over a hardcoded CHECK constraint list for enum sets that change over time?",
+          "choices": [
+            "Adding a new valid value to a reference table is a simple data change (inserting one row), while a hardcoded CHECK constraint's list must be altered via a schema change (ALTER TABLE) every single time a new valid value needs to be added, which is more disruptive to maintain",
+            "Reference tables with foreign keys execute validation queries faster than any CHECK constraint under all circumstances",
+            "CHECK constraints cannot technically be used with VARCHAR columns of any kind",
+            "A foreign key reference table automatically translates every invalid value into its nearest valid equivalent"
+          ],
+          "correct": 0,
+          "right": "Exactly — updating a reference table is a routine data change, while updating a CHECK constraint's hardcoded list requires a schema alteration every time the business adds a new valid status.",
+          "wrong": "If the business adds a new order status next year (say, 'Backordered'), a hardcoded CHECK (Status IN ('Pending', 'Shipped', ...)) constraint requires an ALTER TABLE statement to update — a schema change. A reference table (StatusCodes) with a foreign key constraint just needs one new row inserted into the reference table — a routine data operation, not a schema change — and the foreign key automatically enforces validity against whatever the reference table currently contains."
+        }
+      ],
+      "close": "Enum validation needs care around NOT IN's NULL gotcha, and CHECK constraints only guard the future — existing bad data needs a separate cleanup query. For enums that evolve, a reference table beats a hardcoded list."
+    },
+    "G05-T16": {
+      "open": "Fiscal years that don't align with calendar years — where a seemingly reasonable YEAR() filter is systematically, reproducibly wrong.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe the YEAR(TransactionDate) = 2024 fiscal year error as 'systematic, not random' and 'always wrong by exactly 9 months of data'?",
+          "choices": [
+            "Every single execution of that same flawed filter will always include the same wrong months (Jan-Mar 2024, which is FY2025 territory) and exclude the same right months (Apr-Dec 2023, FY2024's first three quarters) — the error is entirely predictable and reproducible, not a one-off fluke",
+            "The error only occurs randomly, roughly 9% of the time the query is executed",
+            "SQL Server's YEAR() function has an intermittent bug that produces different results on different servers",
+            "The 9-month figure refers to how long it took to discover the error, not the scope of the error itself"
+          ],
+          "correct": 0,
+          "right": "Right — because the fiscal year offset from calendar year is fixed, this specific wrong query will always be wrong in exactly the same predictable way, every single time it runs.",
+          "wrong": "Since the business's fiscal year (April–March) is offset from the calendar year by a fixed 3 months, the YEAR() = 2024 filter will always and only ever include January-March 2024 (which actually belongs to FY2025) while always and only excluding April-December 2023 (which belongs to FY2024's first three quarters). This isn't a fluke that happens sometimes — every single run of this flawed query produces the exact same wrong scope, which is what makes it 'systematic' rather than a random glitch."
+        },
+        {
+          "q": "In the fiscal year formula CASE WHEN MONTH(date) >= 4 THEN YEAR(date) + 1 ELSE YEAR(date) END, why does a date in April 2023 get assigned to fiscal year 2024, not 2023?",
+          "choices": [
+            "This business's convention names a fiscal year after the calendar year in which it ENDS — since the fiscal year that starts April 2023 ends in March 2024, it's called 'FY2024,' so April 2023 (the very start of that fiscal year) correctly maps to fiscal year 2024",
+            "The formula contains a bug and April 2023 dates should actually be labeled fiscal year 2023, not 2024",
+            "MONTH(date) >= 4 always adds exactly one year regardless of which specific month is being evaluated",
+            "This naming convention is universal and used identically by every business regardless of when their fiscal year starts"
+          ],
+          "correct": 0,
+          "right": "Right — the fiscal year takes its name from the year it ends in, so a date near the start of that fiscal year (like April 2023) still gets labeled with the ending year (2024).",
+          "wrong": "The lesson explicitly states this convention: 'the fiscal year is named for the calendar year in which it ends.' A fiscal year running April 2023 through March 2024 is called 'FY2024' because it ENDS in March 2024, even though it STARTS in April 2023. So the formula correctly maps any date from April 2023 onward (through March 2024) into fiscal year 2024 — this is a naming convention (common in UK accounting and government finance), not a bug."
+        },
+        {
+          "q": "Why does Step 5's check for orders 'spanning a fiscal year boundary' matter for accrual-style revenue recognition, separate from simply knowing which fiscal year a transaction belongs to?",
+          "choices": [
+            "A single order or subscription that starts in one fiscal year and ends in a different one may need its revenue split and allocated across both periods, rather than attributed entirely to just one fiscal year — a plain per-transaction fiscal year assignment doesn't handle this splitting",
+            "Orders can never legitimately span two different fiscal years, so this check exists purely as a safeguard against impossible data",
+            "Fiscal year boundary spanning only matters for transactions that occur exactly at midnight",
+            "Step 5 is functionally identical to Step 3's fiscal year assignment logic, just written differently"
+          ],
+          "correct": 0,
+          "right": "Right — a transaction assigned wholesale to one fiscal year is a simplification that breaks down for spanning records, which need their value allocated proportionally across both periods for accurate accrual accounting.",
+          "wrong": "A long-running order or subscription might begin in March (end of one fiscal year) and continue into April (start of the next). Simply assigning that whole transaction's value to a single fiscal year based on, say, its OrderDate would misstate revenue for accrual accounting purposes — proper accrual treatment requires recognizing the portion of value that belongs to each fiscal period separately. Step 5 identifies these spanning cases specifically so that this period-splitting logic can be applied where it's actually needed, rather than everywhere."
+        }
+      ],
+      "close": "Fiscal year boundaries need explicit date-range filters, not YEAR() shortcuts — and the fiscal year naming convention (named for the year it ends in) plus revenue-spanning records both need deliberate handling, not assumption."
+    },
+    "G05-T17": {
+      "open": "SLA breach detection — measuring elapsed time against a contracted threshold, with an eye toward both closed historical breaches and breaches still actively happening right now.",
+      "questions": [
+        {
+          "q": "Why does the lesson distinguish 'open' SLA breaches (Step 4, orders still undelivered and already past the threshold) from 'closed' breaches (Steps 1-3, orders that were eventually delivered but late)?",
+          "choices": [
+            "Open breaches are real-time operational problems that need immediate action right now, while closed breaches are historical facts useful for retrospective compliance reporting and trend analysis — the two serve different operational purposes and need different queries",
+            "Open and closed breaches always represent the exact same set of orders, just measured at different points in time",
+            "SQL Server automatically closes any breach that has been open for more than 5 days",
+            "Only closed breaches count toward the company's contractual SLA obligations; open breaches don't matter"
+          ],
+          "correct": 0,
+          "right": "Right — an open breach demands action today; a closed breach is a fact for the historical record. Both matter, but for different operational reasons.",
+          "wrong": "An order that's already past its SLA deadline and STILL hasn't been delivered (open breach) is an active problem someone needs to act on right now — it can still be salvaged or at least escalated. An order that eventually got delivered, but later than the SLA allowed (closed breach), is a historical fact useful for compliance reporting and identifying systemic patterns, but there's no longer an action to take on that specific order. The lesson treats these as complementary, not the same thing — full SLA management needs both."
+        },
+        {
+          "q": "Why does the lesson explain that DATEDIFF(DAY, ...) is not suitable for an SLA measured in business days, only calendar days?",
+          "choices": [
+            "DATEDIFF(DAY, ...) counts every single day of the week including Saturdays and Sundays — an SLA promising delivery within a certain number of business days would need weekends excluded from the count, which plain DATEDIFF cannot do without a calendar table or custom logic",
+            "DATEDIFF(DAY, ...) can only be used with DATETIME columns, never with plain DATE columns",
+            "Business day SLAs and calendar day SLAs always produce identical results for any given date pair",
+            "DATEDIFF requires a stored procedure to be created before it can measure any date range at all"
+          ],
+          "correct": 0,
+          "right": "Right — DATEDIFF(DAY, ...) counts every calendar day indiscriminately, including weekends, which doesn't match what a 'business days' SLA is actually promising.",
+          "wrong": "DATEDIFF(DAY, StartDate, EndDate) counts every day in between, Saturday and Sunday included. But if an SLA promises '5 working days,' weekends shouldn't count toward that total. Without excluding non-business days — which requires either a calendar/business-day reference table or custom date-skipping logic — a plain DATEDIFF(DAY, ...) calculation would understate how many actual business days have elapsed, misrepresenting SLA compliance."
+        },
+        {
+          "q": "Why does the lesson emphasize classifying breaches by severity (how many days over the SLA) rather than treating every breach as equally urgent?",
+          "choices": [
+            "A breach that's 1 day over SLA and one that's 14 days over SLA represent very different levels of operational and contractual severity — classifying by degree lets operations teams prioritize the worst breaches for escalation rather than treating a minor and a severe breach identically",
+            "SQL Server automatically assigns identical priority to every row returned by a WHERE clause, so classification happens outside the database entirely",
+            "Breach severity classification only matters for orders that used express shipping, not standard delivery",
+            "Every SLA breach, regardless of how many days late, carries exactly the same financial penalty under any contract"
+          ],
+          "correct": 0,
+          "right": "Right — treating a 1-day and a 14-day breach identically wastes triage effort; classifying by severity focuses attention where the operational and contractual stakes are actually highest.",
+          "wrong": "The lesson's own severity classification (WARNING at 6-7 days, HIGH at 8-10 days, CRITICAL at >10 days) exists precisely because not all breaches carry the same weight — a minor 1-day slip might be tolerable, while a 14-day delay is a serious contractual failure that likely triggers real consequences. Sorting and classifying by DaysOverSLA lets an operations team focus limited attention and escalation resources on the breaches that matter most, rather than treating a barely-late order the same as a severely late one."
+        }
+      ],
+      "close": "SLA breach detection needs both real-time open-breach alerts and historical closed-breach reporting, must account for business-day vs calendar-day measurement, and benefits from severity classification rather than flat pass/fail."
+    },
+    "G05-T18": {
+      "open": "Timestamp clock drift — where distributed systems disagree about what time it is, and that disagreement breaks the ordering of events that depend on it.",
+      "questions": [
+        {
+          "q": "Why does the lesson build in a 5-minute tolerance before flagging a future-dated transaction as clock drift, rather than flagging anything even one second in the future?",
+          "choices": [
+            "A small amount of timing variance is expected from legitimate causes like network latency, so a tight zero-tolerance threshold would generate false-positive alerts for normal system behavior — the 5-minute buffer distinguishes genuine drift from ordinary operational noise",
+            "SQL Server's GETDATE() function is only accurate to within 5-minute increments",
+            "The 5-minute tolerance exists purely to reduce the number of rows a query needs to scan, with no relation to timing accuracy",
+            "Any transaction timestamped even 1 second in the future is always immediately deleted by SQL Server"
+          ],
+          "correct": 0,
+          "right": "Right — a zero-tolerance check would flag ordinary network latency as if it were serious drift; the 5-minute buffer separates real clock problems from normal operational jitter.",
+          "wrong": "In any real distributed system, small timing discrepancies from network latency, processing delays, or sub-second clock differences between servers are completely normal and not indicative of a real problem. If the check flagged any transaction even a second ahead of the checking server's clock, it would generate a constant stream of false-positive alerts for perfectly ordinary variance. The 5-minute tolerance is calibrated to catch genuinely significant drift (like the scenario's 47-minute-fast server) while ignoring routine, harmless timing noise."
+        },
+        {
+          "q": "Why does the lesson describe the parent-child temporal check in Step 3 (a Transaction should not precede its own Order) as something a single-table CHECK constraint cannot enforce?",
+          "choices": [
+            "The comparison requires looking at two related but different tables (Transactions and Orders) together via a JOIN — a CHECK constraint is scoped to validating conditions within a single table's own row and cannot reference or compare against a value stored in a separate table",
+            "CHECK constraints can only validate numeric columns, never DATETIME columns, in any version of SQL Server",
+            "Cross-table temporal checks are actually impossible to write in T-SQL under any circumstances, including as a SELECT query",
+            "SQL Server automatically enforces all cross-table temporal ordering without needing any explicit validation code"
+          ],
+          "correct": 0,
+          "right": "Right — a CHECK constraint is scoped to a single row within a single table and structurally cannot reach across to compare against a different table's value, which is exactly what this parent-child ordering check needs to do.",
+          "wrong": "A standard CHECK constraint evaluates a condition using only columns available within the same row of the same table — it cannot directly reference a value stored in a different table. Checking 'this Transaction's date must not be before its associated Order's date' requires joining Transactions to Orders to compare across the two tables, which is exactly what the Step 3 query does with a JOIN — a capability a simple single-table CHECK constraint doesn't have (this kind of cross-table rule would need a trigger or application-layer logic to enforce preventively)."
+        },
+        {
+          "q": "Why does the lesson identify UTC standardization (using GETUTCDATE() instead of local server time) as the root-cause fix for multi-server clock drift, rather than just increasing the tolerance window?",
+          "choices": [
+            "Increasing the tolerance window only masks the symptom by accepting more variance without fixing anything, while standardizing every server's timestamps to a single common reference (UTC) eliminates the ambiguity between different local time zones that makes drift and confusion possible in the first place",
+            "GETUTCDATE() automatically synchronizes server clocks across a network with zero configuration needed",
+            "UTC standardization only matters for servers physically located outside the United Kingdom",
+            "Local time and UTC time always produce identical DATETIME values in SQL Server regardless of server location"
+          ],
+          "correct": 0,
+          "right": "Exactly — a wider tolerance just accepts more slop without addressing the underlying ambiguity; standardizing on UTC removes the local-timezone confusion that makes cross-server comparison unreliable in the first place.",
+          "wrong": "Widening the tolerance window is a workaround that just accepts more discrepancy as 'normal' without addressing why the discrepancy exists. The lesson's scenario shows servers in different time zones (UTC, UTC+1) plus one with genuine clock drift — storing local time creates fundamental ambiguity about what time an event actually happened relative to events on other servers. Standardizing every server on UTC removes the time zone ambiguity entirely, giving a single consistent reference frame that genuine clock drift (a server's clock literally being wrong) is then easier to detect against, rather than being confused with normal time zone differences."
+        }
+      ],
+      "close": "Distributed timestamp validation needs tolerance for normal network variance, cross-table JOINs for parent-child ordering checks a single CHECK constraint can't express, and UTC standardization as the actual root-cause fix for multi-server drift."
+    },
+    "G05-T19": {
+      "open": "Business hours ranges — where an apparent after-hours violation can actually be a timezone conversion bug wearing a disguise.",
+      "questions": [
+        {
+          "q": "Why does the lesson caution that DATEPART(WEEKDAY, ...) values depend on the database's @@DATEFIRST setting, rather than being a fixed universal numbering?",
+          "choices": [
+            "SQL Server's weekday numbering is configurable per session/database via SET DATEFIRST — code hard-coded to assume 1=Sunday and 7=Saturday will silently misclassify weekends if the environment's DATEFIRST setting differs from that default",
+            "DATEPART(WEEKDAY, ...) always returns the same fixed values on every SQL Server installation worldwide with no possible configuration difference",
+            "@@DATEFIRST only affects DATETIME columns, never DATE columns, so this caution doesn't actually apply here",
+            "This caution only matters for databases physically hosted outside of Europe"
+          ],
+          "correct": 0,
+          "right": "Right — the weekday numbering is configurable, not fixed, so code that assumes one specific mapping can silently misclassify weekends in an environment with a different DATEFIRST setting.",
+          "wrong": "SQL Server's default @@DATEFIRST is 7 (meaning Sunday=1, Saturday=7 in DATEPART(WEEKDAY,...)'s output), but this can be changed with SET DATEFIRST 1 (Monday-start) or other values. Code that hard-codes IN (1, 7) to mean 'weekend' assumes the default setting — in an environment where DATEFIRST has been changed, that same code would silently misclassify which days count as weekends, without raising any error. The lesson's suggested MOD-based alternative is one way to write more portable logic."
+        },
+        {
+          "q": "Why does the lesson's scenario (an apparent after-hours violation caused by an unconverted US Eastern Time timestamp) illustrate that not every flagged out-of-hours record is a genuine violation?",
+          "choices": [
+            "A timestamp of 22:00 that was actually recorded in a different time zone (EST) can correspond to a perfectly legitimate business-hours moment (17:00 EST) once properly converted — the 'violation' exists only because the timezone conversion was never applied, not because any rule was actually broken",
+            "Timezone conversion bugs always make a transaction look like it happened earlier than it actually did, never later",
+            "The scenario shows that business hours checks should never be applied to any transaction from an international source",
+            "US Eastern Time and GMT are always exactly 12 hours apart, which is why the transaction appeared as 22:00"
+          ],
+          "correct": 0,
+          "right": "Right — the 'after-hours' flag was an artifact of a missing timezone conversion, not a real violation; the true local time (17:00 EST) was well within business hours all along.",
+          "wrong": "The scenario describes a transaction stored as 22:00 GMT that was actually meant to represent 17:00 Eastern Time (a legitimate business-hours moment) — the timestamp just never got converted from the source system's local time to the target system's expected time zone before being stored. The business-hours check correctly flags 22:00 as after-hours based on the stored value, but the stored value itself is wrong due to the missing conversion — the true event happened during business hours, making this a data quality bug, not an actual after-hours violation."
+        },
+        {
+          "q": "Why does the lesson recommend a classification column (like BatchProcess or ManualEntry) rather than treating every out-of-hours flag as an equally suspicious event?",
+          "choices": [
+            "Legitimate automated processes — scheduled batch jobs, overnight system tasks — genuinely and intentionally run outside business hours, so a classification column lets the validation distinguish those expected exceptions from records that need real investigation as possible violations",
+            "A classification column is required syntax before DATEPART(HOUR, ...) can be used in any WHERE clause",
+            "Every single out-of-hours transaction, without exception, represents a compliance violation requiring escalation",
+            "Classification columns only apply to Transactions, never to Orders, according to the lesson"
+          ],
+          "correct": 0,
+          "right": "Exactly — some out-of-hours activity is legitimate by design (scheduled jobs), and a classification distinguishes those expected exceptions from records that genuinely warrant investigation.",
+          "wrong": "The lesson explicitly notes: 'Automated batch processes, scheduled jobs, and international time zones generate valid out-of-hours records.' Not every timestamp outside the 08:00-18:00 window represents unauthorized human activity — some are intentional, scheduled, and entirely expected. A classification column lets the validation logic (and the humans reviewing flagged records) separate 'this is a known, expected exception' from 'this needs to be investigated as a possible genuine violation,' rather than treating every flag as equally alarming."
+        }
+      ],
+      "close": "Business-hours checks depend on the server's DATEFIRST setting for weekday numbering, need timezone-conversion awareness before trusting a flag as real, and benefit from classifying expected automated exceptions separately from genuine violations."
+    },
+    "G05-T20": {
+      "open": "Invalid week or month numbers — where a numeric period component falls outside its fixed valid range, often because of a zero-based versus one-based encoding mismatch.",
+      "choices_note": "",
+      "questions": [
+        {
+          "q": "Why does the lesson identify zero-based versus one-based month numbering as a common source of invalid month values during data import?",
+          "choices": [
+            "Many programming languages number months starting at 0 (January = 0), while SQL Server's own convention is one-based (January = 1) — importing data from a zero-based source without adjustment shifts every month number down by one, producing invalid values like 0 or excluding what should be month 12",
+            "SQL Server can natively interpret both zero-based and one-based month numbers correctly without any conversion needed",
+            "Zero-based month numbering is always invalid regardless of the source system's own internal conventions",
+            "This mismatch only affects the Quarter column, never a dedicated Month column, in any table"
+          ],
+          "correct": 0,
+          "right": "Right — the mismatch between a zero-based source convention and SQL Server's one-based convention is exactly what produces off-by-one invalid month values during import.",
+          "wrong": "Some programming languages and systems represent January as month 0 and December as month 11 (zero-based), while SQL Server and standard calendar convention represent January as 1 and December as 12 (one-based). If data is imported from a zero-based source without adjusting the offset, every month value ends up shifted down by one — producing an invalid Month = 0 (which should have been January = 1) and potentially losing what should be month 12 (December) since the zero-based system's highest value would only reach 11."
+        },
+        {
+          "q": "Why does the lesson prefer DATEPART(ISO_WEEK, ...) over plain DATEPART(WEEK, ...) for international systems needing consistent week numbering?",
+          "choices": [
+            "DATEPART(WEEK, ...) depends on the session's @@DATEFIRST setting and can return inconsistent results depending on that configuration, while DATEPART(ISO_WEEK, ...) follows the fixed, internationally standardized ISO 8601 week numbering regardless of local server settings",
+            "DATEPART(ISO_WEEK, ...) is significantly faster to execute than DATEPART(WEEK, ...) for any given date",
+            "DATEPART(WEEK, ...) can only return values between 1 and 12, making it unsuitable for weekly data",
+            "ISO_WEEK and WEEK always return identical results in every SQL Server configuration, making the choice purely stylistic"
+          ],
+          "correct": 0,
+          "right": "Right — DATEPART(WEEK,...) is sensitive to the same configurable @@DATEFIRST setting that affects weekday numbering, while ISO_WEEK follows a fixed international standard that doesn't shift with local configuration.",
+          "wrong": "Just as DATEPART(WEEKDAY, ...) is affected by @@DATEFIRST, DATEPART(WEEK, ...) is similarly influenced by that same configurable setting, meaning it can return different week numbers for the same date depending on server/session configuration. DATEPART(ISO_WEEK, ...) instead follows the ISO 8601 international standard consistently, which doesn't shift based on local settings — making it the more reliable and portable choice for systems that need to agree on week numbers across different environments or countries."
+        },
+        {
+          "q": "Why does the lesson describe an off-by-one import error affecting Quarter values (like the batch of 847 records with an invalid Quarter = 0) as capable of distorting an entire seasonal analysis, rather than just being a handful of odd rows?",
+          "choices": [
+            "Because the error was systematic (affecting an entire batch, not isolated rows) and the invalid Quarter value causes those records to be silently excluded by any query using WHERE Quarter BETWEEN 1 AND 4, the affected quarter's reported totals can appear near-zero even though the underlying data actually exists",
+            "Invalid Quarter values are automatically corrected by SQL Server before any aggregate function processes them",
+            "A Quarter value of 0 causes the entire query to fail with a runtime error rather than silently excluding rows",
+            "Off-by-one import errors can only ever affect a single row at a time, never an entire import batch"
+          ],
+          "correct": 0,
+          "right": "Right — because the error hit an entire import batch systematically, and standard range-based queries silently exclude the invalid values rather than erroring, the specific quarter's totals can look artificially near-zero rather than obviously broken.",
+          "wrong": "The scenario describes 847 records with the same systematic Quarter mapping error, not isolated one-off mistakes. Because WHERE Quarter BETWEEN 1 AND 4 silently excludes rows with Quarter = 0 (no error is raised, they just vanish from the result set), an entire quarter's worth of genuine data effectively disappears from any report built on that filter — making Q4 performance look near-zero when the real data is actually present in the table, just tagged with an invalid period value that standard queries don't recognize."
+        }
+      ],
+      "close": "Invalid period numbers often trace back to zero-based versus one-based encoding mismatches during import, and their silent exclusion from range-filtered queries can make an entire reporting period look empty when the data actually exists, just mistagged."
+    },
+    "G05-T21": {
+      "open": "The last lesson of Group 5 — using the population's own distribution, not a hardcoded number, to catch anomalies a stale fixed threshold would miss.",
+      "questions": [
+        {
+          "q": "Why does the lesson's opening scenario emphasize that a hardcoded '> 5%' threshold in an Excel dashboard failed to catch a branch's default rate anomaly, even though the true statistical threshold (mean + 3σ) would have caught it three months earlier?",
+          "choices": [
+            "A fixed number stays frozen even as the underlying population's normal range shifts over time — a dynamic threshold recalculated from the population's own current mean and standard deviation adapts automatically, catching anomalies that a stale fixed number, set years ago and never revisited, would miss",
+            "The '> 5%' threshold was actually mathematically identical to mean + 3σ for this dataset, so the comparison in the scenario is misleading",
+            "Excel dashboards are structurally incapable of ever displaying a value above 5%, which is why the anomaly wasn't caught",
+            "The regulator only uses fixed thresholds, never statistical ones, making the internal threshold irrelevant to external detection"
+          ],
+          "correct": 0,
+          "right": "Right — a fixed number set once and never revisited doesn't track how the population's normal range may shift, while a threshold recalculated from the population's own current mean and stddev adapts automatically.",
+          "wrong": "The scenario states the branch's 6.8% default rate was more than eleven standard deviations above the historical mean of 2.1% — a genuinely extreme statistical outlier. But the dashboard's hardcoded '> 5%' threshold, set years earlier and never updated, happened to sit in a range that didn't trigger until the rate had already climbed well past where a dynamic mean + 3σ threshold would have caught it. A threshold recalculated from the population's own current statistics adapts as that population's normal range evolves; a number typed into a spreadsheet years ago does not."
+        },
+        {
+          "q": "Why does the lesson use NULLIF(StdDevTarget, 0) when calculating each Z-score, and specifically why NULLIF rather than just checking StdDevTarget > 0 in a WHERE clause?",
+          "choices": [
+            "NULLIF converts a StdDevTarget of exactly 0 into NULL right inside the division itself, which makes the division return NULL instead of raising a divide-by-zero runtime error — this keeps the row present in the result set with a NULL Z-score, rather than needing to filter the row out entirely beforehand",
+            "NULLIF and a WHERE StdDevTarget > 0 filter are functionally interchangeable and produce exactly the same result set in every case",
+            "NULLIF is required syntax any time STDEV() appears anywhere in a T-SQL query",
+            "A StdDevTarget of 0 can never actually occur in real SalesTargets data, so this is purely defensive coding with no real purpose"
+          ],
+          "correct": 0,
+          "right": "Right — NULLIF turns the problematic 0 into NULL right at the division, avoiding an error while still letting the row appear in the output (with a NULL Z-score) rather than being filtered out entirely.",
+          "wrong": "If a group has only one record, or all records in a group happen to have identical TargetAmount values, STDEV() returns 0. Dividing by 0 directly would raise a runtime error. NULLIF(StdDevTarget, 0) converts that specific 0 into NULL, and since SQL Server division by NULL returns NULL (not an error), the row still appears in the result set — just with a NULL ZScore rather than a computed value — which is different from filtering the row out of the result entirely with a WHERE clause."
+        },
+        {
+          "q": "Why does the lesson recommend percentile-based bands (P10-P90) as a non-parametric alternative to Z-score for identifying outliers, specifically for skewed financial data?",
+          "choices": [
+            "Percentile calculations are based on the actual rank-ordering of the data rather than the mean and standard deviation, so they aren't distorted by extreme values the way Z-score's own inputs (mean, stddev) can be pulled off-center by the very outliers being searched for",
+            "Percentile-based detection always produces results identical to Z-score detection for any dataset, making the choice purely a matter of preference",
+            "PERCENTILE_CONT() cannot be computed using a window function and requires a separate query for each row",
+            "Percentile bands only work correctly on datasets with fewer than 50 total rows"
+          ],
+          "correct": 0,
+          "right": "Exactly — percentile bands are computed from rank-order position, not from the mean/stddev that outliers themselves can distort, making them a more robust choice for skewed data.",
+          "wrong": "Z-score depends on the mean and standard deviation of the very data being examined — and in a skewed distribution, a few extreme values can meaningfully shift both the mean and standard deviation, distorting the baseline used to judge what counts as 'unusual.' Percentile-based measures (like P10 and P90) are computed from the rank-ordered position of values within the distribution, which is inherently more resistant to being skewed by a small number of extreme outliers — making them the more robust ('non-parametric') choice when the underlying distribution isn't close to normal."
+        }
+      ],
+      "close": "That completes Group 5 — Range/Boundary, 21 lessons. Every lesson circled the same core question from a different angle: is this value, or this derived value, inside the bounds it should be in — and is the threshold itself still the right one to measure against?"
     }
   }
 }
