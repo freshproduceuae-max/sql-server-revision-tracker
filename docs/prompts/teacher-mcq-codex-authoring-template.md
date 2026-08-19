@@ -56,9 +56,21 @@ CONSTRAINTS (violating these has caused rejected content before):
 - Never write markdown emphasis (**bold**, *italic*) inside any string value — this app's renderer treats asterisks as literal text, and injecting markdown syntax breaks nothing but is against house style.
 - Do not invent SQL behavior not demonstrated in the lesson's own Solution Query/Explanation. If a lesson states something as a stated simplification, do not treat it as an error to catch in the MCQ.
 - "wrong" feedback text must not assert anything the source lesson doesn't actually support.
-- IMPORTANT: before writing any question, check whether the lesson's own Live Scenario paragraph is internally consistent with its Solution Query/Explanation/Expected Output. If you notice ANY internal contradiction within a lesson file (a fact stated one way in the scenario and the opposite way in the code/explanation), do not silently pick one side — instead, add a top-level key "_flagged_inconsistencies" to your output JSON object (an array of strings, one per lesson with an issue, e.g. "{{GROUP_ID}}-T05: scenario says X but Solution Query says Y") so it can be reviewed separately. Base your actual MCQ content on the Solution Query and Explanation sections (the technical ground truth), not the narrative scenario, when they conflict.
+- The output JSON must be strictly valid — no trailing commas after the last element of any object or array. Double-check the JSON is parseable before finalizing your answer.
+- IMPORTANT: before writing any question, check whether the lesson's own Live Scenario paragraph is internally consistent with its Solution Query/Explanation/Expected Output. If you notice ANY internal contradiction within a lesson file (a fact stated one way in the scenario and the opposite way in the code/explanation), do not silently pick one side — instead, add a top-level key "_flagged_inconsistencies" to your output JSON object (an array of strings, one per lesson with an issue, e.g. "{{GROUP_ID}}-T05: scenario says X but Solution Query says Y") so it can be reviewed separately. This should NOT include cases where the scenario simply describes a real-world concept (like a bank statement or inventory snapshot) using illustrative language while the Solution Query implements it against the actual available schema tables (Orders, Transactions, Customers, Products, Employees, SalesTargets) — that mapping is the standard, intentional pattern used throughout this course and is not a contradiction. Only flag genuine contradictions where the same fact (e.g. which of two values is the "correct"/standard one) is stated oppositely in different sections. Base your actual MCQ content on the Solution Query and Explanation sections (the technical ground truth), not the narrative scenario, when they conflict.
 
 Output the complete JSON object as your final message with no other content around it.
+
+## Changelog
+
+- **v2 (from G09):** added the strict-JSON-validity reminder (trailing
+  commas caused a defect in G08's output) and narrowed the
+  `_flagged_inconsistencies` criteria to exclude the standard
+  scenario-vs-schema-table mapping pattern (3 false-positive flags in
+  G08). See `docs/teacher-mcq-role-swap-experiment.md`'s "Prompt template
+  changelog" section for the full rationale.
+- **v1 (G06–G08):** original template, no JSON-validity reminder, broader
+  (unqualified) inconsistency-flagging instruction.
 ```
 
 ## Placeholders
