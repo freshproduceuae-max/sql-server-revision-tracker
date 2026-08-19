@@ -923,6 +923,384 @@
         }
       ],
       "close": "That's the full Uniqueness group — ten lessons, and you've gone from exact-copy rows all the way to soft-delete edge cases, with the fuzzy-matching and conditional-uniqueness patterns in between. Those cover the two biggest ideas in this whole group: sometimes uniqueness only applies to a subset of rows, and sometimes what looks like the same thing twice isn't spelled the same way at all. Strong session."
+    },
+    "G03-T01": {
+      "open": "Group 3: Referential Integrity. Completeness asked \"is it there,\" Uniqueness asked \"does it repeat,\" — this group asks \"do the connections between tables actually hold up.\" We'll start with the classic case: a row pointing at a parent that isn't there.",
+      "questions": [
+        {
+          "q": "In the LEFT JOIN pattern for finding orphan orders, what does filtering `WHERE c.CustomerID IS NULL` actually isolate?",
+          "choices": [
+            "Rows from Orders that found no matching row in Customers — the LEFT JOIN fills the unmatched side with NULL, so filtering on that NULL isolates exactly the orphans",
+            "Rows where the CustomerID column itself contains a literal NULL value",
+            "Every row in the Orders table regardless of whether it matches",
+            "Rows where the CustomerID appears more than once"
+          ],
+          "correct": 0,
+          "right": "Exactly — LEFT JOIN keeps every row from Orders and fills in Customers columns where a match exists, NULL where it doesn't. Filtering on that NULL is how you isolate exactly the rows with no matching parent.",
+          "wrong": "This is the anti-join pattern from Data Validation's earlier groups, applied to a real FK: LEFT JOIN keeps every Orders row and attaches Customers columns when a match exists. Where there's no match, those Customers columns come back NULL — not because CustomerID is NULL, but because nothing matched. Filtering `WHERE c.CustomerID IS NULL` isolates exactly those unmatched rows."
+        },
+        {
+          "q": "The lesson presents both a LEFT JOIN version and a NOT EXISTS version for finding the same orphans. What's the actual tradeoff between them?",
+          "choices": [
+            "They return identical rows; NOT EXISTS can be faster on large indexed tables since it stops at the first match, while LEFT JOIN is more convenient when checking multiple parent tables in one query",
+            "NOT EXISTS only works on numeric columns",
+            "LEFT JOIN cannot be used with more than one table",
+            "NOT EXISTS returns different rows than LEFT JOIN"
+          ],
+          "correct": 0,
+          "right": "Right — same result set, different shape and performance character. This exact tradeoff came up back in Data Validation's Uniqueness group too, for the same underlying reason: both patterns answer \"does a match exist,\" just phrased differently.",
+          "wrong": "Both patterns return the same rows. The practical difference: NOT EXISTS can short-circuit as soon as it finds one match, which tends to perform well on large, indexed parent tables. LEFT JOIN is convenient when you need to check against more than one parent table at once — Method A here checks Customers AND Products in a single query using two LEFT JOINs."
+        },
+        {
+          "q": "Why does the lesson recommend Method C — a single count per FK relationship — for a data quality dashboard specifically?",
+          "choices": [
+            "A single number per FK check that reads zero when healthy and turns non-zero when something breaks is exactly the kind of metric a dashboard can monitor and alert on",
+            "Method C is the only version that actually works correctly",
+            "Dashboards cannot display row-level detail, only counts",
+            "It hides which specific rows are affected, which is required for GDPR"
+          ],
+          "correct": 0,
+          "right": "Exactly — Methods A and B are for investigating a known problem; Method C is for noticing one exists in the first place. A dashboard needs a number that's boring when things are fine and impossible to miss when they're not.",
+          "wrong": "Methods A and B give you the detail — which rows, which values. Method C compresses that down to one number per relationship, which is exactly what a monitoring dashboard needs: zero means clean, any non-zero triggers investigation. You'd use Method C to notice a problem exists, then Method A or B to actually dig into it."
+        }
+      ],
+      "close": "The LEFT JOIN / NOT EXISTS anti-join pattern is the single most reusable technique in this entire group — you'll see it again in almost every lesson that follows. Dangling Reference is next: what happens when the parent existed, and was deleted later."
+    },
+    "G03-T02": {
+      "open": "Same broken-connection symptom as the last lesson, different cause. This lesson asks you to separate \"never had a valid parent\" from \"had one, and it got deleted.\"",
+      "questions": [
+        {
+          "q": "The lesson draws a distinction between an orphan (G03-T01) and a dangling reference (this lesson). What's the actual difference, given that both look identical in SQL?",
+          "choices": [
+            "An orphan had an invalid FK from the start (bad data on creation); a dangling reference was valid when created but became invalid later because the parent was deleted",
+            "An orphan is always in the Orders table, a dangling reference is always in a different table",
+            "Dangling references can be detected with LEFT JOIN, orphans cannot",
+            "There is no real difference — the terms are interchangeable"
+          ],
+          "correct": 0,
+          "right": "Exactly — the SQL to find both is identical (that's the point the lesson is making), but the story behind each one is different, and that story is what determines the correct fix.",
+          "wrong": "Both produce the exact same query result — a child row with no matching parent. The difference is entirely causal, not structural: an orphan's FK was already broken the moment the row was created (bad import, bypassed validation). A dangling reference was perfectly valid when created, and only became broken because the parent row was deleted afterward. You need an archive/audit log to tell which one you're looking at."
+        },
+        {
+          "q": "Why does the lesson say cascade deletes (ON DELETE CASCADE) are 'not always the answer' for a deleted customer's orders?",
+          "choices": [
+            "Many business scenarios need to retain orders for audit, revenue reporting, or legal compliance even after the customer is deleted — soft-deleting the customer instead keeps the FK relationship intact",
+            "ON DELETE CASCADE is not supported in SQL Server",
+            "Cascade deletes always run slower than manual deletes",
+            "Cascading would delete the Customers table itself"
+          ],
+          "correct": 0,
+          "right": "Right — automatically deleting the orders along with the customer would erase exactly the records finance and audit need to keep. Soft-deleting the customer (IsActive = 0) preserves the history while still marking the relationship as no longer active.",
+          "wrong": "The instinct might be \"customer deleted, so cascade-delete their orders too\" — but orders often need to survive for revenue reporting, audits, and legal retention requirements, independent of whether the customer record itself still exists. The lesson's suggested fix is to soft-delete the customer instead of physically removing the row, which keeps the FK relationship intact rather than creating a dangling reference at all."
+        },
+        {
+          "q": "What does summing up the stranded revenue attached to dangling-reference orders actually accomplish, beyond just counting the broken rows?",
+          "choices": [
+            "It converts a data-quality flag into a business metric finance can act on — a specific pound/dollar amount that's currently unattributable, not just an abstract row count",
+            "It automatically fixes the dangling references",
+            "It deletes the affected orders",
+            "It has no practical value beyond the row count"
+          ],
+          "correct": 0,
+          "right": "Exactly — \"47 broken rows\" is an engineering fact. \"£847.50 of revenue can't be attributed to a customer for reporting\" is something finance actually has to act on. Same underlying query, very different audience.",
+          "wrong": "A row count tells an engineer something is broken. A revenue figure tells finance something they need to fix — money that currently can't be correctly attributed to any customer in reporting. Grouping by the deleted CustomerID and summing TotalAmount turns a technical data-quality issue into a number a non-technical stakeholder can prioritize against other work."
+        }
+      ],
+      "close": "You've now got the vocabulary to tell two identical-looking SQL results apart by their actual cause — which matters because the fix for each is different. Self-Referencing FK Violation is next: what happens when a table's foreign key points back into itself."
+    },
+    "G03-T03": {
+      "open": "New shape entirely: a table whose foreign key points back at its own rows — an org chart, where an employee's manager is just another employee. Let's see how that can break in ways a normal parent-child FK never could.",
+      "questions": [
+        {
+          "q": "Why does the lesson insist on running the self-loop and circular-reference checks BEFORE using the recursive CTE to walk the org hierarchy?",
+          "choices": [
+            "A recursive CTE that hits a circular reference will loop indefinitely until SQL Server throws a MAXRECURSION error — checking for loops first prevents building a query around data that will crash it",
+            "Recursive CTEs are always slower than the validation checks",
+            "SQL Server requires all self-referencing tables to be validated before any query can run",
+            "The checks and the recursive CTE test completely unrelated things"
+          ],
+          "correct": 0,
+          "right": "Exactly — a circular chain gives a recursive CTE nothing to terminate on. It'll keep walking A → B → A → B forever until the recursion cap stops it with an error. Fixing the loops first means the hierarchy walk actually has a chance of succeeding.",
+          "wrong": "Think about what a recursive CTE actually does: it keeps following the chain until it runs out of new rows to follow. If A reports to B and B reports to A, there's no natural stopping point — the CTE will keep looping until SQL Server's MAXRECURSION limit kills it with an error. Running the self-loop and circular checks first means you catch and fix the loop before you try to build a report on top of broken data."
+        },
+        {
+          "q": "Check 3 joins the Employees table to itself with `A.ManagerID = B.EmployeeID AND B.ManagerID = A.EmployeeID`. What does this specific pattern detect?",
+          "choices": [
+            "A two-way circular loop — A manages B, and B also manages A, at the same time",
+            "Every employee who has ever changed departments",
+            "Employees who report to themselves directly",
+            "The total headcount of the company"
+          ],
+          "correct": 0,
+          "right": "Right — both conditions have to be true at once: A's manager is B, AND B's manager is A. That mutual pointing-at-each-other is exactly what a two-person circular loop looks like in a self-referencing table.",
+          "wrong": "Read both halves of the join condition together: A.ManagerID = B.EmployeeID means A reports to B. B.ManagerID = A.EmployeeID means B ALSO reports to A. Both being true at the same time is a genuine contradiction — two people each claiming to manage the other — which is exactly the two-way circular loop this check is built to surface."
+        },
+        {
+          "q": "What is the ReportingPath string (e.g. `E010 > E001 > E003`) built by the recursive CTE actually useful for?",
+          "choices": [
+            "If an employee's own ID appears twice in their path, that reveals a circular reference in the hierarchy they're part of",
+            "It's purely cosmetic formatting with no diagnostic value",
+            "It calculates each employee's salary based on hierarchy depth",
+            "It replaces the need for the ManagerID column entirely"
+          ],
+          "correct": 0,
+          "right": "Exactly — the path is a visible trail of everywhere the walk has already been. If a node shows up twice in its own path, the walk has looped back on itself, which is unambiguous proof of a cycle.",
+          "wrong": "The path string records every node visited on the way to the current one. If you ever see the same EmployeeID appear twice inside its own ReportingPath, that's direct evidence the walk looped back to somewhere it had already been — a circular reference. The lesson also notes unusually long paths (more than ~10 levels) as a secondary signal of likely data entry errors."
+        }
+      ],
+      "close": "Self-referencing tables add a whole new failure category that normal parent-child FKs don't have — loops. Circular Reference in Hierarchy is next, going beyond simple two-way loops into chains of any length that eventually curve back on themselves."
+    },
+    "G03-T04": {
+      "open": "Last lesson caught direct self-loops and two-way loops. This one goes further: what about a loop that takes five, ten, or twenty hops to get back to where it started?",
+      "questions": [
+        {
+          "q": "How does building a VisitedPath string as the recursive CTE walks the hierarchy help detect a circular reference of any length, not just two hops?",
+          "choices": [
+            "If the next node the walk is about to visit already appears somewhere in the accumulated path, the walk has looped back on itself, regardless of how many hops that took",
+            "The path string is only used for display purposes and has no detection role",
+            "It counts the total number of employees in the company",
+            "It only works for loops of exactly three nodes"
+          ],
+          "correct": 0,
+          "right": "Exactly — the path doesn't care how long the loop is. Whether it takes 2 hops or 15, the moment the walk is about to revisit a node already in its own trail, that's proof of a cycle, at any depth.",
+          "wrong": "The path accumulates every node the walk has passed through so far. The check `VisitedPath NOT LIKE '%node%'` — testing whether the next node to visit is already somewhere in that trail — works regardless of how long the chain is. A 3-hop loop and a 15-hop loop are both caught the same way: the walk is about to step onto ground it's already covered."
+        },
+        {
+          "q": "The lesson offers a second, simpler detection method: flag any employee 'not reachable from a root.' Why does this work for cycles of any depth?",
+          "choices": [
+            "A node inside a circular chain can never be reached by walking downward from a true root (a node with no manager), because the chain never actually connects back to a root — it only connects to itself",
+            "Every employee is always reachable from a root by definition",
+            "This method only detects self-loops, not longer chains",
+            "It requires manually listing every employee in the company first"
+          ],
+          "correct": 0,
+          "right": "Right — a cycle is, by definition, disconnected from the real hierarchy. It might reference real employee IDs, but the chain of managers only ever points back into the loop, never out to a genuine root. Walking down from every real root and flagging who was never visited catches exactly that.",
+          "wrong": "Think about what a circular chain actually is: a set of nodes that only point to each other, never to a real root (someone with ManagerID IS NULL). If you walk the tree starting from every genuine root and mark everyone you reach, anyone left unmarked was never connected to a real root at all — which is exactly what being trapped in a cycle means, no matter how many hops the cycle has."
+        },
+        {
+          "q": "The lesson calls MAXRECURSION 'both a safety cap and the reason Checks 1–3 in G03-T03 must be run first.' What does this connect back to?",
+          "choices": [
+            "Without fixing simple self-loops and two-way loops first, a recursive CTE walking the hierarchy will hit a circular chain and either loop until MAXRECURSION throws an error, or silently stop short of the real answer",
+            "MAXRECURSION has nothing to do with the earlier lesson",
+            "G03-T03's checks are only relevant to Credit Risk, not Data Validation",
+            "MAXRECURSION automatically fixes any circular references it finds"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is the payoff of doing the simpler checks first. Clean up the obvious loops (self-loops, two-way loops) before attempting any deep recursive walk, or the walk itself becomes the thing that breaks.",
+          "wrong": "This directly ties back to the previous lesson: G03-T03's Checks 1–3 catch the simplest loop shapes (self-loops, two-way loops) before you ever try a full recursive hierarchy walk. Skip that step, and the recursive CTE here will run straight into whatever loop exists and either error out at the recursion cap or produce an incomplete, misleading result."
+        }
+      ],
+      "close": "You've now got detection for loops at every depth — direct, two-way, and multi-hop — plus a simpler shortcut that sidesteps needing to track paths at all. Many-to-Many Junction Table Violation is next: what happens when a table exists purely to connect two other tables, and one side of that connection breaks."
+    },
+    "G03-T05": {
+      "open": "Junction tables don't have data of their own — their whole job is connecting two other tables. So what does \"broken\" even mean for a table that's just a bridge?",
+      "questions": [
+        {
+          "q": "Why must a junction table's FK be validated on BOTH sides, not just one?",
+          "choices": [
+            "The relationship depends entirely on both foreign keys being valid — checking only one side leaves the other side's violations completely invisible",
+            "SQL Server automatically validates one side and requires manual checks only for the other",
+            "Junction tables never have more than one foreign key",
+            "Checking both sides is only necessary for tables with more than 1000 rows"
+          ],
+          "correct": 0,
+          "right": "Exactly — a junction row's whole purpose is representing a connection between two specific parent rows. If either side is broken, the connection itself is meaningless, so both sides genuinely need their own check.",
+          "wrong": "A junction table exists purely to represent a relationship between two other tables — its rows have no independent meaning. If you only check that SalespersonID is valid and never check the other side, a broken relationship on that unchecked side goes completely undetected. The lesson is explicit: always validate both directions, not just the more obvious one."
+        },
+        {
+          "q": "The lesson checks that Quarter is one of 1, 2, 3, or 4 — but its own Explanation says this ISN'T actually a referential integrity check. What kind of check is it instead, and why does it appear in the same query anyway?",
+          "choices": [
+            "It's a domain/range integrity check, not a FK check — but it's combined here because a junction row can have a perfectly valid FK and still be semantically meaningless if its other values are invalid",
+            "It actually is a FK check, and the lesson's explanation is simply wrong",
+            "Quarter is checked against a real ForeignKey to a Quarters table",
+            "It's a performance optimization with no validation purpose"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson is careful to name this distinction itself: a valid SalespersonID plus an invalid Quarter is a junction row that's referentially fine but still garbage. Combining both kinds of checks in one query reflects that a junction table's real health depends on more than just its foreign keys.",
+          "wrong": "The lesson states this directly: the Quarter check is domain integrity (is this value within a valid range), not referential integrity (does this value point to a real parent row). They're combined in the same query because a junction table's real-world validity depends on both — a row can have a perfectly valid SalespersonID and still be meaningless if Quarter is 5, which doesn't exist."
+        },
+        {
+          "q": "What does the composite uniqueness check (GROUP BY SalespersonID, Year, Quarter HAVING COUNT(*) > 1) catch that the FK checks alone would miss?",
+          "choices": [
+            "A salesperson somehow having more than one sales target row for the same quarter — a data entry error or reload bug, not a broken relationship",
+            "Salespeople who don't exist in the Employees table",
+            "Quarters that fall outside the valid range of 1-4",
+            "It duplicates exactly what the FK checks already find"
+          ],
+          "correct": 0,
+          "right": "Exactly — this is a different failure mode entirely. Both FKs can be perfectly valid, Quarter can be a legitimate value, and you can still have the same salesperson accidentally given two targets for the same quarter, which the FK checks would never catch.",
+          "wrong": "This check is looking for something the FK validity checks can't see at all: duplication. Both FKs being valid and Quarter being a legal value says nothing about whether a salesperson accidentally got two separate target rows for the exact same quarter — which typically signals a reload bug or a data entry mistake, the same duplicate-detection pattern from the Uniqueness group, applied here to a junction table specifically."
+        }
+      ],
+      "close": "Junction tables need three different kinds of validation working together — both FK directions, domain checks on the non-key columns, and uniqueness on the combination. Cross-Database FK Violation is next: what happens when the parent table isn't even in the same database."
+    },
+    "G03-T06": {
+      "open": "Every check so far has stayed inside one database, where SQL Server can at least theoretically enforce the relationship. This lesson steps outside that boundary entirely.",
+      "questions": [
+        {
+          "q": "Why can't SQL Server enforce a foreign key constraint that points from a table in one database to a table in a different database?",
+          "choices": [
+            "FK constraints in SQL Server are limited to tables within the same database — there's no `FOREIGN KEY REFERENCES OtherDatabase.dbo.Table` syntax, even on the same server instance",
+            "Cross-database FKs work fine, this is a myth",
+            "It's a licensing restriction that can be removed by upgrading SQL Server",
+            "It only affects databases on different physical servers"
+          ],
+          "correct": 0,
+          "right": "Right — this is a hard structural limit, not a configuration setting. Even two databases sitting on the exact same server instance can't have a FK constraint declared between them.",
+          "wrong": "This isn't a setting you can turn on — SQL Server's FK constraint syntax simply has no way to reference a table in a different database, full stop, even when both databases live on the same physical server. That's exactly why the lesson calls this \"entirely the responsibility of the application layer and validation scripts\" — nothing in the schema itself can catch it."
+        },
+        {
+          "q": "What's the actual advantage of the 'snapshot into a temp table' pattern over querying the remote database live for every row?",
+          "choices": [
+            "The cross-database round trip happens once to populate the temp table, then all the local validation runs at local speed — instead of one remote round trip per row being checked",
+            "Temp tables are permanent and never need to be recreated",
+            "It bypasses the need for any validation at all",
+            "It only works when the remote database is offline"
+          ],
+          "correct": 0,
+          "right": "Exactly — one remote trip instead of thousands. Pulling the reference data over once and then validating locally is dramatically cheaper than reaching across the database boundary for every single row.",
+          "wrong": "A live cross-DB query run inside a NOT EXISTS for every row means one remote round-trip per row being checked — slow, and it blocks entirely if the remote system is unreachable. Snapshotting the remote IDs into a local temp table means exactly one round trip total, after which every row of local validation runs at normal local speed against data already in hand."
+        },
+        {
+          "q": "Since SQL Server cannot enforce this relationship at all, where does the lesson say the responsibility for cross-database integrity actually lives?",
+          "choices": [
+            "Entirely in application code, scheduled validation scripts, and documentation like a data dictionary listing every cross-database dependency and its validation schedule",
+            "It doesn't need to live anywhere — the relationship is unimportant",
+            "In a special SQL Server cross-database constraint mode",
+            "Solely in the judgment of whoever writes the application code, with no documentation needed"
+          ],
+          "correct": 0,
+          "right": "Exactly — with no schema-level enforcement possible, the only thing standing between this relationship and silent drift is deliberate process: validation scripts that actually run, and documentation that says they should exist in the first place.",
+          "wrong": "Since the database itself can't be relied on to catch this, the lesson is explicit that responsibility shifts entirely to people and process: application-layer validation, scheduled reconciliation checks that alert on non-zero counts, and a documented data dictionary that explicitly lists every cross-database reference so nobody forgets it needs checking."
+        }
+      ],
+      "close": "Cross-database relationships are the sharpest example in this group of a rule that matters but that the database genuinely cannot enforce for you. Soft-Delete FK Violation is next — a case where the FK IS inside one database, is perfectly valid, and is still functionally broken."
+    },
+    "G03-T07": {
+      "open": "Here's a case where the foreign key constraint does everything it's supposed to, and the data is still wrong. Let's see how a valid FK can still point at a functionally dead parent.",
+      "questions": [
+        {
+          "q": "Why does a proper FK constraint fail to catch an order referencing a soft-deleted (IsActive = 0) product?",
+          "choices": [
+            "An FK constraint only checks that the referenced row exists — it has no concept of an IsActive flag, so a soft-deleted row still satisfies the constraint perfectly",
+            "FK constraints check IsActive automatically in SQL Server by default",
+            "Soft-deleted rows are physically removed from the table, so this scenario is impossible",
+            "The FK constraint would throw an error in this exact case"
+          ],
+          "correct": 0,
+          "right": "Exactly — 'does this row exist' and 'is this row still meaningful' are two completely different questions. The FK constraint only ever answers the first one.",
+          "wrong": "The FK constraint's entire job is checking whether the referenced row physically exists in the parent table — and P009 does exist, it's just flagged IsActive = 0. Whether that flag makes the reference functionally dead is a business rule the schema knows nothing about. Only an application check or a validation query like this one can catch it."
+        },
+        {
+          "q": "Why does this check use a plain INNER JOIN to Products instead of a LEFT JOIN?",
+          "choices": [
+            "The FK is already known to be valid — the row exists — so the query isn't looking for missing parents (which needs LEFT JOIN), it's looking for parents that exist but are inactive (which INNER JOIN handles directly)",
+            "INNER JOIN is required whenever filtering on a boolean column",
+            "LEFT JOIN cannot be combined with a WHERE clause",
+            "It's purely a stylistic choice with no functional reason"
+          ],
+          "correct": 0,
+          "right": "Right — this is a deliberate, meaningful choice, not a style preference. LEFT JOIN is the tool for \"does a match exist at all\"; INNER JOIN plus a filter is the right tool once you already know it does and you're filtering on that match's attributes.",
+          "wrong": "Earlier lessons in this group use LEFT JOIN specifically to find rows with NO match at all. This lesson is different — the product genuinely exists, so there's nothing missing to find. INNER JOIN correctly assumes the match exists and lets the query filter on that matched row's IsActive value directly, which is both simpler and more intentional than a LEFT JOIN would be here."
+        },
+        {
+          "q": "Why does the query specifically exclude orders with Status IN ('Cancelled', 'Returned') from the flagged results?",
+          "choices": [
+            "A cancelled or returned order referencing an inactive product isn't actually a problem — that order was already resolved, so there's nothing left to fulfil against the now-inactive product",
+            "Cancelled and Returned orders never have a ProductID value",
+            "SQL Server automatically excludes these statuses from all JOINs",
+            "It's an arbitrary filter with no business reasoning behind it"
+          ],
+          "correct": 0,
+          "right": "Exactly — the check is specifically hunting for orders that would still try to fulfil against a dead product. An order that's already closed out has nothing left to break.",
+          "wrong": "The whole point of this check is finding orders that WILL try to fulfil against a product that no longer exists in active inventory. A cancelled or returned order is already closed — there's no future fulfilment attempt to worry about, so flagging it would just be noise. The exclusion keeps the results focused on orders that are still open and would actually hit the problem."
+        }
+      ],
+      "close": "You've now seen a case where the schema-level constraint is completely satisfied and the data is still broken from a business standpoint — a reminder that \"exists\" and \"valid\" aren't the same question. Cascade Delete Orphan Check is next: verifying that a delete which was SUPPOSED to clean up everything actually did."
+    },
+    "G03-T08": {
+      "open": "A cascade delete ran, no errors were thrown, the ticket got closed. This lesson asks the question nobody asked at the time: did it actually work all the way down?",
+      "questions": [
+        {
+          "q": "Why doesn't `ON DELETE CASCADE` on Customer→Orders automatically also cascade Orders→Transactions?",
+          "choices": [
+            "Cascade behavior must be explicitly configured on every FK in the hierarchy that should cascade — it does not automatically chain to the next level down unless that FK also has ON DELETE CASCADE set",
+            "SQL Server always cascades through every level of a hierarchy automatically",
+            "Cascading is limited to exactly one level by a hard SQL Server limit that cannot be changed",
+            "Transactions can never be deleted by any cascade rule"
+          ],
+          "correct": 0,
+          "right": "Exactly — each FK's cascade behavior is its own independent setting. Configuring it at one level tells you nothing about what happens at the next level down, which is precisely how the OrderItems table in the scenario got left behind.",
+          "wrong": "Each foreign key's ON DELETE behavior is configured independently. Setting CASCADE on the Customer→Orders relationship says nothing about what happens on the Orders→Transactions relationship — that FK needs its own CASCADE setting, or deletes stop there. A multi-level hierarchy needs cascade explicitly configured at every single level for a delete to fully propagate."
+        },
+        {
+          "q": "What is the pre-deletion scope check (Step 4) actually for, run BEFORE the DELETE happens?",
+          "choices": [
+            "It shows exactly how many rows at each level will be affected, preventing accidental large-scale deletions and documenting the expected scope for an audit trail",
+            "It permanently deletes the rows it counts",
+            "It's a performance test unrelated to the actual deletion",
+            "It only works after the deletion has already happened"
+          ],
+          "correct": 0,
+          "right": "Right — this is a look-before-you-leap check. Seeing \"3 orders, 7 transactions\" before running the delete means no surprises about scope, and gives you something concrete to point to afterward if anyone asks what was supposed to happen.",
+          "wrong": "This runs before anything is deleted, specifically to answer \"what am I actually about to affect?\" Seeing the exact row counts at each level ahead of time prevents an accidental larger-than-expected deletion, and gives you a documented expected scope to compare against after the fact — which is exactly what Step 3's post-deletion check verifies against."
+        },
+        {
+          "q": "In Step 3's cascade integrity check, what does a non-zero OrphanCount at any level actually mean?",
+          "choices": [
+            "The cascade did not complete fully at that level — child rows were left behind referencing a now-deleted parent, and remediation is needed",
+            "The deletion failed completely and no rows were removed",
+            "It means the check itself has a bug",
+            "A non-zero count is always expected and can be ignored"
+          ],
+          "correct": 0,
+          "right": "Exactly — zero across every level is the only \"cascade fully worked\" result. Any non-zero count is a direct signal that some layer of the hierarchy was left with dangling references the cascade never reached.",
+          "wrong": "Zero at every level means the cascade genuinely removed everything it should have. A non-zero count at ANY level — even just one layer down — means the cascade stopped short somewhere, leaving orphaned child rows behind. Per the lesson, that's exactly the situation from the scenario: the GDPR deletion ticket was closed as complete when it actually wasn't, until an audit found the leftover OrderItems six weeks later."
+        }
+      ],
+      "close": "You've now got a repeatable way to actually verify a cascade delete worked, instead of trusting \"no error was thrown\" as proof. Missing Mandatory Relationship is next — the last lesson in this group, and it circles back to a distinction you'll want to have crisp: relationships that were never set at all versus ones that broke later."
+    },
+    "G03-T09": {
+      "open": "Last lesson in Referential Integrity. This one is about a relationship the business calls mandatory, that the schema quietly allows to not exist at all.",
+      "questions": [
+        {
+          "q": "The lesson combines two distinct failure modes into one check for a mandatory relationship. What are they?",
+          "choices": [
+            "CustomerID is NULL (the relationship was never set), and CustomerID has a value but doesn't match any row in Customers (an orphan)",
+            "CustomerID is too long, and CustomerID contains special characters",
+            "The order was placed on a weekend, and the order total is zero",
+            "The customer's name is misspelled, and their email is invalid"
+          ],
+          "correct": 0,
+          "right": "Exactly — both are ways a mandatory relationship can fail to actually exist: the field was left completely empty, or it was filled in with a value that points nowhere real. Case 3's CASE expression catches both in a single pass.",
+          "wrong": "A mandatory relationship can be violated two different ways: the FK column is left NULL entirely (nobody set it), or it's populated but with a value that has no matching row in the parent table (an orphan). Both mean the order effectively has no valid customer attached — Case 3 in the lesson checks for both conditions together with a single CASE expression."
+        },
+        {
+          "q": "Why does the lesson call a nullable FK column a 'schema smell' when the business rule says the relationship is mandatory?",
+          "choices": [
+            "A nullable column tells the schema \"this relationship is optional,\" directly contradicting a business rule that says it's required — that mismatch means the database won't enforce what the business actually needs",
+            "Nullable columns always cause SQL Server performance problems",
+            "It's purely a stylistic preference with no functional consequence",
+            "NULL values are illegal in SQL Server and this is a bug"
+          ],
+          "correct": 0,
+          "right": "Exactly — the schema and the business rule are telling two different stories. Whenever that mismatch exists, violations accumulate over time because nothing in the database itself is stopping them.",
+          "wrong": "If the real rule is \"every Order must have a Customer,\" the column should be NOT NULL — that's how you'd tell the schema the relationship is required. Leaving it nullable means the schema is silently saying \"optional\" while the business says \"mandatory.\" That contradiction is exactly why violations build up over time: nothing at the database level is actually enforcing what the business requires."
+        },
+        {
+          "q": "The lesson explicitly distinguishes this lesson from G03-T02 (Dangling Reference). What's the actual difference between the two?",
+          "choices": [
+            "G03-T02 covers a parent that was valid and later deleted; G03-T09 covers a relationship that was never set or never valid to begin with — same SQL pattern (NOT EXISTS), different root cause and remediation",
+            "G03-T02 only applies to Customers, G03-T09 only applies to Products",
+            "There is no real difference between the two lessons",
+            "G03-T09 uses a completely different SQL technique than G03-T02"
+          ],
+          "correct": 0,
+          "right": "Exactly — same detection query, genuinely different story behind the data, which is exactly the same shape of distinction as orphan vs. dangling reference back in G03-T01/T02. Two lessons in this group, same underlying lesson: the SQL for finding a broken relationship often can't tell you why it's broken.",
+          "wrong": "Per the lesson's own comparison: G03-T02 (Dangling Reference) is about a parent that existed and was later deleted — the relationship was valid once. G03-T09 is about a relationship that was either never set (NULL) or never valid at all from the moment it was created. The SQL overlap is real (both lean on NOT EXISTS), but the root cause — and therefore the correct fix — is different in each case."
+        }
+      ],
+      "close": "That's the full Referential Integrity group — nine lessons, and you've gone from a single broken FK all the way through self-referencing loops, cross-database boundaries, and cascades that only partially worked. The throughline across all nine: a foreign key constraint, when it exists at all, only ever answers \"does the parent exist\" — never \"is the relationship still meaningful.\" Everything else needs a query like the ones you just worked through. Strong finish to this group."
     }
   }
 }
