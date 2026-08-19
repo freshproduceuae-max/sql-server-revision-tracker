@@ -310,4 +310,26 @@ rules for the duration of this experiment:
 - Claude must independently review every drafted question against its
   source lesson file — Codex authoring a question is not itself evidence
   the question is correct.
+- A verification pass is not independent evidence if it uses the same
+  reasoning mode that produced the original claim. The G09 incident: Claude
+  proposed a T-SQL fix, Codex "verified" it via reasoning alone, both were
+  wrong — an authoritative external source (fetched documentation) is what
+  actually caught the mistake, on a second pass. When verifying a technical
+  claim that can be checked against a real specification, fetch the
+  specification rather than reasoning from training data a second time.
+
+## Definition of done — Teacher MCQ content groups
+
+A group is not complete merely because its questions build successfully.
+Before calling a group done:
+
+- The group's PR must update the machine-readable progress block in
+  `HANDOFF.md` (between the `HANDOFF-PROGRESS:START`/`END` markers) and
+  pass `node scripts/check-handoff-progress.js`.
+- A cold session must run `node scripts/check-handoff-progress.js` before
+  trusting `HANDOFF.md`'s stated progress — the prose above that block is
+  not authoritative on its own; the checker is.
+- Never silently carry forward a stale queue table. If the checker fails,
+  fix `HANDOFF.md` (via `--fix` plus review of the diff) before doing
+  anything else — including before starting a new group.
 

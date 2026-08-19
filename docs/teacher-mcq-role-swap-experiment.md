@@ -104,14 +104,62 @@ Raw prompts and complete outputs live in
 and `output.txt` per group. G06's files were not preserved (deleted before
 this rule existed); G07 onward are archived there.
 
-## Read so far
+## The G09 source-fix incident — a shared miss, not a Claude reporting error
 
-One clean group (G07, zero corrections) is not strong evidence either way —
-the risk flagged before starting was that a model's blind spot as *author*
-is exactly what it can't self-catch as *reviewer*, and Claude is now
-reviewing instead of Codex, so this trial can't fully test that concern
-either. G06 did surface one real issue, but it was in the hand-authored
-source lesson content (predating this experiment), not in anything Codex
-drafted — Codex's MCQs correctly worked around it. Continuing through G10
-per the owner's instruction unless a group surfaces a genuine quality
-problem.
+While reviewing G09, a real pre-existing bug was found in `G09-T09.md`'s
+Step 2 query: `ORDER BY DaysSinceLastEvent DESC NULLS LAST` — `NULLS LAST`
+is Oracle/PostgreSQL syntax, invalid in T-SQL. The first fix replaced it
+with `ORDER BY CASE WHEN DaysSinceLastEvent IS NULL THEN 1 ELSE 0 END,
+DaysSinceLastEvent DESC`. **Claude proposed this fix, and Codex, asked to
+independently verify it, confirmed it as valid T-SQL — both were wrong.**
+SQL Server does not permit a SELECT-list alias to be used inside a larger
+expression (like a `CASE`) in `ORDER BY`; only a bare alias reference is
+documented-valid. Neither Claude's initial reasoning nor Codex's
+verification pass caught this. The owner raised the question that surfaced
+it. A second Codex verification pass — this time fetching Microsoft's live
+`ORDER BY` documentation rather than reasoning from training data alone —
+confirmed the correct, simpler fix: `ORDER BY DaysSinceLastEvent DESC`
+(SQL Server treats NULL as the lowest sort value, so `DESC` already sorts
+NULLs last with no extra logic needed).
+
+This matters for how much to trust "Codex verified it" as a review
+mechanism going forward: a verification pass using the same reasoning mode
+that produced the original error is not independent evidence. Fetching an
+authoritative external source (documentation, in this case) is what
+actually caught the mistake — plain model reasoning, from either model,
+did not.
+
+## Conclusion (after G06–G10)
+
+**Content quality: passed.** Across 204 Codex-drafted questions (G06–G10),
+zero required a factual correction. Two mechanical defects were found and
+fixed programmatically, not through content review: a trailing-comma JSON
+syntax error (G08) and an extraneous `questions_meta` key (G10) — neither
+was a factual/content error. Two pre-existing defects were found in the
+underlying source lesson markdown (predating this experiment, unrelated to
+Codex's authoring): G06-T10's self-contradicting Live Scenario, and
+G09-T09's invalid `NULLS LAST` syntax — both fixed separately from the MCQ
+content itself.
+
+**Token savings: not demonstrated.** Claude's own context grew by
+approximately **445.5k tokens** across the five-group trial — observed
+context cost per lesson worked out to roughly **6.55k tokens/lesson**
+(445.5k ÷ 68 lessons), noticeably higher than the earlier upper estimate of
+**~3.93k tokens/lesson** used when weighing whether the swap would save
+Claude-side tokens. Shifting authoring to Codex did not reduce Claude's
+review burden by the margin assumed going in — independently verifying
+every question against source, plus catching schema defects and source
+bugs, cost real context regardless of who drafted the content.
+
+**The risk this trial was meant to test — whether a model's blind spot as
+*author* is invisible to it as *reviewer* — was not resolved.** No group
+surfaced a genuine Codex authoring error for Claude-as-reviewer to catch or
+miss. The one clear near-miss (G09's `NULLS LAST` fix) tested the opposite
+pairing: Codex reviewing Claude's proposed fix, and both getting it wrong
+under the same failure mode (reasoning from training data instead of
+checking a source of truth).
+
+**The G11 authoring/review-arrangement decision remains open.** This
+document records what happened in G06–G10; it does not recommend continuing
+or discontinuing the role-swap. That choice is the owner's, to be made
+explicitly before G11 starts — see `HANDOFF.md`'s work queue.
