@@ -5503,6 +5503,468 @@
         }
       ],
       "close": "The lesson’s message is that control totals and sequence checks are completeness controls, not business-rule checks. That completes the reconciliation group: from header-detail mismatches through batch verification and every major reconciliation pattern in between."
+    },
+    "G09-T01": {
+      "open": "This lesson starts the Timeliness group by treating staleness as an age test against the current date. Keep that same comparison pattern in mind, because later lessons in this group reuse it for latency, expiry, and reporting freshness.",
+      "questions": [
+        {
+          "q": "Why does the main stale-order check filter out Delivered, Cancelled, and Refunded statuses before applying the 30-day age threshold?",
+          "choices": [
+            "Because terminal states are complete records and are not expected to change further",
+            "Because GETDATE() cannot be used on terminal records",
+            "Because those statuses always indicate future-dated orders",
+            "Because only refunded orders can be older than 30 days"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson treats those statuses as terminal, so stale monitoring should only apply where more processing is still expected.",
+          "wrong": "The query excludes terminal states because they are already complete. The age threshold is meant for open work, not records that should never progress again."
+        },
+        {
+          "q": "What is the purpose of the delivery-date check in Step 3?",
+          "choices": [
+            "To find orders where the promised delivery date has passed but the status is still not Delivered",
+            "To find orders that were cancelled before they shipped",
+            "To calculate the average shipping cost per customer",
+            "To identify orders whose delivery date is exactly 30 days after the order date"
+          ],
+          "correct": 0,
+          "right": "Correct. Step 3 is specifically about orders whose promised delivery date is already in the past while the status remains non-terminal.",
+          "wrong": "Step 3 is not about cancellations or cost analysis. It targets overdue deliveries where the system still has not marked the order as Delivered."
+        },
+        {
+          "q": "Why does the explanation say the threshold should be parameterised for different domains?",
+          "choices": [
+            "Because the right freshness window depends on the workflow, such as 24 hours for clinical records or 1 minute for trading data",
+            "Because SQL Server only supports one hardcoded threshold per database",
+            "Because all data quality checks must use 30 days by law",
+            "Because GETDATE() only works with parameters"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly says timeliness thresholds vary by domain and should be adjusted to the workflow being monitored.",
+          "wrong": "The lesson gives different examples to show that freshness windows are business-driven, not fixed at 30 days for every system."
+        }
+      ],
+      "close": "You have the core stale-data pattern now: compare record age to a threshold, then separate open work from terminal states. The next timeliness lessons build the same idea into latency, SLA, and expiry checks."
+    },
+    "G09-T02": {
+      "open": "This lesson extends the timeliness theme from age into lag: not just whether data is old, but whether it arrived late relative to an SLA. The key reasoning is to measure the gap between two timestamps and then classify the size of that gap.",
+      "questions": [
+        {
+          "q": "Why does Step 1 use DATEDIFF(HOUR, o.OrderDate, t.TransactionDate) instead of DATEDIFF(DAY, ... ) for the SLA check?",
+          "choices": [
+            "Because the SLA is about hour-level latency, so hour precision is the better fit",
+            "Because DATEDIFF(DAY) cannot be used with dates",
+            "Because hour differences always return decimal values",
+            "Because day differences are only valid for future dates"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says the SLA is easier to express in hours or minutes, and Step 1 uses hours to measure arrival lag.",
+          "wrong": "The query can use day differences, but that would be too coarse for a latency SLA. The lesson explicitly prefers a unit that matches the SLA definition."
+        },
+        {
+          "q": "What does a negative LagHours value mean in this lesson's logic?",
+          "choices": [
+            "The transaction timestamp is earlier than the order timestamp, which is treated as a data integrity error",
+            "The order is delayed by exactly one day",
+            "The transaction was successfully delivered early",
+            "The order has already been cancelled"
+          ],
+          "correct": 0,
+          "right": "Correct. A negative lag means the timestamps are in the wrong order, which the lesson treats as an impossible sequence unless there is a time-zone or backdating issue.",
+          "wrong": "Negative lag is not an on-time or cancelled state. It signals that the transaction appears to predate the order, which is an integrity problem."
+        },
+        {
+          "q": "Why does Step 4 treat orders with no transaction as a latency issue?",
+          "choices": [
+            "Because a record that never arrives has effectively infinite latency, so absence itself is a breach condition",
+            "Because missing transactions are automatically marked as cancelled",
+            "Because GETDATE() returns NULL for missing records",
+            "Because only late transactions matter, not missing ones"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson frames a never-arriving record as the extreme case of latency, and Step 4 measures how long it has been absent.",
+          "wrong": "The lesson does not ignore missing records. It treats them as the strongest possible latency problem because the data never showed up at all."
+        }
+      ],
+      "close": "The important idea here is that lateness can be measured, banded, and reported just like staleness. Next lessons in the group keep reusing that same timestamp comparison pattern in different failure modes."
+    },
+    "G09-T03": {
+      "open": "This lesson moves from arrival lag to processing-time SLA breaches, which is a different but related timing problem. Instead of asking whether data came late, it asks how long an item stayed open before reaching a terminal state.",
+      "questions": [
+        {
+          "q": "In Step 1, what does ProcessingDays represent for delivered orders?",
+          "choices": [
+            "The number of calendar days between OrderDate and DeliveryDate",
+            "The number of business days excluding weekends",
+            "The number of hours between order and delivery",
+            "The number of days since the last customer login"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly uses DATEDIFF(DAY, OrderDate, DeliveryDate), which counts calendar days.",
+          "wrong": "The query does not calculate business days or hours. The explanation calls out that this is a calendar-day calculation and that business-day SLAs need a different approach."
+        },
+        {
+          "q": "Why does the explanation say a calendar-table approach may be needed for business-day SLAs?",
+          "choices": [
+            "Because DATEDIFF(DAY) counts weekends too, while a business-day SLA should exclude them",
+            "Because calendar tables are the only way to join Orders and Customers",
+            "Because DATEDIFF(DAY) cannot compare two dates",
+            "Because business-day SLAs are always less than 24 hours"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson points out that calendar days include weekends, so business-day calculations need a more detailed date structure.",
+          "wrong": "The issue is not joining tables or date comparison ability. The issue is that simple day differences include weekends, which is not what a business-day SLA means."
+        },
+        {
+          "q": "What is the purpose of the percentile query in Step 4?",
+          "choices": [
+            "To understand the spread of processing times so SLA targets can be set from historical distribution, not just the mean",
+            "To calculate the exact delivery cost for each order",
+            "To convert delivered orders into pending orders",
+            "To identify customers who have never ordered"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses percentiles to show how historical performance can guide achievable SLA targets.",
+          "wrong": "Step 4 is about the distribution of delivery times, not costs or customer onboarding. The lesson specifically uses median and upper percentiles to inform SLA design."
+        }
+      ],
+      "close": "Processing-time checks are about how long work stays unresolved, not just whether it is old. The next lessons reuse date arithmetic again, but with future dates, backdating, and other sequence errors."
+    },
+    "G09-T04": {
+      "open": "This lesson starts the date-anomaly side of timeliness: records that point into the future when they should not. The main pattern is still simple comparison, but the lesson adds tolerance bands so scheduled records are not confused with genuine errors.",
+      "questions": [
+        {
+          "q": "Why does the query use CAST(GETDATE() AS DATE) when checking for future-dated values?",
+          "choices": [
+            "To strip the time portion and avoid treating a record from earlier today as future-dated because of clock time",
+            "To make all future dates round up to the nearest month",
+            "To convert local time into UTC automatically",
+            "To force all records into the year 2099"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explains that stripping the time avoids edge cases where today’s date could be misread because of time-of-day comparisons.",
+          "wrong": "The cast is not about timezone conversion or artificial year changes. It simply removes the time component so the comparison is date-based."
+        },
+        {
+          "q": "What is the lesson's purpose for checking YEAR(ContractEnd) > 2090?",
+          "choices": [
+            "To catch a pattern typical of 2-digit year migration errors that become 2090-2099",
+            "To identify all perpetual contracts as invalid",
+            "To detect contracts that expire next month",
+            "To prove the customer has cancelled"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation ties 2090+ dates to a common migration bug where 1990s values were shifted into the 2090s.",
+          "wrong": "The query is not flagging normal short-term expiries or cancellations. It is looking for the specific signature of a year-conversion problem."
+        },
+        {
+          "q": "Why are future dates not always treated as errors in this lesson?",
+          "choices": [
+            "Because some systems legitimately schedule orders or contracts in advance, so the query uses tolerance windows to separate expected from suspicious values",
+            "Because GETDATE() cannot detect future dates reliably",
+            "Because all future values are automatically business as usual",
+            "Because ContractEnd must always be at least 10 years ahead"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly says scheduled future events can be legitimate, so the logic uses day and year thresholds to classify risk.",
+          "wrong": "Future dates are not accepted blindly. The lesson distinguishes planned future dates from likely data-entry or migration errors using threshold bands."
+        }
+      ],
+      "close": "The future-date pattern is now in place: compare to today, then apply a tolerance instead of assuming every future value is wrong. Next comes the opposite problem, where a record claims to belong to the past before it was actually created."
+    },
+    "G09-T05": {
+      "open": "This lesson flips the date-error direction and looks for backdating. The core idea is to compare the business date to a more trustworthy sequence and look for impossible or suspicious timing patterns.",
+      "questions": [
+        {
+          "q": "Why is t.TransactionDate < o.OrderDate considered impossible in the lesson's explanation?",
+          "choices": [
+            "Because a payment for an order should not be recorded before the order exists",
+            "Because transactions always happen after delivery, not after ordering",
+            "Because orders cannot have a customer attached",
+            "Because DATEDIFF only works for same-day records"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says the transaction is triggered by the order existing, so a transaction before the order indicates backdating or a data error.",
+          "wrong": "The issue is not delivery timing or customer linkage. It is the impossible sequence of recording the related transaction before the parent order date."
+        },
+        {
+          "q": "What does Step 2's month-end clustering try to detect?",
+          "choices": [
+            "A suspicious concentration of orders on the last day of a month, which can indicate revenue manipulation or backdating",
+            "Customers who placed orders at midnight",
+            "Orders that have no customer records",
+            "Transactions with negative amounts"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says a spike on the last day of the month or quarter is a classic backdating signal that should be audited.",
+          "wrong": "The query is not about midnight timing or negative amounts. It looks for abnormal clustering at period end, which can support a backdating investigation."
+        },
+        {
+          "q": "Why does the explanation say audit log timestamps are more reliable than the business date?",
+          "choices": [
+            "Because users can usually edit the business date, but not the system-assigned creation timestamp",
+            "Because audit logs are always older than the business date",
+            "Because business dates are never used in reporting",
+            "Because order dates and audit timestamps are the same thing"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson makes the audit timestamp the more trustworthy control because it is system-assigned and not user-editable.",
+          "wrong": "The lesson does not treat audit logs as older business dates or the same thing as order dates. It relies on the audit timestamp as a tamper-resistant reference point."
+        }
+      ],
+      "close": "The takeaway is that backdating is often a sequence problem, not just a date problem. The next timeliness lesson shifts to missing batches and load monitoring, where absence of data is itself the issue."
+    },
+    "G09-T06": {
+      "open": "This lesson turns from record-level timing problems to batch-level monitoring. The idea is to compare today's data volume to historical norms and to detect whole missing days, not just late individual records.",
+      "questions": [
+        {
+          "q": "Why does Step 1 compare each day's count to the average of the previous seven days rather than the current day's overall average?",
+          "choices": [
+            "Because a trailing average gives a realistic expected baseline without using the current day itself in the comparison",
+            "Because the current day count must always be included in its own average",
+            "Because rolling averages only work for amounts, not counts",
+            "Because historical averages cannot be used in SQL Server"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says the trailing seven-day average is the expected baseline and excludes the current day from the calculation.",
+          "wrong": "The query intentionally excludes the current day so the baseline is not distorted by the value being tested. That is the point of the trailing window."
+        },
+        {
+          "q": "What is the main reason a day with DailyCount = 0 is treated differently from a low-volume day?",
+          "choices": [
+            "A zero-record day suggests the batch did not run or produced nothing, which is stronger evidence of a missing load than natural volume fluctuation",
+            "A zero-record day is always normal on weekends",
+            "A zero-record day means the data was archived successfully",
+            "A zero-record day only matters if amounts are negative"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson treats zero records as the strongest signal because it suggests a batch failure, not just unusually low traffic.",
+          "wrong": "The lesson does not assume zero is normal or archival. It treats zero as a likely batch failure and therefore a high-priority incident."
+        },
+        {
+          "q": "What does the LAG-based gap check add that the rolling average does not?",
+          "choices": [
+            "It identifies missing days in the sequence entirely, which volume checks alone cannot prove",
+            "It computes business-day percentages",
+            "It replaces the need for TransactionDate",
+            "It converts month-level data into customer-level data"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explains that the gap check finds actual missing dates between populated dates, which is different from spotting low counts.",
+          "wrong": "The LAG check is about missing dates, not business-day math or dimensional reshaping. It complements the volume check by finding holes in the sequence."
+        }
+      ],
+      "close": "This lesson shows that batch monitoring needs both volume checks and sequence checks. Next, the group keeps building completeness logic, but now the focus shifts to sequence and ordering across events."
+    },
+    "G09-T07": {
+      "open": "This lesson is about order in time, not just the presence of data. It uses sequence checks to catch impossible event ordering, then expands that idea to duplicate storms and payment-before-order cases.",
+      "questions": [
+        {
+          "q": "What does the LAG function help detect in Step 2?",
+          "choices": [
+            "Whether each transaction happened after the previous transaction for the same order",
+            "Whether the order has a customer name",
+            "Whether the total amount is positive",
+            "Whether the delivery address is missing"
+          ],
+          "correct": 0,
+          "right": "Correct. The query uses LAG to compare each event against the prior event in the same order sequence.",
+          "wrong": "LAG is used for chronological comparison within an order. It is not about customer fields or amount sign by itself."
+        },
+        {
+          "q": "Why does Step 4 group by hour and minute of TransactionDate?",
+          "choices": [
+            "To detect multiple transactions landing in the same minute, which can signal retries, replay attacks, or race conditions",
+            "To calculate how many customers placed orders in each month",
+            "To convert timestamps into UTC",
+            "To find refunds that happened on weekends"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly says same-minute clustering can reveal replay or retry storms.",
+          "wrong": "The grouping is not for timezone conversion or monthly analysis. It is meant to surface event storms where several transactions occur in the same minute."
+        },
+        {
+          "q": "What is the canonical sequence violation highlighted in Step 1?",
+          "choices": [
+            "Delivery before order",
+            "Transaction after payment",
+            "Customer before country",
+            "Order after invoice"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson calls delivery before order the clearest impossible sequence.",
+          "wrong": "The query is not about invoice order or customer geography. The canonical violation in the lesson is that an item cannot be delivered before it was ordered."
+        }
+      ],
+      "close": "You now have the sequence-oriented timeliness checks that catch impossible event orderings. The next lesson uses the same date comparisons to monitor expiry and active records that should have lapsed already."
+    },
+    "G09-T08": {
+      "open": "This lesson applies timeliness to contract validity rather than event timing. The key pattern is to compare a contract end date to today and then separate expired-active records from those nearing renewal.",
+      "questions": [
+        {
+          "q": "Why does Step 1 use CAST(GETDATE() AS DATE) when checking whether a contract has expired?",
+          "choices": [
+            "To avoid treating a contract as expired earlier on the same day because of the current time component",
+            "To move all contracts to midnight UTC",
+            "To make expired contracts reappear as active",
+            "To compare against the customer's timezone"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says using the date-only value prevents a contract ending today from being misclassified as expired before the day is over.",
+          "wrong": "The cast is not about UTC or reactivating contracts. It just removes the time component so the comparison is aligned to whole days."
+        },
+        {
+          "q": "What is the purpose of the 30/60/90-day logic in Step 2?",
+          "choices": [
+            "To create a renewal pipeline with urgency bands from operational to strategic planning",
+            "To allow contracts to last 90 more days automatically",
+            "To reject any contract that expires in less than 90 years",
+            "To calculate invoice tax rates"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson frames the windows as action bands: urgent, action, and pipeline planning.",
+          "wrong": "The windows do not extend the contract automatically or change tax. They are used to prioritise renewal work by proximity to expiry."
+        },
+        {
+          "q": "Why are orders placed after ContractEnd considered a violation in Step 3?",
+          "choices": [
+            "Because they indicate post-expiry usage, which can mean revenue leakage and legal risk",
+            "Because orders must always be cancelled after expiry",
+            "Because contract dates are never relevant to orders",
+            "Because DATEDIFF only works for active customers"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson links post-expiry orders to unpaid usage and the possibility of deemed renewal by conduct.",
+          "wrong": "The lesson does not say all post-expiry orders are cancelled or irrelevant. It treats them as evidence that a customer continued using the service after the agreement ended."
+        }
+      ],
+      "close": "Expiry monitoring is just another form of timeliness monitoring, but the consequence here is legal and commercial rather than operational. The next lesson pulls freshness into reporting, where the issue is how stale the visible report is compared with source data."
+    },
+    "G09-T09": {
+      "open": "This lesson moves from operational freshness to reporting lag. The main concern is whether the most recent data in the source is close enough to today for the report to be trusted.",
+      "questions": [
+        {
+          "q": "What does MAX(TransactionDate) measure in Step 1?",
+          "choices": [
+            "The most recent source timestamp, which is used as the freshness indicator for the report",
+            "The earliest transaction in the table",
+            "The number of orders per customer",
+            "The average lag between shipments"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says the most recent timestamp shows how far behind the report is.",
+          "wrong": "MAX(TransactionDate) is not the earliest value or an average. It is the latest source date and therefore the freshness anchor for the report."
+        },
+        {
+          "q": "Why does the lesson say the lag threshold is a business requirement rather than a technical constant?",
+          "choices": [
+            "Because different reports tolerate different staleness windows, from minutes for dashboards to days for weekly reports",
+            "Because SQL Server decides the threshold automatically",
+            "Because all reports must use a 1-day lag",
+            "Because transaction tables cannot be checked for freshness"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly says a real-time dashboard and a weekly report do not share the same freshness requirement.",
+          "wrong": "The threshold is not automatic or universal. The lesson makes it clear that acceptable lag depends on the report's business purpose."
+        },
+        {
+          "q": "What does Step 2's per-order freshness check focus on?",
+          "choices": [
+            "How long it has been since the last transaction for each order, especially for non-terminal orders",
+            "Which orders have the highest total amount",
+            "Whether every order has a customer with the same name",
+            "How many months each order spans"
+          ],
+          "correct": 0,
+          "right": "Correct. The query uses the last event date per order to see whether an active order has gone quiet for too long.",
+          "wrong": "Step 2 is not an amount or naming analysis. It checks whether the latest event for an order is stale, especially when the order is still non-terminal."
+        }
+      ],
+      "close": "Reporting lag is now tied to a freshness SLA rather than just record age. The last two lessons round out timeliness with retention and completeness, where the question becomes whether data should still exist and whether every period is present."
+    },
+    "G09-T10": {
+      "open": "This lesson treats timeliness as a retention problem: data can be too old to keep. The important pattern is comparing last activity or transaction age against a retention period and dealing carefully with NULL dates.",
+      "questions": [
+        {
+          "q": "Why does the lesson call NULL LastOrderDate a hidden retention failure?",
+          "choices": [
+            "Because NULL values can slip past a cutoff filter and never get selected for deletion",
+            "Because NULL means the customer must be active",
+            "Because NULL dates are always newer than real dates",
+            "Because NULL only appears in financial records"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation says a simple less-than cutoff misses NULLs, so those records are retained indefinitely.",
+          "wrong": "NULL does not mean active or newer. The problem is that NULLs are excluded by ordinary comparison predicates, which can hide old records from deletion logic."
+        },
+        {
+          "q": "What is the difference between the two retention thresholds in the lesson?",
+          "choices": [
+            "One is for customer inactivity retention and the other is for financial record retention, so they have different legal/business meanings",
+            "One is for orders and the other for deliveries",
+            "One is for future dates and one is for past dates",
+            "There is no difference; both mean the same thing"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson separates GDPR-style customer retention from financial record retention, which has a different requirement.",
+          "wrong": "The thresholds are not duplicates. They reflect two separate retention obligations with different purposes and durations."
+        },
+        {
+          "q": "Why does the explanation recommend DATEADD or a day-based comparison for precise retention checks?",
+          "choices": [
+            "Because DATEDIFF(YEAR) is only a rough approximation and can say a year has passed before 365 exact days have elapsed",
+            "Because DATEADD is the only function that can handle customers",
+            "Because DATEDIFF(YEAR) returns months instead of years",
+            "Because day-based comparisons cannot be used in SQL Server"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly warns that DATEDIFF(YEAR) is conservative and can overstate elapsed years near the boundary.",
+          "wrong": "The issue is not function support. It is precision: year-based differences can move to the next year before the full day count has truly elapsed."
+        }
+      ],
+      "close": "Retention logic is different from the other timeliness checks because the goal is deletion or anonymisation, not just detection. The final lesson in the group closes with completeness, where the focus is on making sure every expected period exists."
+    },
+    "G09-T11": {
+      "open": "This final Timeliness lesson is about completeness over time: not just whether records are current, but whether every expected month and day exists. It combines period generation, left joins, and gap detection to show where coverage breaks down.",
+      "questions": [
+        {
+          "q": "Why does Step 1 generate ExpectedMonths instead of only grouping actual transactions by month?",
+          "choices": [
+            "Because completeness checks need the expected periods so missing months can be detected by absence, not just by counts",
+            "Because SQL cannot group by month directly",
+            "Because transaction dates are not available in the table",
+            "Because all months must always have the same count"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson emphasizes generating what should exist and then left-joining to what does exist so missing periods become visible.",
+          "wrong": "The point is not a SQL limitation. It is that completeness requires an expected timeline, otherwise missing months cannot be identified."
+        },
+        {
+          "q": "What does the left join in Step 1 reveal when am.ActYr is NULL?",
+          "choices": [
+            "The expected month has no actual transaction data, so it is a missing period",
+            "The month has too many transactions",
+            "The month is always a weekend",
+            "The month is invalid because the year is missing"
+          ],
+          "correct": 0,
+          "right": "Correct. A NULL match means the expected month had no actual rows and is therefore a gap.",
+          "wrong": "NULL here means no matching actual month, not a malformed year or volume spike. It is the signature of a missing period."
+        },
+        {
+          "q": "What is the tradeoff of the LAG-based daily gap detection in Step 2?",
+          "choices": [
+            "It is simpler than building a calendar table, but it cannot tell expected weekend gaps from missed batches without business-day context",
+            "It can only detect future dates, not past dates",
+            "It always requires a calendar table",
+            "It duplicates the monthly completeness check exactly"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says LAG finds adjacent gaps, but a business-day calendar is needed to distinguish legitimate gaps from missing data.",
+          "wrong": "The LAG approach is deliberately simpler, not dependent on a calendar table. Its limitation is interpretability, not functionality."
+        }
+      ],
+      "close": "This completes the completeness side of timeliness: generating expected periods, comparing them to reality, and flagging holes in the timeline. Together with the earlier lessons, you now have the full operational toolkit for stale data, lag, expiry, and missing coverage."
     }
   }
 }
