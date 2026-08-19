@@ -4873,6 +4873,636 @@
         }
       ],
       "close": "This lesson closes the group with the pattern that underlies several others: validate the aggregate, not just the row. That same idea appears in credit, stock, and velocity checks throughout Group 7."
+    },
+    "G08-T01": {
+      "open": "This lesson builds on the reconciliation pattern from Group 8: recompute detail totals, compare them to a stored header, and treat tolerance carefully. Here the twist is that rounding differences and missing detail rows can look similar unless you inspect discrepancy size and line patterns.",
+      "questions": [
+        {
+          "q": "Why does the query compare `o.TotalAmount` to `ISNULL(dt.DetailSum, 0)` instead of only to `dt.DetailSum`?",
+          "choices": [
+            "So orders with no transactions still appear as mismatches instead of being filtered out by a NULL comparison",
+            "So SQL can automatically convert all amounts to integers before summing",
+            "So the join becomes faster than an inner join in every case",
+            "So `SUM(Amount)` ignores negative values in the Transactions table"
+          ],
+          "correct": 0,
+          "right": "Exactly. `ISNULL(dt.DetailSum, 0)` lets the query flag header-only orders as reconciliation failures instead of letting NULL hide the problem.",
+          "wrong": "The lesson’s logic is about preserving unmatched headers, not about type conversion, join speed, or filtering out negative amounts."
+        },
+        {
+          "q": "What does the 0.01 tolerance in the WHERE clause and CASE expression represent in this lesson?",
+          "choices": [
+            "A one-penny tolerance to avoid false positives from tiny rounding differences",
+            "A requirement that every discrepancy be exactly one cent",
+            "A way to round all results down to the nearest pound",
+            "A rule that only orders with at least one transaction should be checked"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly uses a 1-penny tolerance so legitimate rounding noise does not become a false mismatch.",
+          "wrong": "The lesson treats 0.01 as a tolerance band, not as a mandatory discrepancy size or a row-filtering rule."
+        },
+        {
+          "q": "What is the point of Step 4’s line-count analysis?",
+          "choices": [
+            "To test whether larger discrepancies tend to increase with more line items, which would support cumulative rounding as the cause",
+            "To convert the monthly totals into yearly totals",
+            "To remove duplicate Orders before comparing headers",
+            "To find transactions with negative amounts only"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses line count as evidence: if discrepancy rises with more lines, rounding accumulation is the likely explanation.",
+          "wrong": "Step 4 is about diagnosing the source of mismatch, not aggregating by year, deduplicating orders, or isolating negatives."
+        }
+      ],
+      "close": "That lesson is the classic header-vs-detail reconciliation pattern with a tolerance and a diagnostic drill-down. Next comes a broader count reconciliation across related systems and relationship-level gaps."
+    },
+    "G08-T02": {
+      "open": "This one expands reconciliation from single totals to counts and relationship integrity. It stays in the Group 8 pattern but shifts from amount mismatches to missing rows, orphan rows, and ratio checks.",
+      "questions": [
+        {
+          "q": "Why does Step 2 use `NOT EXISTS` to find orders without transactions?",
+          "choices": [
+            "It efficiently checks whether a matching child row exists without building a full join result",
+            "It forces SQL Server to sort the tables before scanning them",
+            "It guarantees the order count and transaction count are equal",
+            "It only works when the child table has fewer rows than the parent table"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson positions `NOT EXISTS` as an efficient existence check for relationship-level reconciliation.",
+          "wrong": "The lesson is about existence checks, not forced sorting, guaranteeing equality, or relying on relative table sizes."
+        },
+        {
+          "q": "What does Step 3’s transaction-to-order ratio help detect?",
+          "choices": [
+            "Whether the child-row volume is unusually low or high relative to the parent-row count",
+            "Whether every order was entered on the same date",
+            "Whether transactions were rounded to two decimals",
+            "Whether customers have missing phone numbers"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses ratio analysis to spot missing transactions or suspiciously high child-row counts relative to orders.",
+          "wrong": "The ratio is a reconciliation signal, not a date check, rounding check, or customer-data quality check."
+        },
+        {
+          "q": "What does the CustomerCoveragePct metric measure in Step 5?",
+          "choices": [
+            "The percentage of customers who have at least one order",
+            "The percentage of orders that are fully paid",
+            "The share of products that were sold in the warehouse",
+            "The percentage of transactions that have a null currency"
+          ],
+          "correct": 0,
+          "right": "Exactly. It compares distinct customers in Orders against total customers in Customers to show coverage.",
+          "wrong": "The lesson defines it as customer-to-order coverage, not payment status, product movement, or currency completeness."
+        }
+      ],
+      "close": "The main idea is that row counts alone are not enough; you also need relationship checks and expected ratios. The next lesson turns from counts to cash reconciliation across two independently maintained records."
+    },
+    "G08-T03": {
+      "open": "This lesson moves from simple counts into a formal reconciliation statement. The key idea is not just finding a variance, but separating period totals, unmatched items, and an ending outstanding balance.",
+      "questions": [
+        {
+          "q": "Why does the monthly reconciliation use a `FULL OUTER JOIN` between MonthlyOrders and MonthlyTransactions?",
+          "choices": [
+            "To keep months that exist on only one side visible in the result",
+            "To force duplicate rows to be removed automatically",
+            "To convert transaction amounts into order currency",
+            "To filter out cancelled orders before aggregation"
+          ],
+          "correct": 0,
+          "right": "Exactly. A full outer join preserves periods present in only one dataset, which is essential for two-sided reconciliation.",
+          "wrong": "The lesson uses the join to preserve unmatched periods, not to deduplicate, convert currency, or filter cancellations."
+        },
+        {
+          "q": "What does Step 5’s OutstandingBalance represent?",
+          "choices": [
+            "The remaining unreconciled amount after comparing total order value to settled transaction value",
+            "The total number of orders that were cancelled",
+            "The average transaction amount per order",
+            "The number of months with a non-zero variance"
+          ],
+          "correct": 0,
+          "right": "Correct. It is the remaining difference between total order value and the amount settled by transactions.",
+          "wrong": "The lesson defines it as an amount gap, not a count, average, or month tally."
+        },
+        {
+          "q": "Why does Step 4 use amount proximity to identify near matches?",
+          "choices": [
+            "To surface probable transposition or small-value mismatches that should be reviewed manually",
+            "To prove that all mismatches are caused by rounding",
+            "To exclude every order that already has a transaction",
+            "To convert the query into a bank statement report"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson treats near matches as investigative leads, especially when a transposition error may be involved.",
+          "wrong": "The lesson is about review leads, not proof of rounding, exclusion of matched rows, or conversion into a different report type."
+        }
+      ],
+      "close": "This lesson formalizes reconciliation as totals, unmatched items, and an outstanding balance that must be explained. Next is the same identity applied to opening balance, movements, and closing balance over time."
+    },
+    "G08-T04": {
+      "open": "Here the reconciliation pattern becomes a running-balance check. Instead of comparing one total to another, the lesson validates the period identity: opening plus net movement should land on the next closing balance.",
+      "questions": [
+        {
+          "q": "What does `SUM(NetMovement) OVER (ORDER BY Yr, Mo ROWS UNBOUNDED PRECEDING)` calculate in this lesson?",
+          "choices": [
+            "A cumulative running balance across periods",
+            "A distinct count of transaction dates",
+            "The average monthly debit value",
+            "A list of missing months in the sequence"
+          ],
+          "correct": 0,
+          "right": "Correct. The windowed SUM builds the cumulative balance period by period.",
+          "wrong": "The lesson uses the window aggregate for running totals, not distinct counts, averages, or gap detection."
+        },
+        {
+          "q": "What is the purpose of `LAG(CumulativeNet) OVER (ORDER BY Yr, Mo)` in Step 2?",
+          "choices": [
+            "To compare the current period’s cumulative balance with the prior period’s cumulative balance",
+            "To find the earliest transaction in the month",
+            "To remove duplicate months from the result",
+            "To convert debits into credits automatically"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses LAG to validate that each period’s movement matches the change from the previous cumulative balance.",
+          "wrong": "The lesson uses LAG for period-over-period comparison, not deduplication, min-date lookup, or sign conversion."
+        },
+        {
+          "q": "Why does Step 4 convert year and month into `Yr * 12 + Mo`?",
+          "choices": [
+            "To make consecutive periods easy to compare as a single numeric sequence",
+            "To sort months alphabetically",
+            "To calculate the number of days in each period",
+            "To force SQL Server to use decimal arithmetic"
+          ],
+          "correct": 0,
+          "right": "Exactly. That transformation makes it easy to detect whether there is a gap of more than one period.",
+          "wrong": "The lesson uses the formula for sequence continuity, not alphabetic ordering, date math, or decimal coercion."
+        }
+      ],
+      "close": "The lesson’s core is the accounting identity plus window functions for running validation and gap detection. Next comes a consolidation problem where internal entities must be eliminated rather than merely matched."
+    },
+    "G08-T05": {
+      "open": "This lesson shifts from external reconciliation into consolidation. The main challenge is identifying internal entities and then checking that the mirrored intercompany amounts actually cancel out.",
+      "questions": [
+        {
+          "q": "Why does the query first build an `InternalCustomers` CTE?",
+          "choices": [
+            "To isolate customers flagged as internal entities before matching them to intercompany orders",
+            "To convert all currencies to GBP",
+            "To count only cancelled orders",
+            "To remove orders without a transaction"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly filters internal customers first so later joins focus on intercompany activity.",
+          "wrong": "The CTE is for entity filtering, not currency conversion, cancellation filtering, or orphan removal."
+        },
+        {
+          "q": "What does `STRING_AGG(t.Currency, ', ')` help reveal in Step 1?",
+          "choices": [
+            "Whether an order was settled in more than one currency, which is a currency-mismatch warning",
+            "How many customers are internal entities",
+            "The oldest transaction date in the group",
+            "Whether the order was cancelled after posting"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses the aggregated currency list to spot multi-currency intercompany pairs and exchange-rate risk.",
+          "wrong": "The currency list is diagnostic for settlement mismatch, not customer counts, date age, or cancellation logic."
+        },
+        {
+          "q": "What is Step 2 meant to provide beyond individual-order reconciliation?",
+          "choices": [
+            "A roll-up of total intercompany exposure by entity",
+            "A list of all products sold to customers",
+            "A monthly tax return summary",
+            "A check for duplicate payment dates"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson says Step 2 is for the total uneliminated balance per subsidiary or entity.",
+          "wrong": "Step 2 is an entity exposure rollup, not product, tax, or duplicate-payment analysis."
+        }
+      ],
+      "close": "This one is about elimination, not just matching: intercompany balances must vanish in consolidation. The next lesson turns to a different control-account drift problem between a sub-ledger and the GL."
+    },
+    "G08-T06": {
+      "open": "The reconciliation theme stays the same, but the accounting structure changes: a detail ledger versus a control total. The lesson emphasizes both monthly variance and cumulative drift so you can tell whether the problem is recurring.",
+      "questions": [
+        {
+          "q": "What does `CumulativeDrift` in Step 1 measure?",
+          "choices": [
+            "The running sum of monthly differences between the control total and the sub-ledger",
+            "The average transaction amount per month",
+            "The total number of cancelled orders",
+            "The age of the oldest unreconciled invoice"
+          ],
+          "correct": 0,
+          "right": "Correct. It accumulates the monthly variance over time to show whether the gap is growing.",
+          "wrong": "The lesson defines drift as a cumulative variance, not an average, cancellation count, or invoice age."
+        },
+        {
+          "q": "Why does the CASE expression distinguish both positive and negative variance directions?",
+          "choices": [
+            "Because control-over-subledger and subledger-over-control point to different posting problems",
+            "Because positive variances must always be rounded up",
+            "Because negative variances mean transactions are cancelled",
+            "Because the query only works for months with exactly one order"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson explicitly treats the sign as meaningful: one direction means GL only, the other means sub-ledger only.",
+          "wrong": "The sign is diagnostic in this lesson; it is not about rounding, cancellation, or one-order months."
+        },
+        {
+          "q": "What is Step 3’s purpose?",
+          "choices": [
+            "To identify specific orders that exist in the control system but have no matching sub-ledger transaction",
+            "To calculate VAT on each product",
+            "To find customers with no orders",
+            "To detect missing periods in a calendar"
+          ],
+          "correct": 0,
+          "right": "Exactly. It drills from drift totals down to the records that caused the control-only posting.",
+          "wrong": "Step 3 is a missing-posting drill-down, not a VAT, customer, or calendar analysis."
+        }
+      ],
+      "close": "The lesson shows how small monthly variances compound into cumulative drift and where to drill down for specific unposted items. Next is multi-currency reconciliation, where the first mistake is summing unlike amounts at all."
+    },
+    "G08-T07": {
+      "open": "This lesson is about a subtle but dangerous error: adding transactions across currencies as if they were interchangeable. The fix starts with breaking totals out by currency, then converting with explicit rates before any combined total is trusted.",
+      "questions": [
+        {
+          "q": "Why does Step 1 group by `Currency` before summing amounts?",
+          "choices": [
+            "To avoid mixing different currencies into a meaningless total",
+            "To automatically convert every amount into GBP",
+            "To sort transactions by exchange-rate volatility",
+            "To identify cancelled orders"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson’s first rule is to separate currencies before any aggregate is interpreted.",
+          "wrong": "The query does not convert automatically or analyze cancellations; it isolates currencies first."
+        },
+        {
+          "q": "What does Step 2 flag when `CurrencyCount > 1` for an order?",
+          "choices": [
+            "That the order contains multiple currencies and cannot be summed directly without conversion",
+            "That the order is guaranteed to be overpaid",
+            "That the order was posted before its order date",
+            "That the order must be cancelled"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson labels this a multi-currency order and warns against direct summation.",
+          "wrong": "Multiple currencies are a reconciliation warning, not proof of overpayment, cutoff error, or cancellation."
+        },
+        {
+          "q": "Why does Step 4 check for `LEN(Currency) <> 3` and blank values?",
+          "choices": [
+            "Because invalid or missing ISO 4217 codes cannot be converted reliably",
+            "Because all valid currencies must be numeric",
+            "Because the amount field should be three characters long",
+            "Because blank currencies always mean cancelled orders"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson treats malformed currency codes as a pre-conversion data quality issue.",
+          "wrong": "The lesson is validating currency codes, not numeric formats, amount length, or cancellation status."
+        }
+      ],
+      "close": "The core warning is simple: raw sums across currencies are deceptive unless you know the mix and the conversion basis. The next lesson moves from currency mix-ups to period cutoff errors around the order date and posting date."
+    },
+    "G08-T08": {
+      "open": "This lesson focuses on timing: the economic date of the order versus the date the transaction was posted. The main idea is that a valid amount can still be wrong if it lands in the wrong accounting period.",
+      "questions": [
+        {
+          "q": "What does the lesson treat as the cutoff problem?",
+          "choices": [
+            "A transaction recorded in a different year-month from the related order",
+            "A transaction with too many decimal places",
+            "A customer with no email address",
+            "An order with more than one product"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson defines cutoff errors as period mismatches between the economic activity date and the posting date.",
+          "wrong": "The lesson is about period timing, not decimal precision, customer attributes, or product counts."
+        },
+        {
+          "q": "Why does Step 3 flag transactions near month-end using `DAY(EOMONTH(TransactionDate)) - DAY(TransactionDate)`?",
+          "choices": [
+            "Because transactions close to month-end are at the highest risk of slipping into the next period",
+            "Because those transactions always have zero value",
+            "Because month-end records must be cancelled",
+            "Because `EOMONTH` converts amounts to integers"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses proximity to month-end as a practical risk indicator for cutoff issues.",
+          "wrong": "The query is about period risk, not zero values, cancellations, or numeric type conversion."
+        },
+        {
+          "q": "What does the direction in Step 2 tell you?",
+          "choices": [
+            "Whether revenue was recognized too early or too late, which changes the needed adjustment entry",
+            "Whether the customer is internal or external",
+            "Whether the order amount is taxable",
+            "Whether the transaction uses GBP or USD"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson uses direction to decide whether to reverse the current period or adjust a prior period.",
+          "wrong": "Direction here is about timing adjustment, not entity type, tax, or currency."
+        }
+      ],
+      "close": "The lesson is all about period boundaries and whether revenue landed where it belongs. Next is duplicate payment detection, where the focus shifts from timing to repeated cash outflow."
+    },
+    "G08-T09": {
+      "open": "This lesson is about identifying when the same invoice was paid more than once. It separates exact duplicates from near-duplicates and also distinguishes legitimate split payments from true overpayments.",
+      "questions": [
+        {
+          "q": "Why does the exact-duplicate query group by `OrderID, Amount, Currency` and use `HAVING COUNT(*) > 1`?",
+          "choices": [
+            "To find repeated payments for the same invoice amount and currency",
+            "To find every order with exactly one payment",
+            "To convert duplicate rows into unique rows automatically",
+            "To identify transactions older than 30 days"
+          ],
+          "correct": 0,
+          "right": "Correct. That grouping key is the core duplicate-detection pattern described in the lesson.",
+          "wrong": "The lesson is looking for repeated payments, not single-payment orders, automatic deduplication, or age filtering."
+        },
+        {
+          "q": "What does the self-join condition `t1.TransactionID < t2.TransactionID` accomplish in Step 2?",
+          "choices": [
+            "It prevents mirrored duplicate pairs from appearing twice",
+            "It ensures only cancelled transactions are included",
+            "It forces the join to match different currencies only",
+            "It rounds both transaction dates to the nearest month"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson explains that this avoids showing both A-B and B-A for the same near-duplicate pair.",
+          "wrong": "The condition is about pair deduplication, not cancellation, currency separation, or date rounding."
+        },
+        {
+          "q": "How does Step 3 distinguish split payments from overpayments?",
+          "choices": [
+            "Two transactions that sum exactly to the order total are treated as split payments; sums above the total are overpaid",
+            "Any order with two transactions is always a duplicate",
+            "Any order with one transaction is always an overpayment",
+            "Split payments are defined by negative amounts only"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson explicitly says not all multi-transaction orders are duplicates; the total versus order value determines the status.",
+          "wrong": "The lesson uses amount-sum logic, not transaction count alone or negative-only rules."
+        }
+      ],
+      "close": "The lesson’s key lesson is that duplicate detection needs both grouping and judgement about legitimate split payments. Next comes fan-out double-counting, where the error is not extra cash but an inflated aggregate from a bad join."
+    },
+    "G08-T10": {
+      "open": "This lesson tackles a classic analytics mistake: joining a one-row-per-order table to a multi-row-per-order table, then summing the header value after the join. The result is not a data-quality issue in the source so much as a granularity error in the query.",
+      "questions": [
+        {
+          "q": "What causes the fan-out error in this lesson?",
+          "choices": [
+            "Summing `Orders.TotalAmount` after a one-to-many join to Transactions",
+            "Using `GROUP BY` on the Orders table",
+            "Filtering cancelled orders before aggregation",
+            "Selecting only distinct TransactionID values"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson’s central warning is that the header row gets repeated once per matching transaction.",
+          "wrong": "The other choices are not the cause of fan-out; the issue is aggregate placement after the join."
+        },
+        {
+          "q": "Why does the lesson recommend aggregating transactions first into a CTE?",
+          "choices": [
+            "So each order joins to exactly one transaction total, preventing header multiplication",
+            "So duplicate orders are removed from the database",
+            "So all monthly totals become yearly totals",
+            "So `SUM(DISTINCT)` can be avoided by converting amounts to strings"
+          ],
+          "correct": 0,
+          "right": "Yes. The aggregate-first pattern collapses the many-side to one row per order before joining.",
+          "wrong": "The lesson uses the CTE to control join granularity, not to delete orders, change time scale, or stringify amounts."
+        },
+        {
+          "q": "What does `COUNT(*) - COUNT(DISTINCT o.OrderID)` tell you in Step 2?",
+          "choices": [
+            "How many extra rows were created by fan-out",
+            "How many orders were cancelled",
+            "How many currencies appear in the dataset",
+            "How many orders have no transactions"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson uses that difference as the diagnostic count of multiplied join rows.",
+          "wrong": "The metric measures extra join rows, not cancellations, currency variety, or missing children."
+        }
+      ],
+      "close": "The whole point is to keep aggregation aligned with grain. Next is unallocated cash, where the problem is a payment that exists but cannot be matched to any invoice at all."
+    },
+    "G08-T11": {
+      "open": "This lesson is about cash that arrived but has no valid invoice or order linkage. The focus is on orphan transactions, ageing them, and then looking for plausible matches without pretending the match is certain.",
+      "questions": [
+        {
+          "q": "What does `NOT EXISTS (SELECT 1 FROM Orders o WHERE o.OrderID = t.OrderID)` detect in Step 1?",
+          "choices": [
+            "Transactions with no valid parent order, including NULL and invalid OrderID values",
+            "Only transactions older than 90 days",
+            "Only orders that were cancelled",
+            "Only duplicate transactions with the same amount"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly says it catches both NULL references and non-existent OrderIDs.",
+          "wrong": "The check is about orphaned transactions, not age thresholds, cancellation, or duplicate amounts."
+        },
+        {
+          "q": "Why does Step 2 group unallocated cash by age band?",
+          "choices": [
+            "To prioritize older unresolved receipts because they are harder to resolve",
+            "To convert all amounts to the oldest transaction date",
+            "To find products with zero stock",
+            "To prove the payment was duplicated"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson says age bands help the AR team prioritize fresh items first and escalate stale ones later.",
+          "wrong": "Age bands are about triage, not conversion, inventory, or proving duplication."
+        },
+        {
+          "q": "What is Step 3 trying to do with amount and date proximity?",
+          "choices": [
+            "Suggest likely matches for unallocated receipts that the AR team can manually confirm",
+            "Delete unmatched receipts from the ledger",
+            "Mark every near match as definitively reconciled",
+            "Convert foreign currency receipts into GBP automatically"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson frames Step 3 as fuzzy matching for investigation, not automatic posting.",
+          "wrong": "The query is advisory, not destructive, not definitive, and not a currency conversion routine."
+        }
+      ],
+      "close": "This lesson treats unmatched cash as a triage problem: find the orphans, bucket them by age, and suggest likely allocations. The next lesson turns to stock counts versus system balance."
+    },
+    "G08-T12": {
+      "open": "This lesson reuses the reconciliation pattern for inventory. Instead of invoices and cash, it compares the system’s book balance to physical stock signals and flags products whose movement pattern does not make sense.",
+      "questions": [
+        {
+          "q": "What does the lesson use as a proxy for inventory movement when no dedicated stock movement table exists?",
+          "choices": [
+            "The Orders table, where each order is treated as an outbound movement signal",
+            "The Customers table, where each customer is one unit of stock",
+            "The Transactions table only when amounts are negative",
+            "The Products table price field"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says Orders provide a proxy for movement when a dedicated movement table is absent.",
+          "wrong": "The lesson does not use customers as stock units, negative transactions only, or product prices as movement records."
+        },
+        {
+          "q": "Why does the query flag `StockQuantity = 0 AND COUNT(o.OrderID) > 0`?",
+          "choices": [
+            "Because orders exist despite zero stock, suggesting oversell, count error, or a missed receipt",
+            "Because zero stock means the product must be inactive",
+            "Because every zero-stock product is fully reconciled",
+            "Because the product has no VAT rate"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson treats that combination as a classic stock discrepancy signal requiring investigation.",
+          "wrong": "Zero stock is not automatically benign or tied to VAT; the issue is sales activity against an empty balance."
+        },
+        {
+          "q": "What is Step 3 measuring with `UnsettledOrders` and `OutstandingBalance`?",
+          "choices": [
+            "How much order value remains unmatched by transaction value for each product",
+            "How many products are marked inactive",
+            "How many refunds were issued in the current month",
+            "How many customers live in each country"
+          ],
+          "correct": 0,
+          "right": "Exactly. It’s the product-level settlement gap, not an inactivity or geography report.",
+          "wrong": "The lesson uses product-level outstanding value, not product status counts, refund volume, or customer geography."
+        }
+      ],
+      "close": "The lesson’s theme is that physical or system stock inconsistencies often show up first as mismatched movement patterns. Next is tax reconciliation, where the same compare-and-flag logic is applied to VAT."
+    },
+    "G08-T13": {
+      "open": "This lesson applies reconciliation to tax: derive the VAT component from gross order values, then compare the computed tax with what was actually collected. It also emphasizes that only valid VAT rates should be in play.",
+      "questions": [
+        {
+          "q": "How does the lesson derive VAT from a VAT-inclusive gross amount?",
+          "choices": [
+            "By computing net as `Gross / (1 + Rate/100)` and then VAT as `Gross - Net`",
+            "By multiplying gross by the rate directly",
+            "By subtracting the rate percentage from the gross amount",
+            "By dividing gross by the number of transactions"
+          ],
+          "correct": 0,
+          "right": "Correct. That is the formula described in the explanation and used in the query.",
+          "wrong": "The lesson explicitly uses the reverse-calculation formula, not direct multiplication or unrelated arithmetic."
+        },
+        {
+          "q": "Why does Step 3 flag VAT rates not in `(0, 5, 20)`?",
+          "choices": [
+            "Because those are the valid UK VAT rates the lesson expects",
+            "Because every rate above 20 is automatically tax-free",
+            "Because only 0% and 20% are ever legal in the UK",
+            "Because VAT rates must be stored as text"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson names 0%, 5%, and 20% as the valid UK rate set for this exercise.",
+          "wrong": "The lesson’s own framing allows 0%, 5%, and 20%, not just two rates or text storage."
+        },
+        {
+          "q": "What does Step 4 compare?",
+          "choices": [
+            "VAT computed from invoice data against total transaction amounts received",
+            "Customer age bands against product prices",
+            "Stock quantities against order counts",
+            "Transaction counts against supplier names"
+          ],
+          "correct": 0,
+          "right": "Exactly. It is the tax-control-account-style reconciliation at the end of the lesson.",
+          "wrong": "The lesson’s final comparison is tax versus receipts, not ageing, stock, or supplier-name checks."
+        }
+      ],
+      "close": "The lesson is a tax version of the broader reconciliation pattern: compute expected tax, compare it to actuals, and watch for rate mistakes. Next is the aged debtor report, where outstanding balances are bucketed by age and checked against expected customer totals."
+    },
+    "G08-T14": {
+      "open": "This lesson combines reconciliation with receivables ageing. It first computes invoice-level outstanding balances, then rolls them up into customer and portfolio age bands, and finally checks for overpaid customers.",
+      "questions": [
+        {
+          "q": "Why does the CTE in Step 1 use `HAVING o.TotalAmount - ISNULL(SUM(t.Amount), 0) > 0.01`?",
+          "choices": [
+            "To keep only invoices that still have a meaningful outstanding balance",
+            "To include only cancelled orders",
+            "To round every invoice to the nearest whole pound",
+            "To sort customers alphabetically"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses HAVING to filter out settled orders after aggregation.",
+          "wrong": "The filter is about outstanding balance, not cancellation, whole-pound rounding, or sorting."
+        },
+        {
+          "q": "What do the age-band SUM expressions in Step 1 do?",
+          "choices": [
+            "They pivot outstanding balances into separate customer aging columns",
+            "They convert overdue invoices into credits",
+            "They remove customers with zero orders",
+            "They calculate VAT on receivables"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses conditional SUM to create the standard AR aging breakdown in one row per customer.",
+          "wrong": "The expressions are for aging buckets, not credit conversion, row removal, or tax calculation."
+        },
+        {
+          "q": "What does Step 3’s negative `ImpliedOutstanding` indicate?",
+          "choices": [
+            "The customer has paid more than invoiced, which may indicate duplicate payment or misallocation",
+            "The customer has no orders",
+            "The customer is on a 90+ day aging bucket",
+            "The ledger is perfectly reconciled"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson states that overpayment creates a liability and may indicate a duplicate or wrong-customer allocation.",
+          "wrong": "Negative outstanding is not the same as no orders, age banding, or a clean reconciliation."
+        }
+      ],
+      "close": "The lesson’s structure mirrors a real AR aging workflow: build invoice balances, classify them by age, then identify overpayment anomalies. The final lesson is a batch control-total check, where completeness matters more than tolerance."
+    },
+    "G08-T15": {
+      "open": "This lesson is the batch-file version of reconciliation. Rather than comparing business balances, it verifies that declared control totals match the actual record count and total amount, with zero tolerance for mismatch.",
+      "questions": [
+        {
+          "q": "Why does Step 1 use `@Tolerance = 0.00`?",
+          "choices": [
+            "Because batch control totals must match exactly, not within a rounding band",
+            "Because decimals are not allowed in Transactions",
+            "Because only negative amounts are valid in batch files",
+            "Because `CHECKSUM_AGG` can only work with zero tolerance"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson contrasts batch-file control totals with business-data tolerances and says batch files need exact matches.",
+          "wrong": "The zero tolerance is about exact control-total verification, not decimal rules, sign rules, or checksum limitations."
+        },
+        {
+          "q": "What does `CHECKSUM_AGG(CHECKSUM(...))` provide in this lesson?",
+          "choices": [
+            "A compact integrity value that changes if records are altered after the batch load",
+            "A count of cancelled orders",
+            "A guarantee that no rows were rejected",
+            "A replacement for monthly aging analysis"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses it as a batch-state fingerprint for post-load verification.",
+          "wrong": "The checksum is for change detection, not cancellation counts, rejection proof, or aging."
+        },
+        {
+          "q": "What does the sequence gap query detect?",
+          "choices": [
+            "Missing TransactionID values that suggest lost, rejected, or never-loaded records",
+            "Orders that have no products",
+            "Customers with duplicate names",
+            "Currency codes that are not three letters long"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson explains that a gap in sequential IDs can indicate missing records in the batch.",
+          "wrong": "The gap check is about missing IDs, not order composition, customer names, or currency format."
+        }
+      ],
+      "close": "The lesson’s message is that control totals and sequence checks are completeness controls, not business-rule checks. That completes the reconciliation group: from header-detail mismatches through batch verification and every major reconciliation pattern in between."
     }
   }
 }
