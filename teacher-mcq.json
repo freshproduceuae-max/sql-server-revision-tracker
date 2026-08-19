@@ -4201,6 +4201,678 @@
         }
       ],
       "close": "That completes the 16 consistency lessons. Across them, the common thread is that SQL validation is usually about making an implicit business rule explicit, then checking whether the stored data actually obeys it."
+    },
+    "G07-T01": {
+      "open": "Start with the business-rule framing from Group 7: this lesson treats minimum order value as a post-check validation, not a data type issue. The key pattern is separating zero, negative, token, and sub-minimum positive orders before looking at aggregate revenue impact.",
+      "questions": [
+        {
+          "q": "Why does the lesson treat a £0.50 order differently from a £0.00 order in the violation label?",
+          "choices": [
+            "Because £0.50 is a valid positive amount but still breaches the minimum order value, while £0.00 is classified as a free order",
+            "Because both are invalid currency values and must be rejected by the data type",
+            "Because £0.00 always means a refund and £0.50 always means a chargeback",
+            "Because the query groups all amounts below £10 into one label"
+          ],
+          "correct": 0,
+          "right": "That matches the lesson’s CASE logic: zero-value orders are labelled separately from token and sub-minimum positive orders.",
+          "wrong": "The lesson explicitly distinguishes zero, negative, token, and below-minimum positive amounts. £0.50 is not a data type error; it is a positive order that still violates the business threshold."
+        },
+        {
+          "q": "What is Step 3 calculating when it uses `COUNT(*) * @MinOrderValue - SUM(TotalAmount)`?",
+          "choices": [
+            "The revenue lost if all sub-minimum positive orders had been raised to the minimum threshold",
+            "The number of cancelled orders that were refunded",
+            "The average order value across all customers",
+            "The fulfilment cost per order"
+          ],
+          "correct": 0,
+          "right": "Exactly. The query compares actual revenue to the revenue that would have been earned at the minimum order value.",
+          "wrong": "Step 3 is a revenue-impact calculation, not a refund, average, or fulfilment-cost query. It shows the gap between actual sub-minimum revenue and the minimum allowed revenue."
+        },
+        {
+          "q": "Why does Step 4 use `ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (PARTITION BY YEAR(OrderDate)), 1)`?",
+          "choices": [
+            "To show the share of each year's sub-minimum orders that falls in each month",
+            "To calculate the monthly average order value for each customer",
+            "To compare each month's revenue against the entire table total",
+            "To convert pounds into pence before grouping"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses the windowed total per year so each month can be shown as a percentage of that year’s sub-minimum orders.",
+          "wrong": "The lesson’s explanation is about seasonal patterns within each year. The `PARTITION BY YEAR(OrderDate)` window makes the denominator the yearly sub-minimum count, not a customer average or a table-wide total."
+        }
+      ],
+      "close": "That lesson moves from row-level violations to customer and revenue impact, which is the same detective pattern used throughout Business Rules. Next lessons keep that theme but apply it to exposure, eligibility, and control bypasses."
+    },
+    "G07-T02": {
+      "open": "This lesson builds on the same business-rule idea, but the threshold is cumulative credit exposure rather than a single transaction value. The important shift is that the check must sum active orders first, then compare to the credit ceiling.",
+      "questions": [
+        {
+          "q": "What is the core credit-control rule the lesson says should be enforced?",
+          "choices": [
+            "Sum outstanding orders for a customer and compare that total to the credit limit",
+            "Reject any order over £10,000 regardless of customer history",
+            "Allow credit as long as each individual order is below the limit",
+            "Only check delivered orders because they are the only ones that matter"
+          ],
+          "correct": 0,
+          "right": "That is the lesson’s main point: credit checks must be cumulative, not per-order.",
+          "wrong": "The lesson explicitly says a per-transaction check is insufficient. Delivered and cancelled orders are excluded from the outstanding balance used for the credit check."
+        },
+        {
+          "q": "Which order statuses does the lesson treat as part of outstanding exposure in the main query?",
+          "choices": [
+            "Any status not in Delivered, Cancelled, or Refunded",
+            "Only Pending and Processing, because those are active states",
+            "Only Delivered, because fulfilled orders still count as exposure",
+            "Only Cancelled, because they are the only unpaid records"
+          ],
+          "correct": 0,
+          "right": "Correct. The query excludes Delivered, Cancelled, and Refunded from the exposure calculation.",
+          "wrong": "The lesson’s CTE filters out delivered, cancelled, and refunded orders. It does not define exposure as only Pending/Processing, and it does not include delivered orders in the active balance here."
+        },
+        {
+          "q": "Why does Step 2 compute `CurrentOutstanding + ProposedOrderAmount` before making a decision?",
+          "choices": [
+            "To simulate a pre-order credit check and reject an order that would push the customer over limit",
+            "To recalculate the customer’s credit limit from historical orders",
+            "To find duplicate orders by amount",
+            "To decide whether the order should be marked as refunded"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses that projection to show how the system should stop a breach before the order is committed.",
+          "wrong": "Step 2 is about projected exposure, not credit-limit recomputation, duplicate detection, or refunds. It is a preventive check, not a reconciliation step."
+        }
+      ],
+      "close": "The key pattern here is aggregation before validation, which is a recurring theme in the rest of Group 7. Next lessons vary the aggregation target: rates, dates, transactions, and authorisation controls."
+    },
+    "G07-T03": {
+      "open": "This lesson stays in Group 7’s business-rule lane, but now the validation target is a rate field. The main gotcha is that a percentage column can be corrupted either by impossible values or by decimal-vs-percentage confusion.",
+      "questions": [
+        {
+          "q": "Why does the lesson flag `DiscountPercent = 0.10` as suspicious in Step 3?",
+          "choices": [
+            "Because a tiny non-zero value may mean the API sent 10% as a decimal fraction instead of 10",
+            "Because any value under 1 is mathematically impossible for a percentage field",
+            "Because the column can only store integers",
+            "Because 0.10 always means a 10% surcharge"
+          ],
+          "correct": 0,
+          "right": "Right. The lesson treats very small positive values as possible decimal-entry errors, especially when the business expects percentage notation.",
+          "wrong": "The lesson does not say values below 1 are impossible. It says they can be plausible but suspicious, because they may reflect a percentage/decimal mix-up."
+        },
+        {
+          "q": "Which condition is checked before the lesson considers approval tiers like manager or director sign-off?",
+          "choices": [
+            "Whether the discount is above 100%, below 0, or NULL",
+            "Whether the product price is above £50",
+            "Whether the salesperson is terminated",
+            "Whether the discount is exactly 10%"
+          ],
+          "correct": 0,
+          "right": "Correct. The query first filters out NULL, negative, and over-30 values, then labels the band by severity.",
+          "wrong": "The lesson’s validation starts with range checks and only then classifies tiered approval bands. It is not based on product price, employment status, or an exact 10% threshold."
+        },
+        {
+          "q": "What is the negative effective price example intended to show?",
+          "choices": [
+            "A discount over 100% produces a negative sale value, which is financially catastrophic",
+            "A commission of 110% is a normal high-performing sales rate",
+            "A zero discount always makes the effective price negative",
+            "A rate over 30% is only a reporting issue, not a financial one"
+          ],
+          "correct": 0,
+          "right": "Yes. The explanation says a discount above 100% yields a negative effective price, meaning the business would owe the customer money.",
+          "wrong": "The lesson treats a discount above 100% as impossible and dangerous, not as a normal or merely cosmetic value. The negative effective price is the key failure mode."
+        }
+      ],
+      "close": "This lesson is mostly about catching impossible rates and plausible-looking entry errors before they propagate into pricing or commission calculations. The next lessons move from rate validity into date, stock, and transaction controls."
+    },
+    "G07-T04": {
+      "open": "This lesson is about exact age checking, which is one of the clearest examples of a business rule that looks simple but fails if you use only the year. The query’s real lesson is the birthday adjustment on top of `DATEDIFF(YEAR, ...)`.",
+      "questions": [
+        {
+          "q": "Why is `YEAR(GETDATE()) - YEAR(DateOfBirth)` unsafe for age eligibility?",
+          "choices": [
+            "It ignores whether the birthday has already occurred this year",
+            "It always returns a negative value for minors",
+            "It only works for leap-year birthdays",
+            "It cannot be used with dates stored in SQL Server"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson shows that year-only logic can mark someone as 18 before their actual birthday has happened.",
+          "wrong": "The lesson’s issue is not sign or leap-year handling. It is that year-only subtraction crosses a calendar year boundary before the birthday is reached."
+        },
+        {
+          "q": "What is the purpose of the CASE adjustment subtracted from `DATEDIFF(YEAR, DateOfBirth, GETDATE())`?",
+          "choices": [
+            "To subtract one year when the birthday has not yet occurred this year",
+            "To convert age into months",
+            "To handle NULL DateOfBirth values automatically",
+            "To make every customer appear one year younger"
+          ],
+          "correct": 0,
+          "right": "Yes. That is the standard exact-age correction the lesson explicitly teaches.",
+          "wrong": "The CASE expression is a birthday check, not a month conversion or NULL handler. It only subtracts one when the current date has not yet reached the birthday in the current year."
+        },
+        {
+          "q": "What does Step 3’s `FALSE APPROVAL` label mean?",
+          "choices": [
+            "Year-only age says 18 or over, but exact age is still under 18",
+            "The customer is exactly 18 on their birthday",
+            "The customer has no DateOfBirth stored",
+            "The customer is allowed to buy alcohol because they are close to 18"
+          ],
+          "correct": 0,
+          "right": "That is the discrepancy the lesson wants you to detect: the simplified year-only method would wrongly approve the customer.",
+          "wrong": "The lesson’s discrepancy check is specifically about a false positive caused by year-only age logic. It is not about exact birthdays or missing DOBs."
+        }
+      ],
+      "close": "The important takeaway is that legal age is completed years of life, not a year-number difference. The next lessons continue the same control mindset with duplicate detection, stock, and salary rules."
+    },
+    "G07-T05": {
+      "open": "This lesson shifts from threshold validation to duplicate detection. The core reasoning is that duplicates are defined by the fields that should be unique together, and the lesson shows both exact and near-duplicate patterns.",
+      "questions": [
+        {
+          "q": "What makes the Step 1 duplicate check reliable in this lesson?",
+          "choices": [
+            "It groups by the combination of OrderID, Amount, Currency, and the date part of TransactionDate",
+            "It groups only by Amount so repeated values are easy to spot",
+            "It compares each transaction to the customer’s total monthly spend",
+            "It flags any transaction that happens more than once anywhere in the table"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson defines the uniqueness key as the combination of order, amount, currency, and date.",
+          "wrong": "The lesson does not use amount alone or a whole-table count. It groups by the combination that should uniquely identify the payment event."
+        },
+        {
+          "q": "Why does Step 2 use `LAG(TransactionDate)`?",
+          "choices": [
+            "To compare a transaction to the previous one for the same order and amount and measure suspiciously short gaps",
+            "To sort transactions by currency",
+            "To calculate the average amount per customer",
+            "To find refunds before purchases"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses `LAG` to find a previous row and then checks the minute gap between the two timestamps.",
+          "wrong": "`LAG` in this lesson is not about currency, averages, or refunds. It is used for sequential duplicate detection within the same order-and-amount partition."
+        },
+        {
+          "q": "What does a duplicate `CorrelationID` indicate in Step 3?",
+          "choices": [
+            "An idempotency violation or gateway/key reuse problem",
+            "A normal repeated customer name",
+            "A valid way to group all daily transactions",
+            "A refund that was processed correctly"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson treats repeated correlation IDs as a duplicate-processing failure.",
+          "wrong": "The lesson explicitly says the correlation key should be unique if it is being used as an idempotency key. Repeated values are a duplicate-transaction signal, not a normal grouping mechanism."
+        }
+      ],
+      "close": "This lesson is a good template for detective controls: exact-key grouping first, then near-duplicate timing checks, then key reuse checks. The next lesson applies a similar post-hoc detection mindset to stock oversell."
+    },
+    "G07-T06": {
+      "open": "This lesson is about oversell detection after concurrency has already gone wrong. The useful distinction is between detection queries and real-time prevention, and the lesson is explicit that SQL here is the detector, not the lock manager.",
+      "questions": [
+        {
+          "q": "Why does the lesson use `COUNT(*)` as a proxy for ordered units?",
+          "choices": [
+            "Because the current schema has no Quantity column on Orders",
+            "Because quantity is always equal to the product price",
+            "Because COUNT is the same as SUM(Quantity) in every schema",
+            "Because orders are never linked to products"
+          ],
+          "correct": 0,
+          "right": "Exactly. The explanation says a real system would sum line quantities, but this schema only gives order rows.",
+          "wrong": "The lesson does not say COUNT equals quantity in general. It says the schema lacks a Quantity column, so COUNT is just a demonstration proxy."
+        },
+        {
+          "q": "Which orders are excluded from the oversell count in Step 1?",
+          "choices": [
+            "Cancelled and Refunded orders",
+            "Delivered and Shipped orders only",
+            "Only orders above £1000",
+            "Only orders placed by inactive customers"
+          ],
+          "correct": 0,
+          "right": "Right. The lesson counts active commitments and excludes cancelled and refunded orders from the stock pressure calculation.",
+          "wrong": "The lesson explicitly filters out cancelled and refunded orders because those units should not count against available stock. It does not exclude delivered or shipped orders by default in that step."
+        },
+        {
+          "q": "What is the lesson’s recommended prevention mechanism for real-time oversell?",
+          "choices": [
+            "Pessimistic locking or optimistic concurrency with a stock version counter",
+            "A monthly summary report",
+            "A GROUP BY on product category only",
+            "A discount rate validation rule"
+          ],
+          "correct": 0,
+          "right": "Yes. The explanation names locking or version-based concurrency control as the preventative architecture.",
+          "wrong": "The lesson is very clear that the SQL query is for detection after the fact. Monthly reports and unrelated validation rules do not prevent concurrent oversells."
+        }
+      ],
+      "close": "The key pattern here is that post-hoc validation can expose damage, but it cannot replace transaction-safe write controls. The next lessons keep using similar detective logic, but on pay, tax, and duty controls."
+    },
+    "G07-T07": {
+      "open": "This lesson moves from transaction integrity to compensation compliance. The core idea is to normalise hourly pay into a comparable basis, compare it to a band table, and then separately check the legal minimum wage floor.",
+      "questions": [
+        {
+          "q": "Why does the lesson annualise salary as `HourlyRate * 37 * 52`?",
+          "choices": [
+            "To compare an hourly rate against annual salary bands using the organisation’s full-time working week",
+            "Because 37 hours is the legal minimum for all UK workers",
+            "To convert salary into a daily rate",
+            "To calculate overtime premium"
+          ],
+          "correct": 0,
+          "right": "Correct. The annualisation step makes hourly pay comparable to annual pay frameworks.",
+          "wrong": "The lesson uses 37 hours as the organisation’s assumed working week, not as a legal minimum for all workers. The purpose is comparability, not overtime calculation."
+        },
+        {
+          "q": "What does the LEFT JOIN to `@SalaryBands` help detect?",
+          "choices": [
+            "Employees whose EmploymentType is missing from the band table as well as employees outside the band",
+            "Only employees paid above the band maximum",
+            "Only interns",
+            "Only terminated employees"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson says the LEFT JOIN catches both out-of-band rates and unknown employment types.",
+          "wrong": "The LEFT JOIN is used as a broad compliance check, not just for high earners or a single employee category. It also catches missing band definitions."
+        },
+        {
+          "q": "Why does Step 3 check National Minimum Wage separately from the internal salary band?",
+          "choices": [
+            "Because NMW is an absolute legal floor that can override a seemingly valid internal band",
+            "Because NMW only applies to contractors",
+            "Because internal bands are always stricter than law",
+            "Because the lesson is only interested in payroll taxes"
+          ],
+          "correct": 0,
+          "right": "Exactly. The explanation says an internal band below the legal floor is itself illegal.",
+          "wrong": "The lesson’s point is that internal policy cannot undercut the law. NMW is checked independently because it is an external legal minimum, not just a company preference."
+        }
+      ],
+      "close": "This lesson shows how business-rule validation can combine policy bands with hard legal floors. The next lessons extend that idea into tax rates, role separation, and refund linkage checks."
+    },
+    "G07-T08": {
+      "open": "This lesson is about discrete tax-rate validation rather than a simple range check. The important idea is that a plausible-looking rate can still be invalid if it is not in the approved set for the jurisdiction.",
+      "questions": [
+        {
+          "q": "Why does the lesson say a range check like `BETWEEN 0 AND 100` is not enough for VAT?",
+          "choices": [
+            "Because UK VAT uses a small approved set of discrete rates, not any value in the range",
+            "Because VAT rates can never be stored as decimals",
+            "Because all tax rates must be negative",
+            "Because range checks are only for dates"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation says 17% looks plausible but is not one of the approved UK rates.",
+          "wrong": "The lesson’s issue is not decimal storage or date checking. It is that VAT validity depends on membership in an approved set, not just being numerically plausible."
+        },
+        {
+          "q": "What does Step 2 assume about `TotalAmount` when it calculates VAT?",
+          "choices": [
+            "That `TotalAmount` is tax-inclusive and net amount must be extracted from it",
+            "That `TotalAmount` is always pre-tax and VAT is added later",
+            "That `TotalAmount` is a quantity count",
+            "That VAT is always zero on orders"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson explicitly treats the total as gross and derives net and VAT from it.",
+          "wrong": "The lesson’s formula is gross-to-net extraction. It is not based on quantity counts or a universal zero tax assumption."
+        },
+        {
+          "q": "What does Step 5’s category-level consistency check help find?",
+          "choices": [
+            "Mixed VAT rates inside the same product category, which may signal a legitimate exception or a data error",
+            "Products that have no price",
+            "Transactions with duplicate order IDs",
+            "Customers in non-approved countries"
+          ],
+          "correct": 0,
+          "right": "Right. The lesson uses category consistency to surface possible mismatches or exceptions that need documentation.",
+          "wrong": "The lesson’s Step 5 is about product-category VAT consistency, not pricing, duplicate transactions, or geo-restrictions."
+        }
+      ],
+      "close": "The tax lesson is a good reminder that validation sometimes means checking a value against a reference set, not just a numeric boundary. The next lessons shift from tax into audit controls like segregation of duties and orphan refunds."
+    },
+    "G07-T09": {
+      "open": "This lesson focuses on segregation of duties, which is a control design problem rather than a data-format problem. The SQL examples show how to detect a single person appearing in multiple sensitive roles or reusing transactional identifiers in suspicious ways.",
+      "questions": [
+        {
+          "q": "What is the core SoD violation pattern the lesson is trying to detect?",
+          "choices": [
+            "The same person appearing in conflicting roles within a transaction or control chain",
+            "Any employee with a high salary",
+            "Any transaction above £10,000",
+            "Any order with a missing customer"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson defines SoD as one person controlling multiple high-risk steps that should be separated.",
+          "wrong": "The lesson is not about salary levels, order sizes, or missing customers. It is about overlapping roles and control points."
+        },
+        {
+          "q": "Why does Step 4 treat one `CorrelationID` across multiple orders as a concern?",
+          "choices": [
+            "Because a unique idempotency key should not span multiple orders",
+            "Because correlation IDs are meant to be reused indefinitely",
+            "Because one customer can never place multiple orders",
+            "Because the database should always collapse orders into a single row"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson says correlation-key reuse may indicate abuse or a control failure.",
+          "wrong": "The lesson explicitly treats correlation IDs as transaction-specific identifiers. Reuse across multiple orders is the suspicious condition, not the intended one."
+        },
+        {
+          "q": "What is the difference between preventive and detective controls in the explanation?",
+          "choices": [
+            "Access control is preventive, while SQL validation is detective",
+            "SQL validation is preventive and access control is detective",
+            "Both are the same thing",
+            "Neither one matters if the audit is internal"
+          ],
+          "correct": 0,
+          "right": "Exactly. The explanation says SQL can catch failures, but the root control is access management.",
+          "wrong": "The lesson distinguishes the two: access control prevents the issue, while SQL-based validation detects it after the fact. They are not interchangeable."
+        }
+      ],
+      "close": "This lesson is a classic audit-control pattern: identify role overlaps, then summarize the indicators that may point to fraud or broken process design. The next lesson follows that same audit logic for refunds that have no valid source transaction."
+    },
+    "G07-T10": {
+      "open": "This lesson is about orphan refunds and over-refunds, which are both forms of payment integrity failure. The key technique is to aggregate purchases and refunds separately, then anti-join or compare the totals.",
+      "questions": [
+        {
+          "q": "Why does the lesson use `WHERE Amount < 0` to identify refunds?",
+          "choices": [
+            "Because the schema represents refunds as negative amounts",
+            "Because all negative amounts are automatically chargebacks",
+            "Because negative amounts are impossible and always errors",
+            "Because the order amount column is stored as text"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation says negative amounts are the refund indicator in this single-table ledger design.",
+          "wrong": "The lesson explicitly uses negative amounts as the refund convention in this schema. It does not say every negative amount is automatically a chargeback or a text error."
+        },
+        {
+          "q": "What does the LEFT JOIN in Step 2 detect?",
+          "choices": [
+            "Refund groups with no matching purchase group for the same OrderID",
+            "Refunds that happen on weekends",
+            "Customers with high order volume",
+            "Duplicate products in the catalog"
+          ],
+          "correct": 0,
+          "right": "Yes. The anti-join pattern isolates refunds that have no corresponding positive purchase total.",
+          "wrong": "The lesson’s join is not about time-of-week, customer volume, or catalog duplication. It is specifically looking for orphan refund groups."
+        },
+        {
+          "q": "Why is a refund before its purchase date treated as impossible?",
+          "choices": [
+            "Because the timeline shows the refund happened before the original purchase event",
+            "Because refunds are always processed in a different currency",
+            "Because the customer must be inactive",
+            "Because the query only looks at cancelled orders"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson calls a refund preceding the purchase a temporal impossibility and a sign of clock or data error.",
+          "wrong": "The lesson’s timing check is about event order, not currency or customer status. A refund cannot logically occur before the purchase that created it."
+        }
+      ],
+      "close": "This lesson is a good example of deriving integrity from cross-table totals and event timing. The next lesson moves from payment integrity to frequency and velocity patterns, which are often a fraud signal."
+    },
+    "G07-T11": {
+      "open": "This lesson contrasts simple bucketed counts with rolling-window analysis. The main idea is that frequency alone matters, but the size of the time window determines whether you catch bursty abuse or miss it.",
+      "questions": [
+        {
+          "q": "What is the main limitation of the tumbling hourly bucket in Step 2?",
+          "choices": [
+            "It can miss bursts that cross an hour boundary",
+            "It cannot count transactions at all",
+            "It only works for customers, not bank accounts",
+            "It always overcounts by one"
+          ],
+          "correct": 0,
+          "right": "Exactly. The explanation says a burst can be split across two adjacent buckets and appear less severe than it is.",
+          "wrong": "The lesson does not say tumbling windows are unusable. It says they are fast and simple but can miss bursts that cross bucket boundaries."
+        },
+        {
+          "q": "How does the rolling-window check in Step 3 work?",
+          "choices": [
+            "It self-joins transactions to prior transactions within the last 60 minutes",
+            "It groups all transactions by month",
+            "It only counts transactions after midnight",
+            "It compares amounts to the product price"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses a self-join with `DATEADD(MINUTE, -60, ...)` to count the prior-hour history for each transaction.",
+          "wrong": "The lesson’s rolling window is a self-join, not a monthly aggregate or a price comparison. It looks back 60 minutes from each transaction."
+        },
+        {
+          "q": "Why does Step 4 combine SourceIP and DistinctAccounts?",
+          "choices": [
+            "To detect one source creating lots of activity across many different accounts",
+            "To calculate customer age",
+            "To validate VAT rates",
+            "To find refunds with no purchase"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says breadth plus volume is a stronger fraud signal than volume alone.",
+          "wrong": "Step 4 is a velocity/fraud check, not an age, tax, or refund rule. The combination of IP and distinct accounts is the key signal."
+        }
+      ],
+      "close": "This lesson shows both operational fraud monitoring and the tradeoff between simplicity and accuracy in time-window logic. The next lesson returns to contractual date boundaries and how activities can fall outside a service period."
+    },
+    "G07-T12": {
+      "open": "This lesson is about making sure activity stays inside a valid contract window. The important distinction is between proactive expiry monitoring and reactive detection of orders already placed after the contract ended.",
+      "questions": [
+        {
+          "q": "What boundary does Step 1 actually enforce in the query?",
+          "choices": [
+            "The upper bound, by flagging orders placed after ContractEnd",
+            "The lower bound, by flagging orders before ContractStart exactly",
+            "A fiscal-year boundary only",
+            "A VAT boundary"
+          ],
+          "correct": 0,
+          "right": "Correct. The query explicitly flags orders after the contract end date.",
+          "wrong": "The lesson explains that the full rule would check both start and end, but the code shown mainly enforces the upper bound because it only derives a start date for illustration."
+        },
+        {
+          "q": "Why is Step 2 considered proactive compliance monitoring?",
+          "choices": [
+            "Because it surfaces contracts that are about to expire so renewal action can happen before a violation",
+            "Because it already proves a violation occurred",
+            "Because it only looks at cancelled orders",
+            "Because it calculates tax exposure"
+          ],
+          "correct": 0,
+          "right": "Yes. It is a warning mechanism, not just a retrospective violation report.",
+          "wrong": "The lesson contrasts proactive monitoring with reactive detection. Step 2 looks ahead to expiring contracts rather than proving that an activity has already gone wrong."
+        },
+        {
+          "q": "What does the explanation say about grace periods?",
+          "choices": [
+            "They must be modelled explicitly, or valid post-expiry activity may be mis-flagged",
+            "They should always be ignored",
+            "They are the same as contract start dates",
+            "They only apply to refunds"
+          ],
+          "correct": 0,
+          "right": "Right. The lesson says a real implementation must add grace-period logic if the business allows it.",
+          "wrong": "The lesson does not say grace periods should be ignored. It warns that without a grace-period adjustment, valid activity may be falsely treated as a violation."
+        }
+      ],
+      "close": "This lesson is a straightforward date-range control with a strong reminder that operational rules sometimes need grace periods and contract history tables. The next lesson expands the same compliance idea into geography and sanctioned-region screening."
+    },
+    "G07-T13": {
+      "open": "This lesson combines country-based operating restrictions with IP-origin checks. The point is that location validation has both a static dimension, like registered country, and a dynamic one, like source IP.",
+      "questions": [
+        {
+          "q": "Why does the lesson use two geo-validation layers?",
+          "choices": [
+            "Because registered country and transaction IP origin each reveal different risk signals",
+            "Because one layer replaces the other",
+            "Because country codes and IP addresses are interchangeable",
+            "Because the query is only for product shipping"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation explicitly distinguishes static registration country from dynamic transaction origin.",
+          "wrong": "The lesson says both checks are useful, not interchangeable. Country of registration and source IP each capture a different part of the compliance picture."
+        },
+        {
+          "q": "What is the lesson’s purpose in using `PARSENAME` on `SourceIP`?",
+          "choices": [
+            "To extract the first octet from a dotted IPv4 address",
+            "To calculate the customer’s age",
+            "To split a product code into category parts",
+            "To convert a currency code to lowercase"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses `PARSENAME(..., 4)` as a simple way to grab the first IPv4 octet.",
+          "wrong": "`PARSENAME` is used here for IP parsing, not age, products, or currency manipulation. The lesson even notes that it was originally designed for object names."
+        },
+        {
+          "q": "What does the lesson say SQL can and cannot do for sanctions screening?",
+          "choices": [
+            "SQL can check approved country lists, but full entity-level sanctions screening needs external data integration",
+            "SQL can fully replace sanctions lists if the query is long enough",
+            "SQL cannot validate any geographic restriction",
+            "SQL only works for UK customers"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation explicitly limits SQL’s role to country-code checks and says sanctions screening needs external reference data.",
+          "wrong": "The lesson is careful here: SQL can validate approved-country membership, but it cannot perform full sanctions screening on its own. The limitation is about entity-level matching, not SQL length or geography."
+        }
+      ],
+      "close": "The theme here is that geo-compliance is a layered control, not a single field check. The next lesson shifts to forensic pattern detection, looking for round-number bias and threshold structuring."
+    },
+    "G07-T14": {
+      "open": "This lesson is about spotting suspicious amount patterns rather than a hard validity failure. The key idea is that repeated round numbers or amounts just below thresholds often indicate structuring or fabricated entries.",
+      "questions": [
+        {
+          "q": "Why does the lesson call amounts like £249.99 suspicious near a £250 threshold?",
+          "choices": [
+            "They suggest deliberate structuring just below a control threshold",
+            "They are always invalid currency values",
+            "They prove the transaction was refunded",
+            "They only matter if the customer is under 18"
+          ],
+          "correct": 0,
+          "right": "Exactly. The lesson treats amounts just under a threshold as a classic control-bypass pattern.",
+          "wrong": "The lesson is not about currency validity or age rules. It is about deliberate threshold avoidance and structuring behaviour."
+        },
+        {
+          "q": "What does `Amount = ROUND(Amount, -2)` test in Step 1?",
+          "choices": [
+            "Whether the amount is an exact multiple of 100",
+            "Whether the amount has two decimal places",
+            "Whether the amount is negative",
+            "Whether the amount is below £250"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation says negative precision rounds to hundreds, so equality means the last two digits are zero.",
+          "wrong": "The lesson explicitly explains that negative precision in `ROUND` tests roundness at higher magnitudes. It is not a check for decimal places or negative values."
+        },
+        {
+          "q": "Why does Step 4 compare actual first-digit frequency to Benford’s Law?",
+          "choices": [
+            "To detect distributions that deviate from natural numeric patterns and may signal manipulation",
+            "To calculate VAT",
+            "To find duplicate transactions",
+            "To determine customer age"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson uses Benford’s distribution as a forensic red-flag, not as a tax or identity rule.",
+          "wrong": "Benford analysis in this lesson is about forensic anomaly detection. It is not used for VAT, duplicate payment detection, or age eligibility."
+        }
+      ],
+      "close": "This lesson is a useful reminder that fraud can be visible in distributions, not just in single bad records. The final lesson in this group turns to approval thresholds and how splitting can bypass them."
+    },
+    "G07-T15": {
+      "open": "This lesson applies the inactive-record rule to products, customers, and employees. The central idea is that soft-deleted or terminated records should not keep participating in active business processes.",
+      "questions": [
+        {
+          "q": "What does `IsActive = 0` mean in this lesson’s explanation?",
+          "choices": [
+            "A soft-delete or inactive flag indicating the record should no longer participate in new transactions",
+            "A marker that the record must be physically deleted immediately",
+            "A sign the record is duplicated",
+            "A VAT exemption code"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly calls `IsActive = 0` a soft-delete pattern.",
+          "wrong": "The lesson does not treat `IsActive = 0` as a hard delete requirement. It means the record remains for history, but should not be used in new activity."
+        },
+        {
+          "q": "Why does Step 3 filter inactive customers to orders with statuses like Pending, Processing, and Shipped?",
+          "choices": [
+            "Because those are open orders that should not exist for inactive customers",
+            "Because delivered orders are the only ones that matter",
+            "Because inactive customers are allowed to place any order status",
+            "Because the query is really checking tax rates"
+          ],
+          "correct": 0,
+          "right": "Yes. The lesson is focusing on open activity that should be blocked or resolved when the customer is inactive.",
+          "wrong": "The lesson’s concern is open orders tied to inactive customers. Delivered orders are not the point of that step, and the query is not about tax."
+        },
+        {
+          "q": "What does Step 2 show about terminated employees and sales targets?",
+          "choices": [
+            "Targets should be reassigned or closed, because leaving them open distorts reporting and commission processing",
+            "Terminated employees should keep creating new targets",
+            "Targets are only a problem if the employee was a manager",
+            "No issue exists if the employee is terminated after the target year"
+          ],
+          "correct": 0,
+          "right": "Exactly. The explanation says open targets for terminated employees create reporting and payment confusion.",
+          "wrong": "The lesson says terminated employees should not continue to be active participants in target-setting. The issue is not limited to managers or to the order of year-end events."
+        }
+      ],
+      "close": "This lesson is a broad inactive-entity control: if a record is no longer active, related new activity should stop. The last lesson in the set focuses on threshold bypass through aggregation and splitting."
+    },
+    "G07-T16": {
+      "open": "This final lesson in the group is about approval threshold bypass, which is a classic control-evasion pattern. The real detection step is aggregating related orders so you can see the commitment that was split into smaller pieces.",
+      "questions": [
+        {
+          "q": "Why does Step 1 aggregate by customer and month instead of checking each order individually?",
+          "choices": [
+            "Because splitting orders can hide a total commitment that exceeds the approval threshold",
+            "Because monthly totals are always the only legal reporting period",
+            "Because individual orders are never stored in the database",
+            "Because the threshold applies only to cancelled orders"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson’s point is that the combined monthly value can cross the threshold even when no single order does.",
+          "wrong": "The lesson is not claiming monthly is always the legal period; it is using month as a practical grouping to expose splitting. The control problem is exactly that individual checks can miss the aggregate."
+        },
+        {
+          "q": "What condition in the explanation defines the bypass pattern?",
+          "choices": [
+            "`SUM(TotalAmount)` meets the threshold while `MAX(TotalAmount)` stays below it",
+            "`MIN(TotalAmount)` is zero",
+            "`COUNT(*)` is exactly one",
+            "All orders are cancelled"
+          ],
+          "correct": 0,
+          "right": "Yes. That is the heart of the detection logic the lesson spells out.",
+          "wrong": "The lesson does not define bypass by a zero minimum, a single row, or cancelled orders. It specifically looks for an aggregate that triggers the threshold without any single record doing so."
+        },
+        {
+          "q": "Why does the lesson include a near-threshold check like 5% below the threshold?",
+          "choices": [
+            "To catch deliberate amounts that are just under approval levels",
+            "To identify refunds",
+            "To find inactive customers",
+            "To measure VAT changes"
+          ],
+          "correct": 0,
+          "right": "Right. The lesson says this is the single-transaction equivalent of structuring and is suspicious when repeated.",
+          "wrong": "The near-threshold check is not about refunds, inactivity, or tax. It is there to detect attempts to stay just below an approval boundary."
+        }
+      ],
+      "close": "This lesson closes the group with the pattern that underlies several others: validate the aggregate, not just the row. That same idea appears in credit, stock, and velocity checks throughout Group 7."
     }
   }
 }
