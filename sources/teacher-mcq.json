@@ -6805,6 +6805,342 @@
         }
       ],
       "close": "Baseline-vs-current comparison, the whitelist's edge over referential integrity, and domain-tuned drift thresholds — that closes out Profiling. Ten techniques down: completeness, distribution, statistics, cardinality, patterns, time, correlation, density, outliers, and drift. You've built a genuinely complete profiling toolkit."
+    },
+    "G12-T01": {
+      "open": "Welcome to Statistical/Analytical — you've opened Moving Average Anomaly Detection, the technique that catches a revenue drop or spike the day it happens instead of at month-end. Three questions, let's go.",
+      "questions": [
+        {
+          "q": "Why does the 7-day rolling average window use `ROWS BETWEEN 7 PRECEDING AND 1 PRECEDING` instead of `... AND CURRENT ROW`?",
+          "choices": [
+            "Including CURRENT ROW would contaminate the baseline with the very value being assessed, making the anomaly comparison circular",
+            "SQL Server requires window frames to end at 1 PRECEDING whenever ORDER BY is present",
+            "1 PRECEDING makes the query run measurably faster than CURRENT ROW",
+            "It has no effect on the result — both produce identical rolling averages"
+          ],
+          "correct": 0,
+          "right": "Exactly — the baseline has to be purely historical. If today's value were folded into its own comparison average, a huge spike would partly average itself away, understating its own anomaly.",
+          "wrong": "Here's the trap it avoids: if the window included CURRENT ROW, today's value would be part of the very average it's being compared against — a circular comparison. A big anomaly would pull its own baseline toward itself, making it look less anomalous than it really is. Ending the frame at `1 PRECEDING` keeps the baseline purely historical, uncontaminated by the value being assessed."
+        },
+        {
+          "q": "What does the `WindowDays < 3` guard protect against?",
+          "choices": [
+            "Flagging anomalies based on a baseline built from too few historical days to be reliable",
+            "A division-by-zero error when the rolling average is exactly zero",
+            "SQL Server throwing an error when a window function is used without PARTITION BY",
+            "Duplicate rows appearing in the output for the first week of data"
+          ],
+          "correct": 0,
+          "right": "Right — a 1- or 2-day \"average\" isn't really an average at all. The guard stops the query from calling something an anomaly when there's barely any baseline to compare against.",
+          "wrong": "The lesson explains this directly: for the first few days of the dataset, the rolling window has fewer than 7 prior days to draw on. A baseline built from just 1 or 2 days is too thin to be a meaningful comparison point — the guard skips anomaly detection entirely until at least 3 days of history exist, rather than risk a false flag from an unreliable baseline."
+        },
+        {
+          "q": "Why does Step 3 use `ROW_NUMBER() OVER (ORDER BY OrderDay) - ROW_NUMBER() OVER (PARTITION BY BelowBaseline ORDER BY OrderDay)` to detect consecutive anomalous days?",
+          "choices": [
+            "This gaps-and-islands technique produces the same constant value for every row within one unbroken run of consecutive flagged days, letting GROUP BY collapse each run into a single group",
+            "It's required syntax whenever two ROW_NUMBER() calls appear in the same SELECT list",
+            "It computes the total number of anomalous days across the entire dataset",
+            "It sorts the anomalous days from most severe to least severe"
+          ],
+          "correct": 0,
+          "right": "Right — that's the classic gaps-and-islands trick. Subtracting a partitioned row number from an unpartitioned one produces a constant that's identical for every row in one consecutive run, and changes the moment the run breaks.",
+          "wrong": "This is the gaps-and-islands pattern: the unpartitioned ROW_NUMBER() counts straight through the whole date sequence, while the partitioned one restarts every time BelowBaseline flips. Subtracting them produces the same result for every row inside one unbroken run of the same flag value — a stable \"group ID\" that GROUP BY can collapse each run into. A single flagged day is noise; this is what lets the query isolate genuine multi-day sustained drops."
+        }
+      ],
+      "close": "Excluding today from its own baseline, the WindowDays guard, and gaps-and-islands for consecutive runs — that's moving-average monitoring. Next: Cohort Analysis Validation, where the question shifts from \"is this day normal\" to \"is this customer in the right group at all.\""
+    },
+    "G12-T02": {
+      "open": "Cohort Analysis Validation — this technique checks something easy to get subtly wrong: is every customer assigned to exactly one cohort, and is that assignment the *right* one?",
+      "questions": [
+        {
+          "q": "Why is `MIN(OrderDate) GROUP BY CustomerID` preferred over `ROW_NUMBER()` to find each customer's first order for cohort assignment?",
+          "choices": [
+            "MIN() is deterministic even on a tie, while ROW_NUMBER() would need an explicit tiebreaker or it could assign different \"first\" rows non-deterministically",
+            "ROW_NUMBER() cannot be used with GROUP BY under any circumstances",
+            "MIN(OrderDate) automatically excludes cancelled or returned orders from cohort calculation",
+            "ROW_NUMBER() only works correctly when the table has fewer than 1,000 rows"
+          ],
+          "correct": 0,
+          "right": "Exactly — MIN() always returns the same value for the same data, tie or no tie. ROW_NUMBER() without an explicit, fully-deterministic ORDER BY can pick a different row as \"first\" on different runs when dates tie.",
+          "wrong": "The lesson calls this out specifically: MIN(OrderDate) is robust because it always returns the same value regardless of table reload order or re-sorting. ROW_NUMBER() to find \"the first record\" is fragile by comparison — if two orders share the exact same OrderDate (a tie), ROW_NUMBER() without a fully deterministic tiebreaker could assign \"first\" to either one on different runs, producing non-deterministic, inconsistent cohort assignments."
+        },
+        {
+          "q": "In the Step 1 cohort validation, what does it mean if `COUNT(DISTINCT CohortLabel)` for a customer is greater than 1?",
+          "choices": [
+            "A query bug has assigned the same customer to more than one cohort — typically caused by a JOIN fan-out that groups by each order's month instead of the first order's month",
+            "The customer has placed orders in more than one country",
+            "The customer's account was correctly migrated between two different regional systems",
+            "The customer's CustomerID was reused for two different people"
+          ],
+          "correct": 0,
+          "right": "Right — by design, every customer should land in exactly one cohort (the month of their first order). A count above 1 means the query itself is broken, not that the customer did anything unusual.",
+          "wrong": "The lesson is explicit: `COUNT(DISTINCT CohortLabel)` per customer should always equal 1 — a customer has exactly one \"first order month.\" A result greater than 1 points to a query bug, typically a JOIN that produces fan-out and ends up grouping by *each* order's month rather than only the first one, effectively assigning the same customer to multiple cohorts. It's a query-correctness signal, not a fact about the customer."
+        },
+        {
+          "q": "Why might excluding customers who have never placed an order (Step 4) overstate retention rates calculated from the cohort analysis?",
+          "choices": [
+            "If non-converting customers are systematically different from converting ones, leaving them out biases the retention metric toward only the customers who were always going to convert",
+            "Retention calculations require every customer to have at least one order, or SQL Server raises a divide-by-zero error",
+            "Customers without orders are automatically counted as 100% retained by the cohort query",
+            "It has no effect on retention rates — cohort analysis only ever measures ordering customers by definition"
+          ],
+          "correct": 0,
+          "right": "Right — it's a selection-bias risk. If the customers who never convert are meaningfully different from the ones who do, the retention figure you calculate only describes the population you kept, not the whole acquired population.",
+          "wrong": "The lesson's own point: registered customers who never placed an order are invisible to every cohort analysis, since cohorts are defined by first order date. If those non-converting customers are systematically different — say, they were acquired through a lower-intent channel — excluding them means the retention analysis only reflects the customers who were always more likely to stick around, which can make overall retention look better than it really is across the full acquired population."
+        }
+      ],
+      "close": "Deterministic anchoring, the one-cohort-per-customer invariant, and the selection-bias risk from excluded non-converters — cohort validation done right. Next: Sampling Bias Detection, where we check whether a *sample* still looks like the population it came from."
+    },
+    "G12-T03": {
+      "open": "Sampling Bias Detection — you're about to see how a training sample can look perfectly fine in aggregate while quietly excluding an entire category the model needs to learn.",
+      "questions": [
+        {
+          "q": "Why does the sampling query use `ABS(CHECKSUM(OrderID)) % 4` instead of a sequential row number modulo?",
+          "choices": [
+            "CHECKSUM hashes the key value, distributing evenly across the keyspace, avoiding the bias that occurs when sequentially-assigned IDs cluster into the same modulo bucket",
+            "CHECKSUM always executes faster than ROW_NUMBER() regardless of table size",
+            "Row number modulo is not valid SQL Server syntax and would cause a parse error",
+            "CHECKSUM guarantees exactly 25% of rows are selected, while row number modulo does not"
+          ],
+          "correct": 0,
+          "right": "Exactly right, and it's exactly the bug from the live scenario in reverse: sequential IDs assigned in same-day batches can cluster into the same modulo bucket. Hashing the ID first breaks that clustering.",
+          "wrong": "This is the direct fix for the live scenario's own failure: a modulo on a *sequential* row number can systematically exclude whole categories if those categories tend to get assigned IDs in clusters (like a batch of Cancelled orders all created at day's end, landing on the same modulo bucket). CHECKSUM hashes the key value first, scattering it across the keyspace roughly uniformly — so the sampling doesn't inherit whatever clustering pattern exists in the sequential ID assignment."
+        },
+        {
+          "q": "Why does the bias-detection query use a FULL OUTER JOIN between the population and sample status distributions, rather than a LEFT JOIN?",
+          "choices": [
+            "A LEFT JOIN (population to sample) would miss categories that exist only in the sample; FULL OUTER JOIN catches missing categories in either direction",
+            "FULL OUTER JOIN is required whenever a window function like SUM() OVER() appears in a CTE",
+            "LEFT JOIN cannot be used with GROUP BY in the same query",
+            "FULL OUTER JOIN automatically excludes any category with fewer than 5 rows"
+          ],
+          "correct": 0,
+          "right": "Right — the point is catching gaps in either direction, not just one. A LEFT JOIN from population would still catch categories missing from the sample, but it would silently drop any category that somehow only exists in the sample.",
+          "wrong": "The lesson explains both directions explicitly: a LEFT JOIN would miss categories present only in the sample (unlikely here, but a real risk in general); a RIGHT JOIN would miss categories present in the population but entirely absent from the sample — which is exactly the critical bias case the live scenario describes (Cancelled orders vanishing from the sample). FULL OUTER JOIN is the only join type that's guaranteed to surface a gap regardless of which side it's missing from."
+        },
+        {
+          "q": "Why might even a small deviation like 2 percentage points matter more for a rare class (e.g., fraud at 2% of the population) than the same 2pp deviation would for a common class?",
+          "choices": [
+            "A 2pp shift is a much larger relative change for a class that's only 2% of the population to begin with, compared to the same absolute shift on a class that's 40% of the population",
+            "SQL Server calculates percentage-point deviations differently depending on the size of the category",
+            "Rare classes are always excluded from bias detection queries by default",
+            "A 2pp deviation always indicates the same absolute number of records regardless of category size"
+          ],
+          "correct": 0,
+          "right": "Right — it's about relative, not absolute, impact. A class that's supposed to be 2% of the sample dropping to 0% (or spiking) is a much bigger relative disruption than a 40% class moving to 38% or 42%.",
+          "wrong": "The lesson makes this point directly: the appropriate bias threshold depends partly on class frequency, because a fixed percentage-point deviation means something very different depending on the base rate. For a class that's supposed to be 2% of the population, a 2pp swing could mean the sample has 0% or 4% of that class — a massive relative change. The same 2pp swing on a 40%-of-population class barely moves the needle relatively. Rarer classes need tighter thresholds precisely because a model can fail to learn them entirely if they're underrepresented even slightly."
+        }
+      ],
+      "close": "Hash-based sampling to avoid ID clustering, FULL OUTER JOIN to catch gaps in either direction, and why rare classes need tighter bias thresholds — sampling bias detection covered. Next: Running Total Integrity Check, verifying that cumulative balances actually add up."
+    },
+    "G12-T04": {
+      "open": "Running Total Integrity Check — a stored balance and the sum of its underlying transactions should always agree. This technique is how you prove they still do, fast, across thousands of records.",
+      "questions": [
+        {
+          "q": "Why is `ORDER BY` essential inside the window function when computing a running total with `SUM(Amount) OVER (...)`?",
+          "choices": [
+            "Without ORDER BY, SUM() OVER() with no frame clause returns the grand total for every row, not a running cumulative total",
+            "ORDER BY is required by SQL Server syntax any time SUM() appears inside OVER(), regardless of intent",
+            "ORDER BY makes the query execute faster by pre-sorting the underlying table permanently",
+            "Without ORDER BY, SQL Server would raise a syntax error and refuse to run the query"
+          ],
+          "correct": 0,
+          "right": "Exactly — no ORDER BY means no defined row sequence, so the default frame is the whole partition, and SUM() just returns one number (the grand total) repeated on every row.",
+          "wrong": "The lesson states this directly: `SUM(Amount) OVER (ORDER BY TransactionDate ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)` needs the ORDER BY to define what \"preceding\" and \"current\" even mean. Without an ORDER BY, there's no defined sequence, and SUM() OVER() with no frame clause simply returns the grand total across the whole partition for every single row — not a running, position-dependent total at all."
+        },
+        {
+          "q": "Why does Step 3 specifically look for the *first* point of divergence in a running total sequence, rather than just flagging every divergent record individually?",
+          "choices": [
+            "Once a running total diverges, every subsequent record is also inconsistent as a knock-on effect, so corrective action only needs to target records from the first divergence point onward",
+            "SQL Server can only return one flagged row per query execution",
+            "Records after the first divergence are automatically excluded from the running total calculation",
+            "The first divergence point is always caused by a duplicate transaction, while later ones have different causes"
+          ],
+          "correct": 0,
+          "right": "Right — it's an efficiency insight, not a technical limitation. Since every downstream cumulative value inherits the error, there's no need to individually flag and investigate hundreds of \"divergent\" records when only the first one is the actual root cause.",
+          "wrong": "The lesson explains the practical reason: because a running total is cumulative, once it goes wrong at one point, every subsequent cumulative value is also wrong — the error propagates forward automatically. So there's no analytical value in separately flagging record #500, #501, #502, etc. as \"divergent\" when they're all downstream symptoms of the same root cause at record #499. Finding just the first divergence point lets corrective action target only the records from that point forward, which the lesson calls a significant operational efficiency for large transaction histories."
+        },
+        {
+          "q": "In Step 4's double-entry check, what would it mean if `GrossCredits + GrossDebits` did not equal `NetTotal`?",
+          "choices": [
+            "A floating-point accumulation error or signed-integer overflow — rare, but a genuine data integrity concern in tables with millions of rows",
+            "It's an expected, normal outcome whenever a table contains both positive and negative amounts",
+            "The Transactions table is missing a foreign key constraint to the Orders table",
+            "SQL Server would refuse to execute the query and return a syntax error"
+          ],
+          "correct": 0,
+          "right": "Right — this check should always balance by simple arithmetic (splitting a sum into its positive and negative parts and adding them back can't change the total), so a mismatch points to something going wrong at the computation layer itself, not the data.",
+          "wrong": "The lesson names this specifically: summing the positive amounts (GrossCredits) and the negative amounts (GrossDebits) separately and adding them back together should mathematically always equal the same result as summing everything at once (NetTotal) — that's basic arithmetic, not a data quality question. If they don't match, the lesson attributes it to something at the computation level: a floating-point accumulation error or a signed-integer overflow, both rare but genuine concerns at very large row counts."
+        }
+      ],
+      "close": "The ORDER BY requirement inside SUM() OVER(), first-divergence as the efficient fix point, and the double-entry sanity check — running total integrity is now in your toolkit. Next: Benford's Law, using leading-digit distributions as a fraud signal."
+    },
+    "G12-T05": {
+      "open": "Benford's Law Analysis — a genuinely surprising statistical fact turned into a fraud detector: naturally occurring numbers don't start with each digit equally often, and knowing the expected distribution lets you catch when someone's faking the numbers.",
+      "questions": [
+        {
+          "q": "According to the lesson, what kind of numeric data does Benford's Law NOT reliably apply to?",
+          "choices": [
+            "Uniform distributions (like dice rolls), artificially bounded data (like zip codes), or datasets too small for the pattern to emerge",
+            "Financial data of any kind, including invoices and transaction amounts",
+            "Any dataset containing more than 1,000 records",
+            "Data that has already been through a chi-square test once before"
+          ],
+          "correct": 0,
+          "right": "Right — Benford needs values that span multiple orders of magnitude and arise organically. Uniform, artificially bounded, or too-small datasets don't have the underlying structure that produces the Benford pattern in the first place.",
+          "wrong": "The lesson lists this explicitly: Benford's Law does NOT apply to uniform distributions (like dice rolls, where every outcome is equally likely by construction), artificially bounded data (like zip codes, which don't arise from a multiplicative or organic growth process), or small datasets where random variation dominates any real signal. It applies well specifically to sales amounts, invoice values, and similarly organic financial data spanning multiple orders of magnitude."
+        },
+        {
+          "q": "Why does the leading-digit extraction apply `ABS()` to TotalAmount before casting to BIGINT?",
+          "choices": [
+            "ABS() handles negative values, such as refunds or credits, so a negative amount's leading digit can still be correctly extracted",
+            "ABS() is required by SQL Server whenever CAST is used with the BIGINT data type",
+            "ABS() rounds the amount to the nearest whole number before digit extraction",
+            "ABS() converts the value from a decimal type to a string type"
+          ],
+          "correct": 0,
+          "right": "Right — without stripping the sign first, a negative amount's string representation would start with a minus sign, not a digit, breaking the leading-digit extraction entirely.",
+          "wrong": "The lesson states this plainly: `ABS()` handles negative values — refunds or credits, which naturally occur in an Orders or Transactions table. Without it, a value like -450.00 would convert to the string \"-450\" and `LEFT(..., 1)` would extract \"-\" instead of the actual leading digit \"4\", corrupting the analysis for every negative amount in the dataset."
+        },
+        {
+          "q": "Why is second-digit analysis described as more sensitive than leading-digit analysis for detecting threshold manipulation (e.g., amounts kept just under an approval limit)?",
+          "choices": [
+            "Threshold-manipulation values like £4,999 or £9,999 cluster on a second digit of 9, a pattern the (uniform) second-digit expectation makes easy to spot as an anomaly",
+            "Second-digit analysis uses a larger sample size than leading-digit analysis by definition",
+            "The leading digit of any threshold-manipulated value is always the same as its second digit",
+            "Second-digit analysis does not require a chi-square test to interpret, unlike leading-digit analysis"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's own examples (£4,999, £9,999, £49,900) all share a second digit of 9, and because the second-digit baseline is roughly flat at ~10% per digit, that kind of clustering stands out clearly against expectation.",
+          "wrong": "The lesson's own examples make this concrete: £4,999, £9,999, and £49,900 all have a second digit of 9 — the classic \"just below a round threshold\" pattern. Because second digits converge toward a roughly uniform ~10% distribution across 0–9 (unlike leading digits, which follow Benford's steep, uneven curve), any unusual clustering — like an over-representation of 9 and 0 — stands out clearly against that flat expected baseline, making it a more sensitive detector specifically for this kind of threshold-gaming behavior."
+        }
+      ],
+      "close": "Where Benford's Law does and doesn't apply, the ABS() fix for negative amounts, and why second-digit clustering flags threshold manipulation — Benford's Law analysis is complete. Next: Percentile Rank and Concentration Analysis, measuring how revenue concentrates among your top customers."
+    },
+    "G12-T06": {
+      "open": "Percentile Rank and Concentration Analysis — this is how a business finds out, in one query, whether losing its single biggest customer would be a bad quarter or an existential crisis.",
+      "questions": [
+        {
+          "q": "What's the key difference in purpose between `PERCENT_RANK()` and `NTILE(10)` in this lesson?",
+          "choices": [
+            "PERCENT_RANK() is preferred for thresholding (e.g., \"is this customer in the top 10%?\"), while NTILE() is preferred for bucketing entities into equally-sized groups",
+            "PERCENT_RANK() only works on numeric columns, while NTILE() only works on text columns",
+            "NTILE() always produces more accurate results than PERCENT_RANK() regardless of dataset size",
+            "PERCENT_RANK() requires a PARTITION BY clause, while NTILE() does not support one"
+          ],
+          "correct": 0,
+          "right": "Right — different tools for different questions. PERCENT_RANK gives you a 0-to-1 position for threshold tests; NTILE splits everyone into a fixed number of equal-ish buckets for bucketed reporting.",
+          "wrong": "The lesson states this distinction directly: PERCENT_RANK() returns a value between 0.0 and 1.0 showing where an entity sits in the ranked distribution, making it well-suited for threshold questions like \"is this customer's PERCENT_RANK >= 0.90?\" (top 10%). NTILE(10), by contrast, divides the whole population into 10 equally-sized buckets (deciles) — useful when you want to group customers into segments rather than test against a specific cutoff. The lesson also notes NTILE can produce unequal bucket sizes on small datasets, while both are stable for large ones."
+        },
+        {
+          "q": "What does a Herfindahl-Hirschman Index (HHI) of exactly 10,000 indicate about market/customer concentration?",
+          "choices": [
+            "A monopoly — a single entity holds 100% of the total share",
+            "A perfectly evenly distributed market with no concentration at all",
+            "That the dataset contains a data quality error and needs review",
+            "The threshold at which the US Department of Justice considers a market moderately concentrated"
+          ],
+          "correct": 0,
+          "right": "Right — 10,000 is the ceiling of the HHI scale, reached only when one entity has the entire 100% share (100² = 10,000). It's the mathematical maximum, representing total concentration.",
+          "wrong": "The lesson gives the formula and this exact reference point: HHI is the sum of the squares of each entity's percentage market share. A monopoly — one entity with 100% share — squares to 100² = 10,000, the maximum possible value on this scale. A perfectly fragmented market with N equal entities, by contrast, has HHI = 10,000/N — the more entities share the market equally, the lower the HHI falls. 10,000 specifically represents total, complete concentration, not moderate concentration (that's the >2,500 DOJ threshold mentioned separately in the lesson)."
+        },
+        {
+          "q": "Why is concentration analysis useful even when a business's average revenue per customer looks unremarkable?",
+          "choices": [
+            "An average can hide extreme concentration — e.g., a business could have a modest-looking average revenue per customer while 80% of its actual revenue comes from just 3 customers",
+            "Average revenue per customer is always miscalculated when a business has more than 100 customers",
+            "Concentration analysis replaces the need to calculate an average at all",
+            "A modest average revenue per customer always means the business has low concentration risk"
+          ],
+          "correct": 0,
+          "right": "Right — that's exactly the blind spot the lesson calls out. An average is a single summary number; it has no way of showing you that the number is actually made up of a few huge values and many small ones.",
+          "wrong": "The lesson's closing point is exactly this: a business with an average revenue per customer of £2,000 could still have 80% of its revenue concentrated in just 3 customers — a fact that's completely invisible in the average (which only tells you the total divided by the count) but immediately obvious in a percentile rank or concentration profile. The average and the concentration are two different, independent facts about the same data; one doesn't tell you the other."
+        }
+      ],
+      "close": "PERCENT_RANK for thresholds vs NTILE for bucketing, HHI's monopoly ceiling of 10,000, and why an unremarkable average can hide severe concentration — that's the concentration toolkit. Next: Regression to Mean Detection, where extreme performance quietly reverts to average, and mistaking that for a real trend costs real money."
+    },
+    "G12-T07": {
+      "open": "Regression to Mean Detection — a subtle statistical trap: rewarding your best quarter and punishing your worst can just be rewarding and punishing luck, if performance naturally reverts toward average anyway.",
+      "questions": [
+        {
+          "q": "Why does this technique compare Z-scores across periods instead of comparing raw revenue figures directly?",
+          "choices": [
+            "Z-scores normalise for each period's own distribution, so comparisons stay meaningful even if the overall market grew or shrank between periods",
+            "Z-scores are required by SQL Server whenever LAG() is used in the same query",
+            "Raw revenue figures cannot be compared across different customers under any circumstances",
+            "Z-scores eliminate the need to use a PARTITION BY clause in the window function"
+          ],
+          "correct": 0,
+          "right": "Right — a Z-score answers \"how unusual is this relative to its own period's spread,\" which stays comparable even when the absolute scale of the market shifts between periods.",
+          "wrong": "The lesson explains this directly: comparing raw revenue across periods is misleading if the overall market grows or shrinks between them. A Z-score of +2 always means \"2 standard deviations above that period's own average,\" regardless of whether that period's average was £80,000 or £150,000 — so Z-scores stay meaningful for cross-quarter comparison even when the underlying scale of the business changes, which raw revenue numbers alone can't guarantee."
+        },
+        {
+          "q": "What does `PARTITION BY EntityID` inside the `LAG()` window function ensure in this query?",
+          "choices": [
+            "The lag looks back within each entity's own time series only, never comparing one entity's current value to a different entity's prior value",
+            "It sorts all entities by their total revenue before applying the LAG function",
+            "It removes entities with fewer than two recorded periods from the result set",
+            "It automatically excludes the highest and lowest Z-scores from the comparison"
+          ],
+          "correct": 0,
+          "right": "Right — PARTITION BY is what keeps LAG() from crossing entity boundaries. Without it, LAG() would happily hand entity B's \"current\" row entity A's prior value, which would make no sense.",
+          "wrong": "The lesson states this precisely: `LAG(ZScore) OVER (PARTITION BY EntityID ORDER BY Yr, Qtr)` retrieves each entity's own Z-score from the previous quarter — the PARTITION BY EntityID ensures the lag stays within each entity's own time series and never accidentally pulls the previous *row* from a different entity's history. Without that partition, LAG() would step across entity boundaries whenever one entity's data ended and another's began in the ordered result set."
+        },
+        {
+          "q": "Why does regression-to-mean statistical noise undermine a bonus/penalty system based on top and bottom quarterly performance rankings?",
+          "choices": [
+            "It rewards and penalises entities for what may just be random quarter-to-quarter variance, not genuine differences in underlying skill or effort",
+            "It means the SQL query used to rank salespeople contains a calculation error",
+            "It only affects salespeople who have been employed for fewer than two quarters",
+            "It proves that top-performing salespeople should always be moved to the bottom-ranked group the following quarter"
+          ],
+          "correct": 0,
+          "right": "Right — that's the core insight the analyst brings to the CFO. If extreme results are largely statistical noise reverting toward average, treating them as evidence of genuine skill differences means rewarding and punishing randomness.",
+          "wrong": "The lesson's live scenario makes this explicit: if a rep who hit £180,000 in Q1 (extreme high) naturally reverts to near-average the following quarter regardless of any bonus, and a rep who hit £40,000 (extreme low) naturally rises back toward average too — that reversion is happening on its own, driven by statistical noise, not by the incentive system \"working.\" A compensation structure built on top/bottom quarterly rankings ends up rewarding a lucky quarter and penalising an unlucky one, rather than measuring real, sustained performance differences."
+        }
+      ],
+      "close": "Z-scores for cross-period comparability, PARTITION BY keeping each entity's own history separate, and why reverting extremes can fool a compensation system — regression-to-mean detection covered. One more in this group: Variance and Standard Deviation Validation."
+    },
+    "G12-T08": {
+      "open": "Last one in Statistical/Analytical — Variance and Standard Deviation Validation. Sometimes the giveaway that data is fabricated isn't a wrong average, it's a suspiciously *perfect* one.",
+      "questions": [
+        {
+          "q": "Why is Coefficient of Variation (CoV = STDEV / AVG × 100) preferred over comparing raw standard deviations when comparing spread across products with very different price scales?",
+          "choices": [
+            "CoV expresses spread as a percentage of the mean, making it valid to compare across groups with different scales — raw StdDev comparison across differently-scaled groups is misleading",
+            "Raw standard deviation cannot be calculated at all for products priced above £1,000",
+            "CoV is a required SQL Server function, while raw STDEV comparison would cause a syntax error",
+            "CoV always produces a smaller number than raw standard deviation, making results easier to read"
+          ],
+          "correct": 0,
+          "right": "Right — CoV rescales spread relative to the mean, so a product priced at £5,000 and one priced at £100 can be compared on equal footing instead of the naturally larger raw StdDev of the expensive product making it look more \"variable\" than it really is.",
+          "wrong": "The lesson gives a worked example: a product with mean £5,000 and StdDev £2,000 has CoV 40%, while a product with mean £100 and StdDev £60 has CoV 60% — even though the second product's raw StdDev (£60) is much smaller in absolute terms, it's actually *more* variable relative to its own scale. Comparing raw StdDev directly (£2,000 vs £60) would wrongly suggest the expensive product is far more variable, when relative to each product's own price point, the opposite is true."
+        },
+        {
+          "q": "What three possible explanations does the lesson give for a group showing zero variance (StdDev = 0, every value identical)?",
+          "choices": [
+            "A constant by design (a fixed-fee service), a system default (placeholder value written by the application), or fabricated data (reporting a target instead of actuals)",
+            "A rounding error, a NULL value, and a duplicate row",
+            "An index corruption, a failed JOIN, and a missing WHERE clause",
+            "A currency conversion error, a time zone mismatch, and a schema migration"
+          ],
+          "correct": 0,
+          "right": "Right — those are the three the lesson names, and distinguishing between them needs domain knowledge, but flagging the zero-variance group for a human to look at is always the right first move regardless of which one it turns out to be.",
+          "wrong": "The lesson lists exactly three possibilities: the data could be a genuine constant by design (like a fixed-fee service where every charge really is identical), a system default (the application silently writing a placeholder value instead of the real one), or fabricated data (someone reporting a fixed target figure instead of actual measured values — exactly what Partner C did in the live scenario). The lesson notes telling these apart requires domain knowledge, but flagging any zero-variance group for investigation is always the appropriate first step."
+        },
+        {
+          "q": "Why does detecting heteroscedasticity (unequal variance across groups) matter before running statistical tests like ANOVA or a t-test?",
+          "choices": [
+            "Standard versions of ANOVA and t-tests assume equal variance across groups, so violating that assumption can produce incorrect statistical conclusions",
+            "Heteroscedasticity means the dataset contains a primary key violation that must be fixed before any query will run",
+            "ANOVA and t-tests automatically correct for heteroscedasticity without any need for prior detection",
+            "Heteroscedasticity only affects categorical columns, never numeric ones like TotalAmount"
+          ],
+          "correct": 0,
+          "right": "Right — equal variance across groups is a baked-in assumption of the standard versions of these tests. Violate it silently, and the test's p-values and confidence intervals can no longer be trusted at face value.",
+          "wrong": "The lesson states this directly: heteroscedasticity — different groups having different variances — violates the assumptions of standard statistical tests including ANOVA, t-tests, and linear regression. These tests are built on the assumption that variance is roughly equal across the groups being compared. Detecting heteroscedasticity in SQL before applying such a test lets an analyst know in advance that the equal-variance assumption doesn't hold, avoiding incorrect statistical conclusions that would come from applying the test anyway."
+        }
+      ],
+      "close": "Coefficient of Variation for scale-independent comparison, the three faces of zero variance, and why unequal variance breaks standard statistical tests — that closes out Statistical/Analytical. Eight techniques down: moving averages, cohorts, sampling bias, running totals, Benford's Law, concentration, regression to the mean, and variance validation."
     }
   }
 }
