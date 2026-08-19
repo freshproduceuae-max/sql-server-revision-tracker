@@ -7141,6 +7141,258 @@
         }
       ],
       "close": "Coefficient of Variation for scale-independent comparison, the three faces of zero variance, and why unequal variance breaks standard statistical tests — that closes out Statistical/Analytical. Eight techniques down: moving averages, cohorts, sampling bias, running totals, Benford's Law, concentration, regression to the mean, and variance validation."
+    },
+    "G13-T01": {
+      "open": "Welcome to Hierarchical/Structural — you've opened Parent-Child Referential Integrity, the technique that finds records pointing at parents that no longer exist. Three questions, let's go.",
+      "questions": [
+        {
+          "q": "According to the lesson, why is `NOT EXISTS` often preferred over `LEFT JOIN ... WHERE parent.PK IS NULL` for detecting orphaned records?",
+          "choices": [
+            "NOT EXISTS short-circuits on the first match (faster for large parent tables), reads as a natural statement of the check's intent, and handles NULL FK values intuitively",
+            "LEFT JOIN cannot be used together with a WHERE clause in the same query",
+            "NOT EXISTS is the only syntax SQL Server allows when checking more than one table at once",
+            "LEFT JOIN always returns incorrect results when checking for orphaned records"
+          ],
+          "correct": 0,
+          "right": "Right — three concrete reasons, all named in the lesson: it stops searching as soon as it finds one match, it reads like the English sentence describing the check, and NULL handling is simpler with it.",
+          "wrong": "The lesson gives three specific reasons: NOT EXISTS short-circuits on the first matching row (faster against large parent tables than scanning a full LEFT JOIN), it reads as a natural English statement (\"where no parent exists\"), and it handles NULL FK values more intuitively. LEFT JOIN / IS NULL remains useful when you also want to pull columns from the parent table for comparison — it's not that either is broken, just suited to slightly different needs."
+        },
+        {
+          "q": "What's the key difference between a NULL foreign key and an orphan foreign key, as the lesson distinguishes them?",
+          "choices": [
+            "A NULL FK may be a valid optional relationship or a data gap; an orphan FK always points to a record that doesn't exist and is always a data integrity failure",
+            "A NULL FK is always a critical error, while an orphan FK is always harmless",
+            "They are the same thing, just described with different terminology",
+            "A NULL FK only occurs in the Orders table, while an orphan FK only occurs in the Transactions table"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson draws this line clearly: NULL just means \"no reference given,\" which can be perfectly legitimate. An orphan means \"a reference was given, but it points at nothing\" — that's never legitimate.",
+          "wrong": "The lesson separates these as two distinct failure modes: a NULL foreign key means the reference is simply absent — which could be a valid optional relationship (not every order needs a product yet) or could be a genuine data entry gap, context-dependent. An orphan foreign key, by contrast, means the reference *exists* but points to a record that isn't there — that's always a data integrity failure, with no legitimate interpretation, because the reference is actively wrong rather than just missing."
+        },
+        {
+          "q": "What does an orphan rate above 10% typically suggest, compared to a rate under 1%?",
+          "choices": [
+            "Above 10% suggests a systematic failure (a dropped constraint, an ETL loading children without parents, a large delete on one table); under 1% suggests isolated incidents like test records or migration artefacts",
+            "Above 10% means the query itself contains a syntax error",
+            "Under 1% means referential integrity is completely broken and requires an emergency fix",
+            "The percentage has no bearing on severity — only the absolute orphan count matters"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's own severity classification draws exactly this line: a handful of stray records reads very differently from a tenth of the whole table being orphaned.",
+          "wrong": "The lesson's severity classification distinguishes these directly: below 1% suggests isolated incidents — developer test records, small migration artefacts — that don't point to a broken process. Above 10% suggests something systematic went wrong: a foreign key constraint was dropped, an ETL process loaded child records without their parents, or a large-scale delete hit only one side of a relationship. The percentage, not just the raw count, is what signals whether this is noise or a structural failure."
+        }
+      ],
+      "close": "NOT EXISTS as the natural orphan-detection idiom, NULL vs orphan as two distinct failure modes, and orphan rate as a severity signal — referential integrity checking covered. Next: Circular Reference Detection, where a hierarchy loops back on itself."
+    },
+    "G13-T02": {
+      "open": "Circular Reference Detection — a self-referencing hierarchy that loops is one of the few data quality problems that can actually crash a query, not just corrupt a report.",
+      "questions": [
+        {
+          "q": "Why is the path-string cycle guard (`CHARINDEX(...) = 0`) described as more robust than using a depth counter alone to prevent infinite recursion?",
+          "choices": [
+            "A depth counter alone would incorrectly truncate valid deep hierarchies rather than actually detecting true cycles, while the path guard specifically checks whether a node has already been visited",
+            "CHARINDEX runs faster than any numeric comparison in SQL Server",
+            "A depth counter cannot be used inside a recursive CTE under any circumstances",
+            "The path guard eliminates the need for a MAXRECURSION safety limit entirely"
+          ],
+          "correct": 0,
+          "right": "Right — a depth counter is a blunt instrument. It would stop a legitimately deep 15-level hierarchy at the same point it stops an infinite 3-node cycle, treating both the same way even though only one is actually broken.",
+          "wrong": "The lesson makes this comparison directly: a depth counter alone can only say \"we've gone this many levels deep\" — it can't distinguish a genuinely deep, valid hierarchy from an infinitely looping cycle, so it would incorrectly cut off valid deep trees at the same threshold that's meant to catch cycles. The path-string guard instead tracks which specific nodes have already been visited in this traversal, so it detects an actual repeat visit — a true cycle — rather than just a depth limit being reached."
+        },
+        {
+          "q": "What happens by default in SQL Server if a recursive CTE traverses a genuine circular reference without a path guard in place?",
+          "choices": [
+            "It hits SQL Server's default maximum recursion depth of 100 and throws an error, rather than looping forever",
+            "SQL Server automatically detects the cycle and silently skips the offending rows",
+            "The query returns an empty result set with no error or warning",
+            "SQL Server converts the recursive CTE into a non-recursive one automatically"
+          ],
+          "correct": 0,
+          "right": "Right — SQL Server won't spin forever on its own. The default 100-level recursion cap turns an infinite loop into a hard error instead, though that's a safety net, not a substitute for actually detecting the cycle.",
+          "wrong": "The lesson states this explicitly: SQL Server's default maximum recursion depth is 100. Without a path guard, a genuine circular reference would hit this built-in limit and throw an error, rather than looping forever and hanging the server. It's a safety net against runaway queries, not a mechanism that identifies or fixes the cycle — that's what the path-string guard and cycle-detection logic are for."
+        },
+        {
+          "q": "What are the three distinct structural problems the lesson identifies in self-referencing hierarchies?",
+          "choices": [
+            "Self-loops (an employee is their own manager), multi-node cycles (A reports to B, who reports to C, who reports back to A), and dangling references (ManagerID points to a record that doesn't exist)",
+            "NULL values, duplicate rows, and empty strings",
+            "Missing indexes, slow queries, and locked tables",
+            "Incorrect data types, truncated strings, and rounding errors"
+          ],
+          "correct": 0,
+          "right": "Right — three genuinely different shapes of the same underlying problem, each caught by a different step in the lesson: Step 1 for self-loops, Step 3 for multi-node cycles, Step 5 for dangling references.",
+          "wrong": "The lesson names these three specifically: self-loops, where ManagerID equals the employee's own EmployeeID (caught in Step 1); multi-node cycles, where following the chain eventually loops back to where it started, like A→B→C→A (caught in Step 3's recursive path-tracking); and dangling references, where ManagerID points to an EmployeeID that simply doesn't exist in the table at all (caught in Step 5). All three break a recursive traversal, but they need different detection logic because they're structurally different failures."
+        }
+      ],
+      "close": "The robustness of path-tracking over depth limits, SQL Server's built-in recursion safety net, and the three distinct cycle types — circular reference detection covered. Next: Hierarchy Completeness and Depth Validation, checking whether the shape of the tree itself makes sense."
+    },
+    "G13-T03": {
+      "open": "Hierarchy Completeness and Depth Validation — beyond just \"does this reference exist,\" this technique asks whether the overall shape of the org chart is healthy: not too wide, not too deep, not fragmented.",
+      "questions": [
+        {
+          "q": "What are the three possible explanations the lesson gives for a hierarchy having multiple root nodes?",
+          "choices": [
+            "Disconnected sub-trees loaded separately without a unifying parent, data quality errors (a root manager was deleted), or an intentional flat structure where several senior leaders report to no one",
+            "A SQL Server bug, a corrupted index, and a missing primary key constraint",
+            "Too many employees, too few departments, and an outdated schema",
+            "A JOIN fan-out, a duplicate row, and a NULL in the wrong column"
+          ],
+          "correct": 0,
+          "right": "Right — three named possibilities, and the lesson is careful that not all of them are actually errors; one (the flat structure) can be intentional business design.",
+          "wrong": "The lesson lists these three specifically: disconnected sub-trees (different business units loaded separately without a single connecting parent), data quality errors (some employee's root manager record was deleted, orphaning their whole branch), or an intentional flat structure (several senior leaders genuinely report to no one). It flags multiple roots because they prevent correct depth calculation and hierarchy reporting regardless of which of these three caused it — but not every case is actually a mistake."
+        },
+        {
+          "q": "Why might a manager with exactly 1 direct report be flagged as \"potential hierarchy bloat\" rather than simply accepted as a normal team structure?",
+          "choices": [
+            "It could represent an intermediate management layer that adds an extra reporting hop without adding real organisational value",
+            "SQL Server treats any manager with fewer than 2 direct reports as an invalid record",
+            "A manager with 1 direct report always indicates a data entry error",
+            "It means the employee's ManagerID column contains a NULL value"
+          ],
+          "correct": 0,
+          "right": "Right — it's a candidate for review, not a confirmed problem. A single-report manager could be a legitimate specialist role, but it could also just be unnecessary extra layering in the hierarchy.",
+          "wrong": "The lesson is careful to frame this as ambiguous, not automatically wrong: a manager with exactly 1 direct report could be legitimate structure (a specialist role that genuinely needs its own reporting line), or it could be hierarchy bloat — an intermediate layer inserted that adds a reporting hop without adding real organisational value. The flag exists to prompt a human review, since organisational design is ultimately a business decision the database alone can't settle."
+        },
+        {
+          "q": "Why are \"disconnected\" employees (Step 3) invisible to any top-down hierarchy report, even though they still exist as rows in the Employees table?",
+          "choices": [
+            "A top-down report works by traversing the hierarchy starting from the root(s), and a disconnected employee — by definition — cannot be reached by that traversal no matter how far it goes",
+            "Disconnected employees are automatically deleted from the table by a nightly cleanup job",
+            "SQL Server hides rows that fail a foreign key constraint from all SELECT queries",
+            "Disconnected employees only appear in reports generated on weekends"
+          ],
+          "correct": 0,
+          "right": "Right — it's a structural consequence of how top-down traversal works, not a bug in any specific query. If a node can't be reached by walking down from a root, it will never appear in output built by that traversal, regardless of how the report is generated.",
+          "wrong": "The lesson's own definition makes this direct: a top-down hierarchy report works by starting at the root node(s) and traversing downward through parent-child links. A \"disconnected\" employee is, by the query's own definition, one that cannot be reached by that traversal — their root manager was deleted without reassigning their branch, or their ManagerID points to something that was never actually created as a root. The row still physically exists in the table; it's just structurally unreachable from any starting point the report knows to begin from."
+        }
+      ],
+      "close": "Multiple roots as three distinct (not automatically bad) causes, single-report spans as a bloat candidate, and disconnected nodes as structurally unreachable rather than deleted — hierarchy completeness covered. Next: JSON Structure Validation, where schema drift inside a JSON column hides in plain sight."
+    },
+    "G13-T04": {
+      "open": "JSON Structure Validation — a JSON column can stay perfectly syntactically valid while quietly using the wrong keys, and nothing about that will ever throw an error on its own.",
+      "questions": [
+        {
+          "q": "Why must `ISJSON()` be checked before relying on `JSON_VALUE()` to determine whether a key is genuinely present?",
+          "choices": [
+            "JSON_VALUE() called on a syntactically invalid JSON string returns NULL rather than raising an error, so without ISJSON() first, you can't tell \"key absent\" apart from \"the whole JSON document is broken\"",
+            "JSON_VALUE() cannot be executed at all unless ISJSON() has already run earlier in the same script",
+            "ISJSON() automatically repairs any malformed JSON before JSON_VALUE() reads it",
+            "JSON_VALUE() only works on JSON arrays, never on JSON objects"
+          ],
+          "correct": 0,
+          "right": "Right — the ambiguity is the whole reason ISJSON() has to run first. JSON_VALUE() gives you the same NULL result whether the document is broken or the key is just missing, so you need a separate check to tell those two very different problems apart.",
+          "wrong": "The lesson explains this precisely: calling JSON_VALUE() on a string that isn't valid JSON at all returns NULL rather than raising an error — the same NULL you'd get if the JSON were perfectly valid but the key was simply absent. Without checking ISJSON() first, a NULL from JSON_VALUE() is ambiguous between \"this document is broken\" and \"this key doesn't exist in an otherwise fine document\" — two very different problems that need different fixes."
+        },
+        {
+          "q": "What's the difference in purpose between `JSON_VALUE()` and `JSON_QUERY()`?",
+          "choices": [
+            "JSON_VALUE() extracts a scalar value (string, number, boolean); JSON_QUERY() extracts a nested object or array as a JSON fragment",
+            "JSON_VALUE() only works on the Orders table, while JSON_QUERY() only works on the Transactions table",
+            "JSON_QUERY() validates JSON syntax, while JSON_VALUE() extracts values — they cannot both be used in the same query",
+            "JSON_VALUE() is deprecated in SQL Server and JSON_QUERY() should always be used instead"
+          ],
+          "correct": 0,
+          "right": "Right — different return types for different jobs. Reach for JSON_VALUE() when you want a single field's actual value; reach for JSON_QUERY() when the thing at that path is itself a nested structure.",
+          "wrong": "The lesson states this distinction directly: JSON_VALUE(col, '$.key') is for extracting an individual scalar value — a string, number, or boolean — as NVARCHAR. JSON_QUERY(col, '$.key') is for extracting something that's itself a nested object or array, returning it as a JSON fragment rather than trying to force it into a scalar. You'd use JSON_VALUE for something like `$.currency`, and JSON_QUERY for something like an embedded `$.address` object."
+        },
+        {
+          "q": "Why can't `JSON_VALUE()` alone distinguish between \"this key is absent from the document\" and \"this key exists but its value is explicitly `null`\"?",
+          "choices": [
+            "JSON_VALUE() returns NULL in both cases, so the two scenarios are indistinguishable from its return value alone — a JSON_QUERY() check or raw string inspection is needed to tell them apart",
+            "SQL Server does not allow JSON values to be explicitly set to null under any circumstances",
+            "JSON_VALUE() throws a runtime error whenever a key's value is explicitly null",
+            "A missing key and a null value are treated identically by definition and there is no meaningful difference between them"
+          ],
+          "correct": 0,
+          "right": "Right — from JSON_VALUE()'s return value alone, you genuinely can't tell these apart; both come back as NULL. The lesson names the workaround (JSON_QUERY or raw string inspection) but also notes that for most purposes, treating both as \"missing\" is a fine simplification.",
+          "wrong": "The lesson states this ambiguity directly: JSON_VALUE() returns NULL both when a key is entirely absent from the document and when the key exists but its value is explicitly JSON `null`. To actually tell these apart, the lesson suggests using JSON_QUERY() and checking whether the returned fragment is the literal string \"null\", or inspecting the raw JSON text with something like `CHARINDEX('\"source\"', Metadata) > 0`. For most validation purposes, though, the lesson notes treating both cases as \"missing\" is an acceptable simplification."
+        }
+      ],
+      "close": "The ISJSON-before-JSON_VALUE ordering, scalar vs nested extraction, and the absent-vs-null ambiguity — JSON structure validation covered. Next: Graph Connectivity and Orphan Node Detection, generalising from strict hierarchies to arbitrary networks."
+    },
+    "G13-T05": {
+      "open": "Graph Connectivity and Orphan Node Detection — a hierarchy is really just a special, restricted kind of graph. This technique applies the same reachability thinking to relationships that don't have to form a strict tree.",
+      "questions": [
+        {
+          "q": "What defines an \"isolated node\" in this lesson's graph connectivity terms?",
+          "choices": [
+            "Both in-degree and out-degree equal 0 — no edges point into the node, and no edges point out of it",
+            "The node has an in-degree of exactly 1 and any out-degree",
+            "The node's EmployeeID is NULL",
+            "The node has the maximum possible out-degree in the entire dataset"
+          ],
+          "correct": 0,
+          "right": "Right — completely disconnected on both counts. No manager, no direct reports, no relationship to the rest of the graph at all.",
+          "wrong": "The lesson defines this precisely: in-degree is the count of edges pointing into a node, out-degree is the count of edges pointing out. An isolated node has both equal to 0 — in the management-hierarchy example, that means an employee with no ManagerID (in-degree 0) and no direct reports (out-degree 0), meaning they're entirely disconnected from the rest of the graph, not just at the edge of it."
+        },
+        {
+          "q": "What does it mean for a set of nodes to form one \"connected component\", as defined in this lesson?",
+          "choices": [
+            "Every node in the set is reachable from every other node in the set, treating the edges as undirected for this purpose",
+            "Every node in the set shares the exact same ManagerID value",
+            "The set contains exactly one root node and no leaf nodes",
+            "Every node in the set was created on the same date"
+          ],
+          "correct": 0,
+          "right": "Right — reachability is the defining property, and it's checked in the undirected sense (ignoring which way each edge points), which is different from strict top-down hierarchy traversal.",
+          "wrong": "The lesson's definition is specific: a connected component is a set of nodes where every node is reachable from every other node, treated in an undirected sense (ignoring the direction each edge actually points). A tree — like a clean single-root management hierarchy — has exactly one connected component; a graph with disconnected sub-trees or isolated nodes has more than one. This is a more general concept than \"reachable from the root,\" since it doesn't require a designated starting point."
+        },
+        {
+          "q": "In Step 4's bipartite validation, what does it mean if a single OrderID shows more than one distinct CustomerID?",
+          "choices": [
+            "A structural violation — each order is supposed to link exactly one customer to one product, so multiple customer values for one order suggests a JOIN fan-out or ETL error",
+            "It means the customer placed multiple orders on the same day, which is expected behaviour",
+            "It means the OrderID column contains a duplicate primary key, which SQL Server would normally prevent",
+            "It has no significance — OrderIDs are allowed to link to multiple customers by design"
+          ],
+          "correct": 0,
+          "right": "Right — one order is supposed to map to exactly one customer. Seeing more than one for the same OrderID is a structural red flag, not a valid business scenario.",
+          "wrong": "The lesson frames this relationship as bipartite by design: each order should connect exactly one customer to one product. `COUNT(DISTINCT o.CustomerID) > 1` for a single OrderID violates that expected structure — the lesson attributes violations like this to ETL errors or JOIN multiplicities in the source data (for example, a JOIN that fanned out and duplicated rows), not to a legitimate business scenario where one order genuinely belongs to multiple customers."
+        }
+      ],
+      "close": "Isolated nodes by zero in/out-degree, connected components as undirected reachability, and bipartite violations as ETL red flags — graph connectivity covered. Last one in this group: Nested Set and Adjacency List Consistency."
+    },
+    "G13-T06": {
+      "open": "Last one in Hierarchical/Structural — Nested Set and Adjacency List Consistency. Two different ways to store the same tree, and this technique checks that a derived nested-set encoding actually agrees with the adjacency list it came from.",
+      "questions": [
+        {
+          "q": "Why can't lft/rgt values assigned as simple consecutive integers per row (`lft = 2n-1`, `rgt = 2n`, ordered by depth) ever demonstrate parent-child containment, no matter what data is loaded?",
+          "choices": [
+            "Every node's own rgt is always exactly one more than its own lft by construction, so a containment check against those values can never fail regardless of the actual hierarchy structure",
+            "SQL Server does not allow lft and rgt to be computed using ROW_NUMBER() under any circumstances",
+            "Consecutive integers can only be used for hierarchies with fewer than 10 nodes",
+            "The values would always be identical for every employee, causing a primary key violation"
+          ],
+          "correct": 0,
+          "right": "Right — that's exactly why this needed a real rewrite rather than a small fix. If rgt is always lft+1 by definition, no containment test run against those two numbers can ever meaningfully pass or fail — it's checking something that's true by construction, not by structure.",
+          "wrong": "The lesson's corrected version explains this directly: if lft and rgt are just consecutive integers derived from the same row number (`2n-1` and `2n`), then for every single row, rgt is always exactly lft+1 — guaranteed by how they're computed, completely independent of where that node actually sits in the tree. A containment check like \"is this child's range inside its parent's range\" tested against numbers with that property can never meaningfully fail, because it isn't actually testing the tree's real structure at all — it's testing an arithmetic fact that's true regardless of the data."
+        },
+        {
+          "q": "What does the AncestorPath slash-count check in Step 1 verify?",
+          "choices": [
+            "That the computed Depth value for each employee matches the number of separators in their accumulated ancestor path string, catching a recursive CTE error if they disagree",
+            "That every employee's FullName contains no special characters",
+            "That the AncestorPath string is shorter than 100 characters for every employee",
+            "That every employee has exactly one direct report"
+          ],
+          "correct": 0,
+          "right": "Right — it's a self-consistency check on the recursive CTE's own output. The path string and the depth counter are built by two different pieces of the same query, so if they ever disagree, something in the recursion logic is wrong.",
+          "wrong": "The lesson explains this as an internal consistency check: the path string (like `'EMP-001/EMP-002/EMP-005'`) accumulates one segment per level of recursion, and the number of separators in it should always exactly equal the separately-tracked Depth counter. If they disagree, it means the recursive CTE's join condition or its depth initialization has a bug — the two values are computed by different parts of the same query, so agreement between them is a genuine correctness check, not just a formatting detail."
+        },
+        {
+          "q": "According to the four nested-set consistency invariants listed in the lesson, what should the root node's lft and rgt values equal?",
+          "choices": [
+            "lft = 1, and rgt = 2 × the total number of nodes in the hierarchy",
+            "lft and rgt should both equal 0 for the root node specifically",
+            "lft should equal the root's EmployeeID, and rgt should equal its Depth",
+            "The root node has no lft or rgt values at all, only its children do"
+          ],
+          "correct": 0,
+          "right": "Right — the root's range has to span the entire tree, since every other node's range is nested inside it. lft = 1 (nothing precedes it) and rgt = 2N (it closes only after every other node has opened and closed).",
+          "wrong": "The lesson lists this as one of the four consistency invariants: the root has lft = 1 (since nothing in the entire tree comes before it opens) and rgt = 2 × total node count (since the root's range must contain every other node's range — the whole nested set is opened first and closed last). This is a direct consequence of the general rule that `rgt - lft + 1 = 2 × subtree size`, applied to the root, whose subtree is the entire tree."
+        }
+      ],
+      "close": "Why naive consecutive pairs can never test real containment, the slash-count self-consistency check, and the root's lft=1/rgt=2N invariant — that closes out Hierarchical/Structural. Six techniques down: referential integrity, circular references, completeness and depth, JSON structure, graph connectivity, and nested set consistency."
     }
   }
 }
