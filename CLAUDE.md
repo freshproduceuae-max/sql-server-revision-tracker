@@ -332,4 +332,16 @@ Before calling a group done:
 - Never silently carry forward a stale queue table. If the checker fails,
   fix `HANDOFF.md` (via `--fix` plus review of the diff) before doing
   anything else — including before starting a new group.
+- **`contentThroughPR` tracks the latest merged PR that changed
+  `sources/teacher-mcq.json` or `teacher-mcq.json` — not the latest merged
+  PR in the repo.** Those are different numbers. A docs, process, or
+  checker-maintenance PR (including a PR that fixes this very block) must
+  never become `contentThroughPR`; the checker filters on file path
+  specifically so it can't. Treating "newest merged PR" as the tracked value
+  created a self-referential loop: fixing a stale PR number produces a new
+  merged PR, which makes the fix stale again the moment it lands. Do not
+  reintroduce that field. `sourcesTeacherMcqHash` (a sha256 of
+  `sources/teacher-mcq.json`) is the more reliable signal of which content
+  state was actually verified — prefer it over any PR number when the two
+  seem to disagree.
 

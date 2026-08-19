@@ -257,9 +257,10 @@ entry 19.
   "remainingItemsTotal": 99,
   "fullTrackTotalItems": 251,
   "_note": "84 remaining techniques + 15 remaining exercises = 99 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
-  "latestMergedPR": 44,
-  "latestMergedPRCheckStatus": "verified",
-  "lastVerified": "2026-08-19T18:41:41.556Z"
+  "contentThroughPR": 44,
+  "contentThroughPRCheckStatus": "verified",
+  "sourcesTeacherMcqHash": "sha256:50d139f9ebda79808084da71a265fbb3112a888c6daa61fc28e3b3e863991f6f",
+  "lastVerified": "2026-08-19T19:18:53.726Z"
 }
 ```
 
