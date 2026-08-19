@@ -95,6 +95,27 @@ repo; it is hand-maintained, so corrections here need making there too.
 
 ---
 
+## Reporting status — approval board, not narrative
+
+The owner reviews as a creative director, not a technical supervisor: they
+approve or reject, they do not want the reasoning trail. When reporting
+anything that needs a yes/no, use this shape, not prose:
+
+- **A table or short list of what needs a decision** — one row per item, plain
+  language, no file-path clutter unless the item *is* a file.
+  For a merge/build decision specifically: **what's inside → pros → cons →
+  recommendation**, each as one or two lines, not paragraphs.
+- **One line each for what's moving and what's stuck.** No walkthrough of how
+  it got there unless asked.
+- Save the "why" and the mechanism for when they ask, not by default.
+
+This was corrected explicitly mid-session: *"your writing is just like your
+thinking from off top of your head... I'm not your supervisor like Codex. I'm
+the creative director... a presentation or a shorter preview of everything we
+need to approve concisely."*
+
+---
+
 ## Layout
 
 ```
