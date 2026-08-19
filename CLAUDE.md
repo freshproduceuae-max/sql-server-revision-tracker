@@ -63,6 +63,33 @@ options and ask. Do not silently pick one.
 **7. Branch and PR. Never commit to the default branch.** There is no `main`;
 the default is `claude/confident-volta-l3e55f`.
 
+**8. Show the plan before building it, and name the scope boundary out loud.**
+Three testable behaviours, not a slogan: (a) the plan appears in the
+conversation before the first change of a phase, (b) non-retrofittable
+constraints are asked about before code is written, (c) every mid-phase
+request gets an explicit "this phase" or "the queue." If a session cannot
+point at all three, this rule was not followed. The owner's
+own course material (`AI Course Content/Saqr Academy11–12.docx`) already
+defines how a phase runs — use it rather than inventing a process per session:
+
+- **A release is evidence, not a feeling.** Four separate gates, each answering
+  one question and producing proof: **Safety** (secrets, auth boundaries, env
+  vars), **Reliability** (build/lint/tests, core workflows still pass), **UX**
+  (loading, error, empty, mobile), **Demo** (deployed, release notes, known
+  limitations written down).
+- **Before starting a phase, display the plan in the conversation** — not only
+  in a file. Show what is in scope, what is explicitly out, and which gates
+  apply. A plan the owner has not seen is not a plan they agreed to.
+- **Run the intake first.** Where a phase has design constraints that cannot be
+  retrofitted (a data model, a retention period, a failure mode), ask them
+  before writing code, not after.
+- **When a new request arrives mid-phase, check it against the shown plan and
+  say which it is** — part of this phase, or a new one for the queue. Do not
+  silently absorb it. "Ask for UX polish without scope creep" is the owner's
+  own phrasing; absorbing every new point in arrival order is exactly the
+  failure it names. See LESSONS-LEARNED entry 33 — this rule exists because a
+  whole session ran as reactive absorption with no plan ever shown.
+
 A portable copy lives in `AGENT-LESSONS.md` in the `Make an AI Support System`
 repo; it is hand-maintained, so corrections here need making there too.
 

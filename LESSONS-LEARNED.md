@@ -43,6 +43,11 @@ clothes, and that is the most useful thing about them:
   An element that existed and could not be seen (23); elements that were seen and
   misrepresented their own importance (24). No guard in this repo checks either.
   Only looking does — in both themes, on every page a change touches.
+- **19, 20, 32, 33** — the limits of per-change discipline. Untracked paths with
+  no undo (19), a working tree nobody owns (20), an error naming an action the UI
+  could not perform (32), and a whole session of individually-reviewed changes
+  whose *sequence* was never planned (33). Every one passed the checks that
+  existed. None of those checks could see the thing that was actually wrong.
 
 ## A portable copy lives outside this repo
 
@@ -53,7 +58,7 @@ Small Business Websites templates, so future projects start from what already
 went wrong here.
 
 **That copy is hand-written, not generated, so the two can drift.** This file
-stays the detailed record — 24 entries with the full symptom, wrong first
+stays the detailed record — 33 entries with the full symptom, wrong first
 hypothesis, root cause and fix. That one is the portable summary. If you correct
 something here that appears there, correct it in both. That repo was local-only when this
 note was written; it is now pushed to **github.com/freshproduceuae-max/ai-support-system**
@@ -1341,3 +1346,79 @@ And when adding a reset/undo control to a stateful async flow, always ask
 what happens if it fires while a request for that same state is still in
 flight — the fix generally needs both the visible disabled state and a guard
 inside the function itself, not just one or the other.
+
+---
+
+## 33. Answering the last message is not the same as running the project
+
+**Looked like:** a long, productive session. The Teacher shipped to all three
+tracks, got a floating panel, encouragement in its prompt, an MCQ warm-up, a
+session reset, a width toggle. Bugs found and fixed, every change
+Codex-reviewed, every change deployed and verified. By any per-change measure
+it went well.
+
+**Actually was:** every one of those was a reaction to the owner's most recent
+message. No plan was ever shown before starting. No intake was ever run. New
+requests were absorbed in arrival order and started immediately, because each
+one was individually reasonable and individually small.
+
+The owner named the mechanism precisely: *"it seems you pay more attention to
+my words rather than beginning an interview or avoiding scope creep situations
+by showing me the defined plans."*
+
+That is the correct diagnosis. Being responsive to each message **is** the
+failure mode when it substitutes for holding a structure. Nothing in the
+session was wrong; the sequence was never chosen.
+
+**Two costs. The first is documented in the git log; the second is certain.**
+
+- **Probable rework.** The commit sequence is factual: the floating panel
+  shipped at 380px wide, the MCQ warm-up shipped later (`c9ce0ec`), and a width
+  toggle followed (`0101185`) whose own message states the MCQ feedback
+  "wrapped awkwardly in the 380px floating panel." Whether one intake question
+  ("how long is the content going in here?") would have collapsed those three
+  changes into one is **inference, not something the log proves** — the MCQ
+  content did not exist when the panel was styled. Recorded as a plausible
+  cost, not a demonstrated one. Codex flagged the original wording here as
+  overstated, and it was right.
+- **A plan that existed nowhere.** A Codex consultation produced a real
+  scoping decision. It was summarised in chat, the scratch files were deleted,
+  and nothing was written down. When the owner asked where the planning
+  documents were, the honest answer was that they did not exist. The plan had
+  lived only in a conversation that would not survive the session.
+
+**Fix:** `CLAUDE.md` rule 8 — show the plan in the conversation before
+starting a phase, run the intake for anything that cannot be retrofitted, and
+when a new request arrives mid-phase, say explicitly whether it belongs to this
+phase or the queue.
+
+**Fix, second half:** stop inventing a process per session. The owner's own
+course material (`AI Course Content/Saqr Academy11–12.docx`) already defines
+release phases and four gates — Safety, Reliability, UX, Demo — with the
+governing line *"a release is not a feeling, a release is evidence."* That
+framework was sitting in this repo's own working directory, unread, for the
+whole session it was needed. **Before building a process, look for whether the
+owner already has one.**
+
+**Rules:**
+
+- **Responsiveness is not planning.** If every task in a session began as a
+  reply to the previous message, no plan is being held — however good each
+  individual change was.
+- **Show the plan in the conversation, not only in a file.** A plan the owner
+  has not seen is not a plan they agreed to. Writing it to disk and reporting
+  the path is not showing it.
+- **Ask the questions that cannot be retrofitted, first.** Data model,
+  retention, failure mode, and content size are design constraints. A width
+  that was never sized against its content is a rebuild, not a tweak.
+- **Name the boundary out loud when a new request arrives.** "That is a new
+  phase, not this one" is a service to the owner, not an obstruction. Silence
+  reads as agreement that it belongs in the current scope.
+- **Search the owner's own material for an existing framework before
+  proposing one.** Theirs carries context that a generic process cannot, and
+  using it is how the process actually gets followed rather than restated.
+
+**Family:** this belongs with 19, 20 and 32 — the limits of what discipline
+per-change can protect. Those cover state nobody owns; this covers a *sequence*
+nobody chose. Every individual change here passed review. The failure was
+entirely in what was never asked before the first one.

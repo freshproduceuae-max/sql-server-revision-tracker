@@ -231,19 +231,97 @@ entry 19.
 
 ---
 
-## Next phase — planned work (paused for token budget, resume Wed midday / Thu)
+## Work queue — what is actually outstanding
 
-**Status as of 2026-08-16: paused, not started.** Weekly token budget was ~80%
-spent with the reset landing Wednesday, so this was recorded as a plan instead
-of being built. Resume from here — do not re-derive it from conversation, this
-repo has no memory of prior sessions beyond what is written down.
+**Updated 2026-08-19.** Read this before starting anything. This repo has no
+memory of prior sessions beyond what is written down here.
 
-**Also outstanding right now:** [PR #27](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/27)
-(`docs/lessons-learned-teacher-session`, adds LESSONS-LEARNED entries 25–30 from
-building "The Teacher") is open and unmerged — needs the owner's merge approval
-per the branch/PR rule in `CLAUDE.md`. Check it first when resuming.
+Everything through PR #31 is merged and deployed. No open PRs. The Teacher
+ships with: all three lesson tracks, a floating panel, a session reset, and an
+MCQ-first warm-up covering **one** lesson group.
 
-### How this came up
+| # | Item | Scope | Gated on |
+|---|---|---|---|
+| 1 | Teacher MCQs — rest of Data Validation | 18 groups + 15 exercises (~239 lessons) | nothing |
+| 2 | Teacher MCQs — Credit Risk | 47 modules + 7 case studies | nothing |
+| 3 | Teacher MCQs — Business Analysis | 42 lessons | nothing |
+| 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
+| 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
+| 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing |
+
+Items 1–3 and 6 are **content only** — no infrastructure, no new data surface,
+following patterns already shipped and reviewed. They are not blocked by
+anything and can proceed immediately.
+
+### Which phase each item belongs to
+
+Use the owner's own release structure from `AI Course Content/Saqr
+Academy11–12.docx` rather than inventing one — see `CLAUDE.md` rule 8. Its four
+gates are **Safety** (secrets, auth boundaries, env vars), **Reliability**
+(build/lint/tests, core workflows still pass), **UX** (loading, error, empty,
+mobile), **Demo** (deployed, release notes, known limitations written down).
+Its governing line: *a release is evidence, not a feeling.*
+
+Against that structure, this app has already done the equivalent of Session 1
+(shipped and live) and Session 3 (branch/PR/review discipline, enforced). What
+is left splits into three genuinely different phases:
+
+| Phase | Items | Nature | Gates that apply |
+|---|---|---|---|
+| **1 · Content** | 1, 2, 3, 6 | Authoring against a shipped pattern | Reliability; UX for item 6 (new track = new nav surface) |
+| **2 · Datastore** | 4 (Phase B) | First server-side persistence this app has ever had | **Safety** primarily, then all four |
+| **3 · Automation** | 5 (Phase C) | Scheduled job over Phase 2's data | All four; gated on Phase 2 existing |
+
+Phase 1 does not touch Phase 2's questions and must not be blocked behind them.
+
+### Intake questions for Phase 2 — answer before writing code
+
+These are design constraints, not retrofits. Recorded in full with context in
+the security repo's scoping note (path below); listed here so they are not lost:
+
+1. **What exactly gets logged** — full conversation text, or a minimised
+   subset? Students can type anything into a free-text box, including things
+   about themselves the app never asked for.
+2. **Retention period?** Indefinite is a decision, not a default, and it needs
+   a deletion mechanism.
+3. **Anything linkable to a person?** Including whatever Upstash logs at its
+   own layer, which is not under this app's control.
+4. **Rate limiting.** `api/tutor.js` is public and unauthenticated with none
+   today (`x-app-tag` is explicitly not authentication). Adding a *write* path
+   changes that gap's severity — fix before or after?
+5. **The new secret** (Redis credential) — same handling as
+   `ANTHROPIC_API_KEY`, server-side only, never in client JS?
+6. **Failure behaviour.** A slow or sleeping free-tier Redis must never block
+   or degrade the student's reply; a failed write should be silently skipped.
+
+### The security framework, and what it does and does not gate
+
+The owner maintains a formal security assessment framework at
+`C:\Projects\Security for AI\System Implementation Security` — a 725-item
+evidence-driven Go/No-Go register (NIST SP 800-53/800-61/800-218/800-204D,
+OWASP ASVS 5.0, SOC operations, incident response, supplier due diligence).
+
+**It applies to Phase B only, not to the whole app and not to content work.**
+That scoping decision, its reasoning, the open questions that must be answered
+before Phase B code is written, and the applicability estimate are recorded in:
+
+```text
+C:\Projects\Security for AI\System Implementation Security\Scratchpad\analyst-academy-phase-b-scope.md
+```
+
+Read that file before touching Phase B. The short version: Phase B is the first
+time this app persists user-typed content server-side, which makes it the first
+real new data surface — so it gets a scoped formal assessment (scope →
+applicability → implementation → evidence → decision, per that repo's
+`AI-USAGE-GUIDE.md`), done **before** the code is written, not after. A rough
+estimate suggests only ~35–50 of the 725 items are even plausibly applicable to
+a no-login, no-PII, single-serverless-function app — but that estimate is a
+planning input, not an assessment result, and each criterion still needs a real
+documented rationale.
+
+Content-only work (items 1–3, 6) is explicitly **not** gated on any of this.
+
+### Enterprise Architecture track — how this came up
 
 The owner pasted a real job posting — "Enterprise Architect · AI & Digital
 Platforms" (Michael Page, UAE) — and asked whether any course content already
@@ -255,8 +333,9 @@ microservices/event-driven design as disciplines. `CURRICULUM.md` (a personal,
 non-deployed doc) has an Azure-only data-engineering module, which doesn't
 close the gap either.
 
-Separately in the same session, the owner pointed at a real folder —
-`C:\Projects\Wisdom for AI\System Implementation Security` — containing a
+Separately in the same session, the owner pointed at a real folder — now at
+`C:\Projects\Security for AI\System Implementation Security` (originally
+`Wisdom for AI\…`; both paths hold the same package) — containing a
 50-item enterprise Go/No-Go security-control register (built from NIST
 SP 800-53/800-61/800-218/800-204D and OWASP ASVS 5.0). That folder is a
 **personal security-assessment framework, not course source material** — do
