@@ -8,6 +8,14 @@ with Group 6, the owner asked to swap roles for five groups (G06–G10) as a
 trial: **Codex authors, Claude reviews** — to see whether the swap holds up
 on quality and what it costs in tokens/time on each side.
 
+**Scope note:** as of G10, this covers G01–G10 only — 152 lessons, 456
+questions. Data Validation as a whole spans **G01–G19 plus 15 worked
+exercises** (per `HANDOFF.md`: 236 techniques across 19 groups + 15
+exercises = 251 total). G11–G19 and the worked exercises are not started.
+"Completes the 5-group role-swap trial" and "completes all of Data
+Validation" are not the same claim — only the former is true at this
+point.
+
 ## Method
 
 For each group:
@@ -51,7 +59,7 @@ conversation.
 | G07 Business Rules | 16 | 48 | 43,676 | 0 (nothing to fix) | not recorded | 0 | 0 | 0 (Codex self-checked via `_flagged_inconsistencies`; reported none) | Context 424.2k → 506.5k (+82.3k); 5-hour usage 43% → 46% (+3 pts) | [#41](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/41) (open, pending merge) | Pending |
 | G08 Reconciliation | 15 | 45 | 43,580 | 0 (nothing to fix) | not recorded | 0 (0 Codex retries; 1 JSON syntax defect — trailing commas — repaired programmatically during extraction, not a Codex re-run) | 0 | 0 confirmed — Codex self-flagged 3 lessons (T03, T04, T06) via `_flagged_inconsistencies`, all verified as false positives (standard narrative-scenario-vs-schema-table mapping used throughout the course, not real contradictions) | not recorded (before/after snapshot not supplied for this group) | [#42](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/42) (open, pending merge) | Pending |
 | G09 Timeliness | 11 | 33 | 51,177 | 0 (nothing to fix) | not recorded | 0 | 0 | 0 — Codex reported no `_flagged_inconsistencies` this time | not recorded | [#43](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/43) (open, pending merge) | Pending |
-| G10 Data Type/Storage | 10 | 30 | — | — | — | — | — | — | — | — | — |
+| G10 Data Type/Storage | 10 | 30 | 39,811 | 0 (nothing to fix) | not recorded | 0 | 0 schema fix (extraneous `questions_meta` key on every lesson, stripped programmatically — not a factual error) | 0 — Codex reported no `_flagged_inconsistencies` | not recorded (owner capturing independently as a clean boundary before this group) | [#44](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/44) (open, pending merge) | Pending |
 
 **Lesson learned after G06:** the drafting run's token count was lost
 because the raw Codex output file was deleted (as part of routine `_scratch`
@@ -67,6 +75,7 @@ before its measurements are archived — see below.
 | G07 | `01a01a99-012a-73a0-bb11-be629eeb3a6c` | gpt-5.4-mini | low | read-only | `codex exec --sandbox read-only "$(cat _audit/teacher-mcq-role-swap/G07/prompt.txt)" < /dev/null > _audit/teacher-mcq-role-swap/G07/output.txt 2>&1` |
 | G08 | `01a01abc-3d40-7dc0-947f-274f7d1fc86c` | gpt-5.4-mini | low | read-only | `codex exec --sandbox read-only "$(cat _audit/teacher-mcq-role-swap/G08/prompt.txt)" < /dev/null > _audit/teacher-mcq-role-swap/G08/output.txt 2>&1` |
 | G09 | `01a01b08-70b0-7263-a180-b520ec15f571` | gpt-5.4-mini | low | read-only | `codex exec --sandbox read-only "$(cat _audit/teacher-mcq-role-swap/G09/prompt.txt)" < /dev/null > _audit/teacher-mcq-role-swap/G09/output.txt 2>&1` |
+| G10 | `01a01b1d-e0c0-7b02-bc01-469ac2482619` | gpt-5.4-mini | low | read-only | `codex exec --sandbox read-only "$(cat _audit/teacher-mcq-role-swap/G10/prompt.txt)" < /dev/null > _audit/teacher-mcq-role-swap/G10/output.txt 2>&1` — note: startup emitted a benign `codex_models_manager` timeout warning to stderr before the run proper began; config header and completion were otherwise normal |
 
 ## Prompt template changelog
 
