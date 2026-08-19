@@ -24,8 +24,10 @@ const BUILT_MCQ = path.join(ROOT, 'teacher-mcq.json');
 const START_MARKER = '<!-- HANDOFF-PROGRESS:START (machine-generated, see scripts/check-handoff-progress.js) -->';
 const END_MARKER = '<!-- HANDOFF-PROGRESS:END -->';
 
+let hadFailure = false;
 function fail(msg) {
   console.error('FAIL: ' + msg);
+  hadFailure = true;
   process.exitCode = 1;
 }
 
@@ -65,8 +67,8 @@ function deriveActual() {
   // Built Teacher MCQ content: which groups actually have lessons, and counts
   const src = readJSON(SOURCES_MCQ);
   const built = readJSON(BUILT_MCQ);
-  const srcIds = Object.keys(src.lessons);
-  const builtIds = Object.keys(built.lessons);
+  const srcIds = Object.keys(src.lessons).sort();
+  const builtIds = Object.keys(built.lessons).sort();
 
   const completedGroupIds = [...new Set(builtIds.map(id => id.split('-')[0]))]
     .filter(g => /^G\d{2}$/.test(g))
@@ -94,13 +96,29 @@ function deriveActual() {
   const completedExerciseIds = builtIds.filter(id => /^M\d{2}-E/.test(id));
   const remainingExercises = totalExercises - completedExerciseIds.length;
 
+  // Track-wide totals — kept as two separate, unambiguous numbers.
+  // Never collapse "remaining" and "full track" into the same label.
+  const remainingItemsTotal = remainingTechniques + remainingExercises;   // what's left to do
+  const fullTrackTotal = totalTechniques + totalExercises;                // the whole track, done + not done
+
+  // Exact ID-set comparison between source and built MCQ files, not just counts.
+  const srcSet = new Set(srcIds);
+  const builtSet = new Set(builtIds);
+  const missingFromBuilt = srcIds.filter(id => !builtSet.has(id));   // in source, not built
+  const unexpectedInBuilt = builtIds.filter(id => !srcSet.has(id));  // in built, not source
+  const idSetsMatch = missingFromBuilt.length === 0 && unexpectedInBuilt.length === 0;
+
   return {
     allGroupIds,
     groupTechniqueCount,
     totalTechniques,
     totalExercises,
+    fullTrackTotal,
     srcIds,
     builtIds,
+    idSetsMatch,
+    missingFromBuilt,
+    unexpectedInBuilt,
     completedGroupIds,
     completedThroughGroup,
     contiguous,
@@ -109,7 +127,7 @@ function deriveActual() {
     remainingGroupIds,
     remainingTechniques,
     remainingExercises,
-    srcLessonCountMatchesBuilt: srcIds.length === builtIds.length,
+    remainingItemsTotal,
   };
 }
 
@@ -137,7 +155,7 @@ function readStatedBlock() {
   return { text, block, startIdx, endIdx, jsonStart, jsonEnd };
 }
 
-function buildBlockText(actual, latestMergedPR) {
+function buildBlockText(actual, latestMergedPR, prCheckStatus) {
   const stated = {
     completedThroughGroup: actual.completedThroughGroup,
     completedLessons: actual.completedLessons,
@@ -145,28 +163,40 @@ function buildBlockText(actual, latestMergedPR) {
     remainingGroups: actual.remainingGroupIds,
     remainingTechniques: actual.remainingTechniques,
     remainingExercises: actual.remainingExercises,
+    remainingItemsTotal: actual.remainingItemsTotal,
+    fullTrackTotalItems: actual.fullTrackTotal,
+    _note: `${actual.remainingTechniques} remaining techniques + ${actual.remainingExercises} remaining exercises = ${actual.remainingItemsTotal} remaining. This is NOT the same number as fullTrackTotalItems (${actual.fullTrackTotal}), which is the whole track's techniques+exercises, done or not.`,
     latestMergedPR: latestMergedPR,
-    lastVerified: '(run the checker to refresh this date)',
+    latestMergedPRCheckStatus: prCheckStatus,
+    lastVerified: new Date().toISOString(),
   };
   return START_MARKER + '\n\n```json\n' + JSON.stringify(stated, null, 2) + '\n```\n\n' + END_MARKER;
 }
 
-// --- Best-effort latest merged PR via gh CLI -----------------------------
+// --- Latest merged PR via gh CLI, sorted by mergedAt (not list order) ---
 
 function tryGetLatestMergedPR() {
   try {
     const { execSync } = require('child_process');
-    const out = execSync('gh pr list --state merged --limit 1 --json number', {
+    const out = execSync('gh pr list --state merged --limit 50 --json number,mergedAt', {
       cwd: ROOT,
       stdio: ['ignore', 'pipe', 'ignore'],
       timeout: 15000,
     }).toString();
     const arr = JSON.parse(out);
-    if (Array.isArray(arr) && arr.length > 0) return arr[0].number;
+    if (!Array.isArray(arr) || arr.length === 0) {
+      return { number: null, status: 'skipped: gh returned no merged PRs' };
+    }
+    // gh's list order is not guaranteed to be chronological — sort explicitly.
+    const withDates = arr.filter(pr => pr.mergedAt);
+    if (withDates.length === 0) {
+      return { number: null, status: 'skipped: no mergedAt timestamps returned' };
+    }
+    withDates.sort((a, b) => new Date(b.mergedAt) - new Date(a.mergedAt));
+    return { number: withDates[0].number, status: 'verified' };
   } catch (e) {
-    // gh not available, not authenticated, or offline — not a hard failure.
+    return { number: null, status: 'skipped: gh CLI unavailable or unauthenticated' };
   }
-  return null;
 }
 
 // --- Main -----------------------------------------------------------------
@@ -179,6 +209,7 @@ function main() {
   console.log('  Groups with content on disk:', actual.allGroupIds.join(', '));
   console.log('  Total techniques (G01-G19):', actual.totalTechniques);
   console.log('  Total worked exercises:', actual.totalExercises);
+  console.log('  Full track total (techniques + exercises):', actual.fullTrackTotal);
   console.log('  Completed groups (in teacher-mcq.json):', actual.completedGroupIds.join(', ') || '(none)');
   console.log('  Completed-through-group (contiguous from G01):', actual.completedThroughGroup || '(not contiguous / none)');
   console.log('  Completed lessons:', actual.completedLessons);
@@ -186,26 +217,41 @@ function main() {
   console.log('  Remaining groups:', actual.remainingGroupIds.join(', ') || '(none)');
   console.log('  Remaining techniques:', actual.remainingTechniques);
   console.log('  Remaining exercises:', actual.remainingExercises);
+  console.log('  Remaining items total (techniques + exercises still to do):', actual.remainingItemsTotal);
   console.log('');
 
   if (!actual.contiguous) {
     fail('Completed groups in teacher-mcq.json are not contiguous from G01 — cannot state a single "completed through" group. Check for a skipped group.');
   }
-  if (!actual.srcLessonCountMatchesBuilt) {
-    fail(`sources/teacher-mcq.json has ${actual.srcIds.length} lessons but built teacher-mcq.json has ${actual.builtIds.length} — rebuild with node scripts/build-teacher-mcq.js`);
+
+  if (!actual.idSetsMatch) {
+    fail(`sources/teacher-mcq.json and built teacher-mcq.json have different lesson-ID sets (not just different counts) — rebuild with node scripts/build-teacher-mcq.js`);
+    if (actual.missingFromBuilt.length > 0) {
+      console.error('  In source but missing from built:', actual.missingFromBuilt.join(', '));
+    }
+    if (actual.unexpectedInBuilt.length > 0) {
+      console.error('  In built but not in source:', actual.unexpectedInBuilt.join(', '));
+    }
   }
+
   if (actual.totalTechniques !== actual.completedLessons + actual.remainingTechniques) {
     fail('Internal arithmetic inconsistency deriving technique counts — this is a bug in the checker itself, not the data.');
   }
+  if (actual.remainingItemsTotal !== actual.remainingTechniques + actual.remainingExercises) {
+    fail('Internal arithmetic inconsistency computing remainingItemsTotal — this is a bug in the checker itself, not the data.');
+  }
 
-  const latestMergedPR = tryGetLatestMergedPR();
+  const prResult = tryGetLatestMergedPR();
+  if (prResult.status !== 'verified') {
+    console.log(`(PR-number check SKIPPED: ${prResult.status} — repository-derived checks above still ran and are authoritative on their own)`);
+  }
 
   const { text, block, startIdx, endIdx } = readStatedBlock();
 
   if (block === null) {
     if (fixMode) {
       console.log('No progress block found in HANDOFF.md — inserting one.');
-      const insertion = buildBlockText(actual, latestMergedPR) + '\n';
+      const insertion = buildBlockText(actual, prResult.number, prResult.status) + '\n';
       const marker = '## Work queue — what is actually outstanding';
       const anchorIdx = text.indexOf(marker);
       let newText;
@@ -241,20 +287,36 @@ function main() {
   check('remainingGroups', actual.remainingGroupIds, block.remainingGroups);
   check('remainingTechniques', actual.remainingTechniques, block.remainingTechniques);
   check('remainingExercises', actual.remainingExercises, block.remainingExercises);
+  check('remainingItemsTotal', actual.remainingItemsTotal, block.remainingItemsTotal);
+  check('fullTrackTotalItems', actual.fullTrackTotal, block.fullTrackTotalItems);
 
-  if (latestMergedPR !== null && block.latestMergedPR !== undefined && block.latestMergedPR !== null) {
-    if (block.latestMergedPR !== latestMergedPR) {
-      mismatches.push(`latestMergedPR: HANDOFF.md says ${block.latestMergedPR}, gh reports latest merged PR is #${latestMergedPR}`);
+  // latestMergedPR is only checked when the PR lookup actually succeeded this
+  // run. If it was skipped, we do not flag a mismatch (that would be a false
+  // failure), and we do not silently treat the stale stored value as verified
+  // either — the console note above already made the skip explicit.
+  if (prResult.status === 'verified') {
+    if (block.latestMergedPR !== prResult.number) {
+      mismatches.push(`latestMergedPR: HANDOFF.md says ${block.latestMergedPR}, gh reports (sorted by mergedAt) the latest merged PR is #${prResult.number}`);
     }
-  } else if (latestMergedPR === null) {
-    console.log('(gh CLI unavailable or unauthenticated — skipped latestMergedPR check; not a failure)');
+    if (block.latestMergedPRCheckStatus !== 'verified') {
+      mismatches.push(`latestMergedPRCheckStatus: HANDOFF.md says "${block.latestMergedPRCheckStatus}" but this run verified it successfully — refresh the block`);
+    }
+  }
+
+  // lastVerified is a timestamp, not a fact about the repo — never compared,
+  // only ever regenerated by --fix. A missing/placeholder value is flagged
+  // once, gently, so it doesn't linger forever, but is not a hard failure.
+  if (!block.lastVerified || /run the checker/i.test(String(block.lastVerified))) {
+    console.log('(note: lastVerified is a placeholder — run with --fix to stamp a real timestamp; not a failure)');
   }
 
   if (mismatches.length > 0) {
     if (fixMode) {
       console.log('Mismatches found — rewriting the progress block to match reality:');
       mismatches.forEach(m => console.log('  - ' + m));
-      const newBlockText = buildBlockText(actual, latestMergedPR !== null ? latestMergedPR : block.latestMergedPR);
+      const prNumberToWrite = prResult.status === 'verified' ? prResult.number : block.latestMergedPR;
+      const prStatusToWrite = prResult.status === 'verified' ? 'verified' : block.latestMergedPRCheckStatus || prResult.status;
+      const newBlockText = buildBlockText(actual, prNumberToWrite, prStatusToWrite);
       const newText = text.slice(0, startIdx) + newBlockText + text.slice(endIdx + END_MARKER.length);
       fs.writeFileSync(HANDOFF_PATH, newText);
       console.log('HANDOFF.md progress block updated. Re-run without --fix to verify.');
@@ -265,7 +327,9 @@ function main() {
     return;
   }
 
-  console.log('HANDOFF.md progress block matches the repository data.');
+  if (!hadFailure) {
+    console.log('HANDOFF.md progress block matches the repository data.');
+  }
 }
 
 function printSummaryAndExit() {

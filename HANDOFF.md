@@ -254,8 +254,12 @@ entry 19.
   ],
   "remainingTechniques": 84,
   "remainingExercises": 15,
+  "remainingItemsTotal": 99,
+  "fullTrackTotalItems": 251,
+  "_note": "84 remaining techniques + 15 remaining exercises = 99 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
   "latestMergedPR": 44,
-  "lastVerified": "(run the checker to refresh this date)"
+  "latestMergedPRCheckStatus": "verified",
+  "lastVerified": "2026-08-19T18:41:41.556Z"
 }
 ```
 
@@ -271,8 +275,11 @@ document has drifted. This exact section went stale for six merged PRs
 `docs/teacher-mcq-role-swap-experiment.md` for the incident and the fix.
 
 **Teacher MCQ warm-ups — Data Validation.** G01–G10 complete: 152 lessons,
-456 questions, live in production. G11–G19 (84 techniques across 9 groups)
-and the 15 worked exercises (`M01-E1` … `M10-E1`) are not started.
+456 questions, live in production. Remaining: G11–G19 (84 techniques across
+9 groups) plus the 15 worked exercises (`M01-E1` … `M10-E1`) — **99 items
+left**, not started. The full Data Validation track is 251 items total
+(236 techniques + 15 exercises); 99 remaining is not the same number as
+251 total — don't conflate them.
 
 **The G06–G10 batch was built under a Codex-authors/Claude-reviews role-swap
 trial** — method, per-group results, token measurements, and the honest
@@ -289,7 +296,7 @@ floating panel, a session reset, and an MCQ-first warm-up covering
 
 | # | Item | Scope | Gated on |
 |---|---|---|---|
-| 1 | Teacher MCQs — rest of Data Validation | G11–G19 (84 techniques, 9 groups) + 15 worked exercises | Owner's G11 authoring-arrangement decision (see above) |
+| 1 | Teacher MCQs — rest of Data Validation | G11–G19 (84 techniques, 9 groups) + 15 worked exercises = 99 items remaining | Owner's G11 authoring-arrangement decision (see above) |
 | 2 | Teacher MCQs — Credit Risk | 47 modules + 7 case studies | nothing |
 | 3 | Teacher MCQs — Business Analysis | 42 lessons | nothing |
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |

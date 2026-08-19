@@ -10,11 +10,12 @@ on quality and what it costs in tokens/time on each side.
 
 **Scope note:** as of G10, this covers G01–G10 only — 152 lessons, 456
 questions. Data Validation as a whole spans **G01–G19 plus 15 worked
-exercises** (per `HANDOFF.md`: 236 techniques across 19 groups + 15
-exercises = 251 total). G11–G19 and the worked exercises are not started.
-"Completes the 5-group role-swap trial" and "completes all of Data
-Validation" are not the same claim — only the former is true at this
-point.
+exercises** — 236 techniques + 15 exercises = **251 items total** (per
+`HANDOFF.md`). G11–G19 (84 techniques) plus the 15 worked exercises are
+not started — **99 items remaining**. Do not conflate the two numbers:
+99 is what's left; 251 is the whole track, done or not. "Completes the
+5-group role-swap trial" and "completes all of Data Validation" are not
+the same claim — only the former is true at this point.
 
 ## Method
 
