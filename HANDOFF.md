@@ -238,11 +238,10 @@ entry 19.
 
 ```json
 {
-  "completedThroughGroup": "G12",
-  "completedLessons": 170,
-  "completedQuestions": 510,
+  "completedThroughGroup": "G13",
+  "completedLessons": 176,
+  "completedQuestions": 528,
   "remainingGroups": [
-    "G13",
     "G14",
     "G15",
     "G16",
@@ -250,15 +249,15 @@ entry 19.
     "G18",
     "G19"
   ],
-  "remainingTechniques": 66,
+  "remainingTechniques": 60,
   "remainingExercises": 15,
-  "remainingItemsTotal": 81,
+  "remainingItemsTotal": 75,
   "fullTrackTotalItems": 251,
-  "_note": "66 remaining techniques + 15 remaining exercises = 81 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
-  "contentThroughPR": 48,
+  "_note": "60 remaining techniques + 15 remaining exercises = 75 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
+  "contentThroughPR": 49,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:1b62892a635608420bb0e49867a7b77265e7e5d8102793f463711d9186a91d5e",
-  "lastVerified": "2026-08-19T21:52:42.328Z"
+  "sourcesTeacherMcqHash": "sha256:662ec5817e9ca58898e3736528f113301bfddbe60ec4cb9c0cc524322c0c5ee5",
+  "lastVerified": "2026-08-19T22:11:33.092Z"
 }
 ```
 
@@ -273,13 +272,13 @@ document has drifted. This exact section went stale for six merged PRs
 (#31 → #44) before anyone caught it — see
 `docs/teacher-mcq-role-swap-experiment.md` for the incident and the fix.
 
-**Teacher MCQ warm-ups — Data Validation.** G01–G12 complete once this PR
-merges: 170 lessons, 510 questions. **G01–G11 (162 lessons, 486 questions)
-are live in production; G12 (8 lessons, 24 questions) is in an open PR,
-pending Codex review** — see below. Remaining after G12 merges: G13–G19
-(66 techniques across 7 groups) plus the 15 worked exercises
-(`M01-E1` … `M10-E1`) — **81 items left**. The full Data Validation track
-is 251 items total (236 techniques + 15 exercises); 81 remaining is not
+**Teacher MCQ warm-ups — Data Validation.** G01–G13 complete once this PR
+merges: 176 lessons, 528 questions. **G01–G12 (170 lessons, 510 questions)
+are live in production; G13 (6 lessons, 18 questions) is in an open PR,
+pending Codex review** — see below. Remaining after G13 merges: G14–G19
+(60 techniques across 6 groups) plus the 15 worked exercises
+(`M01-E1` … `M10-E1`) — **75 items left**. The full Data Validation track
+is 251 items total (236 techniques + 15 exercises); 75 remaining is not
 the same number as 251 total — don't conflate them.
 
 **The G06–G10 batch was built under a Codex-authors/Claude-reviews
@@ -291,16 +290,26 @@ as a programme for G12–G14** (8+6+9 = 23 lessons, 69 questions), processed
 as one group per PR, stopping after G14 for the owner's next decision. This
 does not commit G15 onward to any arrangement.
 
+**A pre-existing source-lesson defect was found and fixed while authoring
+G13-T06's MCQs** — `data-validation-lab/methods/G13_Hierarchical_Structural/G13-T06.md`
+Step 3's nested-set validation used consecutive-integer lft/rgt pairs
+(`2n-1`/`2n`) that can never demonstrate real parent-child containment by
+construction, and referenced a dead/broken CTE that would have failed to
+compile if ever invoked. Rewritten to derive genuine lft/rgt values from
+the adjacency list and validate real containment against them. Recorded
+as a pre-existing content defect, not a Claude-authoring or Codex-review
+error — same treatment as the G12-T02 fix in PR #49.
+
 `contentThroughPR` in the progress block above tracks the latest merged PR
 that changed Teacher MCQ content. The Teacher currently ships (production)
 with: all three lesson tracks, a floating panel, a session reset, and an
-MCQ-first warm-up covering **G01–G11 of Data Validation** as of the last
+MCQ-first warm-up covering **G01–G12 of Data Validation** as of the last
 production deploy; check the progress block for what's merged vs. what's
 still an open PR at any given moment.
 
 | # | Item | Scope | Gated on |
 |---|---|---|---|
-| 1 | Teacher MCQs — rest of Data Validation | G13–G19 (66 techniques, 7 groups) + 15 worked exercises = 81 items remaining | Owner's decision after the G12–G14 pre-authorized programme completes (see above) |
+| 1 | Teacher MCQs — rest of Data Validation | G14–G19 (60 techniques, 6 groups) + 15 worked exercises = 75 items remaining | Owner's decision after the G12–G14 pre-authorized programme completes (see above) |
 | 2 | Teacher MCQs — Credit Risk | 47 modules + 7 case studies | nothing |
 | 3 | Teacher MCQs — Business Analysis | 42 lessons | nothing |
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
