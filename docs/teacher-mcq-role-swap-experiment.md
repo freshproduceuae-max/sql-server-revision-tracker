@@ -8,6 +8,14 @@ with Group 6, the owner asked to swap roles for five groups (G06–G10) as a
 trial: **Codex authors, Claude reviews** — to see whether the swap holds up
 on quality and what it costs in tokens/time on each side.
 
+**Scope note:** as of G10, this covers G01–G10 only — 152 lessons, 456
+questions. Data Validation as a whole spans **G01–G19 plus 15 worked
+exercises** (per `HANDOFF.md`: 236 techniques across 19 groups + 15
+exercises = 251 total). G11–G19 and the worked exercises are not started.
+"Completes the 5-group role-swap trial" and "completes all of Data
+Validation" are not the same claim — only the former is true at this
+point.
+
 ## Method
 
 For each group:
