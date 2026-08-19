@@ -289,3 +289,25 @@ and let it guess.
 After deploying, verify in a browser — not just that the build succeeded. Check a
 lesson renders its content and a quiz question answers correctly.
 
+## Teacher MCQ role-swap experiment (G06–G10)
+
+Full method and results: `docs/teacher-mcq-role-swap-experiment.md`. Prompt
+template: `docs/prompts/teacher-mcq-codex-authoring-template.md`. Standing
+rules for the duration of this experiment:
+
+- **Never delete a Codex prompt, output, or token-count record before
+  archiving it and recording its measurements.** G06's drafting-run token
+  count was lost this way — do not repeat it.
+- Preserve the raw prompt and complete raw output for every group in
+  `C:\Projects\Academy\_audit\teacher-mcq-role-swap\<GROUP_ID>\`
+  (`prompt.txt`, `output.txt`) before any extraction or cleanup.
+- Record the "tokens used" figure from the Codex output into the results
+  table the moment the run finishes — before parsing the JSON out of it.
+- Use the same Codex model, reasoning effort, and sandbox/approval
+  configuration, and the same prompt template, for every group in the
+  experiment. Start a fresh Codex session per group — never resume one
+  accumulating session — and record its session id and exact invocation.
+- Claude must independently review every drafted question against its
+  source lesson file — Codex authoring a question is not itself evidence
+  the question is correct.
+
