@@ -49,7 +49,7 @@ conversation.
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | G06 Consistency | 16 | 48 | **lost/unknown** — output file deleted before the token count was recorded; not recoverable | 18,705 (G06-T10 Live Scenario self-contradiction fix, verified post-merge) | not recorded | 0 | 0 MCQ corrections; 1 source-lesson fix (G06-T10 narrative, unrelated to the MCQs) | 1 — G06-T10 Live Scenario contradicted its own Solution Query/Explanation (GB vs UK); MCQs already followed the correct code-based framing and needed no change | not recorded | [#40](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/40) (merged) | Live (verified: 100 lessons / 300 questions in production) |
 | G07 Business Rules | 16 | 48 | 43,676 | 0 (nothing to fix) | not recorded | 0 | 0 | 0 (Codex self-checked via `_flagged_inconsistencies`; reported none) | Context 424.2k → 506.5k (+82.3k); 5-hour usage 43% → 46% (+3 pts) | [#41](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/41) (open, pending merge) | Pending |
-| G08 Reconciliation | 15 | 45 | — | — | — | — | — | — | — | — | — |
+| G08 Reconciliation | 15 | 45 | 43,580 | 0 (nothing to fix) | not recorded | 0 (0 Codex retries; 1 JSON syntax defect — trailing commas — repaired programmatically during extraction, not a Codex re-run) | 0 | 0 confirmed — Codex self-flagged 3 lessons (T03, T04, T06) via `_flagged_inconsistencies`, all verified as false positives (standard narrative-scenario-vs-schema-table mapping used throughout the course, not real contradictions) | not recorded (before/after snapshot not supplied for this group) | [#42](https://github.com/freshproduceuae-max/sql-server-revision-tracker/pull/42) (open, pending merge) | Pending |
 | G09 Timeliness | 11 | 33 | — | — | — | — | — | — | — | — | — |
 | G10 Data Type/Storage | 10 | 30 | — | — | — | — | — | — | — | — | — |
 
@@ -65,6 +65,7 @@ before its measurements are archived — see below.
 |---|---|---|---|---|---|
 | G06 | not recorded (output deleted before capture) | gpt-5.4-mini (inferred from G07, same config) | low (inferred) | read-only (inferred) | `codex exec --sandbox read-only "$(cat ...)"` (exact prompt file not preserved) |
 | G07 | `01a01a99-012a-73a0-bb11-be629eeb3a6c` | gpt-5.4-mini | low | read-only | `codex exec --sandbox read-only "$(cat _audit/teacher-mcq-role-swap/G07/prompt.txt)" < /dev/null > _audit/teacher-mcq-role-swap/G07/output.txt 2>&1` |
+| G08 | `01a01abc-3d40-7dc0-947f-274f7d1fc86c` | gpt-5.4-mini | low | read-only | `codex exec --sandbox read-only "$(cat _audit/teacher-mcq-role-swap/G08/prompt.txt)" < /dev/null > _audit/teacher-mcq-role-swap/G08/output.txt 2>&1` |
 
 ## Audit trail location
 
