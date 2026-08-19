@@ -253,6 +253,47 @@ Items 1–3 and 6 are **content only** — no infrastructure, no new data surfac
 following patterns already shipped and reviewed. They are not blocked by
 anything and can proceed immediately.
 
+### Which phase each item belongs to
+
+Use the owner's own release structure from `AI Course Content/Saqr
+Academy11–12.docx` rather than inventing one — see `CLAUDE.md` rule 8. Its four
+gates are **Safety** (secrets, auth boundaries, env vars), **Reliability**
+(build/lint/tests, core workflows still pass), **UX** (loading, error, empty,
+mobile), **Demo** (deployed, release notes, known limitations written down).
+Its governing line: *a release is evidence, not a feeling.*
+
+Against that structure, this app has already done the equivalent of Session 1
+(shipped and live) and Session 3 (branch/PR/review discipline, enforced). What
+is left splits into three genuinely different phases:
+
+| Phase | Items | Nature | Gates that apply |
+|---|---|---|---|
+| **1 · Content** | 1, 2, 3, 6 | Authoring against a shipped pattern | Reliability; UX for item 6 (new track = new nav surface) |
+| **2 · Datastore** | 4 (Phase B) | First server-side persistence this app has ever had | **Safety** primarily, then all four |
+| **3 · Automation** | 5 (Phase C) | Scheduled job over Phase 2's data | All four; gated on Phase 2 existing |
+
+Phase 1 does not touch Phase 2's questions and must not be blocked behind them.
+
+### Intake questions for Phase 2 — answer before writing code
+
+These are design constraints, not retrofits. Recorded in full with context in
+the security repo's scoping note (path below); listed here so they are not lost:
+
+1. **What exactly gets logged** — full conversation text, or a minimised
+   subset? Students can type anything into a free-text box, including things
+   about themselves the app never asked for.
+2. **Retention period?** Indefinite is a decision, not a default, and it needs
+   a deletion mechanism.
+3. **Anything linkable to a person?** Including whatever Upstash logs at its
+   own layer, which is not under this app's control.
+4. **Rate limiting.** `api/tutor.js` is public and unauthenticated with none
+   today (`x-app-tag` is explicitly not authentication). Adding a *write* path
+   changes that gap's severity — fix before or after?
+5. **The new secret** (Redis credential) — same handling as
+   `ANTHROPIC_API_KEY`, server-side only, never in client JS?
+6. **Failure behaviour.** A slow or sleeping free-tier Redis must never block
+   or degrade the student's reply; a failed write should be silently skipped.
+
 ### The security framework, and what it does and does not gate
 
 The owner maintains a formal security assessment framework at
