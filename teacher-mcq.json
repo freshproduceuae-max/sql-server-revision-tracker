@@ -7393,6 +7393,384 @@
         }
       ],
       "close": "Why naive consecutive pairs can never test real containment, the slash-count self-consistency check, and the root's lft=1/rgt=2N invariant — that closes out Hierarchical/Structural. Six techniques down: referential integrity, circular references, completeness and depth, JSON structure, graph connectivity, and nested set consistency."
+    },
+    "G14-T01": {
+      "open": "Welcome to DW/SCD Specific — you've opened SCD Type 2 Gap and Overlap Detection, checking that a dimension's version history is contiguous and never double-covers a date. Three questions, let's go.",
+      "questions": [
+        {
+          "q": "According to the three SCD2 date range invariants named in the lesson, what should be true for any given date D within an entity's version history?",
+          "choices": [
+            "At most one row has EffectiveFrom <= D <= EffectiveTo, and — for dates within the tracked history — exactly one row should cover D with no gap",
+            "Every row in the dimension should have the same EffectiveFrom and EffectiveTo values",
+            "D should never fall within any version's date range at all",
+            "Exactly two rows must always cover any given date to allow for correction records"
+          ],
+          "correct": 0,
+          "right": "Right — non-overlapping and gapless together mean exactly one row is valid on any given date within the tracked history. Two rows covering the same date is the overlap failure; zero rows covering it is the gap failure.",
+          "wrong": "The lesson names three invariants: non-overlapping (at most one row covers any date D), gapless (for dates between the first and last version, exactly one row covers D), and current-only (exactly one row is flagged as the current version). Put together, for any date within the tracked history, precisely one row — not zero, not two — should be the valid version for that date. Zero is a gap; two is an overlap; both break point-in-time joins."
+        },
+        {
+          "q": "What does it mean if `LAG(EffectiveTo) OVER (PARTITION BY CustomerID ORDER BY EffectiveFrom)` shows a gap greater than 1 day before the current row's EffectiveFrom?",
+          "choices": [
+            "There's a period of time where no dimension row is valid for that customer — a gap in the SCD2 history",
+            "The customer has been deleted from the dimension table entirely",
+            "SQL Server will automatically reject the load and roll back the transaction",
+            "The customer's IsActive flag has been incorrectly set to 0"
+          ],
+          "correct": 0,
+          "right": "Right — that's exactly the gap failure mode the lesson describes: a stretch of days with no valid dimension row for that customer, meaning any order falling in that window can't be matched to a customer state at all.",
+          "wrong": "The lesson explains this directly: a gap exists when the new version's EffectiveFrom starts more than one day after the previous version's EffectiveTo — meaning there's a stretch of calendar time where no dimension row is valid for that customer. Any fact table order that falls within that gap period will fail to join to any customer dimension row, silently excluding it from customer-level analysis, exactly as described in the live scenario's 120 affected customers."
+        },
+        {
+          "q": "What does it mean if `SUM(IsCurrent)` (the count of current-flagged rows) is greater than `COUNT(DISTINCT CustomerID)` in Step 3's summary?",
+          "choices": [
+            "At least one customer has more than one row simultaneously flagged as the current version — the overlap failure at its worst",
+            "The dimension table is missing rows for some customers entirely",
+            "It indicates a rounding error in the SUM calculation that requires no action",
+            "Every customer in the table has exactly two current versions, which is expected behavior"
+          ],
+          "correct": 0,
+          "right": "Right — if there are more \"current\" flags than customers, at least one customer has two rows simultaneously claiming to be current. That's the specific failure the lesson calls the worst case of an overlap.",
+          "wrong": "The lesson states this directly: more current rows than distinct customers means at least one customer has two active versions simultaneously — the ETL created a new current row without properly closing out the old one. Any query filtering on `IsCurrent = 1` for that customer would return both rows, doubling that customer's contribution to any aggregate built on top of the dimension."
+        }
+      ],
+      "close": "The three SCD2 invariants, gaps as unmatched date ranges, and multiple-current-rows as the worst overlap case — SCD2 validation covered. Next: Fact Table Grain Validation, checking that every row in a fact table represents the same level of detail."
+    },
+    "G14-T02": {
+      "open": "Fact Table Grain Validation — mixing two levels of detail in one fact table (a whole order vs. a single line item) is one of the sneakiest ways to silently inflate a revenue total.",
+      "questions": [
+        {
+          "q": "What does the fact table's \"grain\" refer to, according to this lesson?",
+          "choices": [
+            "The lowest level of detail represented by each row — the specific combination of dimension keys that uniquely identifies what one row means",
+            "The physical storage size of each row on disk",
+            "The number of columns in the fact table",
+            "The refresh frequency of the ETL job that loads the table"
+          ],
+          "correct": 0,
+          "right": "Right — grain is about meaning, not size or schedule. It's the answer to \"what does one row of this table represent?\"",
+          "wrong": "The lesson defines grain precisely: it's the lowest level of detail each row represents, defined by the combination of dimension foreign keys that uniquely identifies it — for example, \"one row per order-product combination.\" It has nothing to do with storage size or refresh timing; it's a statement about what a single row means, and mixing two different meanings in one table (order-level rows alongside line-item-level rows) is exactly the failure this technique detects."
+        },
+        {
+          "q": "Why does a NULL in a dimension key column (like ProductID) act as \"the hallmark of a mixed-grain fact table\", according to the lesson?",
+          "choices": [
+            "It typically means the row can't be assigned to a dimension member at the intended grain level, suggesting some rows carry all keys (fine-grained) while others carry only some (coarser-grained)",
+            "NULL values in dimension keys always indicate a hardware failure during the ETL load",
+            "SQL Server automatically converts NULL dimension keys to the value -1",
+            "A NULL dimension key means the row has been soft-deleted and should be ignored"
+          ],
+          "correct": 0,
+          "right": "Right — a NULL key is the fingerprint of a row that simply doesn't have all the detail the intended grain requires, which is exactly what happens when a coarser-grained row (like an order header) gets loaded alongside fine-grained ones (order lines).",
+          "wrong": "The lesson's live scenario makes this concrete: when the intended grain is one-row-per-product, but some rows come from an order-header-level source with no ProductID at all, those rows show NULL in the ProductID column — they simply don't have that level of detail. The lesson calls this the hallmark of mixed grain: some rows have all the keys the intended grain requires, others have only a subset, because they were sourced from two structurally different levels of detail."
+        },
+        {
+          "q": "Why must a degenerate dimension (like OrderID stored directly in the fact table) be non-NULL, according to the lesson?",
+          "choices": [
+            "Without it, the fact row cannot be traced back to its source transaction at all",
+            "SQL Server enforces a NOT NULL constraint on all degenerate dimensions automatically",
+            "A NULL degenerate dimension would cause the fact table's primary key to be duplicated",
+            "Degenerate dimensions are never allowed to contain data of any kind"
+          ],
+          "correct": 0,
+          "right": "Right — the whole point of a degenerate dimension is traceability back to the source. A NULL there breaks that link entirely, with nothing else in the row to fall back on.",
+          "wrong": "The lesson explains the purpose of a degenerate dimension directly: it's the source transaction key (OrderID, InvoiceNumber) stored right in the fact table rather than in a separate dimension table, and its entire purpose is letting you trace a fact row back to its origin. A NULL value there defeats that purpose completely — there's no other column standing in as a fallback identifier, so the fact becomes untraceable to its source."
+        }
+      ],
+      "close": "Grain as \"what one row means,\" NULL keys as the mixed-grain fingerprint, and degenerate dimensions as the traceability link — grain validation covered. Next: Dimension Key Integrity, checking that fact rows actually point at real dimension members."
+    },
+    "G14-T03": {
+      "open": "Dimension Key Integrity in Star Schema — a fact row referencing a dimension key that doesn't exist, or exists but is marked inactive, both quietly exclude revenue from reports without any error being raised.",
+      "questions": [
+        {
+          "q": "Why does the lesson say LEFT JOIN is more efficient than NOT EXISTS for this particular use case — returning the full row context of failing fact records?",
+          "choices": [
+            "LEFT JOIN naturally returns all the columns from both the fact and dimension side in one pass, which is exactly what's needed when you want to see the failing rows in full detail",
+            "NOT EXISTS cannot be combined with a WHERE clause under any circumstances",
+            "LEFT JOIN is always faster than NOT EXISTS regardless of what columns are being returned",
+            "NOT EXISTS only works when the dimension table has fewer than 100 rows"
+          ],
+          "correct": 0,
+          "right": "Right — it's about what each one is naturally suited for. LEFT JOIN gives you the row plus all the dimension columns (NULL when unmatched) in a single query, which is exactly the shape needed to review each failing order.",
+          "wrong": "The lesson frames this as a fit-for-purpose choice, not a universal performance claim: since Step 1 wants to review the full context of each failing order — its OrderID, CustomerID, and every dimension status flag — a LEFT JOIN naturally returns all of those columns from both sides in a single pass. NOT EXISTS is a good fit for a simple existence check, but it doesn't naturally give you extra columns from the table you're checking against."
+        },
+        {
+          "q": "Why is a fact row referencing an inactive dimension member (IsActive = 0) described as \"technically valid\" but still a concern?",
+          "choices": [
+            "The foreign key itself is valid — the referenced row exists — but many BI tools filter on IsActive = 1 by default, silently excluding these fact rows from reports",
+            "SQL Server automatically rejects any INSERT that references an inactive dimension row",
+            "IsActive = 0 always means the dimension row's primary key has been physically deleted",
+            "It's only a concern for the Customers table, never for the Products table"
+          ],
+          "correct": 0,
+          "right": "Right — referential integrity and business relevance are two separate questions. The key exists (integrity is fine), but a default active-only filter can silently drop that row from every report anyway.",
+          "wrong": "The lesson draws this exact distinction: from a pure referential integrity standpoint, the key is valid because the referenced dimension row genuinely exists — it just happens to be marked inactive. The business concern is separate: many BI tools apply an `IsActive = 1` filter by default, which would silently exclude any fact row tied to an inactive dimension member from current reports, even though the underlying data relationship is perfectly intact."
+        },
+        {
+          "q": "According to the lesson, what are the three possible explanations for an unreferenced dimension member (a customer or product with no matching fact rows)?",
+          "choices": [
+            "A legitimate case (registered but never ordered, or catalogued but never sold), or a placeholder/test row that should be excluded from user-facing reports",
+            "A SQL Server licensing limitation, a network timeout, and a corrupted index",
+            "It always indicates the dimension table needs to be dropped and rebuilt",
+            "It can only happen if the fact table has more rows than the dimension table"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson is careful not to treat every unreferenced row as a problem. Some are perfectly legitimate (a registered-but-inactive customer); others are placeholder or test data that shouldn't be in reports at all.",
+          "wrong": "The lesson gives these specific possibilities: customers who registered but never placed an order (legitimate), products added to the catalogue but never sold (also legitimate), or placeholder/test dimension rows left over from development that should be filtered out of user-facing reports. It's presented as something worth investigating, not something automatically wrong — the interpretation depends on which of these three explains the specific case."
+        }
+      ],
+      "close": "LEFT JOIN as the right tool for full-context review, active-vs-inactive as a separate concern from integrity, and unreferenced members as sometimes-legitimate — dimension key integrity covered. Next: Late-Arriving Facts, when a transaction shows up long after its reporting period has closed."
+    },
+    "G14-T04": {
+      "open": "Late-Arriving Facts Detection — a transaction that arrives weeks after its own event date can quietly invalidate a report the board has already seen.",
+      "questions": [
+        {
+          "q": "What's the difference between a transaction's \"event date\" and its \"load date\", as the lesson defines them?",
+          "choices": [
+            "Event date is when the business event actually occurred and determines the reporting period it belongs to; load date is when the record entered the warehouse and determines which load batch included it",
+            "Event date and load date are two names for the exact same column, used interchangeably",
+            "Event date only applies to Transactions, while load date only applies to Orders",
+            "Load date always comes before event date in a correctly functioning system"
+          ],
+          "correct": 0,
+          "right": "Right — one date is about the business reality (when did this actually happen), the other is about the pipeline (when did the warehouse learn about it). The gap between them is exactly what \"lateness\" measures.",
+          "wrong": "The lesson defines these as two genuinely different things: event date (OrderDate) is when the business event actually occurred, and it's what determines which reporting period the revenue belongs to. Load date is when the record entered the data warehouse, determining which nightly batch picked it up. The whole concept of \"lateness\" is the gap between these two — a transaction that happened in March but wasn't loaded until April is late by that gap, even though both dates are individually accurate."
+        },
+        {
+          "q": "Why does the lesson describe the SCD2 dimension mismatch as a \"specific DW integrity problem\" caused by late-arriving facts?",
+          "choices": [
+            "The correct dimension version for a late fact is the one effective as of its event date, not its load date, but by the time it arrives the customer's dimension state may have already changed",
+            "SCD2 dimensions cannot store more than one version per customer, causing an automatic conflict",
+            "Late-arriving facts are always rejected by SCD2 dimension tables and never loaded at all",
+            "The problem only affects SCD Type 1 dimensions, never SCD Type 2"
+          ],
+          "correct": 0,
+          "right": "Right — the correct lookup key for a late fact is its own event date, not \"whenever it happened to arrive.\" Standard ETL tooling that always joins to the current dimension state gets this wrong by default.",
+          "wrong": "The lesson explains this precisely: a March transaction should be joined to the March version of the customer dimension — the segment or state the customer was in back then. But if that transaction doesn't arrive until April, and the customer's dimension has since changed (a new SCD2 version), a naive ETL join would attach it to the April state instead. The lesson notes this requires a special lookup — as of the event date, not the load date — that most standard ETL tools don't apply by default."
+        },
+        {
+          "q": "Why does the lesson describe the 30-day lateness threshold as \"illustrative\" rather than a fixed rule?",
+          "choices": [
+            "The appropriate threshold should align with the organisation's actual reporting cadence — weekly reconciliation, month-end close, or quarter-end, each implying a different threshold",
+            "30 days is a hard-coded SQL Server system limit that cannot be changed",
+            "The threshold only matters for companies with fewer than 100 customers",
+            "It's illustrative because DATEDIFF() cannot calculate periods longer than 30 days"
+          ],
+          "correct": 0,
+          "right": "Right — the threshold should track how often the business actually closes its books, not an arbitrary fixed number. A weekly-reconciliation business needs a much tighter threshold than one that only closes quarterly.",
+          "wrong": "The lesson gives concrete examples of why the right threshold varies: a 7-day threshold would catch transactions that missed weekly reconciliation, a 45-day threshold would catch ones that missed month-end close, and a 90-day threshold would catch ones that missed quarter-end. The 30-day figure used in the query is just a reasonable illustrative default — the actual threshold should be tuned to match how frequently the specific organisation actually closes its books."
+        }
+      ],
+      "close": "Event date vs load date, the SCD2-mismatch trap for late arrivals, and threshold tuning against the real reporting cadence — late-arriving fact detection covered. Next: Aggregate Consistency, checking that summary tables actually agree with the detail they're supposed to summarize."
+    },
+    "G14-T05": {
+      "open": "Aggregate Consistency Between Fact Layers — when a dashboard's monthly total doesn't match the sum of its own daily totals, something in the pipeline broke, and this technique finds exactly where.",
+      "questions": [
+        {
+          "q": "Why does this lesson use FULL OUTER JOIN rather than LEFT JOIN when comparing the two fact layers for consistency?",
+          "choices": [
+            "A LEFT JOIN would miss periods present only in the second table (e.g. Transaction periods with no matching Orders); FULL OUTER JOIN catches gaps in either direction at once",
+            "FULL OUTER JOIN executes faster than LEFT JOIN on tables with matching row counts",
+            "LEFT JOIN cannot be used together with a CASE expression in the same query",
+            "FULL OUTER JOIN automatically deduplicates rows that appear in both tables"
+          ],
+          "correct": 0,
+          "right": "Right — the same reasoning as elsewhere in this course: a LEFT JOIN only guarantees you catch gaps missing from one specific side. FULL OUTER JOIN is the only join type that surfaces a mismatch regardless of which side it's missing from.",
+          "wrong": "The lesson explains this the same way orphan/gap detection is explained elsewhere in this course: a LEFT JOIN (from the Orders side) would catch periods missing from Transactions, but would miss the reverse case — periods with Transactions but no matching Orders. Only FULL OUTER JOIN catches both directions of mismatch in a single query, which matters here because either direction represents a real consistency problem worth surfacing."
+        },
+        {
+          "q": "Why does the lesson normalise the variance as a percentage (`ABS(variance) / total × 100`) rather than relying on the raw pound-value difference alone?",
+          "choices": [
+            "The same raw variance means very different things depending on the size of the period total — £100 is immaterial against £100,000 but material against £1,000",
+            "SQL Server cannot compare two DECIMAL values directly without first converting one to a percentage",
+            "Percentage variance is always a smaller number than the raw pound variance, making reports look better",
+            "Raw pound variances can only be calculated for values greater than £1,000"
+          ],
+          "correct": 0,
+          "right": "Right — scale matters. The same absolute gap is a rounding error in one context and a real red flag in another; normalising by the total is what makes a single fixed threshold meaningful across periods of very different size.",
+          "wrong": "The lesson makes this exact comparison: a £100 variance on a £100,000 period total is 0.1% — immaterial. The same £100 variance on a £1,000 period total is 10% — clearly material. A raw pound-value threshold would either miss real problems in small periods or flag noise in large ones; normalising by dividing by the total is what lets a single materiality threshold (like 0.1%–1%) apply meaningfully across periods of very different scale."
+        },
+        {
+          "q": "Why does the lesson say a count mismatch and an amount mismatch \"have different root causes and different remediation paths\"?",
+          "choices": [
+            "A count match with an amount mismatch suggests individual values differ; an amount match with a count mismatch suggests duplicate or split records that happen to net out to the same total",
+            "A count mismatch always means the database has run out of storage space",
+            "An amount mismatch can only occur if the database's collation setting is misconfigured",
+            "Count and amount mismatches are actually the same underlying problem described two different ways"
+          ],
+          "correct": 0,
+          "right": "Right — these two checks catch genuinely different failure shapes. One is about individual values being wrong; the other is about the wrong number of records existing, even if their sum happens to still add up.",
+          "wrong": "The lesson distinguishes these directly: if the counts match but the amounts don't, individual transaction values themselves differ between layers — a data or transformation issue. If the amounts match but the counts don't, it points to duplicate or split records whose totals happen to net out to the same figure — a structural, not a value, problem. Because the underlying cause is different in each case, fixing one requires a different investigation than fixing the other, which is why the lesson checks them as two separate signals rather than one combined check."
+        }
+      ],
+      "close": "FULL OUTER JOIN for catching mismatches in either direction, percentage variance for scale-independent materiality, and count-vs-amount as two distinct failure signatures — aggregate consistency covered. Next: Incremental Load Completeness, verifying an ETL batch actually brought over everything it was supposed to."
+    },
+    "G14-T06": {
+      "open": "Incremental Load Completeness Check — an ETL job can finish successfully, report zero errors, and still have silently dropped a chunk of records. This technique is how you'd actually catch that.",
+      "questions": [
+        {
+          "q": "Why is OrderID sequence gap detection (`LEAD(OrderID) - OrderID - 1`) described as more precise than a simple count comparison between source and destination?",
+          "choices": [
+            "It identifies exactly which specific IDs are missing, not just how many records are missing in total",
+            "Sequence gap detection runs faster than any count-based comparison regardless of table size",
+            "Count comparison can only be used on tables with fewer than 1,000 rows",
+            "Sequence gap detection eliminates the need to compare source and destination at all"
+          ],
+          "correct": 0,
+          "right": "Right — a count tells you \"how many,\" a sequence gap tells you exactly \"which ones.\" That precision is what lets someone go straight to the missing records instead of hunting for them.",
+          "wrong": "The lesson makes this distinction directly: count comparison between source and destination tells you *how many* records are missing overall, but sequence gap detection using LEAD() tells you precisely *which* IDs are missing — the exact range between two consecutive loaded IDs. That precision means the team can go straight to querying the source system for those specific missing IDs, rather than having to reconcile the entire dataset to find them."
+        },
+        {
+          "q": "Why does the lesson say a 3-month rolling average catches failures that a simple count comparison alone cannot?",
+          "choices": [
+            "If the source itself genuinely has fewer records that month (a real business decline), a missing-record failure and an honest low-volume month look identical from count comparison alone — the rolling average gives a sense of what's actually \"normal\" to compare against",
+            "Count comparison cannot be computed for any month with fewer than 100 orders",
+            "A rolling average is required by SQL Server syntax whenever GROUP BY is used with COUNT(*)",
+            "The rolling average always produces a higher number than simple count comparison"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly the blind spot: if the source and destination counts agree but both are honestly low due to a slow business month, count comparison alone sees nothing wrong. The rolling average adds a sense of what's actually normal, so an unusual drop stands out on its own.",
+          "wrong": "The lesson names this exact edge case: if the source system itself has fewer records for a given month — a genuine business slowdown — then source-to-destination count comparison shows perfect agreement, because both sides are honestly low. That looks identical to a correctly-loaded low-volume month. The rolling average adds context count comparison alone doesn't have: it tells you whether this month's volume, compared to the recent trend, looks unusually low regardless of whether the source and destination currently agree."
+        },
+        {
+          "q": "Why does the lesson describe over-loads (destination count greater than source count) as \"often harder to detect than under-loads\"?",
+          "choices": [
+            "An inflated total looks like business growth, so it doesn't trigger the same suspicion an unexpectedly low total naturally would",
+            "SQL Server does not provide any built-in function capable of detecting duplicate records",
+            "Over-loads can only occur once per calendar year, making them statistically rare",
+            "Under-loads always produce a SQL Server error message, while over-loads never do"
+          ],
+          "correct": 0,
+          "right": "Right — a bigger-than-expected number doesn't look broken on the surface. It takes an explicit destination-vs-source comparison to reveal that the extra records shouldn't be there at all.",
+          "wrong": "The lesson makes this point directly: an under-load produces a total that's obviously too low, which tends to draw attention on its own. An over-load, by contrast, produces a total that's too high — which superficially looks like the business is simply doing better than expected, rather than looking broken. Without an explicit comparison against the source count, inflated numbers from duplicate loads can go unnoticed precisely because they don't look like a problem."
+        }
+      ],
+      "close": "Sequence gaps for pinpoint precision, rolling averages for context count comparison alone lacks, and over-loads hiding behind apparent growth — incremental load completeness covered. Next: SCD Type 1 Override Audit, recovering some visibility into history that overwrite-in-place destroys."
+    },
+    "G14-T07": {
+      "open": "Slowly Changing Dimension Type 1 Override Audit — SCD1 overwrites history by design, which is fine until someone asks a question the design made unanswerable.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe a change-log table as \"the missing intermediate between pure SCD1 and SCD2\"?",
+          "choices": [
+            "SCD1 keeps no history at all, and SCD2 keeps full history as new dimension rows; a change log sits between them by overwriting the dimension like SCD1 does, while still recording what changed and when in a separate table",
+            "A change-log table is simply another name for an SCD2 dimension table",
+            "SCD1 and SCD2 are identical in every respect except for their table names",
+            "A change-log table replaces the need for a dimension table entirely"
+          ],
+          "correct": 0,
+          "right": "Right — it gets you a documented trail of changes without taking on the full complexity (and query-time effective-date filtering) that comes with SCD2.",
+          "wrong": "The lesson frames these as a spectrum: pure SCD1 overwrites in place and keeps no history whatsoever; SCD2 preserves full history by inserting new dated rows for every change. A change-log table is a middle ground — the dimension itself still gets overwritten SCD1-style (simple to query, no effective-date filtering needed), but every overwrite is separately recorded in a log table capturing the old value, the new value, and when the change happened. It gets you an audit trail without taking on SCD2's full complexity."
+        },
+        {
+          "q": "Why does the change-detection logic use `ISNULL(c.Country, '') <> ISNULL(b.Country, '')` instead of comparing `c.Country <> b.Country` directly?",
+          "choices": [
+            "NULL <> NULL evaluates to unknown (neither true nor false) in SQL, so a direct comparison would fail to correctly identify an unchanged NULL-to-NULL value as \"no change\"",
+            "SQL Server does not allow the <> operator to be used on VARCHAR columns under any circumstances",
+            "ISNULL() is required by SQL Server syntax whenever two columns are compared in a WHERE or CASE clause",
+            "The ISNULL wrapper converts both columns to a numeric type before comparison"
+          ],
+          "correct": 0,
+          "right": "Right — SQL's three-valued logic is the trap here. NULL compared to NULL isn't TRUE and isn't FALSE, it's UNKNOWN, and a CASE expression treats UNKNOWN as \"didn't match\" — which would misclassify a genuinely unchanged NULL as changed.",
+          "wrong": "The lesson explains this precisely: in SQL's three-valued logic, `NULL <> NULL` evaluates to UNKNOWN, not TRUE or FALSE. A CASE expression checking that condition would fail to correctly treat a NULL-to-NULL transition (genuinely unchanged) as \"unchanged\" — it needs to explicitly be TRUE or FALSE to route correctly. Wrapping both sides in ISNULL() converts NULL to a comparable placeholder value first, so two NULLs compare as equal (via the placeholder) and the comparison behaves as a real change check."
+        },
+        {
+          "q": "Why does the lesson call the retroactive effect of an SCD1 attribute change \"correct for some use cases but wrong for historical analysis\"?",
+          "choices": [
+            "Under SCD1, all historical fact rows for that entity now show the new attribute value applied retroactively — accurate for \"who is this customer right now\" but wrong for \"what was true about them when this specific order happened\"",
+            "SCD1 changes are only ever applied to numeric columns, never to text columns like Country",
+            "Historical analysis is technically impossible in any data warehouse regardless of SCD strategy",
+            "The retroactive effect only occurs when the customer's IsActive flag changes from 1 to 0"
+          ],
+          "correct": 0,
+          "right": "Right — that's the fundamental trade-off SCD1 makes. It's genuinely correct for \"what's true about this customer today,\" and genuinely wrong for \"what was true about them back when this order happened.\"",
+          "wrong": "The lesson's own example makes this concrete: a customer who changed from \"UK\" to \"Germany\" in July will, under SCD1, now appear as a German customer for every order they placed from January through June too — even though they were genuinely a UK customer at the time those orders happened. That retroactive view is exactly right for current-state analysis (who is this customer today?) but exactly wrong for historical analysis (what segment was this customer in when this specific order was placed?) — SCD1 can only give you one of those two answers, never both."
+        }
+      ],
+      "close": "Change logs as a middle ground between SCD1 and SCD2, ISNULL as the fix for SQL's NULL-comparison trap, and the retroactive-correctness trade-off — SCD1 audit covered. Next: Data Lineage and Source Traceability, tracing a number on a report all the way back to its source record."
+    },
+    "G14-T08": {
+      "open": "Data Lineage and Source Traceability — when an auditor asks which exact source records a reported figure came from, \"we transformed it somewhere in the pipeline\" is not an acceptable answer.",
+      "questions": [
+        {
+          "q": "What three components does the lesson say are required for complete data lineage on a warehouse record?",
+          "choices": [
+            "Which source system it came from, its unique identifier in that source system, and which ETL load batch brought it into the warehouse",
+            "Its row count, column count, and total storage size",
+            "Its creation date, its last-modified date, and its owner's username",
+            "Its primary key, its foreign keys, and its check constraints"
+          ],
+          "correct": 0,
+          "right": "Right — source system, source record ID, and load batch ID together. With all three, any warehouse row can be traced back to the exact source row and the exact moment it was loaded.",
+          "wrong": "The lesson names these three specifically: which source system the record originated from (SourceSystemID), its unique identifier within that source system (SourceRecordID), and which ETL load batch actually brought it into the warehouse (LoadBatchID / CorrelationID). Together, these let any record in the warehouse be traced back to the exact source row and the exact time it was loaded — which is precisely what the compliance officer in the live scenario needed and couldn't get without them."
+        },
+        {
+          "q": "Why does the lesson distinguish \"duplicate lineage\" (same SourceRecordID loaded twice) from an application-layer duplicate (the same business event recorded twice)?",
+          "choices": [
+            "In duplicate lineage, the business event genuinely happened once but the ETL process loaded it into the warehouse twice; the business layer itself is not at fault",
+            "Duplicate lineage can only happen to records loaded on a Friday",
+            "They are actually the same failure, just described using different terminology",
+            "Application-layer duplicates are always more severe than duplicate lineage issues"
+          ],
+          "correct": 0,
+          "right": "Right — the underlying business event is fine; it happened exactly once. The problem is entirely on the loading side, which also means the fix is entirely on the loading side (dedupe the ETL), not a source-system correction.",
+          "wrong": "The lesson draws this line specifically: duplicate lineage means the source record itself is genuinely singular — the business event happened exactly once — but something in the ETL process (a re-run watermark reset, a retry after partial failure, a combined full-plus-incremental load) caused it to be loaded into the warehouse more than once. That's a pipeline defect, not a business-layer error, which matters because the fix is entirely on the loading side rather than requiring any correction to the source system."
+        },
+        {
+          "q": "Why does the lesson treat an amount discrepancy between an order and its linked transaction as worth investigating, rather than dismissing it as normal rounding?",
+          "choices": [
+            "It could indicate an undocumented transformation was applied during ETL — currency conversion, tax addition, or discount application — that changed the amount without being recorded or verified",
+            "Amount discrepancies are always caused by a corrupted TransactionID column",
+            "SQL Server automatically rounds all DECIMAL values to the nearest whole number during a JOIN",
+            "An amount discrepancy always means the customer cancelled their order after payment"
+          ],
+          "correct": 0,
+          "right": "Right — the concern isn't the discrepancy itself, it's what it might be hiding: a transformation nobody documented or reviewed against business rules, quietly changing figures between the source and the warehouse.",
+          "wrong": "The lesson frames the concern specifically around undocumented transformation: if the order amount and the linked transaction amount genuinely differ by more than a rounding tolerance, something changed the value somewhere in the pipeline — currency conversion, tax being added, a discount being applied — and that transformation may never have been documented or reviewed against actual business rules. The lineage audit's job is to surface these discrepancies so someone can verify whether the transformation was intentional and correct, not to assume it's benign rounding."
+        }
+      ],
+      "close": "The three-part lineage requirement, duplicate lineage as an ETL-side (not business-side) failure, and amount discrepancies as undocumented-transformation flags — data lineage covered. Last one in this group: Bridge Table and Many-to-Many Relationship Integrity."
+    },
+    "G14-T09": {
+      "open": "Last one in DW/SCD Specific — Bridge Table and Many-to-Many Relationship Integrity. A join that silently multiplies rows is one of the most financially dangerous mistakes in a data warehouse, because the query still runs and returns a number that looks completely plausible.",
+      "questions": [
+        {
+          "q": "Why does joining Orders to Transactions without aggregation inflate the total revenue figure, according to the lesson's own worked example?",
+          "choices": [
+            "When an order matches more than one transaction row, that order's row is replicated once per matching transaction, and any SUM computed afterward counts the order's amount multiple times",
+            "SQL Server automatically doubles every DECIMAL value during a JOIN operation",
+            "The Transactions table contains a corrupted Amount column with incorrect values",
+            "TotalAmount and Amount refer to two completely unrelated business concepts that should never be summed together"
+          ],
+          "correct": 0,
+          "right": "Right — that's exactly the mechanism the lesson's own numbers demonstrate: 20 orders become 27 rows after the join because some orders match more than one transaction, and summing over those 27 rows overcounts the orders that got replicated.",
+          "wrong": "The lesson's Step 5 makes this concrete with real numbers: 20 orders, when joined to Transactions without first aggregating, produce 27 rows — because some orders match more than one transaction row, and each match replicates that order's row. Summing TotalAmount over those 27 replicated rows counts the multiplied orders' amounts more than once, inflating the total from £27,610 to £37,274 purely from the join structure, with no change to the underlying data."
+        },
+        {
+          "q": "What does it mean if a bridge table's weighting factors for one entity sum to 1.5 instead of 1.0?",
+          "choices": [
+            "Any total computed by applying those weights to that entity will be systematically overstated by 50%",
+            "The bridge table will automatically reject any new associations until the weights are corrected",
+            "It indicates the entity has been assigned to exactly 1.5 categories, which is a valid business state",
+            "SQL Server will round the weights down to 1.0 automatically during aggregation"
+          ],
+          "correct": 0,
+          "right": "Right — weights are supposed to represent a fair 1/N split, and if they sum above 1.0, whatever total gets computed from them will be inflated by exactly that excess, in this case 50%.",
+          "wrong": "The lesson states this directly: weights are meant to sum to 1.0 per entity so that a weighted total represents a correct, single-counted figure. If they instead sum to 1.5, any total computed by applying those weights (`SUM(Amount) x Weight`) will be systematically overstated by 50% — the exact scale of the error is proportional to how far the weight sum exceeds 1.0, which is why the lesson's live scenario ties incorrect weighting directly to inflated campaign ROI figures."
+        },
+        {
+          "q": "Why does the lesson recommend \"aggregate-first\" as the canonical remedy for fan-out risk?",
+          "choices": [
+            "Computing the summary at the fact table's own grain before joining ensures each fact row's total is already correct, so the subsequent join can't multiply it regardless of how many matching rows exist on the other side",
+            "Aggregate-first is required by SQL Server syntax whenever a JOIN clause is used with SUM()",
+            "It eliminates the need for a bridge table or weighting factors of any kind",
+            "It only works when the fact table has fewer than 50 rows"
+          ],
+          "correct": 0,
+          "right": "Right — aggregate first, then join. Once each order's transactions are already summed into one row, joining to that pre-aggregated result can't multiply anything, no matter how many transaction rows originally existed for that order.",
+          "wrong": "The lesson explains the mechanism: computing `SUM(t.Amount)` per OrderID in a CTE first, then joining that already-aggregated result to Orders, guarantees one row per order going into the join — regardless of how many transaction rows existed for that order before aggregation. Since the multiplication only happens when a JOIN encounters multiple matching rows on one side, removing that multiplicity before the join (by aggregating first) removes the fan-out risk entirely, rather than trying to correct for it after the fact."
+        }
+      ],
+      "close": "Fan-out as row replication through a JOIN, weight-sum errors as proportional overstatement, and aggregate-first as the structural fix — that closes out DW/SCD Specific, and G12-G14 of this pre-authorized programme. Nine techniques in this group: SCD2 gaps/overlaps, fact grain, dimension key integrity, late-arriving facts, aggregate consistency, incremental load completeness, SCD1 audit, data lineage, and bridge table integrity."
     }
   }
 }
