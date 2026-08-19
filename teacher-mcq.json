@@ -5965,6 +5965,426 @@
         }
       ],
       "close": "This completes the completeness side of timeliness: generating expected periods, comparing them to reality, and flagging holes in the timeline. Together with the earlier lessons, you now have the full operational toolkit for stale data, lag, expiry, and missing coverage."
+    },
+    "G10-T01": {
+      "open": "This lesson extends the Data Type/Storage group by showing how mismatched types can hide behind a query that still returns rows. The key idea is not just conversion failure, but the performance and correctness risks that appear when SQL Server has to reconcile VARCHAR and numeric values on the fly.",
+      "questions": [
+        {
+          "q": "Why does the lesson prefer TRY_CAST when testing whether OrderID or TransactionID values can be treated as integers?",
+          "choices": [
+            "It returns NULL on conversion failures instead of stopping the query with an error",
+            "It automatically converts VARCHAR columns to INT for join performance",
+            "It preserves leading zeros when converting text IDs to numbers",
+            "It is the only function that can detect mixed-type columns"
+          ],
+          "correct": 0,
+          "right": "Correct. TRY_CAST lets the query probe type compatibility safely by turning bad conversions into NULLs instead of failing immediately.",
+          "wrong": "The lesson uses TRY_CAST for safe probing, not for performance or preserving formatting. Its purpose is to detect values that would fail conversion without aborting the check."
+        },
+        {
+          "q": "What specific risk does the lesson say can happen with a value like '0123' stored as VARCHAR when it is compared to an INT key?",
+          "choices": [
+            "The leading zero can be dropped, so the string and integer forms no longer represent the same intended value",
+            "The comparison becomes case-sensitive and returns no rows",
+            "The value is always rejected by SQL Server before the join starts",
+            "The value is automatically padded with trailing zeros to match the INT"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson highlights leading-zero loss as a data integrity issue because '0123' and 123 are not the same business value.",
+          "wrong": "The lesson’s warning is about leading zeros being lost during conversion, not about case sensitivity or automatic rejection. SQL Server may still join the rows, but the meaning can be wrong."
+        },
+        {
+          "q": "According to the explanation, why is ISNUMERIC discouraged for this kind of validation?",
+          "choices": [
+            "Because it can return true for strings like '1e2' even though they are not valid INT values",
+            "Because it only works on DECIMAL columns",
+            "Because it always throws an error on non-numeric text",
+            "Because it strips leading zeros from all numeric strings"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson specifically calls out that ISNUMERIC is too broad and can accept values that are not valid for the target type.",
+          "wrong": "The lesson’s point is precision, not general numeric detection. ISNUMERIC can approve values that still fail an INT cast, which makes it a poor fit for data-quality checks."
+        }
+      ],
+      "close": "Next up in the same group, precision and storage issues become more subtle: not all numeric problems are type mismatches. The following lessons move from conversion errors into rounding, truncation, and representation problems."
+    },
+    "G10-T02": {
+      "open": "This lesson moves from type mismatch into representation loss. The focus is on values that fit the column but still lose meaning because the chosen precision is too coarse for the business problem.",
+      "questions": [
+        {
+          "q": "What does ROUND(Amount, -2) help the lesson detect?",
+          "choices": [
+            "Values that are exact multiples of 100, which may indicate truncation or suspicious rounding",
+            "Values that contain exactly two decimal places",
+            "Values that overflow INT storage",
+            "Values that are guaranteed to be stored as FLOAT"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses negative precision to spot round-number values like multiples of 100 or 1000 that may have lost detail.",
+          "wrong": "The negative precision in ROUND is being used as a diagnostic for suspiciously round values, not for counting decimal places or checking integer overflow."
+        },
+        {
+          "q": "Why does the lesson recommend DECIMAL for currency instead of FLOAT?",
+          "choices": [
+            "DECIMAL stores exact values, while FLOAT stores binary approximations that can accumulate rounding error",
+            "FLOAT cannot store numbers smaller than 1",
+            "DECIMAL always uses less storage than FLOAT",
+            "FLOAT rounds every value to whole numbers"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation ties financial accuracy to exact representation, which DECIMAL provides and FLOAT does not.",
+          "wrong": "The issue is not a storage limit or whole-number rounding. The lesson is about exactness: FLOAT can represent currency imperfectly even when the values look normal."
+        },
+        {
+          "q": "What is the lesson trying to catch with the sub-penny price check?",
+          "choices": [
+            "Prices below 0.01 that would round to 0.00 in a DECIMAL(10,2) column",
+            "Prices above 1000 that require BIGINT",
+            "Prices that should be stored as text for display purposes",
+            "Prices that contain a currency symbol"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson specifically warns that sub-penny values need more than two decimal places or they become inaccurate.",
+          "wrong": "The lesson is not about large integers or formatting symbols. It is about precision too fine for a 2dp currency column."
+        }
+      ],
+      "close": "The next lessons keep following the same theme of storage limits, but they move from decimal precision into string length, semi-structured data, and encoding problems."
+    },
+    "G10-T03": {
+      "open": "This lesson focuses on values that are close to a column’s maximum string length. It teaches that truncation risk is often visible before the actual loss happens if you inspect lengths and boundary patterns carefully.",
+      "questions": [
+        {
+          "q": "Why does the lesson use LEN() rather than DATALENGTH() for truncation detection?",
+          "choices": [
+            "LEN() counts characters, which is what matters for maximum text length checks",
+            "DATALENGTH() is the only function that can detect NULL values",
+            "LEN() includes trailing spaces while DATALENGTH() ignores them",
+            "DATALENGTH() cannot be used on VARCHAR columns"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson treats truncation as a character-length problem, so LEN() is the relevant measure.",
+          "wrong": "The lesson explicitly says LEN() is the right choice for truncation checks because it counts characters. DATALENGTH() is more about byte storage planning."
+        },
+        {
+          "q": "What does it mean when a column’s maximum observed length exactly equals the declared column width, according to the explanation?",
+          "choices": [
+            "It is a strong sign that some values may have been truncated at the boundary",
+            "It proves the data is always valid",
+            "It means the column should be converted to INT",
+            "It shows the values were padded with spaces"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson treats exact boundary hits as a truncation signature, especially when several rows hit the same ceiling.",
+          "wrong": "The lesson is looking for a boundary pattern that suggests data loss, not proof of correctness or a type change to numeric storage."
+        },
+        {
+          "q": "What is the purpose of the end-of-string punctuation check in Step 3?",
+          "choices": [
+            "To heuristically spot notes that may have been cut off mid-thought",
+            "To verify that every note is a valid sentence in English grammar",
+            "To find values that are exactly 200 characters long",
+            "To identify rows that contain HTML tags"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses punctuation absence as a heuristic, not a definitive test, for possible truncation.",
+          "wrong": "The punctuation check is a clue about abrupt endings, not a grammar validator or an exact length test."
+        }
+      ],
+      "close": "This lesson’s core skill is boundary thinking: compare observed lengths to the intended maximum, then look for suspicious patterns at the edge. The next lessons apply the same mindset to structured text, encoding, and nullability."
+    },
+    "G10-T04": {
+      "open": "This lesson turns to semi-structured data stored inside text columns. The main skill is separating three different problems: invalid syntax, missing paths or keys, and mismatches between structured and semi-structured copies of the same fact.",
+      "questions": [
+        {
+          "q": "Why does the lesson recommend checking ISJSON() before using JSON_VALUE()?",
+          "choices": [
+            "Because JSON_VALUE() returns NULL on invalid JSON without raising an error, which can hide malformed data",
+            "Because JSON_VALUE() cannot read scalar values from valid JSON",
+            "Because ISJSON() converts JSON text into XML",
+            "Because JSON_VALUE() only works on arrays"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson’s warning is that invalid JSON can quietly produce NULLs, so syntax must be checked first.",
+          "wrong": "The lesson says JSON_VALUE extracts scalars from valid JSON. The danger is silent NULLs from bad input, not inability to read valid JSON."
+        },
+        {
+          "q": "What does TRY_CAST(XMLData AS XML) contribute in this lesson?",
+          "choices": [
+            "It validates that the XML is well-formed and returns NULL if parsing fails",
+            "It converts XML into JSON keys for easier filtering",
+            "It checks whether XML tags are present in the right order but ignores syntax",
+            "It is only used to count the number of XML elements"
+          ],
+          "correct": 0,
+          "right": "Correct. TRY_CAST to XML is the lesson’s well-formedness test for XML text fields.",
+          "wrong": "The lesson uses TRY_CAST as a parser and validity check. It is not a tag-order heuristic or a conversion to JSON."
+        },
+        {
+          "q": "What is the purpose of the XML amount check in Step 4?",
+          "choices": [
+            "To compare the extracted XML amount with TotalAmount and flag mismatches between two representations of the same fact",
+            "To ensure XMLData always stores a customer name",
+            "To detect invalid JSON syntax",
+            "To convert every XML value into a VARCHAR string"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses cross-validation between XML and the table column to check consistency.",
+          "wrong": "The step is about comparing two versions of the same value, not about customer names, JSON syntax, or simple string conversion."
+        }
+      ],
+      "close": "The next lessons keep validating stored values, but they shift from syntax correctness to character sets, overflow risk, and time semantics. The same theme continues: a value can look fine while still being wrong for its storage type."
+    },
+    "G10-T05": {
+      "open": "This lesson is about encoding, not spelling. It shows how the same visible text can be corrupted when data moves between code pages or when Unicode characters are forced into a narrow storage type.",
+      "questions": [
+        {
+          "q": "Why does the lesson use a binary collation in the non-ASCII check?",
+          "choices": [
+            "To make byte-level comparisons reliable instead of relying on linguistic collation behavior",
+            "To convert all text to UTF-8 automatically",
+            "To allow SQL Server to store emojis in VARCHAR",
+            "To make LIKE work only on uppercase letters"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses a binary collation so the character-range test behaves by code point rather than linguistic rules.",
+          "wrong": "The binary collation is there to make the detection precise, not to change the storage encoding or limit case behavior."
+        },
+        {
+          "q": "What does a question mark in a name often indicate in this lesson?",
+          "choices": [
+            "A failed character conversion where an unsupported character was replaced during encoding",
+            "A required punctuation mark in international names",
+            "A valid Unicode surrogate pair",
+            "A sign that the name is stored in NVARCHAR"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson treats '?' as the corruption signature for characters that could not survive conversion.",
+          "wrong": "The lesson’s point is corruption, not legitimate punctuation. A '?' appearing inside a name is used as evidence that encoding went wrong."
+        },
+        {
+          "q": "According to the explanation, when does the lesson recommend NVARCHAR?",
+          "choices": [
+            "When the column contains non-ASCII or Unicode characters that VARCHAR would corrupt",
+            "Only when the text exceeds 4000 characters",
+            "Only for numeric strings like order IDs",
+            "Only when the column stores JSON"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson’s recommendation is driven by character set needs: Unicode content requires NVARCHAR to avoid corruption.",
+          "wrong": "The recommendation is not tied to length alone or to JSON specifically. It is about preserving characters that a narrow VARCHAR column may damage."
+        }
+      ],
+      "close": "The next lesson returns to numeric storage, but this time it is about running out of range rather than losing precision. The key question shifts from can it fit exactly to can it fit at all."
+    },
+    "G10-T06": {
+      "open": "This lesson is about planning for scale before a column hits its ceiling. It treats overflow as a capacity problem as much as a data problem, especially for identity-style sequences and count columns.",
+      "questions": [
+        {
+          "q": "Why does the lesson cast TransactionID to BIGINT before taking MAX()?",
+          "choices": [
+            "To avoid overflow during aggregation and leave headroom for values near INT limits",
+            "To make the column index smaller",
+            "To force SQL Server to treat the values as dates",
+            "To convert negative IDs into positive ones"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson explicitly says BIGINT gives the comparison and aggregation enough room when values approach INT boundaries.",
+          "wrong": "The cast is a safety measure for numeric headroom, not an indexing or type-conversion trick for dates or sign changes."
+        },
+        {
+          "q": "What does the growth projection in Step 3 estimate?",
+          "choices": [
+            "How many days remain until the current sequence would reach INT max at the observed daily growth rate",
+            "How many rows can fit in a VARCHAR column",
+            "How long query execution will take on the table",
+            "Whether the column should be converted to DECIMAL"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses a linear projection to estimate time remaining before overflow.",
+          "wrong": "The projection is about sequence capacity, not text storage or query performance. It is specifically tied to integer exhaustion."
+        },
+        {
+          "q": "What is the lesson’s recommendation when a column is over 90% of its type limit?",
+          "choices": [
+            "Treat it as critical and change the type immediately or plan a migration",
+            "Ignore it until the column actually fails",
+            "Convert the values to strings to avoid overflow",
+            "Reduce the row count to keep the percentage low"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation marks this as an urgent capacity issue, not something to postpone until failure.",
+          "wrong": "The lesson is explicit that high utilisation is a warning sign. Waiting for failure or hiding the issue in text storage is not the solution."
+        }
+      ],
+      "close": "The next lesson changes from numeric capacity to temporal correctness. Once the values fit, the question becomes whether the timestamps mean what you think they mean."
+    },
+    "G10-T07": {
+      "open": "This lesson focuses on timestamp meaning, not just timestamp value. The same clock time can represent different real-world instants if the timezone context is missing, and that is the problem the queries are trying to surface.",
+      "questions": [
+        {
+          "q": "Why does the lesson treat a negative DATEDIFF(MINUTE, OrderDate, TransactionDate) as a timezone clue?",
+          "choices": [
+            "Because a transaction appearing before its order can indicate mixed timezone data rather than a true sequence problem",
+            "Because negative differences are impossible in SQL Server",
+            "Because DATEDIFF only works on dates after the year 2000",
+            "Because timezone offsets are automatically stored in DATETIME"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses impossible-looking ordering as evidence that timestamps may come from different zones without context.",
+          "wrong": "The issue is not a SQL limitation. The lesson is highlighting that missing timezone metadata can make the chronology appear impossible."
+        },
+        {
+          "q": "What pattern in the hour-of-day distribution does the lesson describe as a timezone mixing signal?",
+          "choices": [
+            "A bimodal or split peak distribution rather than one single business-hours peak",
+            "All rows appearing in the same hour",
+            "Only midnight timestamps",
+            "Evenly distributed seconds within each minute"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation specifically says two peaks can indicate multiple timezones in the same dataset.",
+          "wrong": "The lesson is looking for separate clusters of activity, not a single hour or seconds-level spread."
+        },
+        {
+          "q": "What is the lesson’s preferred datatype for new systems that need timezone-safe timestamps?",
+          "choices": [
+            "DATETIMEOFFSET",
+            "SMALLINT",
+            "VARCHAR",
+            "BIT"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation says DATETIMEOFFSET stores the UTC offset and preserves timezone context.",
+          "wrong": "The lesson is explicit that DATETIMEOFFSET is the right choice when timezone context matters. The other types do not solve the problem."
+        }
+      ],
+      "close": "The following lessons shift from time semantics to storage format and field meaning. The key habit stays the same: validate the assumptions behind the stored value, not just the value itself."
+    },
+    "G10-T08": {
+      "open": "This lesson deals with file references stored in text columns. The main skill is distinguishing valid path families from malformed paths and from legitimate but risky storage patterns.",
+      "questions": [
+        {
+          "q": "What does LEFT(AttachmentPath, 2) = '\\\\' classify in the lesson?",
+          "choices": [
+            "A UNC path such as \\\\server\\share",
+            "A relative Unix path",
+            "A local Windows drive path",
+            "An HTTP URL"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson uses that prefix check to identify UNC network paths.",
+          "wrong": "The lesson uses the double-backslash prefix specifically for UNC paths, not for local drives, URLs, or relative Unix paths."
+        },
+        {
+          "q": "Why does the lesson use REVERSE() together with CHARINDEX('.') when extracting file extensions?",
+          "choices": [
+            "To find the last dot in the path so only the real file extension is evaluated",
+            "To convert file paths into lowercase",
+            "To detect drive letters on Windows",
+            "To remove duplicate backslashes from the prefix"
+          ],
+          "correct": 0,
+          "right": "Correct. The last dot matters because folders can also contain dots, and the lesson wants the file extension specifically.",
+          "wrong": "The reverse-and-search pattern is about locating the final extension separator, not about case conversion or path normalization."
+        },
+        {
+          "q": "What is the lesson’s stance on duplicate attachment paths across multiple orders?",
+          "choices": [
+            "They are a review signal, not automatically an error, because some business processes can legitimately share a document",
+            "They always prove the database is corrupted",
+            "They mean the file extension is wrong",
+            "They are only possible when the path is empty"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation explicitly says shared attachments can be valid in some systems and suspicious in others.",
+          "wrong": "The lesson avoids assuming error. It treats duplicates as something to inspect in context, not as proof of corruption or an extension problem."
+        }
+      ],
+      "close": "The next lesson switches from file references to missing-value semantics. Here the issue is not where the data points, but whether blank-looking values are actually blank or simply unknown."
+    },
+    "G10-T09": {
+      "open": "This lesson is about a subtle but common data-quality mistake: treating NULL, empty string, and whitespace-only values as if they all mean the same thing. The queries separate them so downstream logic can make the right business decision.",
+      "questions": [
+        {
+          "q": "Why does the lesson use NULLIF(LTRIM(RTRIM(Phone)), '') as the standardised missing-value check?",
+          "choices": [
+            "It converts empty or whitespace-only text into NULL so all missing forms are handled together",
+            "It converts NULL into the string 'unknown'",
+            "It counts only populated phone numbers",
+            "It forces the phone column to become numeric"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson presents NULLIF with trimming as the canonical way to normalise blank-looking strings into NULL.",
+          "wrong": "The query is about normalising missing text, not labeling values or changing the datatype. Trimming plus NULLIF collapses blank forms into NULL."
+        },
+        {
+          "q": "What does COUNT(Phone) tell you in this lesson that COUNT(*) does not?",
+          "choices": [
+            "COUNT(Phone) excludes NULLs, so it counts only rows where the column is not NULL",
+            "COUNT(Phone) excludes empty strings but includes NULLs",
+            "COUNT(Phone) only counts rows with populated email addresses",
+            "COUNT(Phone) is identical to COUNT(*) in every case"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation uses COUNT(*) versus COUNT(col) to show how NULL changes aggregation results.",
+          "wrong": "The distinction is specifically about NULL exclusion. Empty strings are still counted by COUNT(col), which is exactly why the lesson treats them differently."
+        },
+        {
+          "q": "What business logic problem does the lesson say can happen when NULL and empty string are mixed?",
+          "choices": [
+            "A system can misclassify blank-but-provided data as unknown, or vice versa, and skip the correct follow-up action",
+            "SQL Server will always delete the row automatically",
+            "The column will change into a BIT field",
+            "Every GROUP BY query will fail"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson’s scenario shows unknown versus opted-out semantics getting mixed up when the database stores both forms inconsistently.",
+          "wrong": "The lesson is about semantics and downstream workflow, not automatic deletion, datatype mutation, or query failure."
+        }
+      ],
+      "close": "The final lesson in the group stays on value correctness, but it narrows to flags and statuses. After missing-value handling, the next check is whether a field only contains the small set of states the business actually allows."
+    },
+    "G10-T10": {
+      "open": "This lesson closes the group by checking whether boolean and status fields are actually constrained to the meanings the business expects. It also shows that a flag can be technically valid while still being logically inconsistent with related rows.",
+      "questions": [
+        {
+          "q": "Why does the lesson start with a distinct-value audit for IsActive?",
+          "choices": [
+            "To enumerate the actual stored values before judging whether they belong to the expected set",
+            "To convert IsActive into a string permanently",
+            "To detect timezone problems in the table",
+            "To find duplicate attachment paths"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson says the first step in a flag audit is knowing what values actually exist in the column.",
+          "wrong": "The distinct-value audit is about discovering stored flag values, not about type conversion or unrelated storage checks."
+        },
+        {
+          "q": "What is the lesson’s expected valid set for the IsActive flag?",
+          "choices": [
+            "0 and 1 only, with NULL treated separately if it appears",
+            "Y and N only",
+            "2 and 3 only",
+            "Any non-zero integer"
+          ],
+          "correct": 0,
+          "right": "Correct. The explanation says BIT columns should contain the expected two values, while NULL is a separate business-rule question.",
+          "wrong": "The lesson is specifically about 0/1 semantics for BIT fields, not text flags or arbitrary non-zero values."
+        },
+        {
+          "q": "Why does the lesson flag an inactive customer with a shipped order as inconsistent?",
+          "choices": [
+            "Because the business rule says inactive accounts should not have active orders in workflow states like Processing or Shipped",
+            "Because shipped orders must always belong to active products",
+            "Because the order status field is invalid whenever IsActive = 0",
+            "Because the customer name is missing a space"
+          ],
+          "correct": 0,
+          "right": "Correct. The lesson treats that combination as a business contradiction, not just a datatype issue.",
+          "wrong": "The inconsistency is about the relationship between account state and order lifecycle. It is not a product rule, a generic status failure, or a formatting issue."
+        }
+      ],
+      "close": "That completes the G10 data type and storage set. Across the ten lessons, the recurring pattern is to validate the meaning of stored values, not just their syntax or immediate display."
     }
   }
 }
