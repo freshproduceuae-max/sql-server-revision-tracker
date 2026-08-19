@@ -14,12 +14,19 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const ROOT = path.join(__dirname, '..');
 const HANDOFF_PATH = path.join(ROOT, 'HANDOFF.md');
 const METHODS_DIR = path.join(ROOT, 'data-validation-lab', 'methods');
 const SOURCES_MCQ = path.join(ROOT, 'sources', 'teacher-mcq.json');
 const BUILT_MCQ = path.join(ROOT, 'teacher-mcq.json');
+
+// Files whose presence in a merged PR's diff marks it as a *content* PR for
+// progress-tracking purposes. A PR that only touches docs, process files, or
+// the checker itself does not move the needle and must not become
+// contentThroughPR — see the self-referential-loop incident this fixes.
+const CONTENT_FILES = new Set(['sources/teacher-mcq.json', 'teacher-mcq.json']);
 
 const START_MARKER = '<!-- HANDOFF-PROGRESS:START (machine-generated, see scripts/check-handoff-progress.js) -->';
 const END_MARKER = '<!-- HANDOFF-PROGRESS:END -->';
@@ -155,7 +162,12 @@ function readStatedBlock() {
   return { text, block, startIdx, endIdx, jsonStart, jsonEnd };
 }
 
-function buildBlockText(actual, latestMergedPR, prCheckStatus) {
+function sourcesMcqHash() {
+  const buf = fs.readFileSync(SOURCES_MCQ);
+  return 'sha256:' + crypto.createHash('sha256').update(buf).digest('hex');
+}
+
+function buildBlockText(actual, contentThroughPR, prCheckStatus) {
   const stated = {
     completedThroughGroup: actual.completedThroughGroup,
     completedLessons: actual.completedLessons,
@@ -166,34 +178,51 @@ function buildBlockText(actual, latestMergedPR, prCheckStatus) {
     remainingItemsTotal: actual.remainingItemsTotal,
     fullTrackTotalItems: actual.fullTrackTotal,
     _note: `${actual.remainingTechniques} remaining techniques + ${actual.remainingExercises} remaining exercises = ${actual.remainingItemsTotal} remaining. This is NOT the same number as fullTrackTotalItems (${actual.fullTrackTotal}), which is the whole track's techniques+exercises, done or not.`,
-    latestMergedPR: latestMergedPR,
-    latestMergedPRCheckStatus: prCheckStatus,
+    contentThroughPR: contentThroughPR,
+    contentThroughPRCheckStatus: prCheckStatus,
+    sourcesTeacherMcqHash: sourcesMcqHash(),
     lastVerified: new Date().toISOString(),
   };
   return START_MARKER + '\n\n```json\n' + JSON.stringify(stated, null, 2) + '\n```\n\n' + END_MARKER;
 }
 
-// --- Latest merged PR via gh CLI, sorted by mergedAt (not list order) ---
-
-function tryGetLatestMergedPR() {
+// --- Latest *content* PR via gh CLI ---------------------------------------
+//
+// "Latest merged PR" is the wrong thing to track: the newest PR merged into
+// the repo is frequently a docs/process/checker-maintenance PR (including
+// this checker's own corrective PRs), which has nothing to do with Teacher
+// MCQ content progress. Tracking it created a self-referential loop — fixing
+// a stale PR number produces a new merged PR, which immediately makes the
+// fix stale again.
+//
+// Instead we find the most recently merged PR whose file list touches one of
+// CONTENT_FILES (sources/teacher-mcq.json or the built teacher-mcq.json).
+// Docs-only, process-only, deploy-only, and checker-maintenance PRs are
+// invisible to this check by construction — they never touch those files.
+function tryGetLatestContentPR() {
   try {
     const { execSync } = require('child_process');
-    const out = execSync('gh pr list --state merged --limit 50 --json number,mergedAt', {
+    const out = execSync('gh pr list --state merged --limit 100 --json number,mergedAt,files', {
       cwd: ROOT,
       stdio: ['ignore', 'pipe', 'ignore'],
-      timeout: 15000,
+      timeout: 20000,
     }).toString();
     const arr = JSON.parse(out);
     if (!Array.isArray(arr) || arr.length === 0) {
       return { number: null, status: 'skipped: gh returned no merged PRs' };
     }
-    // gh's list order is not guaranteed to be chronological — sort explicitly.
     const withDates = arr.filter(pr => pr.mergedAt);
     if (withDates.length === 0) {
       return { number: null, status: 'skipped: no mergedAt timestamps returned' };
     }
     withDates.sort((a, b) => new Date(b.mergedAt) - new Date(a.mergedAt));
-    return { number: withDates[0].number, status: 'verified' };
+    const contentPRs = withDates.filter(pr =>
+      Array.isArray(pr.files) && pr.files.some(f => CONTENT_FILES.has(f.path))
+    );
+    if (contentPRs.length === 0) {
+      return { number: null, status: 'skipped: no merged PR in the last 100 touched teacher-mcq.json' };
+    }
+    return { number: contentPRs[0].number, status: 'verified' };
   } catch (e) {
     return { number: null, status: 'skipped: gh CLI unavailable or unauthenticated' };
   }
@@ -241,9 +270,9 @@ function main() {
     fail('Internal arithmetic inconsistency computing remainingItemsTotal — this is a bug in the checker itself, not the data.');
   }
 
-  const prResult = tryGetLatestMergedPR();
+  const prResult = tryGetLatestContentPR();
   if (prResult.status !== 'verified') {
-    console.log(`(PR-number check SKIPPED: ${prResult.status} — repository-derived checks above still ran and are authoritative on their own)`);
+    console.log(`(content-PR check SKIPPED: ${prResult.status} — repository-derived checks above still ran and are authoritative on their own)`);
   }
 
   const { text, block, startIdx, endIdx } = readStatedBlock();
@@ -290,17 +319,22 @@ function main() {
   check('remainingItemsTotal', actual.remainingItemsTotal, block.remainingItemsTotal);
   check('fullTrackTotalItems', actual.fullTrackTotal, block.fullTrackTotalItems);
 
-  // latestMergedPR is only checked when the PR lookup actually succeeded this
-  // run. If it was skipped, we do not flag a mismatch (that would be a false
-  // failure), and we do not silently treat the stale stored value as verified
-  // either — the console note above already made the skip explicit.
+  // contentThroughPR is only checked when the PR lookup actually succeeded
+  // this run. If it was skipped, we do not flag a mismatch (that would be a
+  // false failure), and we do not silently treat the stale stored value as
+  // verified either — the console note above already made the skip explicit.
   if (prResult.status === 'verified') {
-    if (block.latestMergedPR !== prResult.number) {
-      mismatches.push(`latestMergedPR: HANDOFF.md says ${block.latestMergedPR}, gh reports (sorted by mergedAt) the latest merged PR is #${prResult.number}`);
+    if (block.contentThroughPR !== prResult.number) {
+      mismatches.push(`contentThroughPR: HANDOFF.md says ${block.contentThroughPR}, gh reports the latest merged PR touching teacher-mcq.json content is #${prResult.number}`);
     }
-    if (block.latestMergedPRCheckStatus !== 'verified') {
-      mismatches.push(`latestMergedPRCheckStatus: HANDOFF.md says "${block.latestMergedPRCheckStatus}" but this run verified it successfully — refresh the block`);
+    if (block.contentThroughPRCheckStatus !== 'verified') {
+      mismatches.push(`contentThroughPRCheckStatus: HANDOFF.md says "${block.contentThroughPRCheckStatus}" but this run verified it successfully — refresh the block`);
     }
+  }
+
+  const expectedHash = sourcesMcqHash();
+  if (block.sourcesTeacherMcqHash !== expectedHash) {
+    mismatches.push(`sourcesTeacherMcqHash: HANDOFF.md says ${block.sourcesTeacherMcqHash}, actual sha256 of sources/teacher-mcq.json is ${expectedHash}`);
   }
 
   // lastVerified is a timestamp, not a fact about the repo — never compared,
@@ -314,8 +348,8 @@ function main() {
     if (fixMode) {
       console.log('Mismatches found — rewriting the progress block to match reality:');
       mismatches.forEach(m => console.log('  - ' + m));
-      const prNumberToWrite = prResult.status === 'verified' ? prResult.number : block.latestMergedPR;
-      const prStatusToWrite = prResult.status === 'verified' ? 'verified' : block.latestMergedPRCheckStatus || prResult.status;
+      const prNumberToWrite = prResult.status === 'verified' ? prResult.number : block.contentThroughPR;
+      const prStatusToWrite = prResult.status === 'verified' ? 'verified' : block.contentThroughPRCheckStatus || prResult.status;
       const newBlockText = buildBlockText(actual, prNumberToWrite, prStatusToWrite);
       const newText = text.slice(0, startIdx) + newBlockText + text.slice(endIdx + END_MARKER.length);
       fs.writeFileSync(HANDOFF_PATH, newText);
