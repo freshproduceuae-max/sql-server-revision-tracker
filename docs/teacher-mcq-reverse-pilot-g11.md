@@ -74,9 +74,11 @@ subprocess call, so there is no equivalent five-field breakdown to report
 for the authoring step itself. This is recorded here as a known gap, not
 elided.
 
-**Codex's review-run token figures** will be recorded in this section once
-the review runs, using the same five-field method as the PR-review
-workflow's `manifest.txt`.
+**Codex's review-run token figures** (session `01a01bdc-7843-71f1-9c88-a23dde1fadda`):
+541,436 total input tokens, of which 476,672 were cached → **64,764 new
+input tokens**, 3,462 output tokens (1,027 of which were reasoning,
+already included within that 3,462 — not additional). Full breakdown in
+`_audit/teacher-mcq-role-swap/G11-reverse-pilot/manifest.txt`.
 
 **Comparability warning — read before drawing any conclusion:**
 G01–G10's "tokens used" figures in `docs/teacher-mcq-role-swap-experiment.md`
@@ -96,28 +98,49 @@ using this same method.
 
 | Lesson | Questions | Status |
 |---|---|---|
-| G11-T01 Column Completeness Profile | 3 | Drafted, unreviewed |
-| G11-T02 Value Distribution Analysis | 3 | Drafted, unreviewed |
-| G11-T03 Numeric Column Statistics | 3 | Drafted, unreviewed |
-| G11-T04 Cardinality and Uniqueness Check | 3 | Drafted, unreviewed |
-| G11-T05 Pattern Frequency Analysis | 3 | Drafted, unreviewed |
-| G11-T06 Temporal Profile | 3 | Drafted, unreviewed |
-| G11-T07 Cross-Column Correlation Profile | 3 | Drafted, unreviewed |
-| G11-T08 Data Density and Sparsity Profile | 3 | Drafted, unreviewed |
-| G11-T09 Outlier and Anomaly Profile | 3 | Drafted, unreviewed |
-| G11-T10 Schema Change and Drift Detection | 3 | Drafted, unreviewed |
-| **Total** | **30** | Codex review pending |
-
-This table updates once Codex's review and Claude's independent
-verification are complete.
+| G11-T01 Column Completeness Profile | 3 | Reviewed — Codex: no findings |
+| G11-T02 Value Distribution Analysis | 3 | Reviewed — Codex: no findings |
+| G11-T03 Numeric Column Statistics | 3 | Reviewed — Codex: no findings |
+| G11-T04 Cardinality and Uniqueness Check | 3 | Reviewed — Codex: no findings |
+| G11-T05 Pattern Frequency Analysis | 3 | Reviewed — Codex: no findings |
+| G11-T06 Temporal Profile | 3 | Reviewed — Codex: no findings |
+| G11-T07 Cross-Column Correlation Profile | 3 | Reviewed — Codex: no findings |
+| G11-T08 Data Density and Sparsity Profile | 3 | Reviewed — Codex: no findings |
+| G11-T09 Outlier and Anomaly Profile | 3 | Reviewed — Codex: no findings |
+| G11-T10 Schema Change and Drift Detection | 3 | Reviewed — Codex: no findings |
+| **Total** | **30** | Codex: PASS, 0 findings, 0 edits |
 
 ## Audit trail
 
 `_audit/teacher-mcq-role-swap/G11-reverse-pilot/` — Codex review prompt,
 output, token breakdown, session id, before/after state, same preservation
-discipline as G06–G10 and the PR-review pilot (PR #46), before any cleanup.
+discipline as G06–G10 and the PR-review pilot (PR #46).
 
-## Result (pending)
+## Result
 
-Verdict, findings, and the owner's merge decision go here once the Codex
-review and Claude's independent verification are complete.
+**Verdict: PASS.** Codex reviewed all 30 questions independently (fresh
+session, isolated worktree at the PR's exact head SHA, blind prompt — no
+Claude conclusions supplied) and found zero factual errors, zero schema
+issues, zero defensible-but-marked-wrong distractors, and zero
+feedback/source contradictions. Zero files changed — confirmed
+independently via `git status`/`git diff` on the worktree after the run.
+The review transcript (`tests.txt`) shows genuine verification work, not a
+rubber stamp: Codex read all 10 source lesson files in full and
+programmatically dumped every question/answer/feedback triple from
+`sources/teacher-mcq.json` before returning its verdict.
+
+Claude independently reviewed Codex's report (there were no proposed edits
+to review) and separately re-verified the three most technically subtle
+claims in the authored content against known SQL Server semantics —
+`PERCENTILE_CONT(...) OVER ()` returning the same value on every row with
+an empty window, a `CROSS JOIN` against a single-row CTE not multiplying
+row count, and `ORDER BY` needing the year component to sort correctly
+across year boundaries — all confirmed correct. No Claude–Codex
+disagreement arose; nothing required test-based or documentation-based
+resolution.
+
+All required validation passed on Codex's independent run: build (162
+lessons / 486 questions), `check-handoff-progress.js`, `check-docs-sync.js`,
+`lint-markdown.js`.
+
+**Merge/deploy decision belongs to the owner** — not made by this review.
