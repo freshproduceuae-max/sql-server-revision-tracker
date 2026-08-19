@@ -3529,6 +3529,678 @@
         }
       ],
       "close": "That completes Group 5 — Range/Boundary, 21 lessons. Every lesson circled the same core question from a different angle: is this value, or this derived value, inside the bounds it should be in — and is the threshold itself still the right one to measure against?"
+    },
+    "G06-T01": {
+      "open": "This lesson starts Group 6 by checking whether two columns that describe the same real-world fact can contradict each other. The key move is to reason from the stored status and the date column together, not either field in isolation.",
+      "questions": [
+        {
+          "q": "In this lesson, what is the core consistency rule for Employees using IsActive and TerminationDate?",
+          "choices": [
+            "A terminated employee must have IsActive = 0 and a TerminationDate, while an active employee must have IsActive = 1 and no TerminationDate",
+            "Any employee with a TerminationDate must always be deleted from the table",
+            "IsActive alone is sufficient, so TerminationDate can be ignored",
+            "TerminationDate is only for reporting and never affects access control"
+          ],
+          "correct": 0,
+          "right": "That is the lesson's rule: both columns encode the same fact and must agree.",
+          "wrong": "The lesson treats this as a logical contradiction between two columns, not a deletion rule or a one-column-only check. It also shows why access-control logic can be wrong if IsActive and TerminationDate drift apart."
+        },
+        {
+          "q": "Why does the solution use a CASE expression instead of a simple NOT NULL check?",
+          "choices": [
+            "Because the query needs to classify multiple column combinations, not just detect a missing value",
+            "Because NOT NULL cannot be used in SQL Server",
+            "Because CASE is required whenever GETDATE() appears",
+            "Because NOT NULL only works on string columns"
+          ],
+          "correct": 0,
+          "right": "CASE lets the query name each contradiction pattern, such as a termination date paired with an active-looking row.",
+          "wrong": "A NOT NULL check only finds missing data in one column. The lesson needs to evaluate combinations of values and explain whether each combination is contradictory or merely incomplete."
+        },
+        {
+          "q": "What does the lesson say about a delivered order that has no DeliveryDate versus a pending order that has no delivery date?",
+          "choices": [
+            "The first is a contradiction, while the second is incompleteness rather than contradiction",
+            "Both are the same type of contradiction",
+            "Both are harmless because the status column is enough",
+            "Only the pending order is a contradiction"
+          ],
+          "correct": 0,
+          "right": "The lesson explicitly separates contradiction from incompleteness, and only the status/date mismatch is a contradiction.",
+          "wrong": "The lesson distinguishes a status/date conflict from a missing-but-not-conflicting value. A delivered order without a date says two things at once that cannot both be true, while a pending order with no date may simply be unfinished."
+        }
+      ],
+      "close": "Next lessons in Group 6 keep the same idea: a row is wrong when its fields disagree in a way that breaks business meaning. The checks just get broader, moving from one row to many rows and across tables."
+    },
+    "G06-T02": {
+      "open": "This lesson expands consistency checks from one row to two tables. The important distinction is between an intentional historical snapshot and an accidental stale copy, because only one of those is a true mismatch.",
+      "questions": [
+        {
+          "q": "Why does the lesson recommend joining Orders to Customers for the current email instead of trusting Orders.Email?",
+          "choices": [
+            "Because Orders.Email may be a stale copy that does not update when the customer changes their email",
+            "Because Orders cannot store any customer-related data",
+            "Because Customers never changes, so it is always the faster table",
+            "Because joining to Customers removes the need for any consistency checks"
+          ],
+          "correct": 0,
+          "right": "The lesson's point is that denormalised copies become stale when the master record changes.",
+          "wrong": "The lesson is not saying customer data cannot exist in Orders at all. It is saying that if the same fact is duplicated, the copy can drift unless there is an explicit reason for it to differ."
+        },
+        {
+          "q": "What does the lesson mean by a point-in-time snapshot?",
+          "choices": [
+            "A copied value that is allowed to differ from the master because it captures the value at the time of the event",
+            "A value that is always wrong if it differs from the parent table",
+            "A value that can only be stored in a temporary table",
+            "A value that must be recomputed every time the row is read"
+          ],
+          "correct": 0,
+          "right": "The lesson explicitly warns that some cross-table differences are intentional, especially historical snapshots such as order-time prices.",
+          "wrong": "The lesson says not every difference is an error. Some values, like an order's price at sale time, are meant to preserve history even if the master table has changed since then."
+        },
+        {
+          "q": "Why does Step 2 compare Orders.TotalAmount to SUM(Transactions.Amount)?",
+          "choices": [
+            "To perform a reconciliation check that catches missed transactions or amount mismatches",
+            "To prove that every order must have exactly one transaction",
+            "To replace the Orders table with the Transactions table",
+            "To validate currency codes"
+          ],
+          "correct": 0,
+          "right": "That is the reconciliation pattern the lesson teaches: a header total should match the detail rows within a tolerance.",
+          "wrong": "The lesson uses the aggregate comparison as a consistency check, not as a uniqueness rule or a schema replacement. It is meant to catch amounts that no longer reconcile."
+        }
+      ],
+      "close": "The next lesson keeps the same consistency theme but shifts from stored copies to recomputed values. Instead of asking whether two tables agree, it asks whether a stored total still matches what the source data implies."
+    },
+    "G06-T03": {
+      "open": "This lesson is about derived values going stale. The key idea is that a stored total, commission, or hash is only trustworthy if it still matches what you get when you recompute it from the source columns.",
+      "questions": [
+        {
+          "q": "What is the main reason the lesson gives for a derived value becoming stale?",
+          "choices": [
+            "A source column changes but the stored total is not recalculated",
+            "SQL Server automatically deletes derived values after six months",
+            "Derived values only work for integers",
+            "The value is always stale if it uses ROUND"
+          ],
+          "correct": 0,
+          "right": "The lesson says drift happens when the source changes and the application or migration fails to recalculate the stored copy.",
+          "wrong": "The lesson does not frame staleness as an automatic time-based failure or a rounding problem. It is about change without synchronized recomputation."
+        },
+        {
+          "q": "Why does the query allow a small difference such as less than 0.01?",
+          "choices": [
+            "To tolerate penny-level rounding differences in financial comparisons",
+            "Because SQL Server cannot compare decimals exactly",
+            "Because any non-zero difference is ignored in this lesson",
+            "Because differences under 1.00 are considered invalid"
+          ],
+          "correct": 0,
+          "right": "The lesson explicitly uses a penny tolerance to avoid false positives from minor rounding differences.",
+          "wrong": "The lesson still treats meaningful differences as mismatches. The small threshold is there only to avoid flagging harmless rounding noise."
+        },
+        {
+          "q": "What architectural fix does the lesson recommend for stale derived values?",
+          "choices": [
+            "Use a computed column or a view so the value is recalculated from the source data",
+            "Store more copies of the total in additional tables",
+            "Remove the source columns and keep only the derived value",
+            "Convert all amounts to strings before storing them"
+          ],
+          "correct": 0,
+          "right": "The lesson says to eliminate the manual sync problem by deriving the value on read or via a persisted computed column that recalculates automatically.",
+          "wrong": "The lesson's fix is the opposite of storing more redundant copies. It recommends reducing drift by deriving the value from the source rather than duplicating it manually."
+        }
+      ],
+      "close": "This lesson is the bridge from cross-table agreement to internal recalculation checks. The same consistency logic keeps showing up, but now the comparison is stored value versus recomputed value instead of one row versus another table."
+    },
+    "G06-T04": {
+      "open": "This lesson changes the consistency problem from matching values to matching units. A number is not safely aggregatable unless you know what unit it is in, and the lesson makes that visible with currency.",
+      "questions": [
+        {
+          "q": "Why is SUM(Amount) across all transactions unsafe in the lesson's scenario?",
+          "choices": [
+            "Because the amounts are in multiple currencies that cannot be added meaningfully without conversion",
+            "Because SUM cannot be used with numeric columns in SQL Server",
+            "Because the table contains no OrderID column",
+            "Because currency values are always stored as text"
+          ],
+          "correct": 0,
+          "right": "The lesson's point is that GBP, EUR, and USD are different units, so a raw sum is meaningless without conversion or grouping.",
+          "wrong": "The lesson does not claim SUM is invalid for numeric columns. It says the operation is invalid when the values are in different units and are treated as if they were the same."
+        },
+        {
+          "q": "What is the correct pattern for currency-safe aggregation in the lesson?",
+          "choices": [
+            "Group by Currency, or convert everything to one currency before summing",
+            "Ignore Currency because totals are all that matter",
+            "Convert all amounts to strings so they display clearly",
+            "Use MAX(Amount) instead of SUM(Amount)"
+          ],
+          "correct": 0,
+          "right": "The lesson explicitly says to segregate by unit first or convert via exchange rates before aggregating.",
+          "wrong": "The lesson is careful that the grouping key must be the unit column, or else a conversion table must be used. Simply ignoring the unit creates the exact error the lesson warns against."
+        },
+        {
+          "q": "What does the lesson say Step 6 is trying to catch?",
+          "choices": [
+            "Amounts that are implausible for the stated currency, such as a GBP amount that looks like a pence/pounds mix-up",
+            "Orders with duplicate ProductID values",
+            "Customers whose country code is missing",
+            "Transactions that are older than 90 days"
+          ],
+          "correct": 0,
+          "right": "Step 6 is a plausibility check for magnitude errors, like values that suggest the wrong unit within a single currency.",
+          "wrong": "The lesson's Step 6 is not about lookup codes or date sequencing. It checks whether the numeric size makes sense for the currency context, which can expose pence-versus-pounds mistakes."
+        }
+      ],
+      "close": "The next lessons stay in consistency territory but move into hierarchy and time. Here the central lesson is simple: do not aggregate values unless the unit is known and consistent."
+    },
+    "G06-T05": {
+      "open": "This lesson takes consistency into recursive structures. The issue is no longer two columns disagreeing, but a self-referencing hierarchy that can loop forever if a node becomes its own ancestor.",
+      "questions": [
+        {
+          "q": "What does the lesson use to detect a direct self-reference in Employees?",
+          "choices": [
+            "WHERE ManagerID = EmployeeID",
+            "WHERE ManagerID IS NULL",
+            "GROUP BY ManagerID HAVING COUNT(*) > 1",
+            "ORDER BY EmployeeID"
+          ],
+          "correct": 0,
+          "right": "The lesson treats ManagerID = EmployeeID as the simplest cycle and checks it directly.",
+          "wrong": "The lesson's direct self-reference check is a single-row comparison. NULL managers identify roots, not self-managing employees."
+        },
+        {
+          "q": "Why does the recursive CTE track AncestorPath as a string?",
+          "choices": [
+            "To detect whether the current EmployeeID already appears in the path and therefore a cycle exists",
+            "To sort employees alphabetically",
+            "To avoid needing a ManagerID column",
+            "To replace MAXRECURSION completely"
+          ],
+          "correct": 0,
+          "right": "The lesson uses CHARINDEX against the accumulated path to spot when a node reappears in its own ancestry.",
+          "wrong": "The path is not for sorting or replacing the hierarchy columns. It is a cycle-detection aid so the query can tell when recursion has looped back on itself."
+        },
+        {
+          "q": "What is the purpose of the Depth < 20 guard and MAXRECURSION?",
+          "choices": [
+            "To prevent runaway recursion when a cycle exists",
+            "To make the query run faster on all hierarchies",
+            "To ensure every employee has exactly 20 managers",
+            "To force the root to appear last"
+          ],
+          "correct": 0,
+          "right": "The lesson says recursive hierarchy checks need a safety limit so a bad cycle does not recurse indefinitely.",
+          "wrong": "The depth guard is not a business rule about the number of managers. It is a protection against infinite traversal when the data contains a cycle."
+        }
+      ],
+      "close": "The next lesson shifts from structural loops to event order. Both problems are about invalid relationships, but here the relationship is chronological rather than hierarchical."
+    },
+    "G06-T06": {
+      "open": "This lesson is about chronological order. The important habit is to check adjacent events in the expected chain and to read negative DATEDIFF results as an inverted sequence.",
+      "questions": [
+        {
+          "q": "What does a negative DATEDIFF(DAY, OrderDate, DeliveryDate) indicate in the lesson?",
+          "choices": [
+            "DeliveryDate occurs before OrderDate, so the sequence is inverted",
+            "The order was delivered exactly on time",
+            "The order date is missing",
+            "DATEDIFF cannot be used on dates"
+          ],
+          "correct": 0,
+          "right": "The lesson uses negative DATEDIFF as the visible sign that the later event happened before the earlier one.",
+          "wrong": "The lesson treats negative days as the hallmark of a sequence violation. A zero result is same-day and positive is the expected direction."
+        },
+        {
+          "q": "Why does the lesson use LAG(DeliveryDate) OVER (PARTITION BY CustomerID ORDER BY OrderDate)?",
+          "choices": [
+            "To compare each order with the previous delivery for the same customer and detect overlaps",
+            "To delete duplicate orders",
+            "To calculate currency conversions",
+            "To find the newest customer record"
+          ],
+          "correct": 0,
+          "right": "The lesson uses LAG to look back at the previous row in the customer's order sequence and see if the next order arrived before the prior one was delivered.",
+          "wrong": "LAG here is not for deduplication or lookups. It is specifically to compare the current order against the previous order's delivery date."
+        },
+        {
+          "q": "What root cause does the lesson mention for out-of-order timestamps across systems?",
+          "choices": [
+            "Timezone conversion errors when timestamps are not normalised to a single timezone",
+            "Missing foreign keys between Orders and Transactions",
+            "Discounts entered as percentages instead of decimals",
+            "Case-sensitive collations"
+          ],
+          "correct": 0,
+          "right": "The lesson explicitly calls out timezone normalisation as the source of impossible event order.",
+          "wrong": "The lesson does not tie sequence problems to keys, percentages, or collations. It points to timestamps coming from multiple systems without a common timezone."
+        }
+      ],
+      "close": "The next lesson moves one level up from temporal order to grain and fan-out. It is still about consistency, but now the trap is adding together values that live at different aggregation levels."
+    },
+    "G06-T07": {
+      "open": "This lesson shows how inconsistency appears when you mix row-level detail with pre-aggregated values. The central risk is fan-out: a parent row gets repeated for every child row and then summed multiple times.",
+      "questions": [
+        {
+          "q": "Why is SUM(Orders.TotalAmount) after joining to Transactions called a fan-out error in the lesson?",
+          "choices": [
+            "Because each order total is repeated once per matching transaction and gets counted multiple times",
+            "Because SUM only works on distinct values",
+            "Because fan-out is the same thing as a missing foreign key",
+            "Because Orders rows are deleted during the join"
+          ],
+          "correct": 0,
+          "right": "The lesson explains that the parent row is multiplied by child rows, so the same order total is summed repeatedly.",
+          "wrong": "The error is not about SUM itself or missing keys. It is about the join changing the grain and causing the parent amount to be counted once per transaction."
+        },
+        {
+          "q": "What is the lesson's recommended fix for the fan-out problem?",
+          "choices": [
+            "Aggregate the child table to the parent grain first, then join",
+            "Use DISTINCT on the final result only",
+            "Join all tables first and fix the count with ROUND",
+            "Replace JOIN with UNION"
+          ],
+          "correct": 0,
+          "right": "The lesson's fix is to produce one row per order in the child aggregate before joining it to Orders.",
+          "wrong": "The lesson does not recommend hiding the fan-out with DISTINCT or rounding. It says the grain must be aligned before the join."
+        },
+        {
+          "q": "What does Step 4's monthly reconciliation test?",
+          "choices": [
+            "Whether monthly Order totals and monthly Transaction totals match",
+            "Whether every customer has exactly one order per month",
+            "Whether all products are active",
+            "Whether transactions use the same currency"
+          ],
+          "correct": 0,
+          "right": "The lesson uses a monthly roll-up to compare two aggregated views of the same business activity.",
+          "wrong": "The monthly query is a reconciliation check, not a uniqueness or product-status check. It compares totals at the same grain to find gaps."
+        }
+      ],
+      "close": "The next lesson returns to row-level business rules, but now the rule is conditional: one field changes whether another field is required or forbidden. That is a different kind of consistency than grain alignment."
+    },
+    "G06-T08": {
+      "open": "This lesson focuses on conditional dependencies, where one field's value determines whether another field must exist or must not exist. The main skill is turning an implication into a SQL CASE or CHECK rule.",
+      "questions": [
+        {
+          "q": "What does the lesson mean by a conditional dependency?",
+          "choices": [
+            "A rule where field A's value determines whether field B is required, forbidden, or constrained",
+            "A rule that every table must have a primary key",
+            "A rule that only dates can be NULL",
+            "A rule that all columns must use the same datatype"
+          ],
+          "correct": 0,
+          "right": "That is the lesson's definition: the value of one column controls what is allowed in another.",
+          "wrong": "The lesson is not about keys or datatypes. It is about business rules such as Delivered implying DeliveryDate is present."
+        },
+        {
+          "q": "Why can't the rule 'Delivered orders must have DeliveryDate' be enforced by a simple column-level NOT NULL constraint?",
+          "choices": [
+            "Because the field is only required when Status has a specific value",
+            "Because SQL Server does not support NOT NULL",
+            "Because DeliveryDate must always be NULL",
+            "Because NOT NULL only works on computed columns"
+          ],
+          "correct": 0,
+          "right": "The lesson explains that the requirement is conditional on Status, so a table-level rule is needed instead of an unconditional column rule.",
+          "wrong": "The issue is not that NOT NULL is unavailable. The issue is that the requirement is contextual, so a single unconditional constraint cannot express it."
+        },
+        {
+          "q": "Which combination is explicitly flagged in the lesson's Orders check?",
+          "choices": [
+            "Cancelled with DeliveryDate not NULL",
+            "Delivered with DeliveryDate not NULL",
+            "Pending with DeliveryDate NULL",
+            "Shipped with DeliveryDate NULL"
+          ],
+          "correct": 0,
+          "right": "The lesson marks Cancelled with a non-NULL DeliveryDate as a violation, along with Delivered missing a date and Pending having one.",
+          "wrong": "The lesson's violation list includes Cancelled orders that still have a delivery date. Pending with NULL is not a violation there, and Delivered with a non-NULL date is not what the rule forbids."
+        }
+      ],
+      "close": "The next lesson moves from conditional dependencies to value lists and code domains. The theme stays the same: a field is only valid when its value fits the business rule attached to it."
+    },
+    "G06-T09": {
+      "open": "This lesson is about sign consistency. The row may look numerically valid on its own, but the sign has to mean the right business thing or every balance calculation is wrong.",
+      "questions": [
+        {
+          "q": "What is the main sign rule in this lesson for Transactions.Amount?",
+          "choices": [
+            "Negative amounts are a violation when the business rule requires positive values",
+            "All amounts must be stored as text",
+            "Positive amounts are invalid for refunds",
+            "The sign does not matter if the total is correct"
+          ],
+          "correct": 0,
+          "right": "The lesson explicitly flags negative transaction amounts when the business expects positive values.",
+          "wrong": "The lesson is not saying sign is optional. It says the business meaning of sign must be consistent, or balances and totals become wrong."
+        },
+        {
+          "q": "Why does the lesson warn about SUM(Amount) even when every individual amount looks plausible?",
+          "choices": [
+            "Because if sign convention is wrong, the same SUM can produce gross or net totals with very different meanings",
+            "Because SUM only works for negative values",
+            "Because Amount should never be aggregated",
+            "Because a zero-value transaction always cancels the query"
+          ],
+          "correct": 0,
+          "right": "The lesson's point is that the same-looking SUM can either net debits and credits or just add everything up, depending on sign convention.",
+          "wrong": "The issue is not that aggregation is forbidden. It is that the meaning of the sum changes completely depending on whether the values are signed or unsigned."
+        },
+        {
+          "q": "What does the lesson say about zero-value transactions?",
+          "choices": [
+            "They are often errors or test entries, though some legitimate cases exist",
+            "They are always valid and should never be checked",
+            "They prove the sign convention is correct",
+            "They are only relevant to currency conversion"
+          ],
+          "correct": 0,
+          "right": "The lesson treats zero as suspicious because it can indicate a processing error, while acknowledging that a legitimate zero can exist.",
+          "wrong": "The lesson is careful not to declare every zero wrong. It says zero amounts often deserve review because they can distort averages and signal bad data."
+        }
+      ],
+      "close": "The next lesson moves from sign to controlled vocabularies. It is still a consistency problem, but now the question is whether a stored code actually belongs to the allowed reference set."
+    },
+    "G06-T10": {
+      "open": "This lesson validates lookup codes against a reference set. The important distinction is between a truly invalid code and a variant encoding of a valid code, because those need different fixes.",
+      "questions": [
+        {
+          "q": "What SQL pattern does the lesson use to find codes that are not in the reference table?",
+          "choices": [
+            "A LEFT JOIN to the reference table with WHERE reference.code IS NULL",
+            "A CROSS JOIN to every possible code",
+            "A UNION of all valid and invalid codes",
+            "A window function over the code column"
+          ],
+          "correct": 0,
+          "right": "The lesson uses the anti-join pattern to surface stored values that have no matching reference row.",
+          "wrong": "The lesson is specifically about anti-joins, not cross joins or unions. A missing match in the reference table is what flags the code as invalid."
+        },
+        {
+          "q": "How does the lesson distinguish a variant encoding from a truly invalid code?",
+          "choices": [
+            "By mapping common aliases like UK to the ISO code GB",
+            "By deleting all codes that do not match exactly",
+            "By converting all codes to lowercase",
+            "By treating every unknown code as valid"
+          ],
+          "correct": 0,
+          "right": "The lesson shows that some codes are aliases or non-standard variants that can be mapped to a canonical value.",
+          "wrong": "The lesson does not say all unknown codes are acceptable. It separates aliases that can be corrected from values that need investigation."
+        },
+        {
+          "q": "Why are lookup mismatches especially dangerous according to the lesson?",
+          "choices": [
+            "Because affected records become invisible to standard filters such as WHERE Country = 'GB'",
+            "Because SQL Server refuses to store them",
+            "Because they automatically fix themselves",
+            "Because they only affect sorting, not filtering"
+          ],
+          "correct": 0,
+          "right": "The lesson says the records still exist, but queries filtering on the expected code miss them, so counts and reports are understated.",
+          "wrong": "The problem is not storage or sorting. The problem is that reports using the correct filter value will not see rows stored with the wrong code."
+        }
+      ],
+      "close": "The next lesson returns to multi-row logic. Instead of checking whether a code belongs to a set, it checks whether a business rule about the number of rows per key has been broken."
+    },
+    "G06-T11": {
+      "open": "This lesson is about multi-row constraints, where a business rule depends on how many rows share the same key. The SQL pattern is GROUP BY plus HAVING, and the lesson also shows how to expose the exact duplicate rows.",
+      "questions": [
+        {
+          "q": "What does HAVING COUNT(*) > 1 detect in the lesson?",
+          "choices": [
+            "A key combination that should be unique but appears more than once",
+            "A row with a NULL value",
+            "A transaction that is negative",
+            "A status transition that is invalid"
+          ],
+          "correct": 0,
+          "right": "The lesson uses GROUP BY to define the rule key and HAVING to keep only groups with duplicate rows.",
+          "wrong": "The query is not checking NULLs, signs, or state transitions. It is checking whether a supposed unique combination appears more than once."
+        },
+        {
+          "q": "Why does the lesson use ROW_NUMBER() over the duplicate groups?",
+          "choices": [
+            "To identify which row is the canonical one and which rows are duplicates",
+            "To calculate currency totals",
+            "To force SQL Server to sort the table physically",
+            "To replace the GROUP BY"
+          ],
+          "correct": 0,
+          "right": "The lesson says row numbering helps decide which duplicate to keep and which ones to remove or merge.",
+          "wrong": "ROW_NUMBER is not being used as a replacement for aggregation. It is used after duplicates are found so each row in the duplicate group can be distinguished."
+        },
+        {
+          "q": "What is the effect of duplicate SalesTargets rows in the lesson's example?",
+          "choices": [
+            "The target total becomes inflated, which can distort commission calculations",
+            "The rows are automatically merged by SQL Server",
+            "The duplicate rows do not matter because SUM ignores them",
+            "The employee becomes inactive"
+          ],
+          "correct": 0,
+          "right": "The lesson shows that duplicates inflate the target denominator and can make performance appear worse than it is.",
+          "wrong": "The lesson is explicit that duplicate rows are dangerous because aggregations will include them. SQL Server does not automatically merge them away."
+        }
+      ],
+      "close": "The next lesson moves from multi-row counts to allowed status changes. The row count is not the issue anymore; the issue is whether the current state could have come from a valid prior state."
+    },
+    "G06-T12": {
+      "open": "This lesson treats status as a state machine. The key idea is that a status is only valid if it can be reached through a permitted transition from the previous state.",
+      "questions": [
+        {
+          "q": "What is the lesson's main limitation when only the current Status is stored in Orders?",
+          "choices": [
+            "It cannot fully prove transition history, so some previous-state inference is approximate",
+            "It cannot filter by Status at all",
+            "It forces every order to be Pending",
+            "It means DeliveryDate must be NULL"
+          ],
+          "correct": 0,
+          "right": "The lesson says you can infer likely previous states, but without a history table you cannot fully prove how the record got there.",
+          "wrong": "The limitation is not about filtering or forcing a single status. It is about not having explicit transition history, which makes full validation incomplete."
+        },
+        {
+          "q": "Which transitions are considered terminal in the lesson?",
+          "choices": [
+            "Delivered and Cancelled",
+            "Pending and Processing",
+            "Processing and Shipped",
+            "Any status with a DeliveryDate"
+          ],
+          "correct": 0,
+          "right": "The lesson explicitly labels Delivered and Cancelled as terminal states with no further transitions allowed.",
+          "wrong": "Pending and Processing are active states in the lesson, not terminal ones. Terminal states are the endpoints of the workflow."
+        },
+        {
+          "q": "Why does the lesson say CHECK constraints alone are not enough for transition validation?",
+          "choices": [
+            "Because transition rules depend on the previous value, not just the current column value",
+            "Because CHECK constraints cannot use any columns",
+            "Because transition rules only apply to dates",
+            "Because CHECK constraints delete invalid rows automatically"
+          ],
+          "correct": 0,
+          "right": "A transition rule needs old state plus new state, which is why the lesson points to triggers or application-layer validation instead of a simple CHECK.",
+          "wrong": "The lesson is not saying CHECK is impossible in general. It is saying it cannot capture the prior-to-current-state relationship needed for a state machine."
+        }
+      ],
+      "close": "The next lesson returns to parent-child agreement. Instead of asking how a row got into its current state, it asks whether a child record still agrees with the parent record it depends on."
+    },
+    "G06-T13": {
+      "open": "This lesson is about denormalised child attributes that must agree with the parent. The core check is simple: if a child repeats a parent property, the two values need to match unless a business exception is documented.",
+      "questions": [
+        {
+          "q": "What does the lesson check first with Orders and Products?",
+          "choices": [
+            "Whether an order references an inactive product",
+            "Whether product prices are always positive",
+            "Whether every order has exactly one product",
+            "Whether products have matching VAT rates"
+          ],
+          "correct": 0,
+          "right": "The lesson flags orders that point to a product whose current status is inactive or missing.",
+          "wrong": "The lesson is not doing a price positivity check there. It is checking whether the order is linked to a product that should no longer be used."
+        },
+        {
+          "q": "Why does the lesson use a LEFT JOIN for the parent-child check?",
+          "choices": [
+            "To catch both mismatched parents and orphan rows where the parent is missing",
+            "To sort the results alphabetically",
+            "To avoid checking inactive products",
+            "To guarantee only one row per order"
+          ],
+          "correct": 0,
+          "right": "The lesson explains that a LEFT JOIN lets you detect missing parent rows as well as mismatched values.",
+          "wrong": "The join type is about visibility of orphaned rows, not sorting or deduplication. A LEFT JOIN preserves the child so the missing parent can be seen."
+        },
+        {
+          "q": "What nuance does the lesson mention about employee department versus manager department?",
+          "choices": [
+            "Cross-department reporting lines can be legitimate and should be reviewed rather than blindly rejected",
+            "Every department mismatch must be deleted immediately",
+            "Department values are never compared to managers",
+            "Only inactive employees can have mismatches"
+          ],
+          "correct": 0,
+          "right": "The lesson notes that some mismatches are valid exceptions, so the query flags them for review instead of declaring every one a hard error.",
+          "wrong": "The lesson does not assume every department mismatch is impossible. It deliberately leaves room for legitimate cross-department reporting relationships."
+        }
+      ],
+      "close": "The next lesson turns from agreement between parent and child to how many children are allowed. The question becomes one of cardinality rather than attribute match."
+    },
+    "G06-T14": {
+      "open": "This lesson is about cardinality rules: minimums, maximums, and exact counts. The same pattern is used to find missing child rows, too many child rows, and overloaded managers.",
+      "questions": [
+        {
+          "q": "What does NOT EXISTS detect in the lesson's Orders check?",
+          "choices": [
+            "Orders with no transactions, violating the minimum cardinality of 1",
+            "Orders with too many products",
+            "Orders that are cancelled",
+            "Transactions that are negative"
+          ],
+          "correct": 0,
+          "right": "The lesson uses NOT EXISTS to find parent rows with zero children when at least one is required.",
+          "wrong": "The query is not about products, cancellation, or signs. It is specifically checking for the absence of any matching transaction rows."
+        },
+        {
+          "q": "How does the lesson detect a maximum cardinality violation of more than 3 transactions per order?",
+          "choices": [
+            "GROUP BY OrderID HAVING COUNT(*) > 3",
+            "WHERE TransactionCount = 3",
+            "ORDER BY TransactionDate DESC",
+            "LAG(TransactionID) OVER (...)"
+          ],
+          "correct": 0,
+          "right": "The lesson uses GROUP BY and HAVING COUNT(*) > 3 to isolate orders that exceed the permitted child count.",
+          "wrong": "The violation is not found by sorting or by exact equality to 3. It is found by grouping each order's transactions and filtering groups that exceed the threshold."
+        },
+        {
+          "q": "What does Step 4 apply cardinality to besides orders?",
+          "choices": [
+            "Managers with too many direct reports",
+            "Products with too many categories",
+            "Customers with too many emails",
+            "Transactions with too many currencies"
+          ],
+          "correct": 0,
+          "right": "The lesson extends the same concept to span of control, flagging managers with more than the allowed number of direct reports.",
+          "wrong": "The step is about the management hierarchy, not product categories or codes. It counts direct reports per manager and compares that to the business limit."
+        }
+      ],
+      "close": "The next lesson is another form of business orphaning, but this time caused by soft deletes. The FK may still exist technically, while the business relationship is already broken."
+    },
+    "G06-T15": {
+      "open": "This lesson covers soft-delete cascades. The key insight is that a child can be an orphan in business terms even when the foreign key still points to a valid parent row.",
+      "questions": [
+        {
+          "q": "What is the main issue when Customers.IsActive is set to 0 but open orders remain active?",
+          "choices": [
+            "The orders become business-level orphans and may still be processed when they should be stopped",
+            "The database automatically deletes the orders",
+            "The customer row becomes a foreign key error",
+            "The orders can no longer be joined to Customers"
+          ],
+          "correct": 0,
+          "right": "The lesson says the relationship still exists technically, but the business rule has been violated because active processing continues for a deactivated customer.",
+          "wrong": "The issue is not a broken FK or automatic deletion. The problem is that the parent is inactive while the child still behaves as if the relationship were active."
+        },
+        {
+          "q": "Why does the lesson say standard FK constraints do not catch this problem?",
+          "choices": [
+            "Because the parent row still exists, so referential integrity is technically satisfied",
+            "Because FK constraints only work on text columns",
+            "Because Orders cannot reference Customers",
+            "Because soft deletes are always unsupported"
+          ],
+          "correct": 0,
+          "right": "The lesson explains that a soft-deleted parent is still physically present, so the FK remains valid even though the business meaning is wrong.",
+          "wrong": "The lesson does not claim soft deletes are unsupported. It says the problem is logical rather than referential, so FK constraints alone will not detect it."
+        },
+        {
+          "q": "What remediation does the lesson recommend?",
+          "choices": [
+            "Update the customer and cancel dependent orders in the same transaction",
+            "Leave the orders active and rely on reports",
+            "Hard-delete all historical rows",
+            "Change the FK to nullable"
+          ],
+          "correct": 0,
+          "right": "The lesson emphasizes atomic deactivation plus cancellation so the state change cannot be half-applied.",
+          "wrong": "The lesson's fix is not to loosen integrity or discard history. It is to cascade the business action in one transaction so the active children do not survive the parent's deactivation."
+        }
+      ],
+      "close": "The final lesson in this set deals with strings rather than business state. It checks whether values that should compare the same are being stored in incompatible case or accent variants."
+    },
+    "G06-T16": {
+      "open": "This lesson is about encoding and collation consistency. The same logical value can look different on disk because of case or accent differences, and the lesson shows how that affects matching and deduplication.",
+      "questions": [
+        {
+          "q": "Why does the lesson use LOWER(Email) when finding duplicate email addresses?",
+          "choices": [
+            "To compare emails case-insensitively and detect logical duplicates stored with different case",
+            "To encrypt the email address",
+            "To make the email column numeric",
+            "To force duplicates to disappear automatically"
+          ],
+          "correct": 0,
+          "right": "The lesson says LOWER() is a simple way to normalize case for comparison so logically identical emails can be matched.",
+          "wrong": "The function is not for encryption or cleanup. It is for comparison, and the lesson also notes the tradeoff that wrapping in LOWER() can reduce index usage."
+        },
+        {
+          "q": "What does COLLATE Latin1_General_CS_AS do in the lesson's email comparison?",
+          "choices": [
+            "Forces a case-sensitive comparison on a case-insensitive database",
+            "Deletes accents from the text",
+            "Converts the column to lowercase",
+            "Makes all comparisons binary"
+          ],
+          "correct": 0,
+          "right": "The lesson uses COLLATE to prove the stored values differ in case even if the database default collation would treat them as equal.",
+          "wrong": "The lesson is not using COLLATE to strip accents or change storage. It is explicitly controlling comparison sensitivity for that expression."
+        },
+        {
+          "q": "What is the recommended fix for mixed-case values that are meant to be the same logical value?",
+          "choices": [
+            "Normalize to a canonical form at ingest, such as lowercase emails or uppercase product codes",
+            "Store both case variants forever",
+            "Rely on DISTINCT in every query",
+            "Change all values to NULL"
+          ],
+          "correct": 0,
+          "right": "The lesson says the right fix is canonical normalization during data entry or ETL, not repeated ad hoc comparison logic.",
+          "wrong": "The lesson does not recommend preserving all variants or hiding them with DISTINCT. It recommends preventing the inconsistency at ingest so downstream queries stay simple and reliable."
+        }
+      ],
+      "close": "That completes the 16 consistency lessons. Across them, the common thread is that SQL validation is usually about making an implicit business rule explicit, then checking whether the stored data actually obeys it."
     }
   }
 }
