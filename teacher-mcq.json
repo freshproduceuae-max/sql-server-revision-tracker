@@ -7771,6 +7771,426 @@
         }
       ],
       "close": "Fan-out as row replication through a JOIN, weight-sum errors as proportional overstatement, and aggregate-first as the structural fix — that closes out DW/SCD Specific, and G12-G14 of this pre-authorized programme. Nine techniques in this group: SCD2 gaps/overlaps, fact grain, dimension key integrity, late-arriving facts, aggregate consistency, incremental load completeness, SCD1 audit, data lineage, and bridge table integrity."
+    },
+    "G15-T01": {
+      "open": "Welcome to ETL/Load Process — you've opened Staging Table Row Count Reconciliation, checking that records survive every stage of the pipeline instead of quietly vanishing along the way. Three questions.",
+      "questions": [
+        {
+          "q": "In the stage-count waterfall, what does the lesson say distinguishes an \"expected\" record drop from an \"unexpected\" one?",
+          "choices": [
+            "Loss at a filter stage (a business rule excluding records on purpose) is expected; loss at a JOIN stage (which should find a match for every record) is unexpected unless referential integrity is broken",
+            "Any drop greater than 10 records is automatically unexpected, regardless of which stage it happens at",
+            "All record loss during ETL is expected and never needs individual investigation",
+            "Loss is only unexpected if it happens on the very first stage of the pipeline"
+          ],
+          "correct": 0,
+          "right": "Right — a filter is supposed to drop records; a JOIN is supposed to match every one. That's exactly the distinction the lesson draws: expected loss has a business rule behind it, unexpected loss means something's broken.",
+          "wrong": "The lesson draws this line specifically: dropping records at a filter stage (like keeping only Delivered orders) is expected — that's the business rule doing its job. Dropping records at a JOIN stage is a different story: a JOIN should find a match for every record unless referential integrity is genuinely broken, so unexplained loss there points to real orphaned data, not an intended filter."
+        },
+        {
+          "q": "What does it mean if a stage in the waterfall shows MORE records than the prior stage, according to the lesson?",
+          "choices": [
+            "A fan-out has occurred — one record joined to multiple rows in another table, replicating the original record",
+            "SQL Server automatically doubles row counts whenever a UNION ALL is used",
+            "It always means the ETL pipeline completed successfully with no issues",
+            "It indicates the source system added new records during the ETL run"
+          ],
+          "correct": 0,
+          "right": "Right — a stage growing instead of shrinking is the fan-out signature: something on the other side of a join matched more than once, replicating rows rather than filtering them.",
+          "wrong": "The lesson names this directly: a record GAIN at any stage signals a fan-out — one record on one side of a JOIN matched multiple rows on the other side, replicating that original record rather than passing it through untouched. It's flagged as the specific trigger to investigate JOIN cardinality and consider adding a GROUP BY or deduplication step."
+        },
+        {
+          "q": "Why does the lesson describe the DECLARE-and-compare pattern in Step 4 as \"the simplest form of control total verification\"?",
+          "choices": [
+            "It stores the source and destination counts as variables and does one direct arithmetic comparison — if the variance isn't zero, the load is flagged as incomplete without needing to inspect individual records",
+            "DECLARE statements automatically fix any row count mismatch they detect",
+            "It requires scanning every individual row in both tables one at a time",
+            "It can only be used when the source and destination tables have identical column structures"
+          ],
+          "correct": 0,
+          "right": "Right — it's a single subtraction between two stored totals. No row-by-row inspection needed to know whether something's off; the variance alone tells you whether to keep digging.",
+          "wrong": "The lesson calls this the simplest form specifically because it just captures @SourceCount and @DestCount as two variables and computes @Variance = @SourceCount - @DestCount — one arithmetic comparison, no row-level inspection required. If @Variance isn't 0, that's the signal the load hasn't transferred the expected number of records and the reason needs investigating before the load is accepted as complete."
+        }
+      ],
+      "close": "Expected filter loss vs unexpected JOIN loss, record gain as the fan-out signal, and control totals as the simplest completeness check — staging reconciliation covered. Next: Transformation Rule Validation, checking that business rules were actually applied, not just executed."
+    },
+    "G15-T02": {
+      "open": "Transformation Rule Validation — an ETL job can complete with zero errors while still getting every phone number, country code, or email format subtly wrong. This technique catches that.",
+      "questions": [
+        {
+          "q": "Why does the lesson compute an `ExpectedNormalisedPhone` column showing what a phone number *should* look like after transformation?",
+          "choices": [
+            "It serves two purposes: confirming the transformation logic is correct before applying it at scale, and producing a preview of the correction that could be used to fix already-loaded records",
+            "SQL Server requires every transformation check to include a preview column by default",
+            "It replaces the need to check the actual Phone column entirely",
+            "It only works for phone numbers with international dialling codes"
+          ],
+          "correct": 0,
+          "right": "Right — a dual-purpose column. It validates the transformation logic itself, and it doubles as a ready-made correction script for records that never got transformed.",
+          "wrong": "The lesson names two purposes directly: first, it confirms the transformation logic itself is correct before it's applied at scale — you can see what the fix would produce. Second, it effectively produces a correction preview: the value that an UPDATE statement would need to write to apply the missing transformation to records that were loaded without it."
+        },
+        {
+          "q": "Why does the lesson describe the VAT rate check (`VATRate NOT IN (0, 5, 20)`) as revealing a possible mapping table problem?",
+          "choices": [
+            "A rate outside the UK's standard rates (like the old 17.5% pre-2011 rate, or a non-UK 25% rate) suggests a mapping table that wasn't updated, or a record from an overseas source that skipped country-specific rate conversion",
+            "SQL Server automatically converts all VAT rates to 20% during any numeric transformation",
+            "The check only applies to products priced under £10",
+            "VATRate can only ever be exactly 0, 5, or 20 in any valid UK dataset by database constraint"
+          ],
+          "correct": 0,
+          "right": "Right — the specific values named matter: 17.5% is a real historical UK rate (pre-2011), and a rate like 25% points to a non-UK source. Either points at the mapping logic, not a random glitch.",
+          "wrong": "The lesson gives specific examples: a rate of 17.5% is the old UK standard rate before 2011 — a strong sign the mapping table is stale and wasn't updated to current rates. A rate of 25% isn't a valid UK rate at all, suggesting a record from an overseas source that passed through without the country-specific rate conversion being applied. Both point to a mapping table or transformation gap, not a one-off data entry error."
+        },
+        {
+          "q": "What does the transformation rule summary in Step 6 (Passed/Failed/Nulls/Total per rule) let an analyst do that checking a single record cannot?",
+          "choices": [
+            "It gives a pass/fail scorecard across the whole dataset, showing what fraction of records genuinely conform to each rule — a 58% pass rate flags that a rule needs its logic extended, not just that one record is wrong",
+            "It automatically corrects every failing record without further action",
+            "It only works if every single record in the table has already passed all rules",
+            "It replaces the need for the individual per-record transformation checks entirely"
+          ],
+          "correct": 0,
+          "right": "Right — one record tells you about one record. The summary tells you whether the transformation rule itself is actually working across the board, which is the real question an ETL owner needs answered.",
+          "wrong": "The lesson explains the summary's purpose directly: a 100% pass rate confirms a rule is genuinely working across the dataset, while a lower rate — the lesson's own example shows 58% — flags that a meaningful fraction of records still need the rule applied, or that the rule's logic needs to be extended to cover more format variants it currently misses. That's a dataset-wide health signal a single-record check can't give you."
+        }
+      ],
+      "close": "The correction-preview pattern, VAT rate as a mapping-table tell, and pass-rate scorecards over single-record checks — transformation rule validation covered. Next: Duplicate Detection During Load, catching records before they're loaded twice."
+    },
+    "G15-T03": {
+      "open": "Duplicate Detection During Load — a corrected re-send of yesterday's file, loaded without deduplication, can quietly overstate a week's revenue by hundreds of thousands.",
+      "questions": [
+        {
+          "q": "Why does the lesson treat exact key duplicates (same OrderID more than once), business-key duplicates (same CustomerID+ProductID+date), and near-duplicates (same customer+amount within days) as needing different detection strategies?",
+          "choices": [
+            "Exact key duplicates are definitively wrong, business-key duplicates may be legitimate or erroneous depending on context, and near-duplicates are probabilistic and require business context to confirm — three different confidence levels needing three different checks",
+            "SQL Server only supports one type of duplicate detection query per table",
+            "Near-duplicates are always more severe than exact key duplicates",
+            "All three types are actually the same underlying problem, just checked with different syntax for convenience"
+          ],
+          "correct": 0,
+          "right": "Right — three genuinely different confidence levels. An exact key duplicate is unambiguous; a business-key match could be two real same-day orders; a near-duplicate is just a hint that needs a human to confirm.",
+          "wrong": "The lesson is explicit about the distinction: exact key duplicates (same OrderID) are definitively wrong, since a primary key should prevent them entirely. Business key duplicates might be legitimate (a customer genuinely placing two separate same-day orders) or erroneous (a retry load) — the lesson notes amounts help distinguish which. Near-duplicates are the weakest signal — probabilistic, requiring actual business context to confirm whether they represent a real resubmission or just coincidence."
+        },
+        {
+          "q": "In Step 5's deduplication preview, why does `ROW_NUMBER() OVER (PARTITION BY business_key ORDER BY OrderID)` keep the row with rank 1 — the earliest OrderID — as the canonical record?",
+          "choices": [
+            "The earliest-assigned ID is often the correct choice, since it typically represents the first, original occurrence of that record rather than a later duplicate load",
+            "SQL Server always requires ORDER BY OrderID specifically inside a PARTITION BY clause",
+            "ROW_NUMBER() can only be computed in ascending order, never descending",
+            "The earliest OrderID is chosen at random and has no particular significance"
+          ],
+          "correct": 0,
+          "right": "Right — first occurrence, first ID, generally the canonical original. It's a reasonable default rule for \"which copy do we keep\" when duplicates are being resolved.",
+          "wrong": "The lesson frames this as a deliberate default choice, not an arbitrary one: the earliest-assigned ID is often the correct record to keep because it typically represents the first, original occurrence of that business event — later duplicates, by contrast, usually come from a retry, a re-send, or a duplicate load. `WHERE Rn = 1` in a load statement is what actually applies this rule to only bring in the deduplicated set."
+        },
+        {
+          "q": "Why does the lesson call SQL-based deduplication \"a compensating control\" rather than the primary defence against duplicates?",
+          "choices": [
+            "It detects duplicates that have already gotten in; the real primary controls should be upstream — unique constraints, idempotent ETL design, and source-system deduplication before extraction",
+            "SQL deduplication queries are always too slow to run in production environments",
+            "Compensating controls are a stronger defence than any upstream constraint could ever be",
+            "SQL-based deduplication can only be used once per calendar month due to performance limits"
+          ],
+          "correct": 0,
+          "right": "Right — it's a safety net, not the main line of defence. The real fix is upstream: prevent duplicates from being created or loaded in the first place, and let the SQL check catch whatever slips through anyway.",
+          "wrong": "The lesson is explicit about the hierarchy here: the primary control against duplicates should be upstream — unique constraints on the target table, an idempotent ETL design (so re-running the same load twice produces the same result, not double the data), and deduplication at the source system before extraction even happens. SQL-based detection like this technique provides a safety net for when those upstream controls fail, not a substitute for having them in the first place."
+        }
+      ],
+      "close": "Three duplicate types needing three confidence levels, earliest-ID as the canonical record, and detection as a safety net rather than the primary defence — duplicate detection covered. Next: Type Coercion and Implicit Conversion Audit, catching values that convert without error but arrive wrong."
+    },
+    "G15-T04": {
+      "open": "Type Coercion and Implicit Conversion Audit — TRY_CAST is a deliberately forgiving function, and that forgiveness is exactly what makes silently failed conversions so dangerous.",
+      "questions": [
+        {
+          "q": "Why does the lesson call TRY_CAST's behaviour \"deliberate\" even though it can hide failed conversions?",
+          "choices": [
+            "Returning NULL instead of raising an error lets ETL pipelines keep processing without crashing on a single bad value — the tradeoff is that failed conversions become invisible unless the NULL rate is actively monitored",
+            "TRY_CAST is a bug in SQL Server that Microsoft has not yet fixed",
+            "TRY_CAST always throws a visible warning message, so nothing is actually hidden",
+            "TRY_CAST only fails silently when used inside a stored procedure, never in a plain query"
+          ],
+          "correct": 0,
+          "right": "Right — it's a genuine design tradeoff, not an oversight. The forgiveness that keeps a pipeline running is the exact same behavior that hides a failed conversion unless someone is specifically watching for it.",
+          "wrong": "The lesson explains this as a real design tradeoff, not a flaw: TRY_CAST returning NULL rather than raising an error means an ETL pipeline can keep processing the rest of a batch without crashing over one malformed value. The cost of that resilience is that failed conversions become invisible by default — comparing the pre-load and post-load NULL rate is what's needed to actually surface where conversion silently failed."
+        },
+        {
+          "q": "Why is a high proportion of round numbers (`TotalAmount = FLOOR(TotalAmount)`) in a financial amount column treated as a possible red flag?",
+          "choices": [
+            "It may indicate precision was lost during a FLOAT-to-DECIMAL conversion, or that the source stores integer cents/pence values that should have been divided by 100 but weren't",
+            "Round numbers in financial data are always fabricated or fraudulent",
+            "SQL Server cannot store decimal values below £1.00 under any circumstances",
+            "It means the currency column was accidentally deleted during transformation"
+          ],
+          "correct": 0,
+          "right": "Right — two concrete, plausible causes named by the lesson: a lossy FLOAT conversion, or a units mistake where pence/cents values never got divided down to pounds/dollars.",
+          "wrong": "The lesson names two specific causes: after a FLOAT-to-DECIMAL conversion, values that should have fractional cents often collapse to round integers, indicating lost precision. Separately, some source systems store amounts as integer cents or pence (so £1,499.99 is stored as 149999) — if the ETL forgot to divide by 100, every value would appear as an implausibly large round number. Either way, a high proportion of round numbers is worth investigating rather than assuming it's a coincidence."
+        },
+        {
+          "q": "Why does the lesson describe the DiscountPercent mix-up (0.15 vs 15) as \"entirely semantic\" rather than a conversion failure?",
+          "choices": [
+            "Both 0.15 and 15 are individually valid numbers that convert without any error — the value that gets loaded is technically correct as a number, but its business meaning (a 0.15% discount vs a 15% discount) is wrong by a factor of 100",
+            "SQL Server refuses to store the value 0.15 in any DECIMAL column",
+            "It only happens when the DiscountPercent column has no data type assigned",
+            "The mix-up can only occur if the discount is applied twice in the same query"
+          ],
+          "correct": 0,
+          "right": "Right — nothing errors, nothing fails to convert. The number itself is perfectly valid; it's the interpretation (percent vs decimal fraction) that's off by a hundredfold, and only a domain range check catches that.",
+          "wrong": "The lesson makes this distinction precisely: 0.15 and 15 are both entirely valid numeric values — neither one fails to convert, neither raises an error, so TRY_CAST-style detection wouldn't catch this at all. The problem is purely about meaning: if the source means \"15%\" as 0.15 (a decimal fraction) but the target column expects 15 (a whole-number percentage), the value silently becomes a 99-fold understatement. Only a domain range check (like requiring 0–100 for a percentage column) catches this kind of semantic, not syntactic, error."
+        }
+      ],
+      "close": "TRY_CAST's deliberate forgiveness as a double-edged tradeoff, round numbers as a precision-loss tell, and percent-vs-decimal as a purely semantic error — type coercion auditing covered. Next: Lookup and Reference Data Freshness, checking that the tables an ETL depends on are actually up to date."
+    },
+    "G15-T05": {
+      "open": "Lookup and Reference Data Freshness — an ETL pipeline is only as good as the reference tables it looks values up against, and those tables can go stale silently.",
+      "questions": [
+        {
+          "q": "Step 1 checks for expected Status values missing from the data using a LEFT JOIN from ExpectedStatuses to the actual data. What does this specific join direction actually catch, and what does it miss?",
+          "choices": [
+            "It catches expected statuses that are missing from the actual data; it does NOT catch new, unexpected status values appearing in the data that aren't in the expected list — that would need a FULL OUTER JOIN, as Step 2 demonstrates for Country",
+            "It catches both missing and unexpected values simultaneously, exactly like a FULL OUTER JOIN would",
+            "It only works correctly if the ExpectedStatuses table is completely empty",
+            "It catches unexpected new values but never catches genuinely missing ones"
+          ],
+          "correct": 0,
+          "right": "Right — LEFT JOIN only looks one direction. To catch both \"missing\" and \"unexpected new\" values, you need FULL OUTER JOIN, exactly as the lesson's own Step 2 does for Country.",
+          "wrong": "A LEFT JOIN from ExpectedStatuses only ever preserves rows from the expected side — so it can surface an expected status that's absent from the actual data (a.Status IS NULL), but it structurally cannot surface a brand-new status value that exists in the actual data but isn't in the expected list at all, since there's no ExpectedStatuses row to join from in that case. Catching both directions — missing AND unexpected — needs a FULL OUTER JOIN, which is exactly the technique Step 2 uses for Country."
+        },
+        {
+          "q": "Why does the lesson call MAX(EventDate) an \"imperfect\" freshness proxy when a table lacks an explicit UpdatedDate column?",
+          "choices": [
+            "It cannot detect a table that was loaded but never actually refreshed since then — it only tells you the most recent event date present, not when the table was last touched by an ETL run",
+            "MAX(EventDate) always returns NULL for any table with more than 100 rows",
+            "It's imperfect because SQL Server does not support the MAX() function on DATE columns",
+            "It only works for tables that have exactly one row"
+          ],
+          "correct": 0,
+          "right": "Right — it's a proxy, not a direct measurement. It tells you the newest event recorded, not whether the ETL that's supposed to keep refreshing the table is still actually running.",
+          "wrong": "The lesson is upfront about this limitation: MAX(EventDate) is a lightweight signal that catches the common staleness scenarios, but it's not a direct measurement of ETL activity — it can't distinguish \"this table was refreshed today with only old event dates in it\" from \"this table hasn't been refreshed in weeks.\" It's useful as a proxy specifically because most tables lack a dedicated UpdatedDate column, but it doesn't replace one."
+        },
+        {
+          "q": "Why does the lesson describe an empty reference table (Step 5) as \"the most catastrophic lookup failure\"?",
+          "choices": [
+            "Every ETL lookup against it returns NULL, causing every dependent record to fail validation and every referential integrity check to fail simultaneously, rather than a partial or isolated failure",
+            "An empty table causes SQL Server itself to crash and become unavailable",
+            "It can only happen once per calendar year, making it statistically rare but always catastrophic when it occurs",
+            "It only affects the Customers table and never affects Products or Orders"
+          ],
+          "correct": 0,
+          "right": "Right — total failure, not partial. An empty lookup table doesn't cause a handful of records to fail; it takes down every single lookup against it at once, all simultaneously.",
+          "wrong": "The lesson explains why this is the worst case, not just a bad one: with a completely empty reference table, every single ETL lookup against it returns NULL — not a subset of lookups, all of them — so every dependent record fails validation and every referential integrity check involving that table fails simultaneously. That's categorically worse than a partial failure (some records affected) because the entire pipeline stage effectively stops working at once."
+        }
+      ],
+      "close": "LEFT JOIN's one-directional catch versus FULL OUTER JOIN's both-direction catch, MAX(date) as an imperfect proxy, and empty tables as total (not partial) failure — reference data freshness covered. Next: Load Window and Boundary Condition Check, making sure each ETL run covers exactly the right date range."
+    },
+    "G15-T06": {
+      "open": "Load Window and Boundary Condition Check — a failed control-table update can silently cause a date to be loaded twice, or never loaded at all, and both failures look identical from the outside.",
+      "questions": [
+        {
+          "q": "What are the two most common boundary errors in watermark-based ETL, according to the lesson?",
+          "choices": [
+            "Using >= instead of > at the start boundary (re-loading the record with exactly the watermark value), and inconsistent end-boundary exclusivity between adjacent load windows",
+            "Using the wrong database server name, and forgetting to close the database connection",
+            "Loading data in the wrong time zone, and using a VARCHAR column instead of a DATE column",
+            "Running the ETL job too early in the morning, and running it on a weekend"
+          ],
+          "correct": 0,
+          "right": "Right — both are about exactly where the boundary sits. Get the >= vs > wrong, or leave the end-boundary inconsistent between adjacent windows, and you get either a duplicate or a gap at the seam.",
+          "wrong": "The lesson names these two specifically: using `>=` instead of `>` against LastRunDate re-loads the exact record that had that boundary date value, creating a duplicate. Separately, inconsistent boundary inclusivity between adjacent windows — whether one window's end is exclusive and the next window's start is inclusive, or vice versa — determines whether a boundary record gets loaded twice or skipped entirely between two consecutive runs."
+        },
+        {
+          "q": "Why does the lesson caution that gap dates found by the calendar-spine technique (Step 4) might not actually indicate a load failure?",
+          "choices": [
+            "A date with no records could be a legitimate non-trading day (a weekend or bank holiday), not necessarily a genuine ETL load gap — the analyst needs to check against a non-trading-day calendar to tell the difference",
+            "The calendar-spine technique can only detect gaps that are exactly 7 days long",
+            "Gap dates are only meaningful if they occur in the first week of a calendar month",
+            "SQL Server automatically excludes weekends from any date range query"
+          ],
+          "correct": 0,
+          "right": "Right — a day with zero records isn't automatically a bug. It might just be a day the business genuinely didn't trade, and the lesson explicitly tells the analyst to check that before assuming a load failure.",
+          "wrong": "The lesson makes this explicit: gap dates found by comparing a generated calendar against actual records may be legitimate (weekends, bank holidays where no genuine business activity occurred) or may indicate a real load gap. The technique surfaces candidate dates; it's the analyst's job to compare those dates against a known non-trading-day calendar to determine which gaps are expected and which represent an actual missing load."
+        },
+        {
+          "q": "Why does the lesson compare the Orders date range against the Transactions date range in Step 5 as a cross-dataset check?",
+          "choices": [
+            "If related tables cover different date spans — e.g. Transactions extends 5 days further than Orders — it suggests one table's load was incomplete or the ETL logic for the two tables diverged",
+            "It's required because SQL Server enforces that all tables in a database must share identical date ranges",
+            "Comparing date ranges across tables is only useful for tables that have no foreign key relationship at all",
+            "It automatically fixes any misalignment it finds between the two tables"
+          ],
+          "correct": 0,
+          "right": "Right — related tables should generally track together. When one's date span diverges from the other's, that's a signal the two loads aren't in sync, worth investigating on its own.",
+          "wrong": "The lesson gives the specific reasoning: if Transactions covers March 1–20 but Orders only covers March 1–15 for what should be the same load batch, either 5 days of transactions have no matching orders, or the Orders load simply didn't finish loading its full expected range. Comparing the date spans of related tables is a cheap way to catch this kind of divergence — where the ETL logic for two related tables ended up out of sync with each other."
+        }
+      ],
+      "close": "The two classic watermark boundary errors, gap dates needing a non-trading-day sanity check, and cross-table date-span comparison as a divergence signal — load window validation covered. Next: Incremental vs Full Load Verification, catching the day someone accidentally ran the wrong load mode."
+    },
+    "G15-T07": {
+      "open": "Incremental vs Full Load Verification — running a full load by mistake on a day that should have been incremental can overwrite change history that took months to accumulate.",
+      "questions": [
+        {
+          "q": "Why does the lesson use a rolling 3-month average, rather than a fixed record-count threshold, to detect a full-load-on-incremental-day error?",
+          "choices": [
+            "It provides a data-driven baseline for what \"normal\" looks like for a given ETL, since the right threshold depends on the pipeline's own typical volume and volatility rather than one fixed number that would fit every pipeline",
+            "A fixed threshold is technically impossible to implement in SQL Server",
+            "The rolling average is required specifically because Orders and Transactions have different column names",
+            "A rolling average always produces a lower number than any fixed threshold would"
+          ],
+          "correct": 0,
+          "right": "Right — a data-driven baseline beats a fixed guess. What counts as \"way too many records\" is different for a pipeline that normally loads 50 rows a day versus one that normally loads 50,000, and the rolling average adapts to that automatically.",
+          "wrong": "The lesson frames the rolling average as a baseline the ETL establishes for itself: a ratio of 5x or more against this baseline strongly suggests a full load occurred — not because that specific count is inherently wrong in isolation, but because it deviates dramatically from this specific pipeline's own established pattern. The lesson also notes the multiplier thresholds (5x, 2x) can be tuned to the ETL's own volatility, which only makes sense against a self-referential rolling baseline, not a single fixed number applied to every pipeline."
+        },
+        {
+          "q": "Why does the lesson call historical records appearing in what should be an incremental load a \"full-load fingerprint\"?",
+          "choices": [
+            "An incremental load, by definition, should only contain records from the current period — records dated from many months ago showing up means more than the incremental delta was loaded, which is exactly what a full load does",
+            "Historical records can only ever appear in a table due to a corrupted primary key",
+            "It's called a fingerprint because it can only be detected using a specialized SQL Server forensic tool",
+            "Historical records showing up always means the ETL job crashed partway through"
+          ],
+          "correct": 0,
+          "right": "Right — it's diagnostic by definition. An incremental load's whole job is to bring in only the new delta; finding old records in it is essentially proof that something loaded more than the delta.",
+          "wrong": "The lesson's reasoning is definitional: an incremental load for \"this month\" should, by its very nature, only contain records dated within the incremental window. If it also contains records from 6 months ago, that's not a coincidence — a full load (which pulls the entire dataset regardless of date) is the operation that would produce exactly that pattern. Step 2 flags any month falling before the expected incremental window start as this reliable signal."
+        },
+        {
+          "q": "Why does Step 4's cross-period duplicate check (matching OrderIDs between the recent window and historical months) work as a de-duplication verification?",
+          "choices": [
+            "If an incremental load correctly de-duplicates against the existing target, an OrderID already present in a historical month should never reappear in the new load — if it does, either the incremental filter is missing or the pre-insert deduplication check isn't functioning",
+            "It verifies that OrderIDs are stored using the correct data type in the database schema",
+            "The check only works if the Orders table has been completely emptied and reloaded from scratch",
+            "It confirms that customers are placing genuinely new orders rather than duplicate ones"
+          ],
+          "correct": 0,
+          "right": "Right — the logic runs backwards from what a working incremental load guarantees. If it's working correctly, an already-loaded OrderID simply cannot show up again in a new incremental batch; finding one means that guarantee has been violated.",
+          "wrong": "The lesson explains the underlying logic: a correctly functioning incremental load should never re-insert a record that already exists in the target from a prior load — that's the whole point of deduplication before insert. So if an OrderID from the \"recent\" window also appears in the \"historical\" window, something is broken: either the incremental date filter isn't correctly excluding already-processed records, or the deduplication check before insert isn't actually running."
+        }
+      ],
+      "close": "Rolling averages as a self-adapting baseline, historical records as a full-load fingerprint, and cross-period duplicates as broken deduplication evidence — incremental-vs-full verification covered. Next: Orphan Record and Broken FK Detection Post-Load, catching what a partial or out-of-order load leaves behind."
+    },
+    "G15-T08": {
+      "open": "Orphan Record and Broken FK Detection Post-Load — when one source extract fails but another succeeds, the records that made it through can end up pointing at parents that were never loaded.",
+      "questions": [
+        {
+          "q": "Why does the lesson distinguish a NULL foreign key from an orphan foreign key as requiring different remediation?",
+          "choices": [
+            "A NULL FK means the source record never had a parent reference (a source data issue); an orphan FK means the reference exists but the parent record is absent (an ETL sequencing issue) — fixing one requires fixing the source, the other requires re-running a failed parent load",
+            "NULL foreign keys and orphan foreign keys are actually the same failure, described with two different names for convenience",
+            "A NULL FK can only occur in the Orders table, while an orphan FK can only occur in the Transactions table",
+            "Orphan FKs are always less severe than NULL FKs and can generally be ignored"
+          ],
+          "correct": 0,
+          "right": "Right — same symptom (a broken relationship), two very different root causes, and knowing which one you're looking at tells the ETL team exactly what to fix.",
+          "wrong": "The lesson draws this distinction precisely: a NULL FK means the record genuinely never had a parent reference to begin with — a source data quality issue, like an order placed without a customer association. An orphan FK means a reference exists but points to nothing — an ETL sequencing issue, where the child record loaded before or without its parent. The remediation is different in each case: fix the source system for NULL FKs, versus re-run the failed parent extract for orphan FKs."
+        },
+        {
+          "q": "Why does Step 1's recency flag distinguish \"recent\" orphans from \"historic\" orphans?",
+          "choices": [
+            "Recent orphans (from the last day or so) suggest the parent table's extract failed during the most recent load run; historic orphans suggest a pre-existing integrity problem that was never caught, requiring a different remediation path",
+            "Recent orphans are always false positives caused by clock synchronization issues",
+            "The recency flag only exists to sort the output alphabetically for readability",
+            "Historic orphans are automatically deleted by SQL Server after 90 days"
+          ],
+          "correct": 0,
+          "right": "Right — same symptom, but the age tells you which story it is: a live failure from last night's run, or a long-standing gap nobody caught until now. Different remediation paths follow from each.",
+          "wrong": "The lesson explains the diagnostic value directly: recent orphans point at last night's specific run — the parent table's extract likely failed during that run, and the fix is to re-run that extract. Historic orphans, by contrast, suggest a pre-existing integrity problem that predates the current investigation and was simply never caught — that calls for a broader data audit and possibly a correction script, not just re-running yesterday's job."
+        },
+        {
+          "q": "Why does the lesson say financial exposure quantification (Step 4) makes orphan records \"actionable for finance teams in a way that raw counts are not\"?",
+          "choices": [
+            "Translating a technical defect (\"8 orphan rows\") into a business metric (\"£8,400 of transaction revenue is unmatched\") communicates the real-world impact in terms finance teams can act on directly, rather than an abstract row count",
+            "Finance teams are contractually unable to act on any metric that isn't expressed in currency",
+            "SQL Server cannot compute a SUM() over orphaned records under any circumstances",
+            "The financial figure is always more accurate than the row count in every situation"
+          ],
+          "correct": 0,
+          "right": "Right — it's a translation from technical language into business language. \"8 rows\" means little to a finance team; \"£8,400 unmatched\" tells them exactly what's at stake and why it's worth acting on.",
+          "wrong": "The lesson makes this exact comparison: \"8 orphan rows\" is a technical fact that doesn't communicate business impact on its own, while \"£8,400 of transaction revenue is unmatched to orders\" tells a finance team precisely what's at stake in terms they already work in. The orphan percentage adds further context — the lesson notes 32% orphaned is critical, while 0.1% might be acceptable background noise — helping prioritize which orphan issues actually need urgent attention."
+        }
+      ],
+      "close": "NULL vs orphan FKs as two different failure causes, recency as a triage signal, and financial framing as what makes a defect actionable — post-load orphan detection covered. Next: Reject and Exception Record Audit, making sure a reject table doesn't just quietly grow forever unnoticed."
+    },
+    "G15-T09": {
+      "open": "Reject and Exception Record Audit — a reject table that nobody looks at is a slow, invisible leak of real business activity out of every report.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe simulating a reject table (by re-applying validation rules to already-loaded data) as \"a compensating check, not a replacement\"?",
+          "choices": [
+            "It only catches quality failures in records that made it to the target table — it cannot see records that were dropped entirely before ever reaching the load, which only a real reject table with actual reject logging would capture",
+            "Simulating a reject table always produces less accurate results than a manual spreadsheet review",
+            "SQL Server does not allow simulated reject checks to run against production tables",
+            "A simulated reject table replaces the need for any data quality rules at all"
+          ],
+          "correct": 0,
+          "right": "Right — it can only see what actually landed in the table. Anything dropped before load ever happened is invisible to this kind of after-the-fact check, which is exactly why it's a compensating measure rather than a true substitute.",
+          "wrong": "The lesson is explicit about this limitation: when no dedicated reject table exists, applying the same validation rules to already-loaded data can approximate what would have been rejected — but it can only see records that made it into the target. A record that was dropped entirely before load (never even reaching the target table) is invisible to this technique, which is exactly why it's called a compensating check rather than a genuine replacement for a real reject/quarantine table with proper logging."
+        },
+        {
+          "q": "Why does the lesson emphasize monitoring the *trend* of the reject rate over time (Step 3), not just its current value?",
+          "choices": [
+            "A stable 0.5% reject rate is manageable, but a rate climbing from 0.5% to 1.2% to 2.8% over successive months indicates a deteriorating source system or an outdated mapping rule — a trajectory a single snapshot can't reveal",
+            "Reject rate trends are only useful for detecting fraud, not data quality issues",
+            "The current reject rate value is always inaccurate and should never be trusted on its own",
+            "SQL Server automatically resets the reject rate to zero at the start of each month"
+          ],
+          "correct": 0,
+          "right": "Right — a snapshot tells you where things stand right now; a trend tells you whether the situation is getting worse. Catching a rate that's climbing month over month is what lets a team intervene before the backlog becomes material.",
+          "wrong": "The lesson makes this exact contrast: a stable 0.5% reject rate month after month is a manageable, known baseline. But a rate that climbs — 0.5% to 1.2% to 2.8% — over three consecutive months tells a completely different story: something is deteriorating, whether that's the source system's own data quality or a mapping rule that's no longer covering all the input variants it needs to. A single snapshot value can't distinguish a stable baseline from an accelerating problem; only the trend across periods can."
+        },
+        {
+          "q": "Why does the lesson treat transaction orphans (Transactions referencing OrderIDs that don't exist in Orders) as a useful proxy for Orders reject volume, even when no reject table exists?",
+          "choices": [
+            "If an order was rejected before load, its associated transaction still arrives in the Transactions load — but now without a matching parent order — so the orphan transaction count provides an indirect measure of how many orders were actually rejected",
+            "Transaction orphans are always caused by database replication lag and have nothing to do with Order rejects",
+            "The proxy only works when the Transactions table has fewer rows than the Orders table",
+            "SQL Server generates orphan transactions automatically whenever an order is successfully loaded"
+          ],
+          "correct": 0,
+          "right": "Right — the transaction doesn't know its parent order got rejected; it just arrives and finds no match. That mismatch is exactly the residue a rejected order leaves behind, even with no reject table to consult directly.",
+          "wrong": "The lesson's reasoning connects two independently-loaded tables: if an order was rejected before it ever reached the Orders table, the transaction associated with that order still gets loaded into Transactions — but now it references an OrderID that was never actually created in Orders, making it an orphan. Counting these orphans gives an indirect signal of how many orders were likely rejected upstream, even in a system with no dedicated reject table to check directly."
+        }
+      ],
+      "close": "Simulated reject checks as compensating, not replacing, real reject logging; reject-rate trends over snapshots; and transaction orphans as an indirect reject proxy — reject audit covered. Last one in this group: Post-Load Reconciliation and Sign-Off."
+    },
+    "G15-T10": {
+      "open": "Last one in ETL/Load Process — Post-Load Reconciliation and Sign-Off. This is the final gate: one consolidated scorecard that either certifies a load as good, or stops it before bad data ever reaches production reporting.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe the UNION-based scorecard pattern as scaling \"to any number of checks without changing the consuming code\"?",
+          "choices": [
+            "Every check returns a row with the same consistent column signature (CheckName, ExpectedValue, ActualValue, Variance, PassFail, Details), so a monitoring tool can always filter on WHERE PassFail = 'FAIL' regardless of how many checks are added or removed",
+            "UNION ALL automatically limits the scorecard to exactly 10 checks and no more",
+            "The consuming code has to be rewritten every time a new check is added to the UNION",
+            "SQL Server requires all UNION ALL queries to have exactly the same number of rows on each side"
+          ],
+          "correct": 0,
+          "right": "Right — a stable output shape is what makes it scalable. Add a new check that returns the same six columns and the monitoring logic downstream never has to change.",
+          "wrong": "The lesson explains this precisely: because every individual check SELECT returns the same consistent column signature — CheckName, ExpectedValue, ActualValue, Variance, PassFail, Details — an orchestration tool or dashboard can always evaluate the combined result with a single `WHERE PassFail = 'FAIL'` filter, no matter how many checks exist in the UNION or how many get added later. The consuming logic never has to change shape."
+        },
+        {
+          "q": "Why does the lesson order the final scorecard with `ORDER BY PassFail ASC`?",
+          "choices": [
+            "'FAIL' sorts before 'PASS' in standard string ordering (F comes before P), so failing checks always appear first — visible immediately in a dashboard that only shows the first several rows",
+            "ASC ordering is required by SQL Server whenever a CASE expression appears in the SELECT list",
+            "It sorts the checks alphabetically by CheckName, coincidentally putting failures first",
+            "PassFail values are stored as integers, and ASC sorts the highest integer value first"
+          ],
+          "correct": 0,
+          "right": "Right — pure ASCII/string ordering: 'F' comes before 'P', so ascending order naturally puts every FAIL row ahead of every PASS row, with zero extra logic needed.",
+          "wrong": "The lesson explains the mechanism directly: since PassFail is computed as the string 'PASS' or 'FAIL', and 'F' comes before 'P' in standard ASCII ordering, sorting ascending on that column naturally places every FAIL row before every PASS row. This matters practically because a monitoring dashboard that only displays the first several rows of a result set will always show failures first, without needing any extra logic to force that ordering."
+        },
+        {
+          "q": "Why does the lesson place all tolerance thresholds in DECLARE statements at the top of the query, rather than hardcoding them directly inside each CASE expression?",
+          "choices": [
+            "It lets the reconciliation logic be maintained as a stored procedure where thresholds become parameters — the same procedure could run with a looser tolerance during bulk loads and a stricter one for overnight reconciliation",
+            "DECLARE statements execute faster than any hardcoded literal value in a CASE expression",
+            "SQL Server requires all numeric thresholds to be declared as variables before they can be compared",
+            "It has no practical benefit and is done purely as a stylistic preference in this lesson"
+          ],
+          "correct": 0,
+          "right": "Right — it turns fixed numbers into parameters. Wrapped in a stored procedure, the exact same reconciliation logic can be called with different tolerance settings for different situations without touching the query itself.",
+          "wrong": "The lesson gives a concrete reason: keeping thresholds in DECLARE statements rather than scattered as hardcoded literals inside CASE expressions means the whole reconciliation query can be wrapped as a stored procedure where those thresholds become parameters. The lesson's own example: a daily ETL might tolerate 0.5% duplicates during a bulk load, but require a stricter 0% during overnight reconciliation — the same procedure, called with different parameter values, handles both scenarios without any change to the underlying query logic."
+        }
+      ],
+      "close": "Consistent column shape as what makes the scorecard scale, ASCII ordering putting failures first automatically, and DECLARE thresholds as reusable parameters — that closes out ETL/Load Process. Ten techniques: staging reconciliation, transformation rules, duplicates, type coercion, reference freshness, load windows, incremental-vs-full, post-load orphans, reject audits, and the final sign-off scorecard."
     }
   }
 }
