@@ -210,10 +210,15 @@ entry 19.
 - **Progress is browser-local.** Completion state lives in `localStorage` under
   `crAcademy_v1`. Nothing syncs across devices, and clearing site data wipes it.
   This is the largest open item.
-- **The coverage audit reasons over source, not runtime.** It cannot catch the
-  app's rendering logic changing so that ids become uncompletable without the
-  ids themselves changing. Closing that properly needs a headless harness this
-  single-file app does not have.
+- ~~**The coverage audit reasons over source, not runtime.**~~ **Closed by
+  PR #58.** A real, browser-driven Playwright harness now exists
+  (`tests/e2e/`) and exercises track navigation, lesson loading, completion,
+  Teacher MCQs, Quiz Practice, checkpoints, loading/error states across all
+  four content-fetching paths, and mobile viewport — not source-structure
+  inspection. See "Headless coverage harness" below for the full design and
+  review history. `scripts/build-projects.js`'s source-only id-coverage
+  check still exists and still has the limitation described above in
+  isolation, but the runtime half of that gap is now covered by the harness.
 - **The Vercel project is now named `analyst-path`, but the live URL is still
   `credit-risk-academy.vercel.app`.** Renaming the project did not move the
   `.vercel.app` domain: the old one is registered as the project's *production
@@ -381,7 +386,7 @@ check the progress block for the exact verified state at any given moment.
 | 3 | Teacher MCQs — Business Analysis | 42 lessons | nothing technical — **parked**, not authorized to start |
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
-| 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start |
+| 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start. **One unauthorized generation attempt was made and rejected — see "Enterprise Architecture — rejected unauthorized run" below.** |
 
 **Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
 close.** None of them are blocked by a technical dependency — each is
@@ -545,6 +550,154 @@ Not started — do these in order:
     Codex review with the diff **and** that verification evidence, then
     branch + PR per rule 7 — never commit straight to
     `claude/confident-volta-l3e55f`.
+
+### Enterprise Architecture — rejected unauthorized run
+
+On 2026-08-20, the owner independently ran a Codex content-generation agent
+pack against this repo, concurrently with an in-progress Claude session,
+without stopping to authorize it through the plan above first. The owner
+then independently reviewed that run's output and issued a verdict:
+**REJECT / QUARANTINE.**
+
+- **The generated EA Teacher MCQ batch — 54 questions across the planned 18
+  lessons — was rejected outright** for systemic assessment defects. It is
+  quarantined, not merged, not built on, and **not approved for reuse or
+  integration in any form.**
+- **The 18-lesson EA draft source (`sources/enterprise-architecture.json`)
+  is retained only as unreviewed evidence** of what that run produced — not
+  as a starting point, not pre-approved content. Any future EA work
+  authorized under the plan above starts from a fresh review, not from this
+  draft.
+- Business Analysis content was not touched by that run — nothing to
+  reject or retain there.
+- EA track integration (registry entry, hero body, `contentUrl()` branch,
+  loader, `vercel.json` builds entry — steps 5–9 above) was never reached;
+  still entirely not started.
+- **The underlying EA plan itself — the "Decision made" section above — is
+  unaffected and remains valid and parked.** The rejection is about this one
+  unauthorized run's output quality, not about the plan.
+
+Full evidence — the raw prompt, the complete generation log, byte-verified
+copies of every file the run produced, and the disposition of each — is
+preserved at
+`C:\Projects\Academy\_quarantine\ea-concurrent-run-20260820T074354Z\`
+(`MANIFEST.md` there is the authoritative record; this section summarizes
+it). **Do not read that content back into any future EA work without an
+explicit fresh review** — quarantined means quarantined, not "on hold for
+later."
+
+---
+
+## Headless coverage harness
+
+**Merged and live** as of PR #58 (`3bd7a35` on `claude/confident-volta-l3e55f`).
+Closes the runtime half of the coverage-audit gap referenced in "Known
+gaps" above: `scripts/build-projects.js` only ever reasoned over source, and
+could pass while the app's actual rendering logic silently broke without any
+id changing. This harness exercises the real, rendered app in a real
+browser instead.
+
+**What it covers:** track navigation, lesson loading and completion (one
+representative lesson each for Credit Risk, Data Validation, and Business
+Analysis — not every lesson, equivalent runtime coverage), Teacher MCQ
+warm-ups, the full Quiz Practice session lifecycle, checkpoints (unlock gate
++ mark-done), loading and error states across all four content-fetching
+paths (cross-origin GitHub-raw for Credit Risk/Data Validation, same-origin
+for Quiz Practice/Business Analysis/checkpoints — not just the cross-origin
+case), and mobile viewport (iPhone 13, real WebKit).
+
+**Tooling:** `@playwright/test` — the first npm dependency this repo has
+ever had, owner-approved after a design consultation with Codex. Test files
+live under `tests/e2e/`. `scripts/dev-server.js` is a ~60-line
+dependency-free static file server used only by the harness (real HTTP,
+since the app fetches JSON/markdown at runtime and browsers block that over
+`file://`); not used in production, Vercel serves the app there.
+
+**Execution model — sequential by default, on purpose.** `playwright.config.js`
+defaults to `workers=1`, `fullyParallel=false`. Given the machine-instability
+incident this harness's own development ran into, and that all 15 tests
+finish in roughly 15–35 seconds run serially anyway, there is negligible
+time benefit to parallelising the everyday local run. Parallel execution
+exists only as an explicit opt-in (`STRESS=1 npx playwright test`) for
+deliberately stress-testing stability under real concurrent load — **it is
+not the default and is not wired into any CI path.** It has a known,
+disclosed, non-blocking limitation: under `STRESS=1`, one run out of several
+observed a resource-contention timeout flake (4 tests timed out waiting on
+load states under heavy parallel CPU load; passed cleanly on retry and in
+every other stress run). Do not describe `STRESS=1` as fully stable — it
+isn't, and it doesn't need to be for the sequential default to be trustworthy.
+
+**Server lifecycle — direct spawn, not Playwright's built-in `webServer`
+config.** `tests/e2e/global-setup.js` spawns `scripts/dev-server.js`
+directly (`shell: false`, no intermediary shell process) and hands its exact
+PID to `tests/e2e/global-teardown.js`, which kills that PID directly
+(`process.kill(pid)` — an unconditional `TerminateProcess` on Windows, no
+process-tree walk needed). This replaced Playwright's built-in `webServer`
+config after an independent review reproduced the shell-spawned dev-server
+process surviving past the test runner's own exit — root cause: `webServer`
+spawns its command string through a shell, so the PID Playwright tracked for
+its own teardown was the shell's PID, not the actual `node.exe` running
+underneath it, and Windows does not automatically kill a child when its
+parent shell is killed.
+
+**Route mocking — deterministic release, not a permanent hang.**
+`tests/e2e/helpers.js`'s "pending forever" mocks (for asserting loading
+spinners) use a controllable deferred promise (`makeDeferred`), explicitly
+resolved by `test.afterEach` (`releasePendingRoutes`) — which Playwright
+guarantees runs regardless of whether the test passed, failed, or timed out.
+An earlier version used a bare never-resolving `Promise` instead; that
+removed the dangling-timer risk it was fixing but could still leave an
+unresolved Playwright route operation pending during browser/context
+teardown, which a second independent review reproduced as a hang. The
+current version has no permanent timer and no permanently-unresolved
+operation — every pending route is guaranteed to complete before its test
+ends.
+
+**Security/correctness fixes from review:** `scripts/dev-server.js`'s path
+boundary check originally used `resolved.startsWith(root)`, a raw
+string-prefix comparison that would incorrectly admit a sibling directory
+sharing a string prefix with the repo root (e.g. `<root>2`); fixed to
+require the next character be a path separator, or exact equality. Also
+wrapped `decodeURIComponent` in try/catch — a malformed `%`-escape was
+throwing uncaught inside the request handler, which would have crashed the
+whole server, not just failed one request. `tests/e2e/mobile.spec.js`'s
+original mobile-breakpoint assertion (`width > 300`) couldn't actually
+distinguish the mobile CSS rule from the desktop rule clamped by
+`max-width` (both produce a width comfortably over 300px at the iPhone 13's
+390px viewport); replaced with a direct
+`getComputedStyle(panel).maxWidth === 'none'` check, which can only be true
+under the mobile media query.
+
+**Review history — three independent Codex review rounds, two real
+process-lifecycle root causes found across them:**
+1. **Design review** (before implementation): approved with two corrections
+   (loading/error-states spec needed same-origin coverage, not just
+   cross-origin; no `data-testid` additions to `index.html` in this phase).
+2. **Round 1** (`BLOCK`): found the path-boundary bug, the
+   `decodeURIComponent` crash risk, and the mobile-assertion weakness — all
+   three fixed and confirmed resolved in round 2.
+3. **Round 2** (`BLOCK`): reproduced a real hang + leaked process 3/3 times
+   against the never-resolving-Promise route fix, even after the underlying
+   timer was removed — correctly diagnosed by the owner as a different
+   mechanism (unresolved operation during context teardown, not a dangling
+   timer). Fixed with the deterministic-release pattern above.
+4. **Round 3** (fresh session, prior thread expired): reproduced a *second*,
+   previously-undiagnosed leak — the shell-spawned `webServer` dev-server
+   process itself, unrelated to route handling — using an objective
+   process-tree verification tool (`scripts/verify-clean-shutdown.js`,
+   committed to the repo) rather than impression. Root-caused and fixed with
+   the direct-spawn `global-setup`/`global-teardown` lifecycle. **Final
+   verdict: `PASS`**, independently confirmed via 6 process-lifecycle runs
+   (3 sequential, 3 stress) with zero attributable leaked processes and zero
+   bound-timeout violations, plus the disclosed stress-mode flake recorded
+   as a known non-blocking limitation rather than papered over.
+
+Unlike the Teacher MCQ content programme, this PR's review rounds were not
+saved to a dedicated `_audit/` folder — the PR #58 commit history and this
+section are the record. If a future infrastructure PR follows the same
+multi-round Codex review pattern, save its raw prompts and output the same
+way `_audit/teacher-mcq-role-swap/<GROUP_ID>/` does for content, rather than
+relying on commit messages alone.
 
 ---
 
