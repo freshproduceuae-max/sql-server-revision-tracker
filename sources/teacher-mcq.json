@@ -9115,6 +9115,804 @@
         }
       ],
       "close": "Stage-by-stage comparison for pinpointing the failure, intentional business rules needing documentation, and record-level tracing catching what aggregates can hide — that closes out Cross-System. Eight techniques: row count reconciliation, schema drift, dual-write consistency, API response validation, currency/unit conversion, timezone alignment, lookup synchronisation, and end-to-end flow validation."
+    },
+    "G19-T01": {
+      "open": "Whitespace and invisible characters are among the most common silent data quality defects — a value that looks identical to a human eye can fail equality checks, joins, and lookups because of characters no one can see.",
+      "questions": [
+        {
+          "q": "A join between two tables fails to match rows that appear identical when displayed. What is a likely cause that ordinary visual inspection will not reveal?",
+          "choices": [
+            "A non-breaking space (CHAR(160)) embedded in one of the join key values",
+            "The columns are indexed",
+            "The tables have different collations that both use case-insensitive comparison",
+            "One table has more rows than the other"
+          ],
+          "correct": 0,
+          "right": "CHAR(160), the non-breaking space, renders identically to a normal space but is a different character code, so equality and join comparisons fail even though the values look the same.",
+          "wrong": "Indexing does not change comparison results, differing row counts don't cause a missed match on identical keys, and case-insensitive collation would make matching easier, not harder."
+        },
+        {
+          "q": "Why is LEN() unreliable for detecting a non-breaking space or other invisible Unicode character, while DATALENGTH() can help?",
+          "choices": [
+            "LEN() counts characters and does not distinguish a non-breaking space from a normal space, but DATALENGTH() returns the byte count which can reveal encoding-related differences",
+            "LEN() only works on numeric columns",
+            "DATALENGTH() ignores trailing spaces entirely",
+            "LEN() and DATALENGTH() always return the same value for any string"
+          ],
+          "correct": 0,
+          "right": "LEN() reports character count regardless of which specific character is present, so a non-breaking space counts the same as a regular space; DATALENGTH() reports the underlying byte size, which can expose encoding differences that character count hides.",
+          "wrong": "LEN() works on string columns, LEN() actually trims trailing spaces (a separate quirk) while DATALENGTH() does not, and the two functions frequently diverge — that divergence is exactly what makes DATALENGTH() useful here."
+        },
+        {
+          "q": "Why is nested REPLACE() typically needed to collapse double (or multiple) spaces down to a single space, rather than a single REPLACE(col, '  ', ' ') call?",
+          "choices": [
+            "A single REPLACE only removes one occurrence per pass, so runs of three or more consecutive spaces can still leave a double space after one pass",
+            "REPLACE() cannot operate on space characters at all",
+            "REPLACE() only works on the first 10 characters of a string",
+            "Nested REPLACE() is required by SQL Server syntax rules for all string functions"
+          ],
+          "correct": 0,
+          "right": "REPLACE replaces all non-overlapping occurrences of the pattern in one pass, but a run of an odd number of spaces (e.g. three) can still leave a residual double space after replacing pairs, so repeated passes are used to fully collapse runs of whitespace.",
+          "wrong": "REPLACE() works on any character including spaces, it has no such length restriction, and nesting is a practical technique here, not a syntax requirement."
+        }
+      ],
+      "close": "Whitespace and invisible-character cleansing is a foundational step because these defects silently break equality-based operations — joins, lookups, and deduplication — without producing any visible symptom in a query result grid."
+    },
+    "G19-T02": {
+      "open": "Case normalisation makes text fields consistent for comparison, but the correct case convention depends on the field's purpose — codes are usually upper-cased, emails lower-cased, and names resist simple rules.",
+      "questions": [
+        {
+          "q": "Why is LOWER() generally the right normalisation for email addresses before storing or comparing them?",
+          "choices": [
+            "Almost all mail providers treat the domain and local part as effectively case-insensitive, so lowercasing avoids spurious duplicates and suppression-list mismatches",
+            "Email addresses are required by RFC to be stored in lowercase",
+            "LOWER() is faster to execute than UPPER() in SQL Server",
+            "Lowercase emails take up less storage space than mixed-case emails"
+          ],
+          "correct": 0,
+          "right": "Although technically the local part is case-sensitive per RFC 5321, virtually all real-world providers treat email addresses case-insensitively, so normalising to lowercase prevents the same mailbox being treated as two different values.",
+          "wrong": "There is no such storage requirement in the RFC, the two functions have equivalent cost, and case does not affect the storage size of a VARCHAR/NVARCHAR value."
+        },
+        {
+          "q": "Why does a simple UPPER()/LOWER()-based 'proper case' transformation often fail for multi-word names?",
+          "choices": [
+            "It cannot correctly handle names with internal capitalisation conventions, such as \"McDonald\" or \"O'Brien\", producing an incorrectly cased result",
+            "SQL Server does not provide any function capable of changing text case",
+            "Proper-case transformations only work on numeric fields",
+            "Names longer than 20 characters cannot be processed by string functions"
+          ],
+          "correct": 0,
+          "right": "A naive proper-case rule capitalises the first letter of each word and lowercases the rest, which breaks names with internal capital letters like \"McDonald\" (would become \"Mcdonald\") — a limitation, not a SQL feature gap.",
+          "wrong": "SQL Server has UPPER/LOWER functions readily available, case transformation is a text operation with no numeric restriction, and there is no such length limit on string functions."
+        },
+        {
+          "q": "What risk does SQL Server's default case-insensitive (CI) collation introduce when comparing values against a second system that uses a case-sensitive collation?",
+          "choices": [
+            "Two values that SQL Server treats as equal under CI collation may be treated as distinct by the other system, causing inconsistent match results across systems",
+            "SQL Server's default collation makes all string comparisons fail",
+            "Case-insensitive collation prevents any string column from being indexed",
+            "Cross-system comparison is impossible regardless of collation settings"
+          ],
+          "correct": 0,
+          "right": "Under case-insensitive collation, \"Alice\" and \"ALICE\" compare as equal in SQL Server, but a case-sensitive system elsewhere may treat them as different values — a mismatch in matching behaviour that can silently produce different results depending on which system runs the comparison.",
+          "wrong": "Comparisons succeed under CI collation, they just may not agree with a CS system; indexing string columns is unaffected by collation case-sensitivity; and cross-system comparison is possible, just risky without explicit normalisation."
+        }
+      ],
+      "close": "Case normalisation choices should match the field's real-world comparison semantics — emails and codes usually want a single fixed case, while personal names require care because casing carries genuine information that a blunt transformation can destroy."
+    },
+    "G19-T03": {
+      "open": "Null imputation fills missing values using defensible substitutes drawn from related data, but imputation is only appropriate when a plausible value can actually be derived — some nulls should be preserved as \"unknown\" rather than guessed.",
+      "questions": [
+        {
+          "q": "What is the purpose of using a COALESCE hierarchy for product-mean price imputation rather than a single fallback value?",
+          "choices": [
+            "It tries progressively broader (and less specific) fallback sources in order, using the most specific available value before resorting to a general default",
+            "COALESCE can only accept exactly two arguments in SQL Server",
+            "It guarantees the imputed value will always equal zero if any source is missing",
+            "It replaces NULLs with the string 'NULL' rather than a numeric value"
+          ],
+          "correct": 0,
+          "right": "COALESCE returns the first non-NULL argument from a list, so ordering fallback expressions from most specific (e.g. product-level average) to least specific (e.g. global average) lets the imputation use the best available level of detail.",
+          "wrong": "COALESCE accepts any number of arguments, it does not force a zero result, and it substitutes an actual value, not the literal text 'NULL'."
+        },
+        {
+          "q": "Why does an imputation flag column matter as part of an audit trail, separate from the imputed value itself?",
+          "choices": [
+            "It records which values were originally missing and later derived, so downstream analysis can distinguish observed data from filled-in estimates",
+            "It is required by SQL Server to allow NULL values in a table",
+            "It automatically corrects any future NULLs without additional logic",
+            "It converts the imputed column's data type to VARCHAR"
+          ],
+          "correct": 0,
+          "right": "Without a flag, an imputed value is indistinguishable from a genuinely observed value, which can mislead any later analysis (e.g. treating an estimate as ground truth); the flag preserves the provenance distinction.",
+          "wrong": "NULLs are permitted in SQL Server regardless of any flag column, the flag doesn't perform automatic correction on its own, and it has no effect on the data type of the imputed column."
+        },
+        {
+          "q": "According to the lesson's guidance on 'when NOT to impute', what is a legitimate reason to leave a value as NULL rather than filling it in?",
+          "choices": [
+            "No reliable derivation source exists, and guessing a value risks introducing a fabricated fact that looks like real data",
+            "Imputation is always forbidden by GDPR regardless of context",
+            "NULL values are always faster for SQL Server to store than any other value",
+            "Imputation is only allowed on primary key columns"
+          ],
+          "correct": 0,
+          "right": "When there's no defensible way to derive a plausible value, imputing anyway creates a fabricated data point that a downstream consumer cannot distinguish from a real observation — leaving it NULL (with the missingness visible) is the more honest choice.",
+          "wrong": "GDPR does not categorically forbid imputation, storage efficiency isn't the deciding factor in imputation decisions, and imputation is generally applied to non-key attribute columns, not primary keys."
+        }
+      ],
+      "close": "Imputation should be traceable and justified by an actual derivation path — a flagged, well-sourced estimate is useful, but silently guessing a value without evidence trades a visible gap for an invisible error."
+    },
+    "G19-T04": {
+      "open": "Deduplication requires deciding which of several near-identical records is the canonical one to keep, and ROW_NUMBER() with a completeness-based ordering is a standard way to make that choice systematically.",
+      "questions": [
+        {
+          "q": "What does PARTITION BY Email combined with ROW_NUMBER() OVER (... ORDER BY completeness DESC) accomplish in a deduplication query?",
+          "choices": [
+            "It ranks all records sharing the same email within their own group, ordered so the most complete record gets rank 1 and is treated as the canonical survivor",
+            "It deletes all rows with a duplicate email immediately upon execution",
+            "It merges all duplicate rows into a single row automatically without any further logic",
+            "It counts the total number of distinct emails in the entire table"
+          ],
+          "correct": 0,
+          "right": "PARTITION BY groups rows by email so ROW_NUMBER restarts at 1 for each email group; ordering by a completeness score descending makes the most complete duplicate rank 1, identifying which record should be treated as canonical.",
+          "wrong": "ROW_NUMBER() itself does not delete or merge rows — it only assigns ranks that a subsequent step can act on — and it operates per partition, not as a single table-wide distinct count."
+        },
+        {
+          "q": "Why must order records be re-keyed to point at the canonical customer record before deleting the duplicate customer rows?",
+          "choices": [
+            "Deleting a duplicate customer row without first updating orders that reference it via foreign key would orphan those orders",
+            "Re-keying is required to change the customer's email address",
+            "SQL Server automatically re-keys foreign keys when a row is deleted",
+            "Orders cannot exist without at least two customer records referencing them"
+          ],
+          "correct": 0,
+          "right": "If an order's CustomerID points to the duplicate row that gets deleted, the order becomes an orphan with a dangling foreign key reference; updating the orders to point at the surviving canonical CustomerID first preserves referential integrity.",
+          "wrong": "Re-keying updates the foreign key value on Orders, not the customer's email; SQL Server does not automatically cascade updates unless an explicit ON DELETE/UPDATE CASCADE constraint exists; and orders reference exactly one customer, not two."
+        },
+        {
+          "q": "Why is a completeness score (e.g. counting populated fields) a reasonable tie-breaker for choosing which duplicate record to keep, compared to simply keeping the first-inserted row?",
+          "choices": [
+            "The first-inserted row is not necessarily the most useful one — an earlier, sparsely-filled record could be kept over a later record with more complete information if insertion order alone were used",
+            "Completeness scoring is required by SQL Server's ROW_NUMBER function to execute",
+            "First-inserted rows always have the highest completeness score by definition",
+            "Completeness scoring guarantees zero duplicates will ever occur again"
+          ],
+          "correct": 0,
+          "right": "Insertion order is arbitrary with respect to data quality; a later duplicate record may have been entered with more complete details (e.g. a phone number added on a repeat purchase), so ranking by completeness picks the more useful record to retain.",
+          "wrong": "ROW_NUMBER() works with any ORDER BY expression, insertion order has no guaranteed relationship to completeness, and deduplication is a one-time repair, not a constraint that prevents future duplicates."
+        }
+      ],
+      "close": "Deduplication is a two-part problem: identifying which records are duplicates, and choosing a defensible rule for which one survives — completeness-based ranking with re-keying of dependent records is one systematic way to do both safely."
+    },
+    "G19-T05": {
+      "open": "Value standardisation maps free-text or inconsistent codes onto a controlled vocabulary, typically via a mapping table, but the mapping must be verified for coverage before it's applied as an UPDATE.",
+      "questions": [
+        {
+          "q": "Why should a coverage check be run before executing an UPDATE that applies a value-mapping CTE to a Status or Country column?",
+          "choices": [
+            "It confirms every distinct value actually present in the data has a corresponding entry in the mapping table, so no value is silently left unmapped or turned into NULL",
+            "Coverage checks are a mandatory SQL Server syntax requirement for all UPDATE statements",
+            "It automatically expands the mapping table with new entries",
+            "It prevents the UPDATE from running faster than expected"
+          ],
+          "correct": 0,
+          "right": "If a source value has no matching row in the mapping CTE, a join-based UPDATE can silently produce NULL or skip that row entirely, so checking coverage first surfaces any unmapped value before the UPDATE runs, not after.",
+          "wrong": "There is no such SQL Server syntax mandate, a coverage check reports gaps rather than auto-populating the mapping, and it is unrelated to UPDATE execution speed."
+        },
+        {
+          "q": "What is the caveat about case-insensitive matching when mapping free-text values (like Country names) to a controlled vocabulary?",
+          "choices": [
+            "Values that differ only by case may be intended as the same entity, but relying purely on case-insensitive matching risks silently collapsing genuinely distinct values that happen to share the same letters",
+            "Case-insensitive matching is always the safest choice with zero downside",
+            "SQL Server cannot perform case-insensitive comparisons under any collation",
+            "Case-insensitive matching converts all VARCHAR columns to INT automatically"
+          ],
+          "correct": 0,
+          "right": "Case-insensitive matching is useful for typo tolerance (\"uk\" vs \"UK\"), but it can also incorrectly conflate values that are case-sensitive by convention or that differ for a legitimate reason, so the mapping needs review rather than blind trust in the match.",
+          "wrong": "It has real trade-offs, not zero downside; SQL Server supports case-insensitive comparison depending on collation; and matching case has no effect on data type conversion."
+        },
+        {
+          "q": "In a mapping-CTE UPDATE pattern for standardising Status values, why is the mapping typically expressed as its own CTE rather than as inline CASE expressions repeated in every query?",
+          "choices": [
+            "It centralises the controlled vocabulary in one place, so a single change to the mapping propagates consistently instead of requiring every CASE expression to be updated separately",
+            "CTEs execute faster than any CASE expression regardless of context",
+            "A CASE expression cannot reference more than two WHEN conditions",
+            "Mapping CTEs are required before any UPDATE statement can be compiled"
+          ],
+          "correct": 0,
+          "right": "A mapping table or CTE is a single source of truth for the controlled vocabulary; scattering equivalent CASE logic across many queries risks the mappings drifting out of sync when the vocabulary changes.",
+          "wrong": "Performance is not the primary rationale here and isn't guaranteed to favor CTEs universally, CASE expressions support any number of WHEN branches, and CTEs are not a syntactic prerequisite for UPDATE statements."
+        }
+      ],
+      "close": "Value standardisation is only as trustworthy as its mapping coverage — verifying that every real-world value has a defined mapping before applying it prevents silent data loss during the cleansing UPDATE."
+    },
+    "G19-T06": {
+      "open": "Date format normalisation must resolve ambiguity between conventions (UK DD/MM vs US MM/DD) and detect unparseable values, using TRY_CONVERT with explicit style codes rather than guessing.",
+      "questions": [
+        {
+          "q": "Why does TRY_CONVERT(DATE, value, 103) fail to reliably disambiguate a date like '02/03/2024' as definitively DD/MM or MM/DD format?",
+          "choices": [
+            "Both interpretations (2 March or 3 February) are structurally valid dates, so the style code alone cannot tell which convention the source system actually used without additional context",
+            "Style code 103 is not a valid TRY_CONVERT style number in SQL Server",
+            "TRY_CONVERT always returns NULL for any date containing the digit zero",
+            "Style code 103 only works with DATETIME columns, never DATE columns"
+          ],
+          "correct": 0,
+          "right": "When both day and month components are ≤12, the date string is ambiguous by construction — style 103 (British/French, DD/MM/YYYY) will parse it as one specific date, but that's a choice of interpretation, not proof of which convention the original data used.",
+          "wrong": "103 is a valid TRY_CONVERT style for DD/MM/YYYY, TRY_CONVERT's behavior does not depend on zero digits specifically, and TRY_CONVERT to DATE works from a compatible string regardless of source column type."
+        },
+        {
+          "q": "What SQL Server behaviour causes the 'two-digit year cutoff' problem when parsing a date like '15/03/24'?",
+          "choices": [
+            "SQL Server applies a fixed pivot year rule to decide whether '24' means 1924 or 2024, which can misinterpret dates near the pivot boundary without additional context",
+            "Two-digit years are always rejected by TRY_CONVERT and return NULL",
+            "SQL Server converts two-digit years to the current calendar year regardless of the value entered",
+            "Two-digit years can only be parsed if the DATEFORMAT session setting is disabled"
+          ],
+          "correct": 0,
+          "right": "SQL Server's default two-digit year interpretation uses a cutoff (commonly 1950–2049) to decide the century, so a value intended as one century can silently be parsed into the wrong one if it falls near or outside that assumed range.",
+          "wrong": "Two-digit years are generally parseable, not rejected outright; the pivot logic depends on the value, not simply defaulting to the current year; and this behavior isn't gated by a DATEFORMAT toggle in that way."
+        },
+        {
+          "q": "Why is TRY_CONVERT preferred over CONVERT for a date-normalisation validation pass across many rows?",
+          "choices": [
+            "TRY_CONVERT returns NULL for a value that cannot be parsed instead of raising an error, allowing the whole batch to be scanned in one pass for both successes and failures",
+            "TRY_CONVERT is a synonym for CONVERT with no functional difference",
+            "CONVERT cannot accept a style code parameter at all",
+            "TRY_CONVERT automatically corrects malformed dates to the nearest valid date"
+          ],
+          "correct": 0,
+          "right": "CONVERT raises a conversion error and halts the batch on the first unparseable value; TRY_CONVERT instead returns NULL for that row and continues, which is essential for a validation query that needs to see every failure, not just the first one.",
+          "wrong": "The two functions behave differently on failure, which is the whole point of using TRY_CONVERT here; CONVERT does accept a style code; and neither function guesses or auto-corrects a value — TRY_CONVERT only ever returns NULL or the parsed value."
+        }
+      ],
+      "close": "Date normalisation combines explicit style codes with awareness of genuine structural ambiguity — some date strings cannot be resolved by SQL alone and require either source-system context or manual review to interpret correctly."
+    },
+    "G19-T07": {
+      "open": "Phone number standardisation strips formatting noise and converts national formats to a canonical international form like E.164, while also being careful not to treat clearly reserved test ranges as real numbers.",
+      "questions": [
+        {
+          "q": "Why does the standardisation script use nested REPLACE() calls to strip spaces, hyphens, parentheses, and other formatting characters before validating a UK phone number?",
+          "choices": [
+            "Removing all non-digit formatting characters first produces a consistent digit-only string that can then be reliably checked and reformatted, regardless of how the original number was punctuated",
+            "REPLACE() can only remove one type of character per query execution",
+            "Nested REPLACE() converts the phone number into an integer data type automatically",
+            "Stripping formatting characters is required before SQL Server will accept a VARCHAR column"
+          ],
+          "correct": 0,
+          "right": "Source phone numbers arrive in many punctuated forms (with spaces, dashes, brackets); stripping all of them down to digits-only gives a canonical basis from which the E.164 form can be consistently constructed.",
+          "wrong": "Each REPLACE() call handles one character type, but nesting several lets multiple types be removed in sequence within a single query — it's not a hard one-per-query limit; REPLACE returns a string, not an INT; and VARCHAR columns accept any characters without such a requirement."
+        },
+        {
+          "q": "Why is the UK prefix normalised to +44 rather than kept as a leading 0 when producing the canonical E.164 form?",
+          "choices": [
+            "E.164 format requires the international country calling code instead of the national trunk prefix, so the leading 0 is dropped and replaced with +44",
+            "Phone numbers beginning with 0 cannot be stored in a NVARCHAR column",
+            "The leading 0 makes the number too long to fit any SQL Server data type",
+            "E.164 is a UK-specific standard that only applies to landline numbers"
+          ],
+          "correct": 0,
+          "right": "E.164 is an international format that always begins with a '+' and the country code — for the UK the national trunk prefix '0' is replaced by '+44', and the remaining digits are kept as the subscriber number.",
+          "wrong": "A leading 0 is a perfectly valid character in an NVARCHAR column with no length issue, and E.164 is an international standard used across all countries and applies to mobile numbers as well, not solely UK landlines."
+        },
+        {
+          "q": "Why does the lesson flag Ofcom-reserved 07700 900xxx numbers specifically, rather than treating any structurally valid-looking mobile number as real?",
+          "choices": [
+            "That specific range is officially reserved for fictional/example use (e.g. in television and film), so a structurally valid-looking number in that range is not a genuine customer contact",
+            "07700 900xxx numbers are always invalid according to the E.164 checksum algorithm",
+            "Ofcom numbers cannot be stored as NVARCHAR and require a special data type",
+            "Numbers in that range always belong to automated marketing systems"
+          ],
+          "correct": 0,
+          "right": "Ofcom deliberately reserves the 07700 900000–07700 900999 range as drama numbers for fictional use, so even though such a number passes structural format checks, it is known in advance to not correspond to a real subscriber.",
+          "wrong": "E.164 has no checksum validation of this kind, there's no special data type requirement, and the reservation isn't about automated marketing systems — it's specifically for fictional/media use."
+        }
+      ],
+      "close": "Phone number cleansing combines mechanical normalisation (strip formatting, apply the international prefix) with domain knowledge about reserved test ranges that would otherwise look like perfectly valid numbers to a purely structural check."
+    },
+    "G19-T08": {
+      "open": "Numeric range and outlier correction uses statistical fences (like the IQR method) alongside business-rule thresholds and unit-scale heuristics to catch values that are structurally valid but practically implausible.",
+      "questions": [
+        {
+          "q": "In the IQR outlier method, what does the upper fence Q3 + 1.5 × IQR represent?",
+          "choices": [
+            "A statistically-derived threshold above which a value is flagged as a likely outlier, based on the spread between the 25th and 75th percentiles",
+            "The exact maximum value permitted by a database CHECK constraint",
+            "The average of all values in the dataset plus 1.5 times the row count",
+            "A fixed currency threshold defined by financial regulation"
+          ],
+          "correct": 0,
+          "right": "IQR (interquartile range) is Q3 − Q1; adding 1.5 times that spread to Q3 gives a commonly used statistical fence beyond which values are considered unusually high relative to the bulk of the data's distribution, independent of any particular unit or business context.",
+          "wrong": "It is a statistical convention, not a database constraint, not a formula involving row count, and not a regulatory currency figure — those would be business-rule thresholds, a distinct and complementary technique mentioned in the lesson."
+        },
+        {
+          "q": "What heuristic does the lesson describe for detecting a 'pence vs pounds' unit error in monetary amounts?",
+          "choices": [
+            "Comparing a value against roughly 100 times the average for its group — a value that large relative to peers may actually be recorded in the minor unit (pence) instead of the major unit (pounds)",
+            "Checking whether the value contains a decimal point at all",
+            "Verifying the value is a prime number",
+            "Confirming the value is stored in a DECIMAL(10,2) column"
+          ],
+          "correct": 0,
+          "right": "If typical amounts are recorded in pounds but a subset of values are 100× larger than the group average, that's consistent with those values actually being recorded in pence (the minor unit is 1/100 of the major unit) rather than pounds.",
+          "wrong": "Presence of a decimal point doesn't reveal a unit-scale error, primality is irrelevant to monetary values, and the column's declared data type says nothing about whether the value inside it used the wrong unit."
+        },
+        {
+          "q": "Why does severity-band bucketing (grouping outliers into bands of magnitude) add value beyond a single true/false outlier flag?",
+          "choices": [
+            "It distinguishes minor deviations from extreme ones, letting reviewers prioritise the most severe cases first rather than treating every flagged value as equally urgent",
+            "Severity bands are required by SQL Server before any CASE expression can execute",
+            "Bucketing automatically corrects the outlier value to the nearest band boundary",
+            "A true/false flag cannot be computed for numeric columns in SQL Server"
+          ],
+          "correct": 0,
+          "right": "A binary outlier flag treats a value slightly beyond the fence the same as one wildly beyond it; grouping into severity bands preserves the magnitude information so review effort can be triaged toward the most impactful anomalies first.",
+          "wrong": "CASE expressions have no such prerequisite, bucketing only classifies — it does not alter the underlying value — and boolean outlier flags are computable on any numeric column."
+        }
+      ],
+      "close": "Outlier detection benefits from combining a statistical method (IQR fences) with domain-specific business thresholds and unit-scale heuristics, since a value can be a legitimate statistical outlier without being a data quality error, or vice versa."
+    },
+    "G19-T09": {
+      "open": "String truncation and length-enforcement checks compare actual data against the declared column length metadata, using values at the exact limit as circumstantial evidence that longer source values were silently cut off.",
+      "questions": [
+        {
+          "q": "Why does the lesson use INFORMATION_SCHEMA.COLUMNS to retrieve the maximum length for a column rather than hardcoding the length in the validation query?",
+          "choices": [
+            "Reading the length from schema metadata keeps the check accurate automatically if the column definition changes, rather than requiring the validation query to be manually updated in sync",
+            "INFORMATION_SCHEMA.COLUMNS is the only way to read data from a VARCHAR column in SQL Server",
+            "Hardcoded lengths always execute more slowly than a metadata lookup",
+            "INFORMATION_SCHEMA views are required before an ALTER TABLE can succeed"
+          ],
+          "correct": 0,
+          "right": "Sourcing the limit from schema metadata means the check stays correct even after a column's declared length is altered, avoiding the risk of a hardcoded number silently drifting out of sync with the actual schema.",
+          "wrong": "INFORMATION_SCHEMA.COLUMNS provides metadata, not row data — normal SELECT statements read the column values; there's no inherent performance penalty tied to hardcoding vs metadata lookup; and ALTER TABLE does not depend on querying INFORMATION_SCHEMA first."
+        },
+        {
+          "q": "Why is a value that is exactly at a column's maximum length treated as circumstantial evidence of possible truncation, rather than conclusive proof?",
+          "choices": [
+            "A value could coincidentally be exactly that length by chance, so hitting the limit is suggestive but not certain proof that a longer source value was cut short",
+            "SQL Server always raises an error when a value reaches the maximum column length, making truncation impossible to miss",
+            "Values at the maximum length are always corrupted and unusable",
+            "Truncation can only be conclusively proven by dropping and recreating the column"
+          ],
+          "correct": 0,
+          "right": "Hitting the exact length limit is consistent with truncation having occurred, but it's also possible the true value is genuinely that exact length — the AtLimitCount signal narrows down candidates for review, it doesn't prove truncation on its own.",
+          "wrong": "SQL Server truncates or errors depending on ANSI settings without necessarily flagging it obviously to a downstream query, values at the limit aren't inherently corrupted, and truncation evidence doesn't require recreating the column."
+        },
+        {
+          "q": "How can a minimum-length check act as an indirect proxy for detecting truncation at the other end of a value?",
+          "choices": [
+            "An implausibly short value for a field that should normally contain more content can indicate the value was cut off during ingestion, complementing the maximum-length check",
+            "Minimum-length checks can only be applied to numeric columns, not text",
+            "A minimum-length check always overrides a maximum-length check when both are present",
+            "Short values are a certain sign of a NULL that was miscast as an empty string"
+          ],
+          "correct": 0,
+          "right": "While the maximum-length check flags values suspiciously at the upper bound, an unusually short value for a field that should typically contain more content is a separate signal that something was lost during capture or transformation — both checks look for truncation from different angles.",
+          "wrong": "Minimum-length checks apply just as well to text fields, neither check inherently overrides the other since they flag different symptoms, and a short value isn't automatically evidence of a miscast NULL."
+        }
+      ],
+      "close": "Length-enforcement auditing pairs schema metadata with statistical signals (values at the boundary, implausibly short values) to surface likely truncation, even though no single signal proves it conclusively on its own."
+    },
+    "G19-T10": {
+      "open": "Special character removal and sanitisation must distinguish between validation (rejecting bad input) and sanitisation (making input safe for a specific output format), applying the correct escaping rules for each target format.",
+      "questions": [
+        {
+          "q": "When escaping a string for XML output, why must the ampersand character be escaped first, before escaping other special characters like < or >?",
+          "choices": [
+            "Escaping other characters first would introduce new ampersands (as part of their escape sequences like &lt;), which would then be incorrectly re-escaped if the ampersand replacement ran afterward",
+            "XML does not permit the ampersand character to appear anywhere in a document, even escaped",
+            "The ampersand must always be the last character in any XML-escaped string",
+            "SQL Server's REPLACE() function only accepts one search pattern per statement"
+          ],
+          "correct": 0,
+          "right": "XML entity escapes themselves contain an ampersand (e.g. '<' becomes '&lt;'); escaping & last would double-escape those entities into '&amp;lt;', producing invalid output — escaping & first avoids this order-dependent bug.",
+          "wrong": "The ampersand is permitted in XML as long as it's properly escaped as &amp;, there's no requirement it be positionally last in the string, and REPLACE() can be chained/nested to apply multiple substitutions in one statement."
+        },
+        {
+          "q": "What is the key distinction the lesson draws between 'sanitisation' and 'validation' when preparing a value for output?",
+          "choices": [
+            "Validation decides whether an input is acceptable and should be rejected if not; sanitisation transforms an accepted value so it is safe for a specific output context, such as escaping quotes for CSV",
+            "Sanitisation and validation are two names for exactly the same operation with no functional difference",
+            "Validation only applies to numeric fields, while sanitisation only applies to text fields",
+            "Sanitisation permanently deletes any record containing a special character"
+          ],
+          "correct": 0,
+          "right": "Validation is a gatekeeping decision (accept/reject the input as-is); sanitisation instead transforms a value that has already been accepted so that it renders safely in a particular target format, without necessarily rejecting anything.",
+          "wrong": "The two serve different purposes and aren't interchangeable, both concepts apply to any data type where they're relevant, and sanitisation transforms values for safe output rather than deleting records."
+        },
+        {
+          "q": "Per RFC 4180, why does a CSV field containing a comma or a double-quote need to be wrapped in double quotes, with internal quotes doubled?",
+          "choices": [
+            "Without quoting, a comma inside the value would be misread as a field separator, and an unescaped quote would prematurely terminate the quoted field — RFC 4180 defines quoting and doubled internal quotes to prevent this ambiguity",
+            "RFC 4180 requires every CSV field to be quoted regardless of its content",
+            "CSV parsers automatically strip commas from any field, so quoting is purely cosmetic",
+            "Double-quoting increases the numeric precision of any value it wraps"
+          ],
+          "correct": 0,
+          "right": "A comma inside an unquoted field would be indistinguishable from the field-delimiting comma, and a literal quote inside a quoted field must be doubled ('\"\"') so the parser doesn't treat it as the field's closing quote — this is exactly what RFC 4180 specifies.",
+          "wrong": "RFC 4180 only requires quoting for fields containing the delimiter, quote character, or line breaks, not universally; CSV parsers don't auto-strip commas (that's the whole ambiguity problem); and quoting has no relationship to numeric precision."
+        }
+      ],
+      "close": "Output-safe sanitisation is format-specific — the correct escaping rule for XML, CSV, or JSON differs, and applying the rules in the wrong order (or applying validation logic where sanitisation was needed) produces corrupted or unsafe output even when the underlying data was fine."
+    },
+    "G19-T11": {
+      "open": "Pattern-based correction reformats values that already contain the right information in the wrong shape, applying the fix only when the cleaned result actually matches the target pattern — otherwise the value is flagged for manual review rather than silently passed through.",
+      "questions": [
+        {
+          "q": "Why does the correction script validate the cleaned value against the target pattern before accepting it as corrected, rather than just applying the strip-and-uppercase transformation and assuming success?",
+          "choices": [
+            "Some values are malformed in a way that stripping formatting characters cannot fix, so validating after cleaning distinguishes truly correctable values from ones that remain invalid and need manual review",
+            "SQL Server requires every UPDATE to be preceded by a SELECT validating the WHERE clause",
+            "The LIKE operator cannot be used unless the value has already been transformed",
+            "Validating after cleaning guarantees the underlying business data is also correct, not just its format"
+          ],
+          "correct": 0,
+          "right": "Cleaning (stripping spaces, hyphens, uppercasing) only fixes formatting — a value that's fundamentally wrong (extra characters, missing digits) will still fail the target pattern check afterward, so the post-clean validation is what separates 'safely correctable' from 'needs a human'.",
+          "wrong": "There's no such general SQL Server requirement, LIKE works on any string regardless of prior transformation, and pattern conformance says nothing about whether the underlying value is factually accurate — only that its shape matches."
+        },
+        {
+          "q": "Why does the lesson state that SQL Server's LIKE pattern cannot express a quantifier like [0-9]{6} the way a regular expression could?",
+          "choices": [
+            "T-SQL's LIKE character classes support ranges like [0-9] but have no repetition/quantifier syntax, so each digit position must be spelled out individually",
+            "LIKE patterns can only be up to 6 characters long in total",
+            "SQL Server does not support character classes at all in LIKE patterns",
+            "Quantifiers are supported by LIKE but only for letter ranges, never digit ranges"
+          ],
+          "correct": 0,
+          "right": "T-SQL's LIKE only supports character classes and wildcards (%, _, [abc], [a-z]), not regex-style quantifiers, so matching exactly six digits requires writing [0-9] six times in a row rather than a single [0-9]{6} expression.",
+          "wrong": "LIKE patterns have no such fixed 6-character limit, character classes like [0-9] are fully supported, and the missing quantifier limitation applies equally to digit ranges and letter ranges."
+        },
+        {
+          "q": "Why is idempotency — applying a transformation twice producing the same result as applying it once — a desirable property for a pattern correction like UPPER(REPLACE(NI, ' ', ''))?",
+          "choices": [
+            "It allows the correction to be safely re-run on data that may already be partially cleansed, without risk of the already-correct values being altered incorrectly on a second pass",
+            "Idempotent transformations execute in constant time regardless of table size",
+            "SQL Server refuses to execute any UPDATE that is not idempotent",
+            "Idempotency guarantees the transformation will never encounter a NULL value"
+          ],
+          "correct": 0,
+          "right": "If the correction script needs to be re-run (e.g. on a scheduled job, or after a partial failure), an idempotent transformation leaves already-canonical values unchanged, so the job can be safely repeated without introducing new errors.",
+          "wrong": "Idempotency is about output stability across repeated runs, not execution speed; SQL Server has no such execution restriction; and idempotency doesn't inherently address NULL handling, which must be handled separately (e.g. via ISNULL)."
+        }
+      ],
+      "close": "Pattern-based correction is safe precisely because it validates its own output before accepting it — a transformation that reformats without re-checking risks silently 'correcting' a value into something that still isn't right."
+    },
+    "G19-T12": {
+      "open": "Derived field recalculation compares a stored, denormalised value against a fresh computation from its authoritative source fields, using a tolerance threshold to separate genuine drift from harmless floating-point noise.",
+      "questions": [
+        {
+          "q": "Why does the lesson recommend a tolerance threshold like ROUND(ABS(stored - derived), 2) > 0.01 rather than a strict stored <> derived comparison?",
+          "choices": [
+            "Floating-point arithmetic can produce tiny representational differences (e.g. 19.9999999 vs 20.00) that are not genuine data quality issues, so a small tolerance avoids flagging harmless rounding noise as drift",
+            "SQL Server's <> operator does not work correctly on DECIMAL columns",
+            "A tolerance threshold is required before any WHERE clause can reference a computed expression",
+            "Using <> would cause the query to run indefinitely on large tables"
+          ],
+          "correct": 0,
+          "right": "Values computed through floating-point arithmetic can differ from a stored value by a vanishingly small amount that is not a real discrepancy; a tolerance sized to the field's actual precision (2 decimal places for currency) filters out that noise while still catching genuine drift.",
+          "wrong": "The <> operator works correctly on DECIMAL types, there's no such WHERE clause restriction, and using <> would not cause an infinite-running query — it's a performance-irrelevant concern here, the real issue is false positives from floating-point noise."
+        },
+        {
+          "q": "Before correcting a drifted TotalAmount to match a recalculated Price × Quantity, why does the lesson warn that the root cause must be traced first?",
+          "choices": [
+            "If the source field (Price) was itself incorrectly updated, 'correcting' the derived field to match the wrong Price would propagate the source error rather than fix it",
+            "SQL Server prevents any UPDATE from referencing more than one source column at a time",
+            "Recalculating TotalAmount always produces a negative number if Price has changed",
+            "Root-cause tracing is required before ALTER TABLE can add a computed column"
+          ],
+          "correct": 0,
+          "right": "Drift can originate either from the derived field failing to update, or from the source field itself being wrong; blindly recalculating from a bad source field just moves the error rather than resolving it, so the source values must be verified as correct first.",
+          "wrong": "UPDATE statements can freely reference multiple columns, there's no inherent sign-reversal from recalculation, and tracing root cause is a data-quality practice, not a prerequisite imposed by ALTER TABLE syntax."
+        },
+        {
+          "q": "How does a SQL Server PERSISTED computed column prevent the kind of derived-field drift described in this lesson?",
+          "choices": [
+            "A persisted computed column's value is always derived from its formula and the current source column values, so it cannot independently diverge from what the formula would produce",
+            "PERSISTED computed columns are stored in a separate database that cannot be edited directly",
+            "PERSISTED computed columns automatically reject any UPDATE statement issued against the table",
+            "Persisted columns recalculate their value only once per day via a background job"
+          ],
+          "correct": 0,
+          "right": "A computed column (especially PERSISTED, which stores the value on disk) is always derived by SQL Server from the formula and current source values — there is no separate stored value that a later UPDATE to a source field could leave stale, which is exactly the drift scenario this lesson addresses.",
+          "wrong": "Persisted computed columns live in the same table/database as their source columns, they don't block all UPDATEs to the table (just direct writes to the computed column itself), and recalculation happens automatically on read/write, not on a daily schedule."
+        }
+      ],
+      "close": "Derived field drift is a structural risk whenever a computed value is also stored separately — recalculation audits catch it after the fact, while a computed column (particularly PERSISTED) prevents it from occurring in the first place."
+    },
+    "G19-T13": {
+      "open": "Referential integrity repair categorises foreign-key orphans by likely cause and appropriate resolution, since the correct fix (re-key, placeholder parent, NULL the FK, or delete) depends on why the parent record is actually missing.",
+      "questions": [
+        {
+          "q": "What does a LEFT JOIN combined with a parent-key IS NULL filter detect in a referential integrity check?",
+          "choices": [
+            "Child records whose foreign key value does not match any row in the parent table, i.e. orphaned records with no valid parent",
+            "Parent records that have no children at all, regardless of the child table's foreign key values",
+            "Duplicate rows in the child table sharing the same foreign key value",
+            "Rows where the foreign key column itself is declared NULL-able in the schema"
+          ],
+          "correct": 0,
+          "right": "A LEFT JOIN preserves every child row even when there's no matching parent; filtering on the parent's key column being NULL isolates exactly the child rows for which no matching parent row was found — i.e. orphans.",
+          "wrong": "Parentless parent rows would appear via a join going the other direction (parent LEFT JOIN child), not this pattern; this technique doesn't identify duplicates by itself; and it detects actual missing matches, not merely whether the column's schema permits NULLs."
+        },
+        {
+          "q": "Why does an out-of-sequence multi-batch load (e.g. loading Orders before Customers) create orphans that may resolve themselves without any repair action?",
+          "choices": [
+            "The missing parent records may simply not have been loaded yet and will appear once a later batch completes, making the orphan temporary rather than a genuine data-quality defect",
+            "Out-of-sequence loads always fail immediately and never produce any rows in the child table",
+            "SQL Server automatically reorders batch loads to respect foreign key dependencies",
+            "Temporary orphans are impossible to detect using LEFT JOIN-based queries"
+          ],
+          "correct": 0,
+          "right": "If orders reference customers that haven't been loaded yet purely because of load sequencing, those orphan records are expected to become valid once the customer batch completes — the classification heuristic (ID format conformance) helps distinguish this transient case from a genuine mapping error.",
+          "wrong": "Out-of-sequence loads can still insert child rows successfully when FK constraints are deferred or disabled during load, SQL Server does not automatically reorder unrelated batch load jobs, and the LEFT JOIN technique is exactly what's used to detect these orphans in the first place."
+        },
+        {
+          "q": "Among the four resolution options described (re-key, placeholder parent, NULL the FK, delete), which requires business approval before execution and why?",
+          "choices": [
+            "All four, because each option has different consequences for downstream reporting and data retention, and only the business can determine which trade-off is acceptable for a given category of orphan",
+            "Only the 'delete' option, since re-keying, placeholder creation, and NULLing the FK are always safe to apply automatically",
+            "None of the options require approval as long as the query includes a WHERE clause",
+            "Only the 're-key' option, because it is the only one that changes a primary key value"
+          ],
+          "correct": 0,
+          "right": "Each resolution has real business consequences — re-keying could merge unrelated entities, placeholders affect reporting, NULLing loses linkage, and deletion is irreversible — so the lesson specifies that the business must approve which resolution applies to each category before any of them is executed.",
+          "wrong": "Delete is not uniquely risky among the four — placeholder creation and re-keying carry their own risks; a WHERE clause does not substitute for business sign-off; and re-keying changes a foreign key value on the child row, not a primary key."
+        }
+      ],
+      "close": "Referential integrity repair is not a single mechanical fix — the same LEFT JOIN detection technique surfaces every orphan, but choosing the right remediation for each one requires understanding why the parent is missing and getting business sign-off on the consequences."
+    },
+    "G19-T14": {
+      "open": "Data type coercion validation tests whether string-typed staging values can be safely converted to their target types, using TRY_CAST/TRY_CONVERT to detect failures across an entire batch rather than aborting on the first bad value.",
+      "questions": [
+        {
+          "q": "What is the key behavioural difference between CAST and TRY_CAST when converting a batch of values where some cannot be converted?",
+          "choices": [
+            "CAST raises an error and aborts the statement on the first unconvertible value, while TRY_CAST returns NULL for that value and allows the rest of the batch to be evaluated",
+            "TRY_CAST is simply a faster-executing synonym for CAST with identical error behaviour",
+            "CAST can only convert to numeric types, while TRY_CAST can only convert to string types",
+            "TRY_CAST silently rounds any unconvertible value to zero instead of returning NULL"
+          ],
+          "correct": 0,
+          "right": "CAST throws a conversion error that stops the batch as soon as it hits a value it can't convert; TRY_CAST instead evaluates to NULL for that individual value, letting a single scan reveal every failure in the dataset rather than stopping at the first one.",
+          "wrong": "The two are not interchangeable — their failure behaviour is the entire point of the distinction — and neither function is restricted to numeric-only or string-only target types, nor does TRY_CAST default to zero on failure; it returns NULL."
+        },
+        {
+          "q": "Why does pre-cleaning a numeric string (removing commas, currency symbols, and whitespace) before casting increase the proportion of values that convert successfully?",
+          "choices": [
+            "Cosmetic characters like £, $, commas, and stray whitespace are not valid parts of a numeric literal, so removing them first leaves a string TRY_CAST can actually interpret as a number",
+            "Pre-cleaning changes the target column's data type to VARCHAR automatically",
+            "TRY_CAST ignores all string content and only evaluates the string's length",
+            "Removing commas converts the value from DECIMAL to INT before casting"
+          ],
+          "correct": 0,
+          "right": "A value like '$1,000' fails a direct numeric cast because $ and , are not valid numeric characters; stripping them down to '1000' produces a string that TRY_CAST can successfully interpret as a number, improving the castable percentage.",
+          "wrong": "Pre-cleaning operates on the string value, not the column's declared data type; TRY_CAST evaluates the actual characters, not merely the string's length; and comma removal doesn't perform any implicit type conversion on its own."
+        },
+        {
+          "q": "Why does REPLACE(val, ',', '.') fail to correctly convert a European-format number like '1.299,50' to a standard decimal?",
+          "choices": [
+            "The value already uses a period as the thousands separator and a comma as the decimal separator, so blindly swapping commas to periods produces an unparseable string like '1.299.50' with two periods",
+            "REPLACE() cannot process any string containing more than one comma",
+            "European decimal formats are not supported by any version of SQL Server",
+            "REPLACE(val, ',', '.') deletes the comma entirely rather than substituting a period"
+          ],
+          "correct": 0,
+          "right": "In European format, the period is the thousands separator and the comma is the decimal point — the reverse of UK/US convention — so simply replacing every comma with a period turns '1.299,50' into '1.299.50', which now has two periods and cannot be parsed as a single decimal value.",
+          "wrong": "REPLACE() handles any number of occurrences of a comma without restriction, SQL Server can represent European-formatted values once correctly transformed, and REPLACE(val, ',', '.') substitutes a period for the comma, it does not simply delete it."
+        }
+      ],
+      "close": "Coercion validation is most effective as a two-stage process — cleaning cosmetic formatting first, then testing castability with TRY_CAST/TRY_CONVERT — because it maximises the proportion of values that can be safely converted while precisely isolating the genuinely malformed ones."
+    },
+    "G19-T15": {
+      "open": "Flag and status field standardisation ensures fields with a fixed value domain — booleans, status codes — actually contain only permitted values, while treating NULL as a distinct, deliberately-tracked state rather than silently folding it into false.",
+      "questions": [
+        {
+          "q": "Why does the lesson emphasise that IsActive = 0 and IsActive IS NULL are semantically different states that a compliance query must handle explicitly?",
+          "choices": [
+            "A query filtering WHERE IsActive = 0 does not return rows where IsActive IS NULL, so if NULL is meant to be treated as inactive for compliance purposes, the query must explicitly account for NULL as well",
+            "SQL Server treats NULL and 0 as identical values in every WHERE clause comparison",
+            "IsActive can only be declared as NULL if the column's data type is VARCHAR",
+            "NULL values are automatically converted to 0 whenever a BIT column is queried"
+          ],
+          "correct": 0,
+          "right": "NULL represents 'unknown', not 'false' — a WHERE IsActive = 0 predicate evaluates to UNKNOWN (not TRUE) for NULL rows, so those rows are silently excluded unless the query is rewritten (e.g. with ISNULL(IsActive, 0) = 0) to explicitly capture the NULL case too.",
+          "wrong": "SQL's three-valued logic treats NULL and 0 as distinct, not equal, in a WHERE clause; BIT columns can hold NULL regardless of any other data type; and SQL Server does not implicitly coerce NULL to 0 in comparisons."
+        },
+        {
+          "q": "Why does `WHERE Status NOT IN ('Pending', 'Processing', ...)` fail to catch rows where Status IS NULL as a domain violation?",
+          "choices": [
+            "NOT IN performs a series of comparisons against NULL implicitly, and any comparison involving NULL evaluates to UNKNOWN rather than TRUE, so NULL rows are excluded from the NOT IN result set",
+            "NOT IN can only be used with numeric columns, never with string columns like Status",
+            "SQL Server raises a syntax error whenever NOT IN is used on a nullable column",
+            "NOT IN automatically treats NULL as matching every value in the list, so it is always excluded from a violation count"
+          ],
+          "correct": 0,
+          "right": "NULL NOT IN (list) evaluates to UNKNOWN under SQL's three-valued logic, and a WHERE clause only returns rows where the condition is TRUE, so NULL rows are silently dropped from the domain-violation result unless the query explicitly adds `OR Status IS NULL`.",
+          "wrong": "NOT IN works on string columns just as well as numeric ones, there's no such syntax restriction that raises an error on nullable columns, and the reason NULLs are excluded is the UNKNOWN evaluation, not an implicit match-everything rule."
+        },
+        {
+          "q": "Why does declaring a column as BIT provide a more permanent fix for domain conformance than an ongoing validation query?",
+          "choices": [
+            "A BIT column only permits the values 0, 1, or NULL at the database level, so out-of-domain values are rejected automatically at write time rather than needing to be repeatedly detected after the fact",
+            "BIT columns automatically convert any inserted string value into a valid boolean without error",
+            "Validation queries become unnecessary once a BIT column is defined because SQL Server disables all future SELECT statements against it",
+            "BIT is the only SQL Server data type that supports a CHECK constraint"
+          ],
+          "correct": 0,
+          "right": "The BIT type itself constrains the domain of values that can ever be stored — 0, 1, or NULL — so an out-of-domain value like 2 or 'Y' is rejected at the point of insertion, eliminating the need to repeatedly scan for domain violations after the fact.",
+          "wrong": "A BIT column does not silently coerce arbitrary strings into valid values — an incompatible insert would fail; SELECT statements remain fully usable against a BIT column; and CHECK constraints can be applied to many data types, not exclusively BIT."
+        }
+      ],
+      "close": "Domain standardisation for flag fields is as much about NULL semantics and query correctness as it is about the values themselves — a domain check that silently drops NULLs, or a compliance query that treats NULL as automatically excluded, can leave real violations undetected."
+    },
+    "G19-T16": {
+      "open": "Currency normalisation applies ISO 4217 decimal-place rules per currency and screens for unit-scale errors (amounts recorded in the wrong denomination), since a single fixed-precision column applied uniformly across currencies silently loses information for some of them.",
+      "questions": [
+        {
+          "q": "Why does storing a Kuwaiti Dinar (KWD) amount in a DECIMAL(10,2) column cause a precision loss that a Japanese Yen (JPY) amount stored in the same column would not?",
+          "choices": [
+            "KWD uses 3 decimal places (fils) under ISO 4217, so a column with only 2 decimal places truncates or rounds away real information, while JPY has 0 decimal places and so has no fractional data to lose in the first place",
+            "DECIMAL(10,2) columns can only store even numbers, and KWD amounts are typically odd",
+            "JPY amounts are always stored as strings, so no rounding is ever applied to them",
+            "KWD is not a currency recognised by SQL Server's built-in MONEY data type"
+          ],
+          "correct": 0,
+          "right": "ISO 4217 defines KWD's minor unit (fils) at 3 decimal places, so a DECIMAL(10,2) column rounds the third digit away; JPY has 0 decimal places under the same standard, meaning it never had a fractional component to begin with, so there's nothing to lose at 2 decimal places.",
+          "wrong": "DECIMAL columns store any numeric value within their range/scale, not only even numbers; JPY amounts as numeric values are still subject to normal storage/rounding rules, they just happen to have no fractional part; and SQL Server's MONEY type is currency-agnostic — it doesn't validate ISO 4217 currency codes at all."
+        },
+        {
+          "q": "What is a key limitation of the 'amount is over 100× the currency average' heuristic for detecting minor-unit (cents vs dollars) errors?",
+          "choices": [
+            "It can produce false positives for genuinely large, legitimate transactions that are simply much bigger than the typical transaction, so every flagged row still needs manual review before correction",
+            "The heuristic can only be applied to GBP and USD transactions, never any other currency",
+            "It requires the Currency column to be declared as a computed column",
+            "The heuristic guarantees 100% accuracy for any currency with exactly 2 decimal places"
+          ],
+          "correct": 0,
+          "right": "A single unusually large but entirely legitimate transaction (e.g. a corporate bulk order) can trigger the same 100× threshold as an actual cents/dollars mixup, so the heuristic is only a screening signal, not a definitive determination — all flags require human review.",
+          "wrong": "The heuristic's logic (comparing to a group average) applies to any currency, not just GBP/USD; it doesn't require a computed column, it's a runtime comparison; and no such guarantee of accuracy exists — false positives are explicitly the stated limitation."
+        },
+        {
+          "q": "Why does the lesson recommend DECIMAL(15,4) with application-layer ISO 4217 rounding as the correct column type for a genuinely multi-currency system, rather than a fixed DECIMAL(10,2)?",
+          "choices": [
+            "A fixed 2-decimal-place column can't represent every currency's minor unit correctly (e.g. it truncates KWD's 3 decimal places), so a wider precision column combined with per-currency rounding rules applied in the application preserves accuracy across all currencies",
+            "DECIMAL(15,4) is required by SQL Server before any Currency column can be added to a table",
+            "DECIMAL(10,2) cannot store negative monetary amounts under any circumstances",
+            "Application-layer rounding removes the need to store a Currency column at all"
+          ],
+          "correct": 0,
+          "right": "Different currencies have different ISO 4217 decimal-place requirements (0, 2, or 3 in the examples given); a single fixed 2-decimal-place column can't accommodate all of them without loss, so storing extra precision (4 decimal places) and applying the correct rounding rule per currency at the application layer avoids silently corrupting values for currencies that need more precision.",
+          "wrong": "There's no such SQL Server prerequisite tying column width to table creation, DECIMAL(10,2) can represent negative values just fine (subject to its range), and application-layer rounding doesn't eliminate the need to know which currency a value is in — the Currency column is still essential."
+        }
+      ],
+      "close": "Currency handling in a multi-currency system requires precision and rounding rules to be currency-aware rather than uniform — a single fixed-precision column silently loses information for currencies whose minor unit doesn't match the column's assumed scale."
+    },
+    "G19-T17": {
+      "open": "Email format validation checks the structural components of an address — the @ position, domain, and TLD — using string functions, while being explicit that structural validity is not the same as deliverability.",
+      "questions": [
+        {
+          "q": "Why can't a purely structural check (correct @ position, dot in the domain, no double dots) guarantee that an email address is actually deliverable?",
+          "choices": [
+            "A structurally well-formed address can still point to a domain or mailbox that doesn't actually exist or can't receive mail, which only an SMTP handshake or DNS lookup can confirm",
+            "SQL Server's CHARINDEX function cannot evaluate any string longer than 50 characters",
+            "Structural checks always report an address as invalid even when it is well-formed",
+            "Deliverability can only be determined by checking whether the address contains a Gmail or Outlook domain"
+          ],
+          "correct": 0,
+          "right": "Format checks like 'alice@nonexistent-domain-xyz123.com' pass every structural rule (valid shape, dot in domain, etc.) yet will still hard-bounce because that domain isn't real — confirming an address can actually receive mail requires a live SMTP or DNS check, not just string pattern matching.",
+          "wrong": "CHARINDEX has no such length restriction, well-formed structural addresses correctly pass structural checks, and deliverability is unrelated to which specific provider (Gmail, Outlook, or any other) hosts the domain."
+        },
+        {
+          "q": "How can `CHARINDEX('@', Email)` be compared against `LEN(Email) - CHARINDEX('@', REVERSE(Email)) + 1` to detect an address with more than one @ symbol?",
+          "choices": [
+            "The first expression finds the position of the first @ from the start; the second finds the position of the last @ by searching from the end — if these two positions differ, there is more than one @ in the string",
+            "This comparison always evaluates to TRUE regardless of how many @ symbols are present",
+            "REVERSE() converts the email address into its domain-only component automatically",
+            "CHARINDEX can only be used once per query, so this pattern is required to search twice within a single statement"
+          ],
+          "correct": 0,
+          "right": "CHARINDEX('@', Email) locates the first @ scanning forward; CHARINDEX('@', REVERSE(Email)) locates the first @ scanning from the end (i.e. the last @ in the original string), converted back to a forward position — if a string has exactly one @, both calculations agree; if it has more than one, they differ.",
+          "wrong": "The comparison's result genuinely depends on the number of @ symbols present, REVERSE() simply reverses the entire string character-by-character (it doesn't extract the domain), and CHARINDEX can be called any number of times within a single query."
+        },
+        {
+          "q": "Why does the lesson recommend flagging known disposable/test domains (like mailinator.com or yopmail.com) even when the address is structurally valid?",
+          "choices": [
+            "Addresses at those domains are almost always temporary and will stop working within hours or days, so including them wastes send capacity and risks generating bounces once the temporary mailbox expires",
+            "Disposable domains are always structurally invalid and would already be caught by the @ position check",
+            "SQL Server automatically blocks any INSERT containing a disposable-domain email address",
+            "Disposable-domain addresses are illegal to store under GDPR and must be deleted immediately"
+          ],
+          "correct": 0,
+          "right": "A mailinator.com or similar address can be perfectly well-formed structurally, but such domains are specifically designed for temporary, throwaway inboxes, so even though the format check passes, the address is known in advance to be unreliable for ongoing communication.",
+          "wrong": "These addresses are typically well-formed and would pass structural checks, not fail them; SQL Server has no built-in awareness of disposable email providers; and using a disposable email address is not itself a GDPR violation requiring deletion."
+        }
+      ],
+      "close": "Email validation operates in layers — structural checks eliminate obviously malformed addresses cheaply, while deliverability and domain-reputation signals (disposable domains, reserved ranges) require separate checks because a well-formed address is not automatically a usable one."
+    },
+    "G19-T18": {
+      "open": "Temporal sequence validation checks that related date fields follow their expected chronological order, using DATEDIFF to quantify both violations and implausible durations, while being careful that NULL dates and timezone differences don't produce misleading results.",
+      "questions": [
+        {
+          "q": "Why does `WHERE DeliveryDate <= OrderDate` fail to catch rows where DeliveryDate IS NULL as part of a sequence violation check?",
+          "choices": [
+            "Any comparison involving NULL, including <=, evaluates to UNKNOWN rather than TRUE, so rows with a NULL DeliveryDate are silently excluded from the WHERE clause's result set",
+            "SQL Server automatically converts NULL DeliveryDate values to the current date before evaluating any comparison",
+            "The <= operator can only be used on INT columns, not on DATE or DATETIME columns",
+            "NULL DeliveryDate values are always sorted to the top of the result set regardless of the WHERE clause"
+          ],
+          "correct": 0,
+          "right": "Under SQL's three-valued logic, comparing NULL to any value yields UNKNOWN, and a WHERE clause only keeps rows where the condition is TRUE — so a NULL DeliveryDate row is neither included nor flagged by a simple <= comparison, even though it may represent a genuine data capture gap.",
+          "wrong": "SQL Server does not implicitly substitute GETDATE() for a NULL value in a comparison, the <= operator works on DATE/DATETIME types just as it does on numeric types, and ORDER BY (not WHERE) controls result ordering — NULLs aren't automatically prioritized by a WHERE-only query."
+        },
+        {
+          "q": "Why can a timezone offset between two date sources create a spurious 'sequence violation' that only appears at day boundaries near midnight?",
+          "choices": [
+            "A UTC timestamp close to midnight can fall on a different calendar day once converted to a local timezone (e.g. UTC+1), so comparing an unconverted UTC date against a local-time date can make an event appear to occur a day 'before' or 'after' its true relative order",
+            "Timezone offsets only ever affect the year component of a date, never the day",
+            "DATEDIFF(DAY, ...) is incapable of returning a negative number under any circumstances",
+            "SQL Server automatically normalises all DATETIME values to UTC before any DATEDIFF calculation"
+          ],
+          "correct": 0,
+          "right": "A UTC timestamp of '23:30' becomes '00:30' the next calendar day once shifted by UTC+1, so if one date field is recorded in UTC and a related field is recorded in local time, the DAY-level comparison can misjudge which event came first purely due to the unconverted offset, not a genuine sequencing error.",
+          "wrong": "Timezone offsets affect the time component (and consequently which calendar day a moment falls on), not specifically the year; DATEDIFF(DAY,...) can and does return negative values when the second date precedes the first; and SQL Server does not automatically convert DATETIME values to UTC — that's the source of the very bug being described."
+        },
+        {
+          "q": "What does the DATEDIFF magnitude of a sequence violation help diagnose about its likely root cause, according to the lesson?",
+          "choices": [
+            "A violation of roughly one month in magnitude suggests a day/month transposition error, while a violation of roughly 365 days suggests a year-entry error",
+            "The magnitude of a DATEDIFF violation has no diagnostic value and only indicates that a violation occurred",
+            "Any DATEDIFF violation greater than zero always indicates a timezone misconfiguration specifically",
+            "DATEDIFF can only measure violations in exact multiples of 7 days"
+          ],
+          "correct": 0,
+          "right": "The lesson gives a concrete example: a delivery date roughly a month off from the order date is consistent with a day/month field transposition (e.g. '05/01' entered instead of '01/05'), while a roughly year-long gap is more consistent with a wrong year being entered — the size of the gap narrows down the likely data-entry mistake.",
+          "wrong": "The magnitude is explicitly used as a diagnostic clue in the lesson, not treated as uninformative; not every violation is due to timezone issues — a month-scale gap points toward transposition instead; and DATEDIFF(DAY, ...) returns the exact day count between two dates, with no 7-day granularity restriction."
+        }
+      ],
+      "close": "Chronological validation requires care with two subtleties that are easy to overlook: NULL handling (a simple inequality silently excludes NULL rows) and timezone alignment (comparing dates recorded in different time references can manufacture violations that aren't really there)."
+    },
+    "G19-T19": {
+      "open": "Cleansing pipeline orchestration consolidates many individual checks into a single coordinated pass with a structured audit log, turning data quality validation from an ad hoc manual process into a repeatable, auditable one.",
+      "questions": [
+        {
+          "q": "Why does storing the pipeline's output to a persistent audit log table matter for an external audit, compared to running the same checks ad hoc each month?",
+          "choices": [
+            "A persistent log preserves a permanent, timestamped record of which checks ran, what they found, and the sign-off outcome for every run, giving an auditor concrete evidence rather than relying on the team's word that checks were performed",
+            "Persistent audit logs are required by SQL Server before any SELECT statement involving a CTE can execute",
+            "Ad hoc scripts always produce more accurate results than an orchestrated pipeline",
+            "Storing results in a table automatically fixes any data quality issues the checks discover"
+          ],
+          "correct": 0,
+          "right": "Ad hoc scripts run in an unrecorded, undocumented order leave no durable trace that they occurred; writing each run's check results, timestamps, and sign-off status into a persistent table gives an auditor a concrete, reviewable evidence trail across multiple reporting cycles.",
+          "wrong": "There is no such SQL Server execution prerequisite tied to CTEs, an orchestrated pipeline and an ad hoc script can compute identical results if the logic is the same — the difference is auditability, not raw accuracy — and logging results does not itself remediate any underlying data problem."
+        },
+        {
+          "q": "Why is the 95% conformance pass threshold described as a policy decision rather than a purely technical one?",
+          "choices": [
+            "The acceptable level of data quality for a given pipeline run depends on the business context (e.g. financial reporting may require 100% on HIGH severity checks, while marketing data may tolerate less), which only the business can decide, not a fixed technical rule",
+            "95% is the maximum conformance percentage that SQL Server's ROUND function can calculate accurately",
+            "The threshold is technically fixed at 95% by ISO 4217 for all data quality pipelines",
+            "A lower threshold would cause the pipeline's CTEs to fail to compile"
+          ],
+          "correct": 0,
+          "right": "There's no universal 'correct' conformance percentage — how much imperfection is tolerable depends on the downstream use case, which is a business risk decision, not something SQL or any technical rule can dictate; embedding the threshold as a variable makes that decision explicit and auditable.",
+          "wrong": "ROUND() has no such 95% ceiling on the values it can compute, ISO 4217 concerns currency decimal places, not data-quality thresholds, and the threshold value has no bearing on whether a CTE compiles."
+        },
+        {
+          "q": "Why does the lesson favour a 'run-all' strategy (all checks execute regardless of earlier failures) over a 'fail-fast' strategy for a cleansing pipeline?",
+          "choices": [
+            "Run-all produces a complete picture of every data quality issue in a single pass, which is more useful for triage and root-cause analysis than stopping at the first failure and leaving later checks unexecuted",
+            "Fail-fast pipelines are not supported by SQL Server's CTE syntax under any circumstances",
+            "Run-all strategies always execute faster than fail-fast strategies regardless of table size",
+            "Fail-fast strategies cannot be combined with a CASE expression to classify severity"
+          ],
+          "correct": 0,
+          "right": "If the pipeline stopped at the very first failing check, all subsequent checks would never run, hiding the true scope of data quality problems from the review team; running every check regardless of earlier failures gives a complete view that supports better prioritisation of remediation effort.",
+          "wrong": "Fail-fast patterns (e.g. via RAISERROR) are entirely implementable in T-SQL, run-all is not inherently faster — it does strictly more work, not less — and CASE expressions work identically regardless of which overall execution strategy is chosen."
+        }
+      ],
+      "close": "Orchestration turns individually useful checks into a governed process — the audit trail, explicit threshold policy, and run-all execution strategy together are what make the pipeline's output trustworthy evidence rather than just another ad hoc query result."
     }
   }
 }
