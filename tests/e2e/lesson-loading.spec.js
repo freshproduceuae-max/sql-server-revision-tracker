@@ -58,3 +58,27 @@ test('Business Analysis lesson: same-origin content loads and completes', async 
   const progress = await readProgress(page);
   expect(progress.completed && progress.completed[lessonId]).toBeTruthy();
 });
+
+test('Data Engineering lesson (DE01-T01): same-origin content loads and completes', async ({ page }) => {
+  // Same-origin like Business Analysis (./data-engineering/), no route
+  // mocking needed. DE01-T01 is a real Chapter 1 lesson id, not a stand-in.
+  await page.goto('/index.html#lesson/DE01-T01');
+
+  await expect(page.locator('.loading')).toHaveCount(0, { timeout: 10_000 });
+  await expect(page.locator('.md')).toBeVisible();
+  const mdText = await page.locator('.md').innerText();
+  expect(mdText.length).toBeGreaterThan(20);
+  await expect(page.getByText('Content unavailable')).toHaveCount(0);
+  // DE lessons carry a code block (Solution Code section) -- confirm the
+  // fence actually rendered as a code block, not raw ```python text, which
+  // would indicate mdToHtml's code-lifting failed for this content.
+  await expect(page.locator('.md pre code, .md code').first()).toBeVisible();
+
+  const markBtn = page.getByRole('button', { name: /Mark complete/ });
+  await expect(markBtn).toBeVisible();
+  await markBtn.click();
+  await expect(page.getByRole('button', { name: /Completed/ })).toBeVisible();
+
+  const progress = await readProgress(page);
+  expect(progress.completed && progress.completed['DE01-T01']).toBeTruthy();
+});

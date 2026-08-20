@@ -6,6 +6,7 @@
     { "src": "teacher-mcq.json", "use": "@vercel/static" },
     { "src": "projects/**", "use": "@vercel/static" },
     { "src": "business-analysis/**", "use": "@vercel/static" },
+    { "src": "data-engineering/**", "use": "@vercel/static" },
     { "src": "data-validation-lab/schemas/**", "use": "@vercel/static" },
     { "src": "api/tutor.js", "use": "@vercel/node" }
   ],

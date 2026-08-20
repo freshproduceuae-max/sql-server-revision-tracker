@@ -1,0 +1,33 @@
+[
+  {
+    "code": "DE01",
+    "name": "Python, SQL and Data Engineering Foundations",
+    "desc": "The foundational skills every enterprise data engineer needs before touching a distributed system: idiomatic Python, query-plan-aware SQL, data modelling, REST integration, Git discipline, and the role itself.",
+    "lessons": [
+      {
+        "id": "DE01-T01",
+        "title": "Python for Data Engineers"
+      },
+      {
+        "id": "DE01-T02",
+        "title": "SQL for Data Engineers"
+      },
+      {
+        "id": "DE01-T03",
+        "title": "Data Modelling for Analytics"
+      },
+      {
+        "id": "DE01-T04",
+        "title": "REST APIs and Data Integration Patterns"
+      },
+      {
+        "id": "DE01-T05",
+        "title": "Git and CI-Aware Workflow for Data Pipelines"
+      },
+      {
+        "id": "DE01-T06",
+        "title": "The Enterprise Data Engineer Role"
+      }
+    ]
+  }
+]

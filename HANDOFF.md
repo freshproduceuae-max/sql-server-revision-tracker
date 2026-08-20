@@ -10,13 +10,14 @@ Live: **https://credit-risk-academy.vercel.app**
 
 ## What this is
 
-A Duolingo-style learning app with four tracks:
+A Duolingo-style learning app with five tracks:
 
 | Track | Content | Where the content lives |
 |---|---|---|
 | 💼 Credit Risk | 47 modules + 7 case studies | GitHub raw, **separate branch** (see below) |
 | 🧪 Data Validation | 236 techniques / 19 groups + 15 exercises | `data-validation-lab/` in this repo |
 | 📐 Business Analysis | 42 lessons / 10 chapters | `business-analysis/` in this repo (**generated**) |
+| ⚙️ Data Engineering | **Phase 1 of 6: Chapter 1, 6 of 36 approved lessons** | `data-engineering/` in this repo (**generated**) — see "Data Engineering track" below |
 | 🎯 Quiz Practice | 2,079 questions, 11 banks | `quiz-bank.json` (generated) |
 
 Tracks are **data-driven**: `TRACKS` in `index.html` drives routing, the nav tabs,
@@ -24,8 +25,9 @@ the checkpoint routes and the tab accent. Adding a track is a registry entry plu
 its hero/path body — and, if it brings its own content source, a `contentUrl()`
 branch and a loader. See `CLAUDE.md` for the full checklist.
 
-Plus **23 checkpoint projects** (13 credit, 10 data validation) that unlock only
-when the lessons they consolidate are marked complete.
+Plus **24 checkpoint projects** (13 credit, 10 data validation, 1 data
+engineering so far) that unlock only when the lessons they consolidate are
+marked complete.
 
 The entire app is **one file** — `index.html`. Plain JavaScript, no framework, no
 build step, no bundler. Open it and read it; that is the whole front end.
@@ -387,6 +389,7 @@ check the progress block for the exact verified state at any given moment.
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
 | 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start. **One unauthorized generation attempt was made and rejected — see "Enterprise Architecture — rejected unauthorized run" below.** |
+| 7 | Data Engineering track — Chapters 2–6 | 30 of 36 approved lessons remaining (Chapter 1, 6 lessons, is Phase 1 — see "Data Engineering track" below) | **Not authorized.** Phase 1 (infra + Chapter 1) is a separate, already-authorized programme from any further chapter; Chapters 2–6 need a new, explicit owner authorization the same as any other content programme. |
 
 **Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
 close.** None of them are blocked by a technical dependency — each is
@@ -463,7 +466,66 @@ a no-login, no-PII, single-serverless-function app — but that estimate is a
 planning input, not an assessment result, and each criterion still needs a real
 documented rationale.
 
-Content-only work (items 1–3, 6) is explicitly **not** gated on any of this.
+Content-only work (items 1–3, 6, 7) is explicitly **not** gated on any of this.
+
+### Data Engineering track — Phase 1 (Chapter 1 only)
+
+Same origin story pattern as Enterprise Architecture: the owner pasted a
+real job posting (GSSTech Group, "Sr. Data Engineer - PySpark, Python &
+Cloudera (CDP)", Dubai, banking/transaction-banking domain) and asked
+whether the app already covered it. It did not — a gap-check found only
+one incidental mention of "PySpark"/"Cloudera" anywhere in the repo, in
+the SQL/Power BI quiz bank, no real coverage.
+
+**Full curriculum: `docs/data-engineering-curriculum-proposal.md`** — 36
+lessons / 6 chapters / 6 checkpoints, independently reviewed by Codex
+(`PASS_WITH_FIXES`, all findings applied and marked inline), approved by
+the owner as the final target. **Only Phase 1 — new-track infrastructure
+plus Chapter 1 (6 lessons, checkpoint `P-DE-01`) — is authorized and
+built.** Chapters 2–6 and all Teacher MCQs for this track need a separate,
+explicit authorization before any further content is written — see the
+work queue table above (item 7).
+
+**What Phase 1 actually shipped:**
+- `sources/data-engineering.json` — Chapter 1 source (only DE01 populated;
+  adding DE02–DE06 later is additive to this file, not a schema change)
+- `scripts/build-de-lessons.js` — clone of `build-ba-lessons.js`'s
+  validate-in-memory-before-writing discipline, adapted for lessons that
+  carry a solution code block (Python/PySpark/SQL) and expected output,
+  matching Data Validation's rigor rather than BA's prose-only shape
+- `DE_CHAPTERS` in `index.html` — a compiled-in chapter/lesson registry,
+  **not** a runtime-fetched `index.json` like BA. Deliberate: this track
+  owns checkpoints (`projPrefix:'P-DE-'`), and Data Validation already
+  proves that combination (static chapter list + checkpoints) works, while
+  BA's dynamic-index pattern exists specifically for a track with no
+  checkpoints. Content markdown is still same-origin (`./data-engineering/`),
+  not GitHub raw — this is a brand-new track with no legacy cross-branch
+  content to match, and same-origin avoids LESSONS-LEARNED entry 1's class
+  of bug entirely.
+- `scripts/build-projects.js` extended with a `loadDeChaptersFromApp()`
+  loader (mirrors `loadDvGroupsFromApp()`) and one checkpoint, `P-DE-01`,
+  covering all 6 DE01 lessons in a single transaction-banking scenario that
+  exercises every Chapter 1 skill together. Coverage-audit failure mode is
+  identical to DV/Credit: every chapter must be covered by exactly one
+  checkpoint, checked against the app's real id space, not a hand-maintained
+  copy of it.
+- `vercel.json` — `data-engineering/**` builds entry (without it the SPA
+  catch-all would silently serve `index.html` for every lesson — entry 13).
+- Headless coverage harness (`tests/e2e/`) extended: the 5th tab in
+  `nav.spec.js`, a same-origin lesson-load-and-complete case in
+  `lesson-loading.spec.js` (including a check that the Solution Code
+  fence actually rendered as `<pre><code>`, not raw ```` ```python ```` text),
+  and two checkpoint-unlock cases in `checkpoints.spec.js` (locked when
+  incomplete, unlocks and mark-done works when all 6 lessons are complete).
+
+**Explicit, load-bearing scope honesty (per owner instruction):** completing
+Chapter 1 is a foundation, not job-readiness for the senior PySpark/Cloudera
+role this curriculum was scoped from. The track's own hero copy and the
+last lesson's Explanation both state this directly, rather than implying
+six lessons make someone senior-ready — the distributed-systems,
+Hadoop-ecosystem, and production-operations skills that posting actually
+needs start in Chapter 2 and continue through Chapter 6, none of which are
+built yet.
 
 ### Enterprise Architecture track — how this came up
 

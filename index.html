@@ -485,6 +485,7 @@ const DV_GROUPS=[{"code":"G01","name":"Completeness","desc":"Is the data there? 
 const DV_EXERCISES=[{"id":"M01-E1","title":"NULL in Mandatory Fields","file":"M01_Completeness/M01-E1_null_mandatory_fields.md"},{"id":"M01-E2","title":"Blank & Placeholder Strings","file":"M01_Completeness/M01-E2_blank_placeholder_strings.md"},{"id":"M02-E1","title":"Duplicate Primary Key / Exact Rows","file":"M02_Uniqueness/M02-E1_duplicate_primary_key.md"},{"id":"M02-E2","title":"Fuzzy / Near-Duplicate Detection","file":"M02_Uniqueness/M02-E2_fuzzy_near_duplicates.md"},{"id":"M03-E1","title":"Orphan Records (FK Violations)","file":"M03_Referential_Integrity/M03-E1_orphan_records.md"},{"id":"M03-E2","title":"Self-Referencing Hierarchy","file":"M03_Referential_Integrity/M03-E2_self_referencing_hierarchy.md"},{"id":"M04-E1","title":"Email Address Format","file":"M04_Format_Pattern/M04-E1_email_format.md"},{"id":"M05-E1","title":"Negative, Zero & Out-of-Range Values","file":"M05_Range_Boundary/M05-E1_negative_and_zero_values.md"},{"id":"M05-E2","title":"Date Range & Sequence Violations","file":"M05_Range_Boundary/M05-E2_date_range_violations.md"},{"id":"M06-E1","title":"Calculated Field Mismatch","file":"M06_Consistency/M06-E1_calculated_field_mismatch.md"},{"id":"M06-E2","title":"Cross-Column Logic Violations","file":"M06_Consistency/M06-E2_cross_column_logic.md"},{"id":"M07-E1","title":"Allowed Values / Domain Check","file":"M07_Business_Rules/M07-E1_allowed_values_domain_check.md"},{"id":"M08-E1","title":"Source-to-Target Reconciliation","file":"M08_Reconciliation/M08-E1_source_to_target_count_and_sum.md"},{"id":"M09-E1","title":"Gap & Overlap in Date Sequences","file":"M09_Temporal/M09-E1_gap_and_overlap_detection.md"},{"id":"M10-E1","title":"Outlier Detection (Z-Score + IQR)","file":"M10_Statistical/M10-E1_outlier_detection.md"}];
 const DV_TABLE_CHIPS=['Customers','Orders','Products','Employees','Transactions','SalesTargets'];
 const BA_CHIPS=['Live scenario','The question','Approach','Deliverables','Tools','Interview angle'];
+const DE_TABLE_CHIPS=['Live scenario','The question','Solution code','Expected output','Explanation','Job-readiness note'];
 
 /* Business Analysis content ships in this repo and loads from this origin, not
    from GitHub raw on a content branch. Credit Risk and DV fetch across branches,
@@ -497,6 +498,26 @@ const BA_CHIPS=['Live scenario','The question','Approach','Deliverables','Tools'
 const BA_BASE='./business-analysis/';
 const BA_INDEX_URL=BA_BASE+'index.json';
 const BA_XP=10;
+
+/* Data Engineering — PySpark, Python & Cloudera. Same-origin content like BA
+   (not GitHub raw like DV/Credit — this is a brand-new track with no legacy
+   cross-branch content to match, and same-origin avoids LESSONS-LEARNED
+   entry 1's class of bug entirely). Unlike BA, this track owns checkpoints
+   (projPrefix below), so its chapter/lesson list is a compiled-in constant
+   like DV_GROUPS rather than a runtime-fetched index.json like BA_INDEX_URL —
+   DV already proves that combination (static chapter list + checkpoints)
+   works; BA's dynamic-index pattern is for a track with no checkpoints.
+   Phase 1 only: DE01 is the only chapter present. DE02-DE06 are the
+   approved curriculum's remaining scope (see
+   docs/data-engineering-curriculum-proposal.md) but are NOT authorized to
+   build yet — this array is deliberately sized to grow by appending chapter
+   entries, not by any structural change, when a future chapter is
+   authorized. scripts/build-de-lessons.js checks this array against
+   sources/data-engineering.json on every build, the same way
+   build-projects.js checks DV_GROUPS. */
+const DE_BASE='./data-engineering/';
+const DE_XP=10;
+const DE_CHAPTERS=[{"code":"DE01","name":"Python, SQL and Data Engineering Foundations","desc":"The foundational skills every enterprise data engineer needs before touching a distributed system: idiomatic Python, query-plan-aware SQL, data modelling, REST integration, Git discipline, and the role itself.","t":["Python for Data Engineers","SQL for Data Engineers","Data Modelling for Analytics","REST APIs and Data Integration Patterns","Git and CI-Aware Workflow for Data Pipelines","The Enterprise Data Engineer Role"]}];
 
 /* Quiz bank ships alongside index.html, so it loads from this origin rather than GitHub. */
 const QUIZ_URL='./quiz-bank.json';
@@ -970,8 +991,19 @@ function buildDvFlat(){
   DV_EXERCISES.forEach(e=>flat.push({id:e.id,type:'exercise',ui:DV_GROUPS.length,data:{code:e.id,title:e.title}}));
   return flat;
 }
+function buildDeFlat(){
+  const flat=[];
+  DE_CHAPTERS.forEach((c,ui)=>{
+    c.t.forEach((name,ti)=>{
+      const tn='T'+String(ti+1).padStart(2,'0');
+      flat.push({id:c.code+'-'+tn,type:'de-lesson',ui,data:{code:tn,title:name}});
+    });
+  });
+  return flat;
+}
 function isDvId(id){return /^G\d\d-T\d\d$/.test(id)||DV_EXERCISES.some(x=>x.id===id);}
 function isBaId(id){return /^BA\d\d-T\d\d$/.test(id);}
+function isDeId(id){return /^DE\d\d-T\d\d$/.test(id);}
 function contentUrl(id){
   // hasOwnProperty, not a bare lookup: CONTENT_URLS is an object literal, so
   // contentUrl('constructor') would otherwise return Object.prototype.constructor
@@ -982,6 +1014,8 @@ function contentUrl(id){
   const ex=DV_EXERCISES.find(x=>x.id===id);
   if(ex)return DV_BASE+ex.file;
   if(isBaId(id))return BA_BASE+id+'.md';
+  const de=id.match(/^(DE\d\d)-T\d\d$/);
+  if(de){const ch=DE_CHAPTERS.find(x=>x.code===de[1]);if(ch)return DE_BASE+id+'.md';}
   return null;
 }
 /* BA chapters come from the generated index, so the flat list is empty until it
@@ -1850,6 +1884,13 @@ const TRACKS=[
    planErr:()=>S.projError, planRetry:'retryProjIndex'},
   {id:'dv',    name:'Data Validation',tab:'🧪 Data Validation',col:'#1CB0F6',dark:'#1899D6',projPrefix:'P-DV-',
    planErr:()=>S.projError, planRetry:'retryProjIndex'},
+  // Phase 1 only (6 of the approved 36 lessons; see
+  // docs/data-engineering-curriculum-proposal.md). Structured like DV: a
+  // compiled-in chapter list (DE_CHAPTERS) plus checkpoints (projPrefix),
+  // not BA's runtime-fetched-index pattern — see DE_CHAPTERS' own comment
+  // for why.
+  {id:'de',    name:'Data Engineering',tab:'⚙️ Data Engineering',col:'#00C2A8',dark:'#00A38C',projPrefix:'P-DE-',
+   planErr:()=>S.projError, planRetry:'retryProjIndex'},
   // chapterIndex: how the Study Plan blocks a track that owns no checkpoints.
   // Declared here rather than tested by id in the plan code, so a future
   // checkpoint-less track works by adding a registry entry, not by editing plan
@@ -2036,9 +2077,11 @@ function renderApp(){
   const route=getHashRoute();
   const creditFlat=buildFlat();
   const dvFlat=buildDvFlat();
+  const deFlat=buildDeFlat();
   let xp=0;
   creditFlat.forEach(n=>{if(completed[n.id])xp+=n.type==='case'?25:10;});
   dvFlat.forEach(n=>{if(completed[n.id])xp+=n.type==='exercise'?15:5;});
+  deFlat.forEach(n=>{if(completed[n.id])xp+=DE_XP;});
   Object.keys(completed).forEach(k=>{if(k.indexOf('quiz:')===0)xp+=QUIZ_XP;});
   Object.keys(completed).forEach(k=>{if(k.indexOf('P-')===0)xp+=PROJECT_XP;});
   // Counted from the ids, not from baFlat, so XP does not dip to zero while the
@@ -2069,27 +2112,31 @@ function renderApp(){
   if(route.view==='lesson'){
     const dv=isDvId(route.id);
     const ba=isBaId(route.id);
+    const de=isDeId(route.id);
     // A BA deep link can arrive before the chapter index has loaded. Without this
     // guard the lookup fails and the page reads "Lesson not found" for content
     // that exists — the same false negative as LESSONS-LEARNED entry 1.
+    // DE needs no equivalent guard — DE_CHAPTERS is compiled in, like
+    // DV_GROUPS, not fetched at runtime.
     if(ba&&!S.baIndex){
       if(S.baError){
         return `<div class="loading" style="color:var(--text-lo)">Business Analysis chapters unavailable — check your connection.<button class="quiz-btn" style="margin-top:12px;max-width:200px;" onclick="retryBaIndex()">Try again</button></div>`;
       }
       return `<div class="loading"><div class="spinner"></div>Loading lesson…</div>`;
     }
-    const flat=ba?buildBaFlat():(dv?dvFlat:creditFlat);
+    const flat=ba?buildBaFlat():(dv?dvFlat:(de?deFlat:creditFlat));
     const entry=flat.find(n=>n.id===route.id);
     if(!entry) return `<div style="padding:40px;text-align:center;color:var(--text-mid)">Lesson not found</div>`;
 
     const col=PALETTE[entry.ui%PALETTE.length];
     const isComplete=completed[route.id];
-    const backHash=ba?'track/ba':(dv?'track/dv':'');
+    const backHash=ba?'track/ba':(dv?'track/dv':(de?'track/de':''));
     let kicker;
     if(entry.type==='case')kicker=`Case Study · ${esc(entry.data.sector)}`;
     else if(entry.type==='technique')kicker=`${esc(DV_GROUPS[entry.ui].name)} · Technique ${esc(entry.data.code.replace('T',''))}`;
     else if(entry.type==='exercise')kicker=`Worked Exercise · SSMS Lab`;
     else if(entry.type==='balesson')kicker=`${esc(S.baIndex[entry.ui].name)} · Chapter ${entry.ui+1}`;
+    else if(entry.type==='de-lesson')kicker=`${esc(DE_CHAPTERS[entry.ui].name)} · Lesson ${esc(entry.data.code.replace('T',''))}`;
     else kicker=`${esc(entry.data.code)} · Part ${entry.ui+1}`;
     let lessonContent='';
     if(mdLoading[route.id]){
@@ -2131,6 +2178,7 @@ function renderApp(){
   </div>`;
 
   const isDvTrack=route.track==='dv';
+  const isDeTrack=route.track==='de';
   const isQuizTrack=route.track==='quiz';
   // Tabs are generated from the registry; the active tab carries its own accent
   // inline, so adding a track needs no new markup and no new CSS.
@@ -2214,7 +2262,29 @@ function renderApp(){
     const units=S.baIndex.map((ch,i)=>({kicker:`Chapter ${i+1} of ${S.baIndex.length} · ${ch.desc}`,name:ch.name}));
     return topBar+tabs+hero+renderUnitAccordion('ba','Chapter',units,flat,completed,fi,true);
   }
-  if(isDvTrack){
+  if(isDeTrack){
+    const flat=deFlat;
+    let fi=flat.findIndex(n=>!completed[n.id]);
+    if(fi===-1)fi=flat.length;
+    const done=flat.filter(n=>completed[n.id]).length;
+    const pct=flat.length?Math.round(done/flat.length*100):0;
+    hero=`
+    <div class="hero">
+      <h1>Data Engineering — PySpark, Python &amp; Cloudera</h1>
+      <p class="hero-sub">Phase 1 of the approved curriculum: Chapter 1 (Python, SQL and Data Engineering Foundations), 6 lessons. Chapters 2–6 (PySpark, enterprise ETL/ELT, Hadoop/CDP, quality &amp; governance, production engineering) are the approved target for later phases — completing Chapter 1 alone is a foundation, not job-readiness for a senior role.</p>
+      <div class="progress-card">
+        <div class="progress-head"><span class="progress-lbl">Chapter 1 progress</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:#00C2A8;"></div></div>
+      </div>
+      <div class="framework">
+        <div class="framework-lbl">Every lesson: scenario, code, expected output, explanation</div>
+        <div class="chips">${DE_TABLE_CHIPS.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>
+      </div>
+      <a class="proj-hero-btn" href="#projects/de">🏁 Checkpoint projects${projSummary('de')}</a>
+    </div>`;
+    const units=DE_CHAPTERS.map((c,i)=>({kicker:`Chapter ${i+1} of ${DE_CHAPTERS.length} · ${c.desc}`,name:c.name}));
+    path=renderUnitAccordion('de','Chapter',units,flat,completed,fi,true);
+  }else if(isDvTrack){
     const flat=dvFlat;
     let fi=flat.findIndex(n=>!completed[n.id]);
     if(fi===-1)fi=flat.length;
