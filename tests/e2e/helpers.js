@@ -36,22 +36,41 @@ async function mockGithubRawSuccess(page) {
   });
 }
 
-/** Simulate a GitHub-raw fetch that never resolves within the test, so the
- * loading spinner can be asserted before any content/error state appears.
- *
- * Deliberately never calls route.fulfill()/route.abort() at all, rather
- * than waiting out a real setTimeout first: a `setTimeout` registers a
- * Node timer/handle that keeps that test worker's process alive until it
- * fires, and Playwright's route callback runs inside the worker process,
- * not the browser -- a 60s real timer here can leave the test run hanging
- * or leak a process if the worker isn't force-killed on teardown (found by
- * Codex's independent PR review: `npx playwright test` failed to exit and
- * left a node.exe process running). A route handler that returns a
- * never-resolving Promise with no timer behind it holds no such handle --
- * the page's own fetch just sits pending until the browser context closes
- * at test end, which is all this test actually needs. */
-async function mockGithubRawDelay(page) {
-  await page.route(GITHUB_RAW_PATTERN, () => new Promise(() => {}));
+/** A controllable pending operation: the route handler `await`s
+ * `deferred.promise` and only then calls `route.abort()`. Nothing about
+ * this holds a Node timer -- but unlike a bare `new Promise(() => {})`,
+ * this promise is guaranteed to be resolved exactly once, deterministically,
+ * by `release()`, which every caller MUST invoke from `test.afterEach` (see
+ * loading-error-states.spec.js). That guarantees the route handler always
+ * runs to completion and the underlying request is always positively
+ * aborted before the test ends and the browser context tears down --
+ * closing the specific gap a permanently-unresolved Promise leaves open
+ * (Codex's second-review finding: an unresolved Promise removes the timer
+ * but can still leave an unresolved Playwright operation pending during
+ * context/browser teardown, which is a plausible mechanism for a hang even
+ * with the timer gone). */
+function makeDeferred() {
+  let release;
+  const promise = new Promise((resolve) => {
+    release = resolve;
+  });
+  return { promise, release };
+}
+
+/** Simulate a GitHub-raw fetch that stays pending until explicitly released,
+ * so the loading spinner can be asserted before any content/error state
+ * appears. Register the returned deferred with the test's `pending` array
+ * (see loading-error-states.spec.js's afterEach) so it is guaranteed to be
+ * released -- and the underlying route positively aborted -- before the
+ * test ends, regardless of whether the test body itself reaches that point
+ * (assertion failure, timeout, etc. all still hit afterEach). */
+async function mockGithubRawDelay(page, pending) {
+  const deferred = makeDeferred();
+  pending.push(deferred);
+  await page.route(GITHUB_RAW_PATTERN, async (route) => {
+    await deferred.promise;
+    await route.abort();
+  });
 }
 
 /** Simulate a GitHub-raw fetch failure (network abort), so the app's error
@@ -68,9 +87,26 @@ async function mockSameOriginFailure(page, urlSuffix) {
 }
 
 /** Simulate a same-origin asset hanging, for the loading-state assertion.
- * Same no-timer reasoning as mockGithubRawDelay above -- see its comment. */
-async function mockSameOriginDelay(page, urlSuffix) {
-  await page.route(`**/${urlSuffix}`, () => new Promise(() => {}));
+ * Same deterministic-release pattern as mockGithubRawDelay above -- see its
+ * comment for why a bare never-resolving Promise isn't good enough. */
+async function mockSameOriginDelay(page, urlSuffix, pending) {
+  const deferred = makeDeferred();
+  pending.push(deferred);
+  await page.route(`**/${urlSuffix}`, async (route) => {
+    await deferred.promise;
+    await route.abort();
+  });
+}
+
+/** Release every pending deferred route registered this test, aborting each
+ * underlying request. MUST be called from test.afterEach -- Playwright runs
+ * afterEach regardless of whether the test passed, failed, or timed out, so
+ * this is what actually guarantees no pending route operation survives the
+ * test, rather than relying on browser-context teardown to force it (the
+ * exact assumption that was in question). */
+async function releasePendingRoutes(pending) {
+  for (const deferred of pending) deferred.release();
+  pending.length = 0;
 }
 
 /** Seed crAcademy_v1 in localStorage before the app's first script runs, so
@@ -98,6 +134,7 @@ module.exports = {
   mockGithubRawFailure,
   mockSameOriginFailure,
   mockSameOriginDelay,
+  releasePendingRoutes,
   seedProgress,
   readProgress,
 };

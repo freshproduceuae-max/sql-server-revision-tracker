@@ -10,11 +10,26 @@ const {
   mockGithubRawFailure,
   mockSameOriginFailure,
   mockSameOriginDelay,
+  releasePendingRoutes,
 } = require('./helpers');
+
+// Tracks every deferred "pending forever" route registered via
+// mockGithubRawDelay/mockSameOriginDelay in this test, so afterEach can
+// positively release (and abort) every one of them. Playwright guarantees
+// afterEach runs regardless of how the test ends (pass, fail, timeout), so
+// this is what actually bounds the lifecycle of a "pending" mock -- no
+// route registered by this file can ever survive past its own test.
+let pending;
+test.beforeEach(() => {
+  pending = [];
+});
+test.afterEach(async () => {
+  await releasePendingRoutes(pending);
+});
 
 test.describe('cross-origin (GitHub-raw) content -- Credit Risk / Data Validation', () => {
   test('shows a loading spinner while the fetch is pending', async ({ page }) => {
-    await mockGithubRawDelay(page);
+    await mockGithubRawDelay(page, pending);
     await page.goto('/index.html#lesson/M01');
     await expect(page.locator('.loading .spinner')).toBeVisible();
   });
@@ -46,7 +61,7 @@ test.describe('same-origin content -- Quiz Practice, Business Analysis, checkpoi
   });
 
   test('quiz-bank.json delay shows a loading spinner, not a blank page', async ({ page }) => {
-    await mockSameOriginDelay(page, 'quiz-bank.json');
+    await mockSameOriginDelay(page, 'quiz-bank.json', pending);
     await page.goto('/index.html#track/quiz');
     await expect(page.locator('.loading .spinner')).toBeVisible();
   });
