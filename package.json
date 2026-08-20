@@ -1,0 +1,11 @@
+{
+  "name": "analyst-academy",
+  "private": true,
+  "description": "Headless coverage harness for Analyst Academy (index.html is the deployed app; this package.json exists only for the Playwright test harness).",
+  "scripts": {
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}
