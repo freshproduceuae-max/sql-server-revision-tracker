@@ -61,9 +61,31 @@ function loadCreditIdsFromApp() {
 }
 const CREDIT = loadCreditIdsFromApp();
 
+// Same rule for Data Engineering. Phase 1 only has DE01 in DE_CHAPTERS — this
+// loader doesn't assume 6 chapters exist, it just reads whatever's there, so
+// it needs no changes when DE02-DE06 are authorized later.
+function loadDeChaptersFromApp() {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const m = html.match(/const DE_CHAPTERS\s*=\s*(\[[\s\S]*?\]);\s*\r?\n/);
+  if (!m) throw new Error('DE_CHAPTERS not found in index.html — did the constant move or get renamed?');
+  const chapters = JSON.parse(m[1]);
+  if (!Array.isArray(chapters) || !chapters.length) throw new Error('DE_CHAPTERS parsed but empty');
+  for (const c of chapters) {
+    if (!c.code || !c.name || !Array.isArray(c.t) || !c.t.length) {
+      throw new Error(`DE_CHAPTERS entry malformed: ${JSON.stringify(c).slice(0, 80)}`);
+    }
+  }
+  return chapters;
+}
+const DE_CHAPTERS = loadDeChaptersFromApp();
+
 function techIds(groupCode) {
   const g = DV_GROUPS.find((x) => x.code === groupCode);
   return g.t.map((_, i) => `${groupCode}-T${String(i + 1).padStart(2, '0')}`);
+}
+function deLessonIds(chapterCode) {
+  const c = DE_CHAPTERS.find((x) => x.code === chapterCode);
+  return c.t.map((_, i) => `${chapterCode}-T${String(i + 1).padStart(2, '0')}`);
 }
 
 function makeRng(seed) {
@@ -547,6 +569,36 @@ const DV = [
   },
 ];
 
+// ── Data Engineering checkpoints: one per chapter (Phase 1: DE01 only) ───────
+// Not every chapter needs a pair — matches the DV precedent (Checkpoint 3
+// covers G04 alone). DE02-DE06 checkpoints (P-DE-02..06) are NOT authorized
+// yet; adding them later is additive to this array, no structural change.
+const DE = [
+  {
+    n: 1, title: 'Reconcile a Transaction-Banking Batch', chapters: ['DE01'],
+    tagline: 'One scenario, all six Chapter 1 skills: typed Python, sargable SQL, star-schema design, resilient ingestion, PR workflow, stakeholder check-ins',
+    scenario: [
+      'A transaction-banking platform runs a nightly reconciliation between two sources: a REST API from a third-party FX-rate provider, and an internal SQL Server transactions table. The batch has been unreliable — silent failures, slow queries, and at least one incident where a fix was overwritten because two engineers edited the same file without a review process. You are asked to rebuild the reconciliation as a small, defensible pipeline that would survive a code review from a senior engineer.',
+    ],
+    tasks: [
+      '[DE01-T01] Write a typed Python module that parses the daily transactions CSV export into typed records, collecting every parse failure (with row number and reason) rather than stopping at the first one or swallowing errors silently.',
+      '[DE01-T02] Write the SQL Server reconciliation query joining Transactions against the FX-rate lookup for a given date range, using a sargable date predicate (not a function wrapped around the indexed column) — and show, with SET STATISTICS IO, that it seeks rather than scans.',
+      '[DE01-T03] Design a small star schema (one fact table, two dimension tables) for a monthly reconciliation-exceptions report, and justify one deliberate denormalization choice you made.',
+      '[DE01-T04] Write a resilient fetch function for the FX-rate REST API: paginated, rate-limited, retries a transient 503/429 with backoff, and persists enough state to resume from the last successful page rather than restarting from page 1.',
+      '[DE01-T05] Write the PR description you would submit for this work: what changed, why, and — specifically — what a reviewer should look for that would have caught the original overwritten-fix incident if this workflow had existed then.',
+      '[DE01-T06] Name the three stakeholders (beyond your own team) you would check in with before this pipeline goes to production, and the one question you would ask each — grounded in a specific risk each check-in is meant to catch, not a generic list.',
+    ],
+    deliverables: [
+      'A typed Python parsing module with explicit, collected error handling',
+      'A sargable reconciliation query with SET STATISTICS IO evidence of the plan change',
+      'A star-schema DDL sketch with a stated denormalization rationale',
+      'A resilient, resumable REST ingestion function',
+      'A PR description demonstrating the review workflow from DE01-T05',
+      'A stakeholder check-in list with one grounded question per stakeholder',
+    ],
+  },
+];
+
 // ── Renderers ────────────────────────────────────────────────────────────────
 function renderCredit(p) {
   const covers = p.covers;
@@ -620,6 +672,51 @@ ${p.deliverables.map((d) => `- ${d}`).join('\n')}
 `;
 }
 
+function renderDe(p) {
+  const chapterNames = p.chapters.map((c) => {
+    const ch = DE_CHAPTERS.find((x) => x.code === c);
+    return `**${c} ${ch.name}** (${ch.t.length} lessons)`;
+  }).join(' + ');
+  return `# Checkpoint ${p.n}: ${p.title}
+
+*${p.tagline}*
+
+**Consolidates:** ${chapterNames}
+
+---
+
+## Scenario
+
+${p.scenario.join('\n\n')}
+
+## Tasks
+
+${p.tasks.map((t, i) => `${i + 1}. ${t}`).join('\n')}
+
+## Deliverables
+
+${p.deliverables.map((d) => `- ${d}`).join('\n')}
+
+## Definition of done
+
+- Every deliverable is the actual artefact (code, query, document), not a description of one
+- Each task's lesson reference is used, not just cited
+- You can defend each design choice (the denormalization, the retry strategy, the stakeholder question) in one sentence
+
+## Job-readiness note
+
+This checkpoint consolidates Chapter 1's foundational skills into one
+scenario. It is a checkpoint on the approved 6-chapter curriculum, not a
+capstone — Chapters 2–6 (PySpark, enterprise ETL/ELT, Hadoop/CDP, quality
+and governance, production engineering) are the remaining approved scope
+and are not part of this phase.
+
+---
+
+*Complete all lessons in the covered chapters, work the checkpoint, then mark it done to bank the milestone.*
+`;
+}
+
 // ── Emit ─────────────────────────────────────────────────────────────────────
 const index = [];
 
@@ -634,6 +731,12 @@ for (const p of DV) {
   const covers = p.groups.flatMap(techIds);
   index.push({ id, track: 'dv', n: p.n, title: p.title, tagline: p.tagline, covers, groups: p.groups, file: `${id}.md` });
 }
+for (const p of DE) {
+  const id = `P-DE-${String(p.n).padStart(2, '0')}`;
+  fs.writeFileSync(path.join(OUT, `${id}.md`), renderDe(p));
+  const covers = p.chapters.flatMap(deLessonIds);
+  index.push({ id, track: 'de', n: p.n, title: p.title, tagline: p.tagline, covers, groups: p.chapters, file: `${id}.md` });
+}
 
 fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify({ projects: index }));
 
@@ -644,18 +747,24 @@ const crMissing = crAll.filter((m) => !crCovered.includes(m));
 const dvCovered = DV.flatMap((p) => p.groups);
 const dvAll = DV_GROUPS.map((g) => g.code);
 const dvMissing = dvAll.filter((g) => !dvCovered.includes(g));
+const deCovered = DE.flatMap((p) => p.chapters);
+const deAll = DE_CHAPTERS.map((c) => c.code);
+const deMissing = deAll.filter((c) => !deCovered.includes(c));
 const dupCr = crCovered.filter((m, i) => crCovered.indexOf(m) !== i);
 const dupDv = dvCovered.filter((g, i) => dvCovered.indexOf(g) !== i);
+const dupDe = deCovered.filter((c, i) => deCovered.indexOf(c) !== i);
 
 // Every id a checkpoint waits on must be an id the app can actually mark complete.
 // buildDvFlat() in index.html emits `${group.code}-T${nn}`; buildFlat() emits the
-// module/case codes. Any id outside those sets would leave a checkpoint locked
-// forever with no way for the user to discover why.
+// module/case codes; buildDeFlat() emits `${chapter.code}-T${nn}`. Any id outside
+// those sets would leave a checkpoint locked forever with no way for the user to
+// discover why.
 const appDvIds = new Set(DV_GROUPS.flatMap((g) => g.t.map((_, i) => `${g.code}-T${String(i + 1).padStart(2, '0')}`)));
 const appCreditIds = new Set([...CREDIT.modules, ...CREDIT.cases]);
+const appDeIds = new Set(DE_CHAPTERS.flatMap((c) => c.t.map((_, i) => `${c.code}-T${String(i + 1).padStart(2, '0')}`)));
 const unreachable = [];
 for (const entry of index) {
-  const valid = entry.track === 'dv' ? appDvIds : appCreditIds;
+  const valid = entry.track === 'dv' ? appDvIds : entry.track === 'de' ? appDeIds : appCreditIds;
   for (const id of entry.covers) if (!valid.has(id)) unreachable.push(`${entry.id} waits on unknown id "${id}"`);
 }
 if (unreachable.length) {
@@ -665,11 +774,12 @@ if (unreachable.length) {
 }
 console.log(`covers ids validated against app id space: ${index.reduce((a, e) => a + e.covers.length, 0)} references, all reachable`);
 
-console.log(`credit checkpoints: ${CR.length} | dv checkpoints: ${DV.length}`);
+console.log(`credit checkpoints: ${CR.length} | dv checkpoints: ${DV.length} | de checkpoints: ${DE.length}`);
 console.log(`portfolio csv: ${PORTFOLIO.rows} loans, ${PORTFOLIO.defaults} defaults`);
 console.log(`credit modules covered: ${crCovered.length}/${crAll.length} | missing: ${crMissing.length ? crMissing.join(',') : 'none'} | duplicated: ${dupCr.length ? dupCr.join(',') : 'none'}`);
 console.log(`dv groups covered: ${dvCovered.length}/${dvAll.length} | missing: ${dvMissing.length ? dvMissing.join(',') : 'none'} | duplicated: ${dupDv.length ? dupDv.join(',') : 'none'}`);
-if (crMissing.length || dvMissing.length || dupCr.length || dupDv.length) {
+console.log(`de chapters covered: ${deCovered.length}/${deAll.length} | missing: ${deMissing.length ? deMissing.join(',') : 'none'} | duplicated: ${dupDe.length ? dupDe.join(',') : 'none'}`);
+if (crMissing.length || dvMissing.length || deMissing.length || dupCr.length || dupDv.length || dupDe.length) {
   console.error('COVERAGE FAILURE — fix the specs');
   process.exit(1);
 }

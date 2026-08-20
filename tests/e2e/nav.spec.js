@@ -8,7 +8,7 @@ test.describe('track navigation', () => {
     await mockGithubRawSuccess(page);
   });
 
-  test('all four track tabs navigate and render distinct content', async ({ page }) => {
+  test('all five track tabs navigate and render distinct content', async ({ page }) => {
     await page.goto('/index.html');
     await expect(page.locator('#app')).not.toBeEmpty();
 
@@ -17,6 +17,9 @@ test.describe('track navigation', () => {
       { name: /Data Validation/, hash: 'track/dv' },
       { name: /Business Analysis/, hash: 'track/ba' },
       { name: /Quiz Practice/, hash: 'track/quiz' },
+      // Data Engineering (Phase 1: Chapter 1 only) -- same-origin content
+      // like BA, no route mocking needed for its own hero/accordion.
+      { name: /Data Engineering/, hash: 'track/de' },
     ];
 
     for (const tab of tabs) {
