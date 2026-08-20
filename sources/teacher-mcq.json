@@ -9132,16 +9132,16 @@
           "wrong": "Indexing does not change comparison results, differing row counts don't cause a missed match on identical keys, and case-insensitive collation would make matching easier, not harder."
         },
         {
-          "q": "Why is LEN() unreliable for detecting a non-breaking space or other invisible Unicode character, while DATALENGTH() can help?",
+          "q": "For a pure-ASCII NVARCHAR value, DATALENGTH(col) is expected to equal 2 × LEN(col). What does it mean when DATALENGTH(col) > 2 × LEN(col)?",
           "choices": [
-            "LEN() counts characters and does not distinguish a non-breaking space from a normal space, but DATALENGTH() returns the byte count which can reveal encoding-related differences",
-            "LEN() only works on numeric columns",
-            "DATALENGTH() ignores trailing spaces entirely",
-            "LEN() and DATALENGTH() always return the same value for any string"
+            "The column contains at least one character that requires more than 2 bytes to store — a supplementary Unicode character, BOM marker, or other encoding artefact",
+            "The column definitely contains a non-breaking space (CHAR(160)), since that is the only character that can cause this",
+            "The value has trailing spaces that LTRIM/RTRIM failed to remove",
+            "The column was declared as VARCHAR instead of NVARCHAR, which always doubles the byte count"
           ],
           "correct": 0,
-          "right": "LEN() reports character count regardless of which specific character is present, so a non-breaking space counts the same as a regular space; DATALENGTH() reports the underlying byte size, which can expose encoding differences that character count hides.",
-          "wrong": "LEN() works on string columns, LEN() actually trims trailing spaces (a separate quirk) while DATALENGTH() does not, and the two functions frequently diverge — that divergence is exactly what makes DATALENGTH() useful here."
+          "right": "NVARCHAR normally uses 2 bytes per character, so DATALENGTH = 2 × LEN for ordinary text; when the byte count exceeds that, some character in the value needed more than 2 bytes to encode, which is a proxy for hidden multi-byte or encoding artefacts — not any single specific character.",
+          "wrong": "A non-breaking space (CHAR(160)) is itself a normal 2-byte character in NVARCHAR and would not trigger this ratio on its own; trailing spaces are ordinary 2-byte characters too and do not affect the ratio; and the byte-per-character convention is a property of the NVARCHAR data type itself, not something that flips based on how the value happens to be populated."
         },
         {
           "q": "Why is nested REPLACE() typically needed to collapse double (or multiple) spaces down to a single space, rather than a single REPLACE(col, '  ', ' ') call?",
