@@ -1422,3 +1422,69 @@ owner already has one.**
 per-change can protect. Those cover state nobody owns; this covers a *sequence*
 nobody chose. Every individual change here passed review. The failure was
 entirely in what was never asked before the first one.
+
+## 34. The first Codex finding against freshly authored content, not a pre-existing lesson
+
+**Looked like:** an ordinary reverse-pilot PR (Claude authors, Codex reviews).
+Groups G12 through G18 all came back `PASS` with zero Codex findings — six
+PRs in a row where the only defects were pre-existing bugs in the source
+lesson `.md` files (see the defect list in `HANDOFF.md`), never in the MCQ
+content Claude itself wrote that session. G19 broke that pattern.
+
+**Actually was:** `G19-T01` question 2, authored by Claude in the same PR
+being reviewed, asked why `LEN()` is unreliable for detecting a non-breaking
+space while `DATALENGTH()` "can help" — implying `DATALENGTH()` could
+distinguish `CHAR(160)` from an ordinary space. That's wrong. `CHAR(160)` is
+a normal 2-byte character in NVARCHAR; it does not move the
+`DATALENGTH`/`LEN` ratio at all. The source lesson (`G19-T01.md`) only ever
+uses that ratio as a proxy for characters needing *more* than 2 bytes
+(supplementary Unicode, BOM markers) — a completely different claim from
+the one the question was testing. Codex's blind review of the source lesson
+caught the mismatch; Claude independently re-read `G19-T01.md`, confirmed
+Codex's reasoning against the "LEN vs DATALENGTH for Unicode detection"
+section, and rewrote the question to test what the lesson actually
+documents rather than what sounded plausible.
+
+**Why this is worth a separate entry from the six PASS reviews before it:**
+those six PRs were genuine evidence that Claude-authored MCQ content was
+holding up under independent review — but six clean reviews in a row also
+risks reading as "the authoring step doesn't need the review step anymore."
+G19 is the counter-evidence: the review step caught something in month
+seven of the same well-established process, on content authored the same
+way as the six PASSes before it. The failure mode wasn't a different kind
+of author error — it was a distractor/premise that *sounded* internally
+consistent (LEN counts characters, DATALENGTH counts bytes, therefore
+DATALENGTH must reveal *something* LEN can't) without checking that the
+specific thing it claimed DATALENGTH reveals was the thing the source
+lesson actually said.
+
+**Rules:**
+
+- **A clean streak is not evidence the review step is now optional.** Six
+  PASS reviews in a row describes the author's track record on six specific
+  PRs, not a property of future content. Keep running the same independent
+  review on the seventh, unweakened.
+- **A distractor that sounds mechanistically plausible still needs the
+  underlying claim checked against the source, not just against internal
+  logic.** "X counts characters, Y counts bytes, so Y can reveal a
+  character Y-vs-X can't" is a plausible-sounding shape for a claim; whether
+  *this specific* character actually produces that effect is a fact to
+  verify, not infer from the shape.
+- **When Codex finds something in freshly authored content (not a
+  pre-existing lesson defect), that's a different signal than a source-lesson
+  bug** — it says something about the current authoring pass specifically,
+  not about lesson content written months earlier. Don't fold it into the
+  same "pre-existing defects found" bucket in `HANDOFF.md`; record it
+  separately with the original claim and the correction, the way this entry
+  does.
+- **Record a missing telemetry figure as missing, not as an estimate.** The
+  G19 review ran through the MCP `codex` tool rather than the CLI
+  invocation pattern used for earlier groups, and its tool result didn't
+  surface the five-field token breakdown the CLI gave. The right record is
+  "not captured, tool doesn't expose it" — not a guessed number that would
+  misrepresent a real cost figure as measured.
+
+**Family:** extends the G06–G10 role-swap findings and the G11–G18 reverse-
+pilot pattern documented in `docs/teacher-mcq-role-swap-experiment.md` — this
+is the first data point in that series where the reviewer caught the
+*current* author's own content rather than an inherited lesson defect.

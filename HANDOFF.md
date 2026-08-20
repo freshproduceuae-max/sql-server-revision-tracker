@@ -247,10 +247,10 @@ entry 19.
   "remainingItemsTotal": 15,
   "fullTrackTotalItems": 251,
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
-  "contentThroughPR": 55,
+  "contentThroughPR": 56,
   "contentThroughPRCheckStatus": "verified",
   "sourcesTeacherMcqHash": "sha256:29e6cd6ed802c01f75e227352e8d2ae536375ddb4b4d7cbe21fb104cc1bc9a12",
-  "lastVerified": "2026-08-20T06:52:02.282Z"
+  "lastVerified": "2026-08-20T07:14:21.190Z"
 }
 ```
 
@@ -265,19 +265,26 @@ document has drifted. This exact section went stale for six merged PRs
 (#31 → #44) before anyone caught it — see
 `docs/teacher-mcq-role-swap-experiment.md` for the incident and the fix.
 
-**Teacher MCQ warm-ups — Data Validation.** G01–G19 complete once this PR
-merges: 236 lessons, 708 questions — **all Data Validation techniques
-(G01–G19) done.** G01–G18 (217 lessons, 651 questions) are live in
-production; G19 (19 lessons, 57 questions) is in an open PR, pending Codex
-review — see below. **This PR completes the final pre-authorized
-programme (G18–G19)** — the owner authorized G18–G19 as the last
-techniques programme after reviewing the G12–G14 and G15–G17 outcomes.
-**After this PR merges and is verified in production, the only remaining
-Data Validation item is the 15 worked exercises (`M01-E1` … `M10-E1`),
-which are not authorized under this or any prior programme — a separate
-owner decision, not yet made.** The full Data Validation track is 251
-items total (236 techniques + 15 exercises); once G19 ships, 15 remaining
-exercises is the only gap left, not 34.
+**Teacher MCQ warm-ups — Data Validation.** G01–G19 are complete and **live
+in production**: 236 lessons, 708 questions — **all Data Validation
+techniques (G01–G19) done.** This completed the final pre-authorized
+programme (G18–G19) — the owner authorized G18–G19 as the last techniques
+programme after reviewing the G12–G14 and G15–G17 outcomes. **The only
+remaining Data Validation item is the 15 worked exercises
+(`M01-E1` … `M10-E1`), which are not authorized under this or any prior
+programme — a separate owner decision, explicitly not yet made. No work on
+the worked exercises has started.** The full Data Validation track is 251
+items total (236 techniques + 15 exercises); with G01–G19 done, 15
+remaining exercises is the entire gap left, not 34.
+
+**This Data Validation techniques content programme is now closed.** The
+Business Analysis / Enterprise Architecture agent pack referenced below
+(see "Enterprise Architecture track — how this came up") **remains a valid,
+reviewed plan and G19's finding reinforces its requirement for blind Codex
+review on freshly authored content** — but it is **explicitly parked**.
+Do not start Business Analysis content, Enterprise Architecture, the 15
+worked exercises, or any other content programme without a new, explicit
+owner authorization for that specific programme.
 
 **The G06–G10 batch was built under a Codex-authors/Claude-reviews
 role-swap trial**, documented in `docs/teacher-mcq-role-swap-experiment.md`.
@@ -285,9 +292,16 @@ role-swap trial**, documented in `docs/teacher-mcq-role-swap-experiment.md`.
 Codex reviews)**, then **pre-authorized programmes for G12–G14 and
 G15–G17** (both fully completed: 6/6 PRs PASS, 0 Codex findings each), and
 **after reviewing that outcome, pre-authorized a third and final
-techniques programme for G18–G19**, one group per PR. **G18 completed
-that programme's first PR; G19 (this PR) is the second and final PR,
-completing all Data Validation techniques G01–G19.**
+techniques programme for G18–G19**, one group per PR — now complete:
+
+- **G18 (PR #55): `PASS`, zero Codex findings.**
+- **G19 (PR #56): `PASS_WITH_FIXES`.** Codex's blind review caught one
+  defect in freshly authored MCQ content — the first Codex finding against
+  content from the *current* authoring pass rather than a pre-existing
+  source-lesson bug in this reverse-pilot series (G12–G18 inclusive all had
+  zero such findings). See the dedicated entry below and
+  `LESSONS-LEARNED.md` entry 34 for the full account, including the
+  original claim and the correction.
 
 **Pre-existing source-lesson defects found and fixed during these
 programmes, all recorded as content defects Claude discovered — not
@@ -324,30 +338,59 @@ each fix, it did not find any of them):
   100.0% in a case the buggy formula would have computed as 83.3%).
   Corrected the denominator to `TotalInSystem1` alone, which reproduces
   the documented output exactly.
-- G19 (this PR): no source-lesson defects found across all 19 files
+- G19 (PR #56): no source-lesson defects found across all 19 files
   (`G19-T01.md`–`G19-T19.md`) read before authoring.
+
+**G19 also produced a defect of a different kind — not a pre-existing
+source-lesson bug, but an error in freshly authored MCQ content, the first
+of this kind in the G12–G19 reverse-pilot run:**
+- `sources/teacher-mcq.json`, lesson `G19-T01`, question 2 (PR #56): Claude's
+  original question asked why `DATALENGTH()` "can help" detect a
+  non-breaking space (`CHAR(160)`) where `LEN()` cannot. That's false —
+  `CHAR(160)` is an ordinary 2-byte NVARCHAR character and does not affect
+  the `DATALENGTH`/`LEN` ratio. The source lesson's actual claim (`LEN vs
+  DATALENGTH for Unicode detection` section of `G19-T01.md`) is that
+  `DATALENGTH > 2 * LEN` is a proxy for characters needing *more* than 2
+  bytes — supplementary Unicode, BOM markers — a different claim entirely.
+  **Codex's blind review independently found this**; Claude independently
+  verified it against the source lesson before rewriting the question to
+  test the documented `DATALENGTH > 2*LEN` proxy accurately. Full evidence
+  preserved in `_audit/teacher-mcq-role-swap/G19-reverse-pilot/`
+  (`prompt.txt`, `last-message.txt`, `manifest.txt`, `codex.patch`). See
+  `LESSONS-LEARNED.md` entry 34 for the full write-up.
+
+**Token telemetry gap for the G19 Codex review — recorded as missing, not
+estimated:** the G19 review ran through the MCP `codex` tool rather than
+the `codex exec --json` CLI pattern used for G12–G18, and the MCP tool's
+result did not surface the five-field token breakdown (total input, cached
+input, output, reasoning) that the CLI invocation gave for every prior
+group. This is a genuine gap in that one figure for G19, not a number that
+should be inferred or approximated from other groups' figures.
 
 `contentThroughPR` in the progress block above tracks the latest merged PR
 that changed Teacher MCQ content. The Teacher currently ships (production)
 with: all three lesson tracks, a floating panel, a session reset, and an
-MCQ-first warm-up covering **G01–G18 of Data Validation** as of the last
-production deploy; check the progress block for what's merged vs. what's
-still an open PR at any given moment.
+MCQ-first warm-up covering **G01–G19 of Data Validation — all Data
+Validation techniques, complete** — as of the last production deploy;
+check the progress block for the exact verified state at any given moment.
 
 | # | Item | Scope | Gated on |
 |---|---|---|---|
-| 1 | Teacher MCQs — rest of Data Validation | 15 worked exercises remaining (all G01–G19 techniques done once this PR ships) | Owner's separate decision — not yet authorized |
-| 2 | Teacher MCQs — Credit Risk | 47 modules + 7 case studies | nothing |
-| 3 | Teacher MCQs — Business Analysis | 42 lessons | nothing |
+| 1 | Teacher MCQs — rest of Data Validation | 15 worked exercises remaining (all G01–G19 techniques complete and live) | **Parked.** Owner's separate decision — not yet authorized. No work started. |
+| 2 | Teacher MCQs — Credit Risk | 47 modules + 7 case studies | nothing technical — **parked**, not authorized to start |
+| 3 | Teacher MCQs — Business Analysis | 42 lessons | nothing technical — **parked**, not authorized to start |
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
-| 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing |
+| 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start |
 
-Items 2, 3 and 6 are **content only** — no infrastructure, no new data
-surface, following patterns already shipped and reviewed. They are not
-blocked by anything and can proceed immediately. Item 1 is also content-only
-but is gated on the owner's explicit G11 workflow decision, not on any
-technical dependency.
+**Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
+close.** None of them are blocked by a technical dependency — each is
+content-only content following patterns already shipped and reviewed, and
+each could start immediately on authorization — but none should be started
+without a new, explicit owner decision naming that specific programme.
+The next authorized programme is product/infrastructure work, not more
+content; see the executive proposal delivered alongside this update.
+
 
 ### Which phase each item belongs to
 
