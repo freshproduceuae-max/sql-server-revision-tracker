@@ -27,9 +27,24 @@ const MIME = {
 };
 
 function safeJoin(root, urlPath) {
-  const decoded = decodeURIComponent(urlPath.split('?')[0]);
+  // decodeURIComponent throws on a malformed %-escape (e.g. a lone '%'),
+  // which would otherwise crash the whole server since this runs inside an
+  // http request handler with no surrounding try/catch (Codex review
+  // finding: an uncaught exception here takes the process down, not just
+  // the one request).
+  let decoded;
+  try {
+    decoded = decodeURIComponent(urlPath.split('?')[0]);
+  } catch (e) {
+    return null;
+  }
   const resolved = path.normalize(path.join(root, decoded));
-  if (!resolved.startsWith(root)) return null; // path traversal guard
+  // `resolved.startsWith(root)` alone is a raw STRING prefix check, not a
+  // path-boundary check: a sibling directory like `<root>2` also starts
+  // with the string `<root>` even though it is a completely different
+  // directory (Codex review finding). Requiring the next character to be
+  // the path separator -- or the paths being exactly equal -- fixes that.
+  if (resolved !== root && !resolved.startsWith(root + path.sep)) return null;
   return resolved;
 }
 

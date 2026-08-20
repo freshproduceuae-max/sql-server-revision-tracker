@@ -37,12 +37,21 @@ async function mockGithubRawSuccess(page) {
 }
 
 /** Simulate a GitHub-raw fetch that never resolves within the test, so the
- * loading spinner can be asserted before any content/error state appears. */
-async function mockGithubRawDelay(page, ms = 60_000) {
-  await page.route(GITHUB_RAW_PATTERN, async (route) => {
-    await new Promise((r) => setTimeout(r, ms));
-    route.abort();
-  });
+ * loading spinner can be asserted before any content/error state appears.
+ *
+ * Deliberately never calls route.fulfill()/route.abort() at all, rather
+ * than waiting out a real setTimeout first: a `setTimeout` registers a
+ * Node timer/handle that keeps that test worker's process alive until it
+ * fires, and Playwright's route callback runs inside the worker process,
+ * not the browser -- a 60s real timer here can leave the test run hanging
+ * or leak a process if the worker isn't force-killed on teardown (found by
+ * Codex's independent PR review: `npx playwright test` failed to exit and
+ * left a node.exe process running). A route handler that returns a
+ * never-resolving Promise with no timer behind it holds no such handle --
+ * the page's own fetch just sits pending until the browser context closes
+ * at test end, which is all this test actually needs. */
+async function mockGithubRawDelay(page) {
+  await page.route(GITHUB_RAW_PATTERN, () => new Promise(() => {}));
 }
 
 /** Simulate a GitHub-raw fetch failure (network abort), so the app's error
@@ -58,12 +67,10 @@ async function mockSameOriginFailure(page, urlSuffix) {
   await page.route(`**/${urlSuffix}`, (route) => route.fulfill({ status: 404, body: 'not found' }));
 }
 
-/** Simulate a same-origin asset hanging, for the loading-state assertion. */
-async function mockSameOriginDelay(page, urlSuffix, ms = 60_000) {
-  await page.route(`**/${urlSuffix}`, async (route) => {
-    await new Promise((r) => setTimeout(r, ms));
-    route.abort();
-  });
+/** Simulate a same-origin asset hanging, for the loading-state assertion.
+ * Same no-timer reasoning as mockGithubRawDelay above -- see its comment. */
+async function mockSameOriginDelay(page, urlSuffix) {
+  await page.route(`**/${urlSuffix}`, () => new Promise(() => {}));
 }
 
 /** Seed crAcademy_v1 in localStorage before the app's first script runs, so

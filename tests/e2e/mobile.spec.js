@@ -25,17 +25,35 @@ test('mobile: navigation, lesson load and Teacher panel are usable at phone widt
   const panel = page.locator('.teacher-panel');
   await expect(panel).toBeVisible();
 
-  // The mobile breakpoint (index.html's .teacher-panel media-query override)
-  // must actually be in effect: the panel should span (near) full width,
-  // not sit at its 380px desktop width, at a 390px-wide iPhone 13 viewport.
+  // The mobile breakpoint (index.html's .teacher-panel media-query override,
+  // `left:12px;right:12px;width:auto;max-width:none`) must actually be in
+  // effect, not just "the panel looks wide enough". A raw width threshold
+  // does NOT reliably distinguish this: the desktop rule is `width:380px`
+  // capped by `max-width:calc(100vw - 32px)`, which at the iPhone 13's
+  // 390px viewport clamps to 358px -- only 8px narrower than the mobile
+  // rule's actual ~366px, so a ">300" (or even ">340") threshold would
+  // pass under EITHER rule and prove nothing (found by Codex's independent
+  // PR review). The one property whose exact computed value can only come
+  // from the mobile rule is `max-width`: the desktop rule's `calc(...)`
+  // always resolves to a specific pixel value, never the literal string
+  // "none" -- only the mobile override sets that literally. Checking the
+  // real applied CSS this way is unambiguous in a way geometry isn't.
   //
-  // boundingBox() is a one-shot call with no auto-retry, unlike Playwright's
-  // expect() assertions -- this app re-renders by replacing #app's innerHTML
-  // on every state change (e.g. the MCQ finishing its own load), so a single
-  // boundingBox() call can race a render and transiently see a detached
-  // node (null) under real parallel-worker CPU contention. expect.poll()
-  // retries the read until it succeeds or times out, which toBeVisible()
-  // just above does not protect against for a *subsequent* unrelated call.
+  // getComputedStyle is read via expect.poll() rather than a one-shot
+  // page.evaluate(), because this app re-renders by replacing #app's
+  // innerHTML on every state change (e.g. the MCQ finishing its own load),
+  // so a single read can race a render and transiently see a detached node
+  // under real parallel-worker CPU contention.
+  await expect
+    .poll(
+      () => panel.evaluate((el) => getComputedStyle(el).maxWidth).catch(() => null),
+      { timeout: 10_000 }
+    )
+    .toBe('none');
+
+  // Interactability check, kept separate from the CSS-correctness check
+  // above: the panel must also actually fit on screen, not just carry the
+  // right CSS property.
   await expect
     .poll(() => panel.boundingBox().then((b) => b?.width ?? null), { timeout: 10_000 })
     .toBeGreaterThan(300);
