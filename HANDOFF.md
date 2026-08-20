@@ -238,24 +238,23 @@ entry 19.
 
 ```json
 {
-  "completedThroughGroup": "G15",
-  "completedLessons": 195,
-  "completedQuestions": 585,
+  "completedThroughGroup": "G16",
+  "completedLessons": 201,
+  "completedQuestions": 603,
   "remainingGroups": [
-    "G16",
     "G17",
     "G18",
     "G19"
   ],
-  "remainingTechniques": 41,
+  "remainingTechniques": 35,
   "remainingExercises": 15,
-  "remainingItemsTotal": 56,
+  "remainingItemsTotal": 50,
   "fullTrackTotalItems": 251,
-  "_note": "41 remaining techniques + 15 remaining exercises = 56 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
-  "contentThroughPR": 51,
+  "_note": "35 remaining techniques + 15 remaining exercises = 50 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
+  "contentThroughPR": 52,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:162622744aec5fe59fdb43f9483bb962e4798d70e15780c7b37f9ef8fdccf673",
-  "lastVerified": "2026-08-20T05:38:54.997Z"
+  "sourcesTeacherMcqHash": "sha256:3045e6bdac91e8de0818435df0c2acadac01f80c61d64ebba19de4bf95b60ca4",
+  "lastVerified": "2026-08-20T05:46:27.842Z"
 }
 ```
 
@@ -270,13 +269,13 @@ document has drifted. This exact section went stale for six merged PRs
 (#31 → #44) before anyone caught it — see
 `docs/teacher-mcq-role-swap-experiment.md` for the incident and the fix.
 
-**Teacher MCQ warm-ups — Data Validation.** G01–G15 complete once this PR
-merges: 195 lessons, 585 questions. **G01–G14 (185 lessons, 555 questions)
-are live in production; G15 (10 lessons, 30 questions) is in an open PR,
-pending Codex review** — see below. Remaining after G15 merges: G16–G19
-(41 techniques across 4 groups) plus the 15 worked exercises
-(`M01-E1` … `M10-E1`) — **56 items left**. The full Data Validation track
-is 251 items total (236 techniques + 15 exercises); 56 remaining is not
+**Teacher MCQ warm-ups — Data Validation.** G01–G16 complete once this PR
+merges: 201 lessons, 603 questions. **G01–G15 (195 lessons, 585 questions)
+are live in production; G16 (6 lessons, 18 questions) is in an open PR,
+pending Codex review** — see below. Remaining after G16 merges: G17–G19
+(35 techniques across 3 groups) plus the 15 worked exercises
+(`M01-E1` … `M10-E1`) — **50 items left**. The full Data Validation track
+is 251 items total (236 techniques + 15 exercises); 50 remaining is not
 the same number as 251 total — don't conflate them.
 
 **The G06–G10 batch was built under a Codex-authors/Claude-reviews
@@ -285,8 +284,8 @@ role-swap trial**, documented in `docs/teacher-mcq-role-swap-experiment.md`.
 Codex reviews)**, then **pre-authorized the same arrangement as a
 programme for G12–G14** (all three: PASS, 0 Codex findings each), and
 **after reviewing that outcome, pre-authorized a second programme for
-G15–G17** (10+6+8 = 24 lessons, 72 questions), one group per PR. **G15 is
-the first group in this second programme. The owner's next decision —
+G15–G17** (10+6+8 = 24 lessons, 72 questions), one group per PR. **G16 is
+the second group in this second programme. The owner's next decision —
 G18 onward — has not been made** and must not be assumed.
 
 **Pre-existing source-lesson defects found and fixed during these
@@ -302,22 +301,26 @@ each fix, it did not find any of them):
   to derive genuine lft/rgt values and validate real containment.
 - `G14-T01.md` Step 1 (PR #51): `CAST(expr, 1)` is invalid T-SQL syntax —
   would have failed to compile. Fixed to `CAST(expr AS VARCHAR)`.
-- `G15-T05.md` (this PR): the Explanation prose claimed Step 1 used FULL
+- `G15-T05.md` (PR #52): the Explanation prose claimed Step 1 used FULL
   OUTER JOIN to catch both missing and unexpected values, but Step 1
   actually uses LEFT JOIN, which only catches missing values one
-  direction. Corrected the prose to accurately describe Step 1 and point
-  to Step 2's genuine FULL OUTER JOIN pattern for the other direction.
+  direction. Corrected the prose.
+- `G16-T04.md` (this PR): a code comment claimed `FLOOR()` "truncates
+  toward zero," which is wrong — FLOOR always rounds toward negative
+  infinity (the comment's own example, -0.1 → -1, actually demonstrates
+  this, not truncation, which would give 0). Corrected the comment's
+  wording; the SQL itself was already correct.
 
 `contentThroughPR` in the progress block above tracks the latest merged PR
 that changed Teacher MCQ content. The Teacher currently ships (production)
 with: all three lesson tracks, a floating panel, a session reset, and an
-MCQ-first warm-up covering **G01–G14 of Data Validation** as of the last
+MCQ-first warm-up covering **G01–G15 of Data Validation** as of the last
 production deploy; check the progress block for what's merged vs. what's
 still an open PR at any given moment.
 
 | # | Item | Scope | Gated on |
 |---|---|---|---|
-| 1 | Teacher MCQs — rest of Data Validation | G16–G19 (41 techniques, 4 groups) + 15 worked exercises = 56 items remaining | Owner's decision on G18 onward, after the G15–G17 programme completes |
+| 1 | Teacher MCQs — rest of Data Validation | G17–G19 (35 techniques, 3 groups) + 15 worked exercises = 50 items remaining | Owner's decision on G18 onward, after the G15–G17 programme completes |
 | 2 | Teacher MCQs — Credit Risk | 47 modules + 7 case studies | nothing |
 | 3 | Teacher MCQs — Business Analysis | 42 lessons | nothing |
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |

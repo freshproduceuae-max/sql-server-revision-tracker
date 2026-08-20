@@ -8191,6 +8191,258 @@
         }
       ],
       "close": "Consistent column shape as what makes the scorecard scale, ASCII ordering putting failures first automatically, and DECLARE thresholds as reusable parameters — that closes out ETL/Load Process. Ten techniques: staging reconciliation, transformation rules, duplicates, type coercion, reference freshness, load windows, incremental-vs-full, post-load orphans, reject audits, and the final sign-off scorecard."
+    },
+    "G16-T01": {
+      "open": "Welcome to Geospatial — you've opened Coordinate Range and Validity Check, catching a swapped latitude/longitude before it routes six weeks of deliveries to the wrong depot. Three questions.",
+      "questions": [
+        {
+          "q": "The lesson layers coordinate validation into global range, regional bounds, sentinel detection, and transposition detection. Why does it note that \"a coordinate that passes the global range check may still fail the regional bounds check\"?",
+          "choices": [
+            "Global range only rules out physically impossible values (like latitude 200); a value can be a perfectly valid latitude/longitude pair somewhere on Earth while still being nowhere near the expected UK region",
+            "The regional bounds check is a stricter version of exactly the same test as the global range check, just repeated twice",
+            "Global range checks only apply to the Longitude column, never to Latitude",
+            "SQL Server evaluates regional bounds before global range regardless of query order"
+          ],
+          "correct": 0,
+          "right": "Right — the two checks test genuinely different things. Global range asks \"is this physically possible anywhere on Earth?\"; regional bounds asks \"is this plausible for where this specific customer should be?\" A value can cleanly pass the first and still fail the second.",
+          "wrong": "The lesson's own point is that these are independent tests catching different failure classes: a coordinate like (48.1, 11.5) is perfectly valid globally — it's a real place on Earth — so it sails through the global range check. But if that customer is supposed to be in the UK, that coordinate is nowhere near the UK's expected bounds (49.8–60.9°N), so it fails the regional check even though nothing about it violates basic physical possibility."
+        },
+        {
+          "q": "Why does the lesson describe transposed coordinate detection as requiring \"regional knowledge, not global range checks alone\"?",
+          "choices": [
+            "A transposed UK coordinate (lat/lon swapped) has its latitude value land in the longitude's normal range and vice versa — recognising that pattern requires knowing what UK latitude and longitude normally look like, not just whether each value is globally possible",
+            "Global range checks are incapable of detecting any coordinate problems whatsoever",
+            "Transposition can only be detected by manually calling the customer to verify their address",
+            "SQL Server has a built-in TRANSPOSED() function that performs this check automatically"
+          ],
+          "correct": 0,
+          "right": "Right — you need to know what a normal UK latitude and longitude actually look like to spot the tell-tale swap. A global range check alone has no way to notice that pattern.",
+          "wrong": "The lesson explains the mechanism: a transposed UK coordinate has its latitude value sitting in the range where longitude normally would be (roughly -8 to +2) and its longitude value sitting in the range where latitude normally would be (roughly 50–61). Recognising that specific signature requires knowing the expected regional bounds for both fields — a global check that only asks \"is each value individually possible somewhere on Earth\" has no way to notice this swapped pattern."
+        },
+        {
+          "q": "Why does the lesson single out the coordinate (0°N, 0°E) as \"one of the most common geocoding failure values\" rather than just an unusual data point?",
+          "choices": [
+            "Many geocoding systems default to (0,0) — the intersection of the prime meridian and the equator — when a lookup fails, so its presence for a UK or US customer almost always signals a failed geocode rather than a genuine address",
+            "(0,0) is a real, valid address located in central London that customers legitimately have",
+            "SQL Server automatically rejects any coordinate value that isn't exactly (0,0)",
+            "It's flagged only because it happens to be the mathematical midpoint of all possible coordinate values"
+          ],
+          "correct": 0,
+          "right": "Right — it's a common default fallback, not a real address for this business. Its presence is a strong tell that the geocoding step failed rather than found a genuine location.",
+          "wrong": "The lesson explains why this specific coordinate is so diagnostic: (0,0) — the Gulf of Guinea, not a real customer address for a UK or US business — is a common default value many geocoding systems fall back to when a lookup can't resolve an address. Because it's essentially never a genuine location for this kind of business, its appearance is treated as near-certain evidence of a geocoding failure rather than a coincidental real address."
+        }
+      ],
+      "close": "Global-vs-regional as independent checks, transposition as a pattern only regional knowledge reveals, and (0,0) as a geocoding-failure fingerprint — coordinate validity covered. Next: Distance and Proximity Validation, computing how far apart two points actually are."
+    },
+    "G16-T02": {
+      "open": "Distance and Proximity Validation — a driver's GPS pings showing an impossible 163km hop between two 5-minute intervals is exactly the kind of thing distance math catches that a simple range check never would.",
+      "questions": [
+        {
+          "q": "Why does the lesson say the equirectangular projection approximation is acceptable for UK-scale distance checks but not for precise routing calculations?",
+          "choices": [
+            "It introduces less than 0.5% error for distances up to about 500km, which is fine for anomaly detection at UK scale, but the full Haversine formula is needed where genuine precision matters",
+            "The equirectangular projection only works for distances greater than 1,000km",
+            "SQL Server cannot compute the Haversine formula under any circumstances",
+            "The equirectangular projection and the Haversine formula always produce identical results regardless of distance"
+          ],
+          "correct": 0,
+          "right": "Right — it's a genuine accuracy tradeoff, not a hard limitation. Good enough for spotting an anomaly at UK scale, not precise enough where routing accuracy actually matters.",
+          "wrong": "The lesson states the tradeoff directly: the equirectangular projection introduces less than 0.5% error for distances up to roughly 500km, treating the Earth as locally flat — acceptable for the kind of anomaly detection this lesson focuses on. But it explicitly says the full Haversine formula (which properly accounts for the Earth's curvature) should be used for precise routing calculations, where that small error margin would actually matter."
+        },
+        {
+          "q": "Why does the self-join in Step 2 use `a.CustomerID < b.CustomerID` rather than just joining every customer to every other customer?",
+          "choices": [
+            "It prevents a customer from being matched to themselves and avoids generating both the A-B and B-A version of the same pair, which would otherwise appear as duplicate results",
+            "SQL Server requires an inequality condition whenever a table is joined to itself",
+            "It makes the distance calculation itself more mathematically accurate",
+            "Without it, the query would only return customers from the United Kingdom"
+          ],
+          "correct": 0,
+          "right": "Right — it's a deduplication trick specific to self-joins. Without it you'd get every pair twice (once each direction) plus every customer paired with themselves at distance zero.",
+          "wrong": "The lesson explains this directly: comparing every customer to every other customer via a self-join would otherwise match each customer to themselves (a meaningless zero-distance pair) and produce both the A-to-B and B-to-A version of every genuine pair, which are redundant. The `a.CustomerID < b.CustomerID` condition eliminates both problems in one step, since it's only true for one direction of any given pair and never true when comparing a row to itself."
+        },
+        {
+          "q": "Why does the lesson treat a customer coordinate that exactly matches the London centroid (51.5074, -0.1278) as more likely a default than a genuine address?",
+          "choices": [
+            "The London centroid is commonly used as a geocoding fallback when an address can't be resolved, so its appearance is a strong signal of a failed geocode rather than proof the customer genuinely lives at that exact point",
+            "It's mathematically impossible for any real customer to live at that exact coordinate",
+            "SQL Server automatically flags any coordinate matching a capital city's centroid as invalid",
+            "The London centroid can only appear in test data, never in production data"
+          ],
+          "correct": 0,
+          "right": "Right — a real customer landing on the exact centroid coordinate, to many decimal places, is statistically far more likely to be a fallback default than genuine precision landing exactly there by chance.",
+          "wrong": "The lesson explains this pattern directly: the London centroid is a common fallback value that geocoding systems use when an address cannot be resolved to an actual location — it's a known default, not a coincidence. A coordinate landing exactly there, especially to several decimal places, is treated as a strong signal that the geocode failed and fell back to this default, rather than the customer's real address genuinely sitting at that precise point."
+        }
+      ],
+      "close": "Equirectangular approximation as good-enough-for-anomalies but not for routing, the self-join dedup trick, and the London centroid as a fallback tell — distance validation covered. Next: Postcode and Address Format Validation, checking that address fields actually match their expected structure."
+    },
+    "G16-T03": {
+      "open": "Postcode and Address Format Validation — a postcode missing its space isn't wrong data exactly, but it's wrong enough to get 34,000 letters rejected by a mailing house.",
+      "questions": [
+        {
+          "q": "Why does UK postcode validation in this lesson require six separate LIKE patterns instead of one pattern with a quantifier?",
+          "choices": [
+            "SQL Server's LIKE syntax does not support quantifiers like {1,2}, so each of the UK's distinct postcode structural formats needs its own separate pattern using character classes",
+            "SQL Server limits LIKE patterns to a maximum of 10 characters each",
+            "UK postcodes are randomly generated and have no consistent structural format at all",
+            "Six patterns are used purely for readability; a single pattern with a quantifier would also work but was avoided by choice"
+          ],
+          "correct": 0,
+          "right": "Right — this is a genuine T-SQL limitation, not a stylistic choice. Regex-style quantifiers like {1,2} simply aren't available in LIKE, so each structural variant needs to be spelled out as its own pattern.",
+          "wrong": "The lesson states this as a real syntax limitation: SQL Server's LIKE does not support quantifiers such as `{1,2}` the way full regex engines do. Since UK postcodes have six genuinely distinct structural formats (A9 9AA, A99 9AA, A9A 9AA, AA9 9AA, AA99 9AA, AA9A 9AA), each one needs its own explicit LIKE pattern built from character classes (`[A-Z]`, `[0-9]`), which T-SQL does support — there's no way to collapse them into a single quantified pattern."
+        },
+        {
+          "q": "Why does the lesson call `example.com` email addresses \"technically valid in format but indicative of test data\"?",
+          "choices": [
+            "IANA reserves example.com explicitly for documentation and testing purposes, so a real customer will never genuinely have an @example.com email even though the format itself passes every structural check",
+            "example.com is not a syntactically valid domain name under any email standard",
+            "SQL Server automatically rejects any email address containing the word \"example\"",
+            "Real customers commonly and legitimately use example.com as their personal email domain"
+          ],
+          "correct": 0,
+          "right": "Right — it looks perfectly fine structurally (x@y.z), which is exactly why it needs a separate, deliberate check: the format alone can't tell you it's fake, only knowing that IANA reserves this specific domain can.",
+          "wrong": "The lesson makes this exact distinction: an address like `alice@example.com` passes every structural check — it has an @, a domain, a dot — so a pure format validator would call it valid. What makes it suspicious is domain knowledge: IANA has explicitly reserved example.com for documentation and testing, meaning no real customer will ever legitimately have an email there. Catching it requires checking against known test domains specifically, not just checking the format."
+        },
+        {
+          "q": "Why does the lesson describe the Ofcom-reserved 07700 900xxx number range as a reliable test-data signal?",
+          "choices": [
+            "Ofcom reserves this specific range for use in TV, film, and fiction, meaning it cannot be assigned to real subscribers — so its presence in a production database indicates leftover test data, not a real customer's number",
+            "07700 900xxx numbers are the most common phone number format among UK customers generally",
+            "SQL Server treats these numbers as syntactically invalid and refuses to store them",
+            "The 07700 900xxx range was recently deprecated and is no longer checked by any validation system"
+          ],
+          "correct": 0,
+          "right": "Right — this range is officially set aside for fictional use and can never be a real, assignable UK number. Finding one in production data is essentially proof it's leftover test data, not a genuine subscriber.",
+          "wrong": "The lesson explains the regulatory basis: Ofcom formally reserves the 07700 900xxx range specifically so that TV, film, and fiction can use \"realistic-looking\" phone numbers without ever risking dialing a real subscriber — these numbers cannot be assigned to actual customers by any UK network. Their appearance in a production customer database is therefore a strong, specific signal of leftover placeholder or test data that was never cleaned up before go-live."
+        }
+      ],
+      "close": "LIKE's quantifier limitation forcing six separate patterns, example.com as a domain-knowledge-only test signal, and Ofcom's reserved number range — postcode and address format validation covered. Next: Geographic Clustering and Density Analysis, spotting when too many customers land in exactly the same place."
+    },
+    "G16-T04": {
+      "open": "Geographic Clustering and Density Analysis — when 2.3% of a customer base shares the exact same coordinate, that's not a popular address, it's a geocoding shortcut showing through.",
+      "questions": [
+        {
+          "q": "Why does the lesson treat a 1-degree grid cell containing more than 50% of all customers as a strong data quality signal, rather than just genuine business concentration?",
+          "choices": [
+            "In a nationally distributed customer base, no single 1-degree cell should normally contain more than roughly 10–15% of customers, so 50%+ is far outside what genuine geographic concentration would produce — it's much more likely centroid clustering or a load error",
+            "SQL Server enforces a hard limit of 50% on any single GROUP BY result by default",
+            "A 1-degree grid cell physically cannot contain more than 50% of any dataset regardless of geography",
+            "It's only meaningful if the business operates in exactly one country"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson names a rough expected ceiling (10–15%) for genuine distribution, and 50%+ blows straight past that. At that scale, it's much more likely to be an artifact of geocoding failure than authentic concentration.",
+          "wrong": "The lesson gives a concrete expectation: for a nationally distributed customer base (not a hyper-local business), no single 1-degree cell should typically hold more than about 10–15% of all customers. A cell holding 50%+ is dramatically outside that normal range — the lesson attributes this almost always to a data quality problem, either many customers geocoded to the same postcode centroid, or a load error that duplicated records sharing the same address, rather than genuine organic concentration."
+        },
+        {
+          "q": "Why does the lesson use decimal place count as a proxy for geocoding precision quality?",
+          "choices": [
+            "Fewer decimal places correspond to coarser real-world accuracy — roughly 2 decimal places implies postcode-level precision (~1km), while 6 decimal places implies GPS-level precision (~0.1m) — so counting them reveals whether geocoding happened at the expected resolution",
+            "Decimal place count has no relationship to real-world geographic accuracy whatsoever",
+            "SQL Server automatically rounds all coordinates to exactly 4 decimal places on storage",
+            "It only works for customers located north of 53 degrees latitude"
+          ],
+          "correct": 0,
+          "right": "Right — decimal places map directly onto real-world precision. Fewer digits after the decimal point means a coarser, less precise fix on the actual location.",
+          "wrong": "The lesson gives the specific mapping: roughly 2 decimal places corresponds to about 1km accuracy (postcode-level geocoding), roughly 4 decimal places to about 10m (address-level), and roughly 6 decimal places to about 0.1m (GPS-level). Counting the decimal places actually present in a stored coordinate is therefore a cheap, direct proxy for how precisely that specific record was actually geocoded, without needing any external metadata about the geocoding method used."
+        },
+        {
+          "q": "Why does the FLOOR() function correctly assign the coordinate -0.1 to grid cell -1, rather than to cell 0?",
+          "choices": [
+            "FLOOR() always rounds toward negative infinity — the next lower integer — not toward zero, so -0.1 rounds down to -1",
+            "FLOOR() rounds toward zero for negative numbers specifically, which happens to also produce -1 in this case",
+            "FLOOR() only works correctly on positive numbers, so this result is technically undefined behavior",
+            "SQL Server's FLOOR() function is different from the standard mathematical floor function used in other languages"
+          ],
+          "correct": 0,
+          "right": "Right — FLOOR always goes down to the next whole number, in the direction of negative infinity. For -0.1, the next integer below it is -1, not 0.",
+          "wrong": "FLOOR() consistently rounds toward negative infinity — the next integer that's less than or equal to the input — regardless of sign. For -0.1, the next integer at or below it is -1 (since 0 is actually greater than -0.1, not less than or equal to it), so FLOOR(-0.1) correctly evaluates to -1. This is standard FLOOR behavior in T-SQL, the same as in most other languages — it is not truncation toward zero, which would instead produce 0 for this input."
+        }
+      ],
+      "close": "Concentration thresholds as a geocoding-failure signal, decimal places as a precision proxy, and FLOOR's true rounding direction — clustering and density analysis covered. Next: Coordinate-to-Region Consistency Check, cross-validating a declared country against where the coordinates actually point."
+    },
+    "G16-T05": {
+      "open": "Coordinate-to-Region Consistency Check — a declared country field and a geocoded coordinate are two independent sources of truth about the same fact, and this technique is what happens when you actually compare them.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe rectangular country bounding boxes as producing both \"false negatives\" and \"false positives\"?",
+          "choices": [
+            "A bounding box can exclude genuine locations within the country (like islands sitting outside the rectangle) and can include locations that are actually in a neighbouring country (like an Alsace coordinate falling inside France's box near the German border)",
+            "Bounding boxes only produce false negatives, never false positives, for any country",
+            "SQL Server cannot represent bounding boxes accurately for countries north of 50 degrees latitude",
+            "False negatives and false positives are two names for the exact same kind of error"
+          ],
+          "correct": 0,
+          "right": "Right — a rectangle is a rough approximation of an irregular country shape, and it can be wrong in both directions: excluding real territory (islands) and including territory that actually belongs to a neighbour.",
+          "wrong": "The lesson names both failure directions explicitly: false negatives happen when a genuine location within the country falls outside its rectangular bounding box (like an island); false positives happen when a location inside the bounding box actually belongs to a different, neighbouring country (the lesson's own example: a German coordinate near Alsace falling inside France's bounding box). Both are inherent limitations of using a rectangle to approximate an irregularly-shaped country."
+        },
+        {
+          "q": "Why does Step 3's reverse-lookup subquery use `SELECT TOP 1`?",
+          "choices": [
+            "Because bounding boxes for different countries can overlap in border regions, a single coordinate might technically fall inside more than one country's box, so TOP 1 picks one result rather than the query failing or returning multiple rows unexpectedly",
+            "TOP 1 is required syntax whenever a subquery appears inside a CASE expression in SQL Server",
+            "It limits the query to only checking the first country alphabetically in the CountryBounds table",
+            "TOP 1 makes the subquery run measurably faster regardless of whether overlaps exist"
+          ],
+          "correct": 0,
+          "right": "Right — overlapping bounding boxes near borders mean more than one country's box could technically contain the same coordinate, and TOP 1 is what keeps the subquery from returning multiple rows in that case.",
+          "wrong": "The lesson explains this directly: because bounding boxes for neighbouring countries can genuinely overlap in border regions, a coordinate near a border might technically satisfy the BETWEEN condition for more than one country. Without TOP 1, a subquery expected to return a single scalar value could instead try to return multiple rows, which isn't valid in that context — TOP 1 ensures exactly one country name comes back even when the coordinate technically matches more than one bounding box."
+        },
+        {
+          "q": "Why does the lesson call comparing declared Country against geocoded coordinates an instance of the \"two-source validation principle\"?",
+          "choices": [
+            "Neither the declared country nor the geocoded coordinate is assumed correct on its own — where the two independently-sourced pieces of information agree, confidence is high; where they disagree, something is wrong, without presupposing which source is at fault",
+            "It's called that because exactly two SQL queries are required to implement the check",
+            "The declared Country field is always assumed to be the correct source whenever a mismatch is found",
+            "Two-source validation means the check must be run on two separate database servers simultaneously"
+          ],
+          "correct": 0,
+          "right": "Right — neither field gets automatic trust. Agreement between two independently-sourced facts is treated as evidence of correctness; disagreement flags a problem without assuming in advance which side is wrong.",
+          "wrong": "The lesson defines this principle directly: the declared Country (from what the customer typed on a form) and the geocoded coordinate (from an entirely separate geocoding API) are two independent sources describing the same underlying fact — where the customer actually is. Where they agree, that agreement is itself evidence of correctness. Where they disagree, the SQL simply surfaces the disagreement without presupposing which of the two sources is the wrong one — the lesson notes that determination needs business knowledge or a third source to resolve."
+        }
+      ],
+      "close": "Bounding boxes' two-directional inaccuracy, TOP 1 as the fix for border-region overlaps, and two independent sources beating trusting either one alone — coordinate-to-region consistency covered. Last one in this group: Spatial Join and Coverage Gap Analysis."
+    },
+    "G16-T06": {
+      "open": "Last one in Geospatial — Spatial Join and Coverage Gap Analysis. When service zone polygons don't perfectly tile the map, customers can fall through the cracks between them, technically \"covered\" by nothing.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe the spatial join in Step 2 as mirroring \"the standard LEFT JOIN + IS NULL orphan pattern applied to geographic containment\"?",
+          "choices": [
+            "Every customer appears in the result regardless of match, joined to whichever zone(s) contain their coordinate — a customer whose coordinate falls in no zone shows up with NULL zone fields, exactly like an orphan record with no matching parent",
+            "It's called an orphan pattern because customers without a matching zone are automatically deleted from the Customers table",
+            "The comparison only applies when the ServiceZones table is completely empty",
+            "LEFT JOIN and orphan detection are unrelated concepts that happen to share similar SQL syntax by coincidence"
+          ],
+          "correct": 0,
+          "right": "Right — same mechanism, different domain. A customer whose coordinate matches no service zone gets NULL zone columns from the LEFT JOIN, exactly the same signature a child record with no matching parent produces in classic orphan detection.",
+          "wrong": "The lesson draws this parallel directly: the LEFT JOIN from Customers to ServiceZones keeps every customer row regardless of whether a zone matched, and a customer whose coordinate falls within no defined zone comes back with NULL in the zone columns — structurally identical to how a LEFT JOIN + IS NULL check finds a child record (like an order) with no matching parent (like a customer). The underlying SQL pattern is the same; only the domain (geographic containment vs foreign key integrity) is different."
+        },
+        {
+          "q": "Why does the lesson say NOT EXISTS is \"more efficient\" than GROUP BY + HAVING COUNT = 0 for the coverage gap count in Step 5?",
+          "choices": [
+            "NOT EXISTS can stop searching as soon as it finds one matching zone, while a GROUP BY approach would need to count every match for every customer before it could determine which customers had zero matches",
+            "GROUP BY and HAVING cannot be used together in the same SQL Server query under any circumstances",
+            "NOT EXISTS is required syntax whenever a query involves latitude and longitude columns",
+            "The two approaches always produce different, incompatible results, so efficiency isn't actually the deciding factor"
+          ],
+          "correct": 0,
+          "right": "Right — it's about short-circuiting. NOT EXISTS can stop the moment it finds any match at all, while counting-based approaches have to tally everything up first before they can tell you the count was zero.",
+          "wrong": "The lesson explains the mechanism: NOT EXISTS can exit as soon as it finds a single matching zone for a customer, since that's already enough to know the customer isn't in a coverage gap — there's no need to keep searching or tally up every possible match. A GROUP BY + HAVING COUNT = 0 approach, by contrast, would need to count all zone matches for every customer before it could determine which customers ended up with a zero count. For large tables with many zones, that difference in work adds up."
+        },
+        {
+          "q": "Why does the lesson say an empty service zone needs context before being treated as a problem?",
+          "choices": [
+            "A brand-new zone that was just added legitimately has no customers yet, while an existing zone that previously had customers and now shows zero suggests a genuine load error or reassignment issue — the same symptom (zero customers) can mean two very different things",
+            "Empty zones are always a SQL syntax error and indicate the query itself is broken",
+            "SQL Server automatically deletes any service zone that has zero customers after 24 hours",
+            "An empty zone can only ever mean the zone's bounding box coordinates were entered backwards"
+          ],
+          "correct": 0,
+          "right": "Right — the same observation (zero customers) needs different interpretations depending on the zone's history. A brand-new zone with no customers yet is fine; a previously-populated zone that's now empty is a red flag.",
+          "wrong": "The lesson makes this distinction explicitly: the same raw fact — a zone with zero matched customers — could mean a brand-new zone (like the lesson's example of Zone-Bristol just being added) that simply hasn't been populated yet, which is entirely expected. Or it could mean an existing zone that previously had customers and has now dropped to zero, which points at a genuine load error, a data gap, or customers being incorrectly reassigned elsewhere. Telling these apart requires knowing the zone's history, not just its current count."
+        }
+      ],
+      "close": "The LEFT JOIN orphan pattern applied to geography, NOT EXISTS's short-circuit efficiency, and empty zones needing history for correct interpretation — that closes out Geospatial. Six techniques: coordinate validity, distance/proximity, address format, clustering/density, coordinate-to-region consistency, and spatial coverage gaps."
     }
   }
 }
