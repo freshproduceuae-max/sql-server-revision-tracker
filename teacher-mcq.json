@@ -8779,6 +8779,342 @@
         }
       ],
       "close": "Stored injection's persistence as the real danger, legitimate apostrophes vs actual injection signatures, and the data audit needing a code-audit companion — injection and sanitisation covered. That closes out Security/Compliance, and the entire pre-authorized G15-G17 programme. Eight techniques in this group: PII detection, access pattern anomalies, masking verification, audit trail completeness, retention policy, consent validation, privileged access, and injection/sanitisation auditing."
+    },
+    "G18-T01": {
+      "open": "Welcome to Cross-System — you've opened Row Count Reconciliation Across Systems, catching 7 rolled-back orders that vanished between the OLTP source and the warehouse dashboard. Three questions.",
+      "questions": [
+        {
+          "q": "Why does the lesson use FULL OUTER JOIN between the expected (source) counts and actual (target) counts rather than a simple join?",
+          "choices": [
+            "It catches both directions of mismatch in one query — target periods with no expected counterpart (over-load) and expected periods with no actual counterpart (under-load/missing month)",
+            "FULL OUTER JOIN is required whenever a CASE expression appears in the SELECT list",
+            "A simple join would produce a SQL Server syntax error when comparing two CTEs",
+            "FULL OUTER JOIN only matters when the two tables have exactly the same number of rows"
+          ],
+          "correct": 0,
+          "right": "Right — same reasoning used throughout this course for reconciliation checks. FULL OUTER JOIN is what guarantees a mismatch surfaces regardless of which side is missing the data.",
+          "wrong": "The lesson explains this directly: FULL OUTER JOIN catches both directions of mismatch at once — a target period with records but no expected counterpart (over-load, possibly a duplicate load) and an expected period with no actual records at all (under-load, possibly a missed ETL run). A simple join would only reliably catch one of those two failure directions."
+        },
+        {
+          "q": "Why does the lesson say count reconciliation is \"necessary but not sufficient\" on its own?",
+          "choices": [
+            "20 orders totalling the correct count could still be wrong in value — for example, one order loaded with a 10x amount error — so revenue must be reconciled independently of count",
+            "Count reconciliation can only ever be run once per calendar month",
+            "SQL Server cannot compute COUNT(*) and SUM() in the same query",
+            "Reconciling count alone is technically impossible without also reconciling dates"
+          ],
+          "correct": 0,
+          "right": "Right — a correct row count says nothing about whether the values inside those rows are correct. Revenue needs its own independent check.",
+          "wrong": "The lesson gives the exact scenario: 20 orders totalling £29,700 might have the correct count of rows while one of those rows has a value error, like a 10x amount mistake, that a count-only check would never catch. That's why Step 3 reconciles both count and revenue as separate checks — a count match with a revenue mismatch is a real, detectable failure mode that count alone would miss."
+        },
+        {
+          "q": "Why does the lesson treat a consistent positive delta across many months differently from an alternating positive/negative pattern?",
+          "choices": [
+            "A consistent positive delta suggests a systematic duplicate load; a consistent negative delta suggests systematic data loss; an alternating pattern instead points to a timing or watermark issue rather than either of those steady causes",
+            "A consistent delta of any sign always means the query itself contains a bug",
+            "Alternating deltas are impossible to produce from any real ETL failure",
+            "The sign of the delta has no diagnostic meaning and is purely cosmetic"
+          ],
+          "correct": 0,
+          "right": "Right — the pattern of the delta over time is itself diagnostic. A steady one-directional bias points to one kind of systematic cause; a pattern that flips back and forth points to something timing-related instead.",
+          "wrong": "The lesson uses the delta's sign and pattern as a diagnostic clue: a delta that's consistently positive month after month suggests something systematically duplicating records on load; a delta that's consistently negative suggests something systematically dropping records. An alternating pattern — some months over, some under — points toward a different cause entirely, like a watermark or timing boundary issue rather than a steady structural bug."
+        }
+      ],
+      "close": "FULL OUTER JOIN for two-directional mismatch detection, count as necessary-but-not-sufficient, and delta patterns as diagnostic clues — row count reconciliation covered. Next: Schema Drift and Version Mismatch Detection, catching a hotfix that silently outpaced the ETL that reads from it."
+    },
+    "G18-T02": {
+      "open": "Schema Drift and Version Mismatch Detection — a VARCHAR(20) column quietly truncating a 35-character status value produces zero errors and a wrong report weeks later.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe narrowing type changes (like VARCHAR(500) to VARCHAR(20)) as the most dangerous category in the risk matrix?",
+          "choices": [
+            "SQL Server allows the ALTER TABLE itself to succeed without error, but subsequent loads of values longer than the new limit are silently truncated (or fail, depending on ANSI_WARNINGS settings) — the schema change and the data loss happen at completely different times",
+            "Narrowing changes always cause SQL Server to refuse the ALTER TABLE statement outright",
+            "Widening changes are technically impossible to implement in SQL Server",
+            "Narrowing changes only affect numeric columns, never text columns"
+          ],
+          "correct": 0,
+          "right": "Right — the schema change itself is silent and successful; it's the data loading afterward that quietly gets clipped, with no error connecting the two events.",
+          "wrong": "The lesson explains this precisely: the ALTER TABLE that narrows a column succeeds without any error at all. The actual data loss happens later and separately, when the ETL loads a value longer than the new limit — depending on ANSI_WARNINGS settings, that value is either silently truncated or the INSERT fails. Because the schema change and the eventual data loss are separated in time and don't reference each other, narrowing changes are singled out as the most dangerous category."
+        },
+        {
+          "q": "Why does the lesson use a hardcoded BaselineSchema CTE representing \"the schema as of a known good release version\"?",
+          "choices": [
+            "Running the current schema comparison against this known-good baseline after every deployment verifies the deployment did exactly what was planned — no more changes, no fewer",
+            "SQL Server requires a baseline CTE to be defined before INFORMATION_SCHEMA.COLUMNS can be queried at all",
+            "The baseline schema is regenerated automatically by SQL Server after every ALTER TABLE",
+            "Hardcoding the baseline is purely a performance optimization with no functional purpose"
+          ],
+          "correct": 0,
+          "right": "Right — the baseline is the anchor point. Comparing the live schema against exactly what was approved is what turns \"did this deployment do what we intended\" into a checkable fact instead of an assumption.",
+          "wrong": "The lesson explains the purpose of the baseline directly: it represents the schema as it was in a known-good, previously approved state. Comparing the current live schema against it after every deployment verifies the deployment introduced exactly the intended changes — nothing more, nothing accidentally different. In production, this baseline would live in a maintained schema-management table rather than a hardcoded CTE, but the comparison principle is the same."
+        },
+        {
+          "q": "Why does the lesson recommend INFORMATION_SCHEMA.COLUMNS over sys.columns for cross-platform schema comparison specifically?",
+          "choices": [
+            "INFORMATION_SCHEMA is the ANSI-standard view and works consistently across SQL Server, PostgreSQL, MySQL, and Oracle, while sys.columns is SQL Server-specific",
+            "sys.columns cannot be queried by any user without server administrator privileges",
+            "INFORMATION_SCHEMA.COLUMNS provides strictly more metadata than sys.columns in every case",
+            "sys.columns only works correctly on tables with fewer than 20 columns"
+          ],
+          "correct": 0,
+          "right": "Right — it's about portability. If the comparison logic ever needs to run against a different database engine, the ANSI-standard view keeps working; a SQL Server-specific one wouldn't.",
+          "wrong": "The lesson draws this distinction directly: INFORMATION_SCHEMA.COLUMNS is the ANSI-standard view, meaning the same query works unmodified across SQL Server, PostgreSQL, MySQL, and Oracle — valuable for cross-platform comparison. sys.columns is SQL Server-specific but provides richer metadata (like max_length in bytes for NCHAR types), making it the better choice specifically for deep, SQL-Server-only schema auditing rather than cross-platform work."
+        }
+      ],
+      "close": "Narrowing changes as silently-delayed data loss, baseline comparison as a deployment verification tool, and ANSI-standard vs engine-specific metadata views — schema drift detection covered. Next: Dual-Write Consistency Check, verifying two systems written to in parallel actually agree."
+    },
+    "G18-T03": {
+      "open": "Dual-Write Consistency Check — during a migration where both the old and new systems receive every write, the moment to catch a gap is before cutover, not after the old system is decommissioned.",
+      "questions": [
+        {
+          "q": "Why does the lesson use two separate LEFT JOINs (Steps 1 and 2) instead of one FULL OUTER JOIN for the dual-write consistency check?",
+          "choices": [
+            "Two separate queries produce clearer, separately actionable output — isolating \"records only in System A\" from \"records only in System B\" into distinct result sets the operations team can act on independently",
+            "FULL OUTER JOIN cannot technically be used when comparing two different tables with different column names",
+            "SQL Server limits LEFT JOIN and FULL OUTER JOIN to producing exactly the same result in every case",
+            "Two LEFT JOINs always execute faster than a single FULL OUTER JOIN regardless of table size"
+          ],
+          "correct": 0,
+          "right": "Right — it's a usability choice, not a technical necessity. A single combined FULL OUTER JOIN is more efficient for a quick summary, but two separate result sets are easier for an operations team to actually act on.",
+          "wrong": "The lesson explains this as a deliberate choice for operational clarity: two separate LEFT JOIN queries isolate \"records only in A\" from \"records only in B\" into their own distinct result sets, which the operations team can review and action independently. FULL OUTER JOIN would combine both into one result set — more efficient for a summary count, but harder to hand off as two clear action items."
+        },
+        {
+          "q": "Why does the lesson use `ABS(OrderAmount - TxnAmount) > 0.01` rather than exact equality when checking for value drift?",
+          "choices": [
+            "It tolerates floating-point rounding differences that can occur between systems using different internal numeric precision, while still catching genuine value mismatches",
+            "Exact equality comparisons are not supported in T-SQL for any numeric data type",
+            "The 0.01 threshold is a fixed SQL Server system requirement that cannot be changed",
+            "Using ABS() makes the comparison run measurably faster than exact equality would"
+          ],
+          "correct": 0,
+          "right": "Right — a small tolerance absorbs harmless rounding noise between systems while still catching a value that's genuinely wrong, not just imprecisely represented.",
+          "wrong": "The lesson explains the purpose of the tolerance directly: different systems can use different internal numeric precision, producing tiny rounding differences that don't represent real data problems. A tolerance of 0.01 (one penny for financial data) absorbs that harmless noise while still catching genuinely different values. The lesson notes this threshold should be set based on the business's actual materiality threshold, not treated as a universal constant."
+        },
+        {
+          "q": "Why does the lesson caution that the sample Orders/Transactions data doesn't perfectly represent a genuine dual-write scenario?",
+          "choices": [
+            "A true dual-write comparison needs the same entity mirrored across both systems, but Orders and Transactions are related, not identical, entities — this table pair shows the technique's mechanics without being a perfect real-world dual-write example",
+            "Orders and Transactions can never be compared against each other using SQL under any circumstances",
+            "The sample data was deliberately corrupted to demonstrate what a failed dual-write looks like",
+            "Dual-write consistency checks only work correctly when both tables have exactly the same number of rows"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson is upfront about this limitation rather than glossing over it. A genuine dual-write check needs the same entity in both places; Orders and Transactions are related but not the same entity, so the technique's mechanics are real even though this specific data pairing isn't a perfect stand-in.",
+          "wrong": "The lesson is explicit about this: a genuine dual-write scenario needs the exact same entity mirrored across both systems (like the same trade record in both an on-premise and cloud database). Orders and Transactions are related tables but represent different entities — orders and their payment transactions — which is why the demo shows 20 Orders against 25 Transactions with only 12 matched OrderIDs. The SQL technique itself is genuine; this particular table pairing is an imperfect stand-in used to demonstrate it."
+        }
+      ],
+      "close": "Two LEFT JOINs for actionable separate output, tolerance thresholds for legitimate rounding noise, and an honest caveat about the demo data's limits — dual-write consistency covered. Next: API Response Validation, catching a geocoding API that returns HTTP 200 while quietly degrading."
+    },
+    "G18-T04": {
+      "open": "API Response Validation — an API returning HTTP 200 while silently falling back to a default coordinate is exactly the kind of failure that never shows up as an error anywhere in the pipeline.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe an API returning `{\"status\": \"ERROR\"}` with an HTTP 200 as a particularly dangerous failure mode?",
+          "choices": [
+            "The ETL pipeline receives a technically successful HTTP response and loads the semantic error value as if it were real data, with nothing at the transport level indicating anything went wrong",
+            "HTTP 200 responses are always rejected by SQL Server before they can be loaded into any table",
+            "This failure mode can only occur with geocoding APIs, never with any other type of API",
+            "An HTTP 200 status code guarantees the response body is free of any error content"
+          ],
+          "correct": 0,
+          "right": "Right — the failure happens entirely inside the response body, invisible to anything that only checks the HTTP status. The pipeline has no reason to suspect anything went wrong.",
+          "wrong": "The lesson names this specific pattern: an API returning HTTP 200 (success at the transport level) while the response body itself contains a semantic error value like `{\"status\": \"ERROR\"}` or `{\"currency\": \"N/A\"}`. Because the ETL only sees a successful HTTP response, it loads that error value as if it were legitimate data — nothing in the transport layer signals a problem, so only checking the actual loaded value against known error sentinel patterns (as Steps 2 and 3 do) can catch it."
+        },
+        {
+          "q": "Why does the lesson describe centroid coordinates as \"geographically plausible\" and therefore harder to catch than an obviously invalid value?",
+          "choices": [
+            "Centroid fallback coordinates pass ordinary range checks — they're real, valid locations — so only checking for exact matches against known centroid values (or clustering patterns) can distinguish them from genuine, correctly geocoded addresses",
+            "Centroid coordinates always fall outside the valid latitude/longitude range and should be trivially caught by any range check",
+            "SQL Server automatically flags any coordinate that matches a known city centre",
+            "Centroid coordinates can only appear in data sourced from non-UK geocoding APIs"
+          ],
+          "correct": 0,
+          "right": "Right — a centroid coordinate is a real, valid place on the map. It looks completely legitimate to any check that's only testing whether a value is possible, which is exactly why it needs a more specific check.",
+          "wrong": "The lesson explains why this failure mode is genuinely tricky: a centroid coordinate — like the exact London centroid — is a real, valid location, so it passes any ordinary range check with no problem. What makes it detectable isn't that it's invalid, but that it's suspiciously exact and suspiciously common: many customers landing on the exact same coordinate, or a specific value matching a known centroid within a tight tolerance, is the actual signal Step 1 looks for."
+        },
+        {
+          "q": "Why does the lesson describe a \"Pending\" order with a DeliveryDate already in the past as an \"API_STALE\" freshness violation?",
+          "choices": [
+            "An API providing real-time order status carries an implied contract that the status reflects current reality — a Pending status alongside a past delivery date means the API hasn't been re-queried (or the response wasn't stored) since the order actually progressed",
+            "SQL Server automatically marks any order with a past DeliveryDate as complete regardless of its Status field",
+            "A Pending status with a past DeliveryDate is always caused by a customer cancelling their order",
+            "This check only applies to orders that were placed more than one calendar year ago"
+          ],
+          "correct": 0,
+          "right": "Right — it's a contract violation, not just an odd data point. If delivery genuinely already happened, the status field should reflect that; seeing \"Pending\" instead means the status data has gone stale relative to reality.",
+          "wrong": "The lesson frames this as an implied contract of the API itself: if it's supposed to report real-time order status, then a status of \"Pending\" should mean the order genuinely hasn't progressed yet. Finding a Pending order with a delivery date already in the past means that contract has been violated — either the status API hasn't been called again since the order actually moved forward, or a response update was never stored, leaving stale data sitting in the field."
+        }
+      ],
+      "close": "HTTP 200 masking a semantic error, centroid coordinates as plausible-but-wrong, and stale status as a broken freshness contract — API response validation covered. Next: Currency and Unit Conversion Validation, catching a Euro-cents-vs-units mixup that doubled twelve transaction amounts."
+    },
+    "G18-T05": {
+      "open": "Currency and Unit Conversion Validation — mixing up cents and whole units is the single most common currency conversion mistake, and it produces a very specific, very detectable statistical fingerprint.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe a 100x systematic difference between one currency's average amount and others as the \"statistical fingerprint\" of a cents/units error?",
+          "choices": [
+            "Storing amounts in the smallest monetary unit (pence, cents) when the target expects the major unit (pounds, dollars) inflates every value in that currency by exactly a factor of 100, which shows up as a consistent 100x gap in the average when compared to correctly-converted currencies",
+            "A 100x difference between currencies always indicates a currency was converted using the wrong exchange rate, never a units error",
+            "SQL Server automatically corrects any currency values that differ from others by exactly 100x",
+            "This fingerprint only appears when comparing GBP against exactly one other currency"
+          ],
+          "correct": 0,
+          "right": "Right — because 100 pence equals 1 pound (and similarly for cents), a units mixup doesn't produce random noise, it produces a clean, consistent 100x multiplier across every affected value — a very specific and recognisable pattern.",
+          "wrong": "The lesson explains why this specific ratio is so diagnostic: since there are exactly 100 pence in a pound (or 100 cents in a dollar/euro), storing amounts in the minor unit when the major unit was expected doesn't introduce random error — it multiplies every single value in that currency by exactly 100. That consistent, precise multiplier is what makes it recognisable as a units error specifically, rather than some other kind of data quality problem."
+        },
+        {
+          "q": "Why does the lesson use a 1% tolerance (rather than exact equality) when reconciling Order amounts against matched Transaction amounts?",
+          "choices": [
+            "It accommodates legitimate FX rounding, payment processor fees (typically 0.3-3%), and timing differences between when the order rate and transaction rate were applied — differences above 10% still warrant investigation",
+            "SQL Server cannot compare two DECIMAL values for exact equality under any circumstances",
+            "A 1% tolerance guarantees that all currency conversion errors will be automatically corrected",
+            "The tolerance only applies to transactions processed in GBP, never other currencies"
+          ],
+          "correct": 0,
+          "right": "Right — a handful of small, entirely legitimate reasons (rounding, fees, timing) mean order and transaction amounts won't match to the exact penny even when everything is working correctly. The tolerance absorbs that noise without hiding a genuine problem.",
+          "wrong": "The lesson names three specific legitimate sources of small differences: FX rounding during currency conversion, payment processor fees (which the lesson notes typically run 0.3-3% per transaction), and timing differences between the exchange rate applied at order time versus transaction time. A 1% tolerance absorbs these expected, harmless variations, while the lesson still flags differences above 10% as warranting investigation and above 50% as suggesting a systematic conversion error."
+        },
+        {
+          "q": "Why does the lesson treat a multi-currency order (the same OrderID appearing with transactions in more than one currency) as potentially either legitimate or a sign of an ETL problem?",
+          "choices": [
+            "It could genuinely be a legitimate split payment across currencies, or it could indicate the ETL applied different, inconsistent conversion rules to transactions that should have belonged to the same order — the max/min ratio helps distinguish which",
+            "A multi-currency order is always caused by a customer changing their billing address mid-transaction",
+            "SQL Server automatically rejects any OrderID associated with more than one currency",
+            "This pattern can only occur for orders placed outside of normal business hours"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson doesn't assume the worst automatically. A genuine split payment is a real, legitimate business scenario; the max/min ratio check is what helps tell that apart from an ETL applying inconsistent conversion logic to the same order.",
+          "wrong": "The lesson is careful not to treat this pattern as automatically wrong: it could be a legitimate split payment where a customer genuinely paid across currencies for one order. Or it could indicate the ETL applied different, inconsistent conversion rules to transactions belonging to the same order, which would produce implausible amount ratios between the currencies. The max/min ratio calculation is offered as a plausibility check to help distinguish a normal exchange-rate-driven spread from a suspicious 100x-style anomaly."
+        }
+      ],
+      "close": "The 100x cents-vs-units fingerprint, 1% tolerance for legitimate rounding and fees, and multi-currency orders as sometimes-legitimate — currency conversion validation covered. Next: Timezone and Timestamp Alignment Check, when a shipment timestamp from a US warehouse arrives without being converted to UTC."
+    },
+    "G18-T06": {
+      "open": "Timezone and Timestamp Alignment Check — an order that appears to be shipped 5 hours before it was placed isn't a physics-defying feat, it's an unconverted Eastern Time timestamp.",
+      "questions": [
+        {
+          "q": "Why does Step 2 use `DATEDIFF(HOUR, ...)` rather than `DATEDIFF(DAY, ...)` to detect timezone offset patterns?",
+          "choices": [
+            "DATEDIFF(DAY) can produce a misleadingly large-looking gap when a small timezone offset happens to span midnight, while DATEDIFF(HOUR) correctly shows it as the small offset it actually is",
+            "DATEDIFF(HOUR) is the only date function in T-SQL that supports negative results",
+            "DATEDIFF(DAY) cannot be used at all when comparing two DATETIME columns",
+            "Using hours instead of days makes the query execute measurably faster regardless of data volume"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's own worked example shows exactly this: a genuinely small 2-hour timezone offset can look like a full day's discrepancy if it happens to straddle midnight, unless you measure in hours.",
+          "wrong": "The lesson gives a precise worked example: a transaction at 23:00 UTC on March 15th and an order at 01:00 UTC on March 16th have a `DATEDIFF(DAY)` of -1 — which looks like a full day's worth of wrongness — but a `DATEDIFF(HOUR)` of only -2, revealing it as a small, plausible timezone-scale offset rather than something alarming. Measuring in hours is necessary specifically to catch offsets that span a midnight boundary without exaggerating them."
+        },
+        {
+          "q": "Why does the lesson call a bimodal (two-peak) time-of-day distribution of order hours a timezone signal, rather than assuming it's just two different peak shopping times?",
+          "choices": [
+            "If two source systems in different timezones are merged without conversion, the hour distribution can show two separate peaks — one around normal business hours in each timezone — which is a specific, recognisable pattern distinct from a single system's normal daily rhythm",
+            "A bimodal distribution can only ever be produced by a SQL Server indexing error",
+            "Legitimate businesses never have two separate peak periods during a single day",
+            "The hour-of-day distribution check only applies to orders placed on weekends"
+          ],
+          "correct": 0,
+          "right": "Right — it's a specific, recognisable signature of two merged timezones, not just a generic \"busy twice a day\" pattern. The lesson's own example ties the second peak directly to when it would be business hours in a different timezone.",
+          "wrong": "The lesson describes this pattern specifically: a single-timezone system should show one unimodal peak centred on that timezone's business hours. If records from two timezones get merged without conversion, the distribution can show two distinct peaks — for example, one around 10am UTC (UK business hours) and another around 15:00 UTC, which is 10am US Eastern time. That specific double-peak shape, tied to two different regions' business hours, is what makes it a timezone signal rather than an ordinary daily pattern."
+        },
+        {
+          "q": "Why does the lesson describe `DeliveryDate < OrderDate` as an \"absolute temporal impossibility\", distinct from most other validation checks in this course?",
+          "choices": [
+            "Unlike checks that identify probable errors requiring judgment, an item genuinely cannot be delivered before it's ordered — so any occurrence of this pattern is a certain error, not just a suspicious one",
+            "This check can only be run once, on the very first row of the Orders table",
+            "DeliveryDate is always populated before OrderDate in a correctly functioning system",
+            "SQL Server automatically prevents this condition from ever occurring in stored data"
+          ],
+          "correct": 0,
+          "right": "Right — most validation checks flag something that's probably wrong and needs a human's judgment call. This one is different: there's no legitimate scenario where delivery genuinely precedes the order, so its presence is certain evidence of an error.",
+          "wrong": "The lesson draws this contrast explicitly: many of the checks in this course flag values that are probably wrong and need investigation to confirm. `DeliveryDate < OrderDate` is different — it describes something that cannot happen in reality under any legitimate scenario, so its presence in the data is definitive proof of an error (a timezone mismatch, a data entry mistake, or ETL corruption), not just a candidate worth reviewing."
+        }
+      ],
+      "close": "Hour-level DATEDIFF avoiding the midnight-boundary trap, bimodal distributions as a two-timezone signature, and delivery-before-order as a certain (not probable) error — timezone alignment covered. Next: Lookup Table Synchronisation Validation, keeping shared reference data consistent across three separate systems."
+    },
+    "G18-T07": {
+      "open": "Lookup Table Synchronisation Validation — when a product sync job fails silently for 11 days, new products become sellable in-store but invisible everywhere else that references the same master list.",
+      "questions": [
+        {
+          "q": "Why does the lesson distinguish a ProductID that's \"unused\" (in the Products master but never ordered) from one that's \"orphaned\" (referenced in Orders but missing from Products)?",
+          "choices": [
+            "An unused entry isn't necessarily a sync problem — it might just be a product that hasn't sold yet — while an orphaned reference is definitely a sync problem, since the lookup genuinely cannot be resolved",
+            "Unused and orphaned are two names for the exact same underlying data condition",
+            "Orphaned ProductIDs are always less serious than unused ones and can typically be ignored",
+            "This distinction only matters for tables that have fewer than 50 rows"
+          ],
+          "correct": 0,
+          "right": "Right — very different severity. An unused entry is often completely benign; an orphaned reference means something downstream can never resolve that lookup, which is a genuine failure.",
+          "wrong": "The lesson draws this line clearly: a ProductID sitting in the Products master with no matching orders is simply \"unused\" — plausibly just a product that hasn't sold yet, not necessarily any kind of problem. A ProductID referenced in Orders but absent from Products, by contrast, is \"orphaned\" — a definite sync problem, because there's genuinely no way to resolve that lookup. The health report in Step 5 counts these as two separate categories specifically so a table full of harmless unused entries doesn't get misclassified as broken."
+        },
+        {
+          "q": "Why does the lesson describe two systems using \"overlapping but not identical\" status code sets (like Orders having no \"Shipped\" status that Fulfilment uses) as a common real-world synchronisation failure?",
+          "choices": [
+            "Without a translation layer between the two code sets, status values from one system cannot be mapped into the other, and the FULL OUTER JOIN between the two sets immediately shows exactly which codes exist in one but not the other",
+            "Overlapping status code sets are technically impossible to store in two different SQL Server tables simultaneously",
+            "This kind of mismatch can only be resolved by merging the two systems into a single database",
+            "Status codes are the only kind of data that can ever experience this type of synchronisation failure"
+          ],
+          "correct": 0,
+          "right": "Right — the fix requires an explicit translation layer, and the FULL OUTER JOIN is what surfaces exactly which codes need translating, on both sides.",
+          "wrong": "The lesson's own example makes the failure concrete: Orders might use \"Delivered\" directly, while a Fulfilment system uses \"Shipped\" as an intermediate state that Orders has no equivalent for. Without an explicit translation layer connecting the two code sets, values from one system simply cannot be represented correctly in the other. The FULL OUTER JOIN between the two status sets is what makes exactly which codes are mismatched immediately visible, in both directions at once."
+        },
+        {
+          "q": "Why does the corrected SyncPct formula in Step 5 divide MatchedCount by TotalInSystem1 alone, rather than by TotalInSystem1 plus System2Only?",
+          "choices": [
+            "The percentage is meant to answer \"what fraction of the codes actually referenced in Orders were successfully found in the lookup table\" — adding unused lookup entries (System2Only) to the denominator would understate that figure with something unrelated to the sync gap being measured",
+            "TotalInSystem1 always equals TotalInSystem2 by mathematical definition, making the extra term redundant",
+            "Including System2Only in the denominator would cause a division-by-zero error in every case",
+            "The formula's denominator has no effect on the resulting percentage regardless of which terms are included"
+          ],
+          "correct": 0,
+          "right": "Right — the percentage should measure exactly one thing: how much of what Orders actually needs was found. Unused Products entries have nothing to do with that question, and folding them into the denominator just waters down the number.",
+          "wrong": "The percentage this check cares about is specifically: of the ProductIDs that Orders actually references, how many resolve successfully against the Products master? That's MatchedCount divided by TotalInSystem1 (the full set of ProductIDs Orders references). Adding System2Only — unused Products entries that Orders never touches at all — into the denominator would dilute the percentage with something unrelated to whether Orders' own lookups are resolving correctly, understating how synchronised the system actually is from Orders' perspective."
+        }
+      ],
+      "close": "Unused vs orphaned as different severities, overlapping code sets needing translation, and the corrected sync-percentage formula — lookup synchronisation covered. Last one in this group: End-to-End Data Flow Validation."
+    },
+    "G18-T08": {
+      "open": "Last one in Cross-System — End-to-End Data Flow Validation. A £180K gap between the warehouse and the reporting mart could be an ETL bug or an intentional business rule — this technique is how you tell which, and exactly where it happened.",
+      "questions": [
+        {
+          "q": "Why does the lesson say stage-by-stage comparison \"dramatically reduces diagnostic time\" compared to only comparing the first and last stage?",
+          "choices": [
+            "When Stage 1 and Stage 2 match but Stage 2 and Stage 3 diverge, the failure is pinpointed to exactly the Stage 2→3 transition — narrowing investigation to one specific transformation step instead of the entire pipeline",
+            "Stage-by-stage comparison is required by SQL Server whenever more than two tables are involved in a query",
+            "Comparing only the first and last stage always produces the exact same diagnostic information as comparing every stage",
+            "This technique only works when the pipeline has exactly three stages, no more and no fewer"
+          ],
+          "correct": 0,
+          "right": "Right — comparing every adjacent pair narrows the search from \"somewhere in this whole pipeline\" down to one specific transition, which is the entire diagnostic value of the technique.",
+          "wrong": "The lesson explains the mechanism directly: by computing the same metric at every stage and comparing adjacent pairs, agreement between Stage 1 and Stage 2 combined with disagreement between Stage 2 and Stage 3 tells you exactly where to look — the transformation or aggregation logic between those two specific stages, not the whole pipeline. Comparing only the first and last stage would tell you *that* something diverged somewhere, but not *where*, which is the actual diagnostic value this technique provides."
+        },
+        {
+          "q": "Why does the lesson emphasize that the mart's exclusion of Cancelled and Returned orders \"must be documented and understood by finance analysts\"?",
+          "choices": [
+            "The revenue gap between the warehouse and the mart is an intentional business rule, not a data quality error — but without that context, analysts comparing the two figures would incorrectly escalate it as a discrepancy",
+            "Undocumented business rules always cause SQL Server to throw a runtime error",
+            "Finance analysts are legally required to review every SQL query used in the reporting pipeline",
+            "The exclusion rule only applies during the first week of each fiscal quarter"
+          ],
+          "correct": 0,
+          "right": "Right — the gap is real and intentional, not a bug. Without the context explaining why it exists, someone comparing the two numbers would reasonably (but incorrectly) treat it as evidence something's broken.",
+          "wrong": "The lesson makes this point directly: the difference between warehouse and mart revenue reflects a deliberate business rule (excluding Cancelled and Returned orders from the mart), not a data quality failure. But if finance analysts compare the two figures without knowing that rule exists, they would reasonably interpret the gap as an unexplained discrepancy and escalate it as an error — wasting investigation effort on something that's actually working exactly as designed."
+        },
+        {
+          "q": "Why does the lesson say record-level traceability (Step 3) catches a loss that aggregate-level comparison (Step 4) can mask?",
+          "choices": [
+            "20 orders and 25 transactions can look like a plausible, unremarkable aggregate shift, while the record-level trace reveals that 8 specific orders actually have no matching transaction at all — a real loss hidden by the aggregate numbers happening to look reasonable",
+            "Record-level and aggregate-level traceability always produce identical results in every scenario",
+            "Aggregate-level comparison is technically incapable of using COUNT(*) in any SQL Server query",
+            "Record-level traceability can only be performed on tables containing fewer than 25 rows"
+          ],
+          "correct": 0,
+          "right": "Right — the aggregate totals can look unremarkable on their own, while hiding a genuine problem underneath. Only tracing individual records reveals that some orders are missing their expected match entirely, not just that the totals shifted a bit.",
+          "wrong": "The lesson walks through exactly this masking effect: 20 orders and 25 transactions might look like a modest, plausible expansion at the aggregate level — nothing alarming on its face. But Step 3's record-level trace reveals the real story: 8 specific orders have zero matching transactions (a genuine loss), while some transactions reference orders outside the current window entirely. The aggregate totals being roughly similar in scale doesn't mean nothing is wrong — it can actively hide a real, specific loss that only individual record tracing surfaces."
+        }
+      ],
+      "close": "Stage-by-stage comparison for pinpointing the failure, intentional business rules needing documentation, and record-level tracing catching what aggregates can hide — that closes out Cross-System. Eight techniques: row count reconciliation, schema drift, dual-write consistency, API response validation, currency/unit conversion, timezone alignment, lookup synchronisation, and end-to-end flow validation."
     }
   }
 }
