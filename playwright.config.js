@@ -25,12 +25,15 @@ module.exports = defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  webServer: {
-    command: `node scripts/dev-server.js ${PORT}`,
-    url: `http://localhost:${PORT}/index.html`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 10_000,
-  },
+  // NOT Playwright's built-in `webServer` config -- see
+  // tests/e2e/global-setup.js's comment for why: `webServer` spawns its
+  // command through a shell, so the PID it tracks for teardown is the
+  // shell's PID, not the actual dev-server.js node.exe running underneath
+  // it, and an independent review reproduced that child surviving past the
+  // CLI's own exit. globalSetup/globalTeardown spawn and kill the exact
+  // process directly, no shell, no process-tree-kill dependency.
+  globalSetup: require.resolve('./tests/e2e/global-setup.js'),
+  globalTeardown: require.resolve('./tests/e2e/global-teardown.js'),
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] }, testIgnore: /mobile\.spec\.js/ },
     { name: 'mobile', use: { ...devices['iPhone 13'] }, testMatch: /mobile\.spec\.js/ },
