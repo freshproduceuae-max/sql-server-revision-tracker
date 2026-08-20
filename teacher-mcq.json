@@ -8443,6 +8443,342 @@
         }
       ],
       "close": "The LEFT JOIN orphan pattern applied to geography, NOT EXISTS's short-circuit efficiency, and empty zones needing history for correct interpretation — that closes out Geospatial. Six techniques: coordinate validity, distance/proximity, address format, clustering/density, coordinate-to-region consistency, and spatial coverage gaps."
+    },
+    "G17-T01": {
+      "open": "Welcome to Security/Compliance — you've opened PII Detection and Data Classification, the technique that catches a National Insurance number sitting in an analytics database that 45 people can query. Three questions.",
+      "questions": [
+        {
+          "q": "Why does the lesson check for PII-formatted values in columns whose names don't obviously indicate PII, not just check columns with obvious names like \"Email\" or \"Phone\"?",
+          "choices": [
+            "In data warehouses where multiple source systems are merged, PII can end up in generically-named columns (like ReferenceCode or AccountRef) whose name alone gives no indication of the sensitive content inside",
+            "SQL Server automatically renames any column containing PII to a generic name for security reasons",
+            "Checking column names alone is technically impossible in T-SQL",
+            "Only column values matter for GDPR compliance; column names are never relevant"
+          ],
+          "correct": 0,
+          "right": "Right — name-based checks catch the obvious cases, but a merged, multi-source warehouse can easily end up with genuinely sensitive data sitting in a column whose name gives no hint of that at all.",
+          "wrong": "The lesson explains this specifically: this kind of \"latent\" PII detection matters most in data warehouses where data from multiple source systems has been merged into columns with generic names — the example given is something like `ReferenceCode` or `AccountRef`. A pure name-based check would completely miss PII sitting in a column whose name gives no clue about its actual content; only checking the values themselves against known PII formats (like the NI number pattern) can catch that case."
+        },
+        {
+          "q": "According to the lesson's own corrected classification, is a National Insurance number (government ID) an Article 9 \"special category\" of personal data under GDPR?",
+          "choices": [
+            "No — it's ordinary personal data under Article 4, just highly sensitive due to fraud and identity-theft risk; Article 9 special categories cover things like health data, biometric data, and racial/ethnic origin, not government identifiers",
+            "Yes — any government-issued identifier automatically qualifies as an Article 9 special category",
+            "National Insurance numbers are not considered personal data of any kind under GDPR",
+            "GDPR does not distinguish between different categories of personal data at all"
+          ],
+          "correct": 0,
+          "right": "Right — Article 9's special categories are a specific, named list (health, biometric, racial/ethnic origin, and similar), and a government ID number isn't on it. It's still highly sensitive personal data, just not that particular legal category.",
+          "wrong": "GDPR Article 9 defines special categories narrowly — data revealing racial or ethnic origin, political opinions, religious beliefs, trade union membership, genetic data, biometric data for identification, health data, or data concerning sex life or sexual orientation. A National Insurance number isn't on that list; it's ordinary personal data under Article 4, but treated as highly sensitive in practice because of the fraud and identity-theft risk if it's exposed — a different reason for caution than the special-category rules apply to."
+        },
+        {
+          "q": "Why does the lesson distinguish masking from encryption as two different recommended controls for different columns?",
+          "choices": [
+            "Masking (replacing PII with a non-identifying substitute) suits reporting and analytics where the original value is never needed again; encryption (reversible, keyed) suits operational data that must remain readable by authorised processes while protected from unauthorised ones",
+            "Masking and encryption are two names for exactly the same technique applied to different data types",
+            "Encryption can only be applied to numeric columns, while masking can only be applied to text columns",
+            "Masking is always a stronger security control than encryption in every scenario"
+          ],
+          "correct": 0,
+          "right": "Right — different needs, different tools. Masking suits data that never needs to be reversed back to the original; encryption suits data that legitimately does, for an authorised process, while staying protected from everyone else.",
+          "wrong": "The lesson draws this distinction directly: masking replaces the PII with a functional but non-identifying substitute (like showing only the last 4 digits of an account number) — appropriate where the original value is never needed again, as in reporting or analytics. Encryption stores ciphertext that can be decrypted with the right key — appropriate for operational data that legitimately must remain readable by authorised processes while staying protected from everyone else."
+        }
+      ],
+      "close": "Latent PII in generically-named columns, National Insurance numbers as Article 4 (not Article 9) data, and masking vs encryption as different tools for different needs — PII detection covered. Next: Access Pattern Anomaly Detection, catching a compromised account before it finishes exfiltrating data."
+    },
+    "G17-T02": {
+      "open": "Access Pattern Anomaly Detection — 847 SELECT statements at 2am on a Sunday isn't just unusual, it's the exact signature of an automated crawler working through a compromised account.",
+      "questions": [
+        {
+          "q": "Why does the lesson use `ROWS BETWEEN 7 PRECEDING AND 1 PRECEDING` (excluding the current day) when computing the rolling baseline for volume comparison?",
+          "choices": [
+            "It provides a baseline that reflects genuinely prior behaviour without being contaminated by the anomalous day itself — including today would let a huge spike partly average itself into its own comparison point",
+            "SQL Server requires window frames to always end at 1 PRECEDING when ORDER BY is used",
+            "Excluding the current day makes the query execute measurably faster",
+            "It has no real effect on the result compared to including the current day"
+          ],
+          "correct": 0,
+          "right": "Right — same principle as the moving-average anomaly detector elsewhere in this course: the day being tested can't be part of its own comparison baseline, or a huge spike would partly average itself away.",
+          "wrong": "The lesson's reasoning matches a pattern used elsewhere in this course: if the current day's count were included in its own baseline, an unusually high spike would partly pull the baseline upward toward itself, understating how anomalous it actually is — a circular comparison. Excluding the current day keeps the baseline purely historical, an honest measure of what \"normal\" looked like before today."
+        },
+        {
+          "q": "Why does the lesson describe sequential TransactionID access (Step 3) as a \"crawler fingerprint\" rather than normal human behaviour?",
+          "choices": [
+            "Human users typically query based on business context — specific customers, recent orders, filtered results — while automated crawlers extracting data commonly iterate through IDs in strict sequential order (ID=1000, then 1001, then 1002)",
+            "Sequential access is impossible for a human to produce even by accident",
+            "SQL Server automatically randomizes the order of any query result set, making sequential access theoretically impossible",
+            "It's only meaningful when the sequential access happens during business hours"
+          ],
+          "correct": 0,
+          "right": "Right — it's about the underlying query pattern. A human filters and searches; a scripted crawler grinding through IDs in order produces a very distinctive, very unhuman signature.",
+          "wrong": "The lesson contrasts the two behaviours directly: legitimate human queries are driven by business context — looking up a specific customer, checking recent orders, applying filters — which doesn't naturally produce strict numeric sequence. Automated crawlers extracting data for exfiltration, by contrast, commonly iterate straight through primary keys in order. The lesson's threshold — more than 80% of an IP's accesses being to consecutive IDs — is offered as a strong signal of exactly this scripted pattern."
+        },
+        {
+          "q": "Why does the lesson treat a 100% NULL rate for SourceIP as more than just a missing-data problem?",
+          "choices": [
+            "In a financial system, every transaction should have a logged SourceIP or session identifier for regulatory audit trail purposes — a high NULL rate means audit logging itself is not functioning correctly for some access paths",
+            "A NULL SourceIP always indicates the transaction was fraudulent",
+            "SQL Server cannot process any query involving a column with NULL values",
+            "SourceIP is only relevant for transactions processed outside business hours"
+          ],
+          "correct": 0,
+          "right": "Right — it's not just a data completeness gap, it's an audit control gap. Records with no captured SourceIP represent access that can never be reviewed after the fact.",
+          "wrong": "The lesson frames this as an audit control failure, not just a data quality gap: in a financial system, essentially every transaction should carry a logged SourceIP or equivalent session identifier so the access can be reviewed for regulatory audit purposes. A high NULL rate specifically means the audit logging mechanism isn't functioning correctly for some access paths — those transactions represent activity that simply cannot be traced back to its origin if it's ever needed."
+        }
+      ],
+      "close": "Excluding today from its own baseline, sequential access as a crawler signature, and NULL SourceIP as an audit gap rather than just missing data — access pattern anomaly detection covered. Next: Sensitive Value Masking Verification, confirming a test-environment refresh actually masked what it was supposed to."
+    },
+    "G17-T03": {
+      "open": "Sensitive Value Masking Verification — a masking job that fails silently for NULL source values can leave 12,000 real National Insurance numbers sitting in a Slack-shared test environment.",
+      "questions": [
+        {
+          "q": "Why does the lesson's masking verification logic check that values do NOT match the real PII format, rather than checking that they DO match one specific expected mask pattern?",
+          "choices": [
+            "It correctly handles the case where multiple mask formats may be in use (asterisks, X-substitution, fake domains) without needing to enumerate every possible mask format — anything that still looks like real PII is flagged regardless of what masking style was intended",
+            "Checking for a positive match to a mask pattern is technically impossible in SQL Server",
+            "Negative pattern matching always runs faster than positive pattern matching regardless of the data",
+            "The two approaches are functionally identical and the choice makes no practical difference"
+          ],
+          "correct": 0,
+          "right": "Right — inverting the check sidesteps having to know every possible mask format in advance. Anything that still matches the real PII pattern is unmasked, no matter how the masking was supposed to look.",
+          "wrong": "The lesson explains this design choice directly: inverting the usual check — verifying values do NOT match the real PII format, rather than verifying they DO match one specific mask format — correctly handles environments where multiple masking styles might be in use (asterisks, X-substitution, fake domains) without needing to enumerate all of them. Any value still matching the real NI number pattern is unmasked regardless of what mask format was intended, which is the actual risk that matters."
+        },
+        {
+          "q": "Why does the lesson treat a NULL value in a masked column as needing separate investigation, rather than automatically counting it as \"masked\"?",
+          "choices": [
+            "A NULL that was genuinely NULL in the source is expected and fine, but a NULL that replaced a real value (the masking function set it to NULL) might hide the fact that sensitive data existed there at all — the two cases need to be told apart",
+            "NULL values are always evidence that masking succeeded correctly",
+            "SQL Server treats NULL and a masked value as syntactically identical in every context",
+            "A NULL value can never occur in a properly masked production database"
+          ],
+          "correct": 0,
+          "right": "Right — same symptom (NULL), two very different meanings. One is an unremarkable data gap; the other could be hiding whether real PII used to be there at all.",
+          "wrong": "The lesson distinguishes these two scenarios precisely: a NULL that was genuinely NULL in the original source data is unremarkable and expected. But a NULL that resulted from a masking function replacing a real value is a different case — it may obscure whether sensitive data existed in that field at all, which matters for auditing the masking process itself. The lesson recommends that replacing PII with NULL, if used as a masking strategy, should be explicitly documented as intentional rather than assumed."
+        },
+        {
+          "q": "Why does the lesson describe the \"conditional masking\" failure mode (`IF value IS NOT NULL THEN mask(value) ELSE value`) as a realistic way for masking to fail silently?",
+          "choices": [
+            "If the NULL check itself has a bug — for example, checking the wrong column — the ELSE branch can return a real, unmasked value instead of the intended fallback, with no error raised anywhere in the process",
+            "Conditional logic can never be used safely in a masking function under any circumstances",
+            "This failure mode only occurs when the masking function is written in a language other than SQL",
+            "SQL Server automatically detects and prevents this specific coding pattern"
+          ],
+          "correct": 0,
+          "right": "Right — the danger isn't the conditional logic itself, it's what happens when the condition checks the wrong thing. A subtly wrong NULL check silently routes real PII through the \"do nothing\" branch instead of the masking branch.",
+          "wrong": "The lesson walks through exactly how this fails: the intended logic only skips masking when the source value is genuinely NULL (in which case there's nothing to expose anyway). But if the condition has a bug — say, it checks a different column's NULL-ness instead of the actual value being masked — the ELSE branch can end up returning the real, unmasked value for records where masking should have applied. Nothing raises an error; the query just quietly returns the wrong result, which is exactly the scenario the live case describes."
+        }
+      ],
+      "close": "Negative pattern matching as format-agnostic verification, NULL-as-mask needing its own investigation, and conditional masking as a realistic silent-failure mode — masking verification covered. Next: Audit Trail Completeness Check, making sure the audit log itself didn't quietly stop logging."
+    },
+    "G17-T04": {
+      "open": "Audit Trail Completeness Check — an audit trigger disabled for 11 days during routine maintenance and never re-documented is exactly the kind of gap that only shows up when a regulator asks for records that don't exist.",
+      "questions": [
+        {
+          "q": "Why does the lesson say a gap in sequential TransactionIDs is potential evidence of a compliance breach specifically in a financial system?",
+          "choices": [
+            "In a compliant financial system, records should be soft-deleted (flagged as cancelled) rather than hard-deleted, so the ID sequence should stay continuous — any gap suggests a hard delete that bypassed the audit trail",
+            "ID sequence gaps are always caused by a database backup being restored from an earlier point in time",
+            "SQL Server automatically closes ID sequence gaps within 24 hours by default",
+            "Gaps in ID sequences only ever indicate a harmless numbering restart, never a real issue"
+          ],
+          "correct": 0,
+          "right": "Right — the compliance expectation is that nothing gets truly deleted, only flagged. An ID gap breaks that expectation and suggests a hard delete slipped past the audit trigger entirely.",
+          "wrong": "The lesson states the compliance principle directly: in a properly governed financial system, records should never be hard-deleted — they should be soft-deleted (flagged as cancelled) precisely so the ID sequence stays continuous and auditable. A gap in the sequence therefore means either the records were never inserted, or they were hard-deleted in a way that bypassed the audit trigger — either way, evidence worth investigating as a potential compliance breach, not just a data curiosity."
+        },
+        {
+          "q": "Why does the lesson treat a load batch (CorrelationID) with only a single captured transaction as a possible \"partial-capture failure\" rather than assuming it's just a small batch?",
+          "choices": [
+            "If a batch actually processed hundreds of records but the audit table only shows one, it suggests the audit trigger captured the first insert and then failed partway through — perhaps due to a deadlock or timeout — leaving the rest of that batch unaudited",
+            "A single-record batch always indicates the ETL job crashed before completing any work at all",
+            "SQL Server enforces a minimum of 10 records per CorrelationID by design",
+            "It's flagged purely for statistical reasons with no operational significance"
+          ],
+          "correct": 0,
+          "right": "Right — the concerning scenario isn't a genuinely small batch, it's a large batch where the audit trigger stopped working partway through, silently leaving most of that batch invisible to the audit trail.",
+          "wrong": "The lesson explains the specific failure this check is designed to catch: a batch that genuinely processed hundreds of records, where the audit trigger captured only the very first insert before failing — perhaps due to a deadlock or a timeout — leaving every subsequent insert in that batch with no audit record at all. A single-record batch is the visible symptom of that intermittent failure, which is why it's flagged for review rather than assumed to be a genuinely small, complete batch."
+        },
+        {
+          "q": "Why does the lesson caution that weekends need to be excluded from temporal gap detection for a Monday–Friday business, but not for a 24/7 operational system?",
+          "choices": [
+            "A date with zero transactions is expected and normal for a business that doesn't operate on weekends, but the same zero-transaction date would be a genuine anomaly for a system that's supposed to be running continuously",
+            "SQL Server's date functions behave differently on weekends than on weekdays",
+            "Weekend dates are technically impossible to represent in a DATE column",
+            "The distinction only matters for businesses operating outside the United Kingdom"
+          ],
+          "correct": 0,
+          "right": "Right — the same observed fact (zero transactions on a date) means something completely different depending on whether the business is even supposed to be operating that day.",
+          "wrong": "The lesson makes this exact contrast: for a 24/7 operational system, any date showing zero transactions is inherently suspicious, since the system should never be fully silent. For a Monday–Friday business, weekends are an entirely expected and legitimate gap — treating those dates as anomalies would just generate false alarms. The date-spine technique surfaces every gap date candidate; it's the analyst's job to filter out the expected non-operational gaps based on the specific business's actual operating pattern."
+        }
+      ],
+      "close": "ID sequence gaps as hard-delete evidence, single-record batches as partial-capture failures, and weekend exclusion depending on the business's operating pattern — audit trail completeness covered. Next: Retention Policy and Data Expiry Validation, checking that data is deleted on schedule, not kept forever."
+    },
+    "G17-T05": {
+      "open": "Retention Policy and Data Expiry Validation — a UK telecoms company holding closed-account customer data six years past its 2-year deletion deadline is exactly the kind of breach the ICO actively investigates.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe the deletion deadline for a record as \"a simple derived date\" — EventDate plus RetentionPeriod — rather than something that needs complex logic?",
+          "choices": [
+            "Comparing that single derived date against GETDATE() gives a straightforward test: if the deadline has passed, the record should have been deleted — the DECLARE variables at the top just make the retention period itself configurable per data category",
+            "GDPR requires every retention calculation to use a fixed, non-configurable period of exactly 2 years for all data types",
+            "The deadline can only be computed correctly if the record's primary key is a sequential integer",
+            "SQL Server automatically calculates retention deadlines without any need for date arithmetic"
+          ],
+          "correct": 0,
+          "right": "Right — one date, one comparison. The DECLARE variables exist to make the retention period tunable per data category, not because the underlying logic itself is complicated.",
+          "wrong": "The lesson explains the simplicity directly: the deletion deadline is just `EventDate + RetentionPeriod` (here, ContractEnd + 2 years), and checking whether that single derived date has already passed relative to GETDATE() is a straightforward comparison. The DECLARE variables at the top exist so the retention period itself is configurable — different data categories (customer, employee, financial records) have different regulatory retention requirements, and parameterising the period lets the same logic serve all of them."
+        },
+        {
+          "q": "Why does the lesson treat a NULL ContractEnd date as \"a data quality failure that compounds into a compliance failure\"?",
+          "choices": [
+            "Without a defined ContractEnd, the system has no starting point for the post-contract retention clock, so it cannot determine when the data should be deleted — a data gap that directly blocks a compliance obligation",
+            "A NULL ContractEnd date automatically triggers immediate deletion of the customer's entire record",
+            "SQL Server refuses to store any customer record with a NULL ContractEnd value",
+            "NULL ContractEnd dates only affect customers located outside the United Kingdom"
+          ],
+          "correct": 0,
+          "right": "Right — one gap causes the other. Without a starting point for the retention clock, there's no way to calculate when deletion is due, which turns a simple missing-date problem into an unresolved compliance obligation.",
+          "wrong": "The lesson connects the two failures directly: a record with no ContractEnd date has no defined starting point for its post-contract retention clock. Since the deletion deadline is literally derived from that date, its absence means the system cannot determine when the data should be deleted at all — a data quality gap (a missing date) that directly becomes a compliance gap (an unresolvable deletion obligation), requiring manual investigation rather than automated handling."
+        },
+        {
+          "q": "Why does the lesson describe UK employment law's 6-year employee record retention requirement and GDPR's data-minimisation principle as being in tension with each other?",
+          "choices": [
+            "Employment law requires retaining certain records (like HMRC payroll data) for 6 years after employment ends, while GDPR requires deleting personal data once its processing purpose has ended — reconciling them means keeping only the minimal required records for 6 years and deleting everything else sooner",
+            "UK employment law and GDPR apply to two completely separate categories of employee with no overlap",
+            "GDPR does not apply to employee data under any circumstances, only to customer data",
+            "The 6-year retention requirement was fully repealed when GDPR came into force"
+          ],
+          "correct": 0,
+          "right": "Right — two real, valid legal obligations pulling in different directions on the same data. The resolution the lesson describes is scoping down to what's actually required (payroll records) for the mandated period, while letting everything else (home address, health data, emergency contacts) go sooner.",
+          "wrong": "The lesson names this tension directly: UK employment law requires retaining certain records — specifically HMRC payroll records — for 6 years after employment ends, while GDPR's data-minimisation principle pushes toward deleting personal data as soon as its processing purpose is no longer valid. The lesson's suggested resolution is to retain only the minimal required subset (payroll records) for the full 6 years, while deleting broader personal data (home address, emergency contacts, health information) much sooner, once it's no longer needed for any active purpose."
+        }
+      ],
+      "close": "Deletion deadlines as one simple derived date, NULL ContractEnd as a data gap that blocks a compliance obligation, and the employment-law-vs-GDPR retention tension — retention validation covered. Next: Consent and Legal Basis Validation, checking that marketing emails actually had a lawful reason to be sent."
+    },
+    "G17-T06": {
+      "open": "Consent and Legal Basis Validation — sending a marketing campaign to 180,000 customers without checking whether they'd actually consented is how a single email send turns into an ICO investigation.",
+      "questions": [
+        {
+          "q": "Why does the lesson use `IsActive` as a proxy for processing basis, given that the schema has no dedicated `ConsentStatus` or `LegalBasisCode` column?",
+          "choices": [
+            "IsActive = 1 implies an active contract, justifying processing under GDPR Article 6(1)(b) (contract performance); IsActive = 0 means the contract has ended, so processing can only continue for statutory retention, not marketing or other commercial purposes",
+            "IsActive has no relationship to GDPR compliance and is used purely as an arbitrary placeholder",
+            "GDPR requires every table to have an explicit ConsentStatus column before any processing basis analysis can occur",
+            "IsActive can only be used as a proxy when the customer's Country field is set to 'UK'"
+          ],
+          "correct": 0,
+          "right": "Right — in the absence of an explicit field, IsActive is the closest available signal for whether the contractual basis for processing is still live.",
+          "wrong": "The lesson explains this proxy relationship directly: in the absence of a dedicated legal-basis field, IsActive = 1 is treated as implying the contract is still in force, which justifies data processing under GDPR Article 6(1)(b) — contract performance. IsActive = 0 means the contract has ended, meaning continued processing can only be justified for statutory retention obligations, explicitly not for marketing, profiling, or other ongoing commercial purposes."
+        },
+        {
+          "q": "Why does the lesson flag customers whose first engagement predates 25 May 2018, rather than assuming their data is automatically unlawful to hold?",
+          "choices": [
+            "Their consent may have been collected under the pre-GDPR Data Protection Act 1998, which had a less strict standard — the flag exists to prompt verification that a GDPR-compliant consent refresh was actually completed, not to declare the data automatically unlawful",
+            "Any customer data collected before 25 May 2018 must be permanently deleted regardless of any other factor",
+            "GDPR only applies to customers who registered after 25 May 2018 and has no bearing on earlier customers at all",
+            "Pre-2018 customers are automatically exempt from all GDPR consent requirements going forward"
+          ],
+          "correct": 0,
+          "right": "Right — it's a prompt to verify, not a verdict. Their original consent may not meet GDPR's stricter standard, so the flag asks someone to confirm a proper refresh happened, rather than assuming the worst automatically.",
+          "wrong": "The lesson is careful about this distinction: a customer whose first engagement predates GDPR's enforcement date may have originally consented under the earlier, less strict Data Protection Act 1998 regime. That doesn't automatically make holding their data unlawful — the flag exists specifically to prompt verification that the consent basis has since been reviewed and confirmed as GDPR-compliant, which organisations were required to do when GDPR came into force."
+        },
+        {
+          "q": "Why does the lesson treat an `IsActive = 1` account with a `ContractEnd` date in the past as a data quality issue with compliance implications, not just a minor inconsistency?",
+          "choices": [
+            "The processing basis for that customer becomes ambiguous — the IsActive flag suggests an ongoing contract basis, while the ContractEnd date suggests the contract basis has actually ended, and this contradiction needs resolving before it can be relied on for lawful processing",
+            "SQL Server automatically corrects any inconsistency between IsActive and ContractEnd on its own",
+            "This specific inconsistency can only occur for customers in non-UK countries",
+            "It's flagged purely as a display formatting issue with no bearing on legal basis"
+          ],
+          "correct": 0,
+          "right": "Right — the two fields are telling contradictory stories about the same customer's legal basis for processing, and that contradiction itself is the compliance risk, not just an untidy data point.",
+          "wrong": "The lesson explains why this specific inconsistency matters: it means either the IsActive flag was never updated when the contract genuinely ended, or the ContractEnd date was entered incorrectly. Either way, the processing basis for that customer is now ambiguous — the two fields are giving contradictory signals about whether ongoing processing is actually justified, which is exactly the kind of gap a compliance review needs resolved rather than left unaddressed."
+        }
+      ],
+      "close": "IsActive as an inferred processing-basis proxy, pre-GDPR dates as a verification prompt not an automatic problem, and IsActive/ContractEnd contradictions as ambiguous legal basis — consent validation covered. Next: Privileged Data Access Validation, checking who can actually see the sensitive columns once they're classified."
+    },
+    "G17-T07": {
+      "open": "Privileged Data Access Validation — a view accidentally copied from production without stripping the restricted columns is exactly how junior staff end up able to see patient diagnostic codes.",
+      "questions": [
+        {
+          "q": "Why does the lesson call `SELECT *` in a view or stored procedure a \"security anti-pattern\"?",
+          "choices": [
+            "When a new sensitive column is later added to the underlying table, any existing SELECT * view automatically starts exposing it too — with no code change and no access control review triggered anywhere",
+            "SELECT * always executes significantly slower than explicitly naming every column",
+            "SQL Server disables SELECT * by default in any view that touches a table with more than 10 columns",
+            "SELECT * can only be used in stored procedures, never in views, in any SQL Server version"
+          ],
+          "correct": 0,
+          "right": "Right — the danger isn't in the moment SELECT * is written, it's in what happens later. A new sensitive column added to the table silently flows through into every SELECT * view with zero review.",
+          "wrong": "The lesson explains the specific danger: if a new sensitive column is added to a table later — the lesson's example is adding NationalID to Employees — any existing view using SELECT * automatically begins exposing that new column too, without any code change to the view itself and without triggering any access control review process. The exposure happens silently, purely as a side effect of how the table changed, which is exactly what makes it a security anti-pattern rather than just a stylistic shortcut."
+        },
+        {
+          "q": "Why does the lesson distinguish column-level security from row-level security as two separate controls that \"should both be validated, not assumed\"?",
+          "choices": [
+            "Column-level security prevents specific columns from being returned at all (like restricting HourlyRate to HR), while row-level security restricts which rows a user can see (like an employee only seeing their own record) — they solve different problems and neither one substitutes for the other",
+            "Column-level and row-level security are two names for the exact same underlying mechanism in SQL Server",
+            "Row-level security can only be applied to numeric columns, while column-level security only applies to text columns",
+            "SQL Server automatically enables both types of security whenever a table contains a PII column"
+          ],
+          "correct": 0,
+          "right": "Right — different axis of restriction entirely. One limits which columns come back; the other limits which rows come back. A table can have one correctly configured and still be wide open on the other.",
+          "wrong": "The lesson gives a concrete example of how these differ: column-level security might restrict the HourlyRate column to the HR role entirely, regardless of whose row it is. Row-level security, layered on top, might further restrict things so that even within HR, an individual employee can only see their own HourlyRate, not everyone else's. They're solving genuinely different problems — which columns are visible, versus which rows are visible — so verifying one is correctly configured says nothing about whether the other is too."
+        },
+        {
+          "q": "Why does the lesson use `INFORMATION_SCHEMA.COLUMNS` for this audit rather than querying the actual data values in each table?",
+          "choices": [
+            "It produces a comprehensive sensitive-data map based purely on column metadata (names, types), which is useful for a DBA performing an access audit in a context where they shouldn't be looking at the actual data values themselves",
+            "INFORMATION_SCHEMA.COLUMNS is the only way to query a SQL Server database that contains any PII whatsoever",
+            "Querying actual data values is technically impossible when auditing for sensitive columns",
+            "INFORMATION_SCHEMA.COLUMNS automatically encrypts any column it identifies as containing PII"
+          ],
+          "correct": 0,
+          "right": "Right — it's a metadata-only audit, which is exactly the point. A DBA doing an access review shouldn't need to look at real customer data just to figure out which columns need locking down.",
+          "wrong": "The lesson explains the specific benefit of this approach: `INFORMATION_SCHEMA.COLUMNS` provides a full catalog of every column in every table, letting the audit match column names against known PII patterns without ever needing to look at the actual stored values. This is particularly useful for a DBA conducting an access audit in an environment where they specifically should not be examining real customer data values as part of doing their job."
+        }
+      ],
+      "close": "SELECT * as a silent-exposure risk for future columns, column-level vs row-level security as genuinely separate controls, and metadata-only auditing via INFORMATION_SCHEMA — privileged access validation covered. Last one in this group: Injection and Sanitisation Audit."
+    },
+    "G17-T08": {
+      "open": "Last one in Security/Compliance — Injection and Sanitisation Audit. Finding `'; DROP TABLE Orders; --` sitting in a Notes column doesn't mean an attack succeeded, but it does mean one was attempted and the input validation layer let it through.",
+      "questions": [
+        {
+          "q": "Why does the lesson describe stored injection payloads as \"more dangerous\" than reflected injection?",
+          "choices": [
+            "A stored payload persists in the database and can be triggered by any future access, potentially by multiple downstream systems (reporting tools, APIs, export scripts) that were never hardened against injection — reflected injection only exists for the duration of a single request",
+            "Reflected injection is not a real security vulnerability and has no practical impact",
+            "Stored injection can only affect the Notes column specifically, never any other column",
+            "SQL Server automatically executes any stored injection payload the moment it is written to a table"
+          ],
+          "correct": 0,
+          "right": "Right — persistence is what makes it worse. A stored payload sits there indefinitely, available to be triggered by any downstream system that later touches it, long after the original request that planted it is gone.",
+          "wrong": "The lesson gives two specific reasons: the payload persists in the database and can be triggered by any future access, not just the original request that planted it; and it may be processed by multiple downstream systems — reporting tools, APIs, export scripts — that were never specifically hardened against injection, unlike the original web form's input layer. Reflected injection, by contrast, only exists transiently within a single request-response cycle."
+        },
+        {
+          "q": "Why does the lesson caution against treating every single quote found in a text column as a SQL injection attempt?",
+          "choices": [
+            "Apostrophes appear legitimately in real data — names like O'Brien, product descriptions, notes — so the check distinguishes a bare single quote (which may be entirely legitimate) from an actual injection pattern that combines a quote with SQL keywords",
+            "Single quotes can never appear in legitimate data under any circumstances",
+            "SQL Server automatically strips all single quotes from data before it can be stored",
+            "The distinction only matters for columns that store numeric data types"
+          ],
+          "correct": 0,
+          "right": "Right — a bare apostrophe is completely ordinary in real text data. The actual injection signature the lesson cares about is a quote combined with something like a SQL keyword or a comment sequence, not the quote by itself.",
+          "wrong": "The lesson makes this distinction explicitly: an apostrophe in a name like O'Brien, or in a product description, is entirely legitimate and expected. What the injection-specific checks look for is a quote combined with SQL syntax patterns — a keyword, a comment sequence like `--`, a UNION SELECT — not just the presence of a quote character on its own. The recommended remediation for legitimate quotes is parameterised queries (where a quote is always treated as data, never as syntax), not stripping them from the data."
+        },
+        {
+          "q": "Why does the lesson say the risk audit \"does not assess which application components use dynamic SQL,\" and describe a companion code audit as necessary?",
+          "choices": [
+            "A stored injection payload is inert until some application component reads it and concatenates it into a SQL string — the data audit finds the payloads, but only a separate code audit can determine which systems are actually vulnerable to executing them",
+            "Dynamic SQL cannot exist anywhere in a properly designed SQL Server application by definition",
+            "The code audit is unnecessary busywork since finding the payload in the data is already sufficient evidence of a successful attack",
+            "SQL Server automatically identifies and disables any stored procedure that uses dynamic SQL"
+          ],
+          "correct": 0,
+          "right": "Right — the data audit and the code audit answer two different questions. Finding the payload tells you it's there; only checking the application code tells you whether anything is actually at risk of executing it.",
+          "wrong": "The lesson draws this line clearly: a SQL injection payload sitting in a column like Notes is inert — genuinely harmless — until some application component reads that value and concatenates it directly into a SQL string rather than treating it as safe data. The data audit's job is finding where these payloads exist; determining whether any actual application code is vulnerable to executing them requires a separate audit of the application and stored procedure code itself, checking specifically for string concatenation used to build SQL."
+        }
+      ],
+      "close": "Stored injection's persistence as the real danger, legitimate apostrophes vs actual injection signatures, and the data audit needing a code-audit companion — injection and sanitisation covered. That closes out Security/Compliance, and the entire pre-authorized G15-G17 programme. Eight techniques in this group: PII detection, access pattern anomalies, masking verification, audit trail completeness, retention policy, consent validation, privileged access, and injection/sanitisation auditing."
     }
   }
 }
