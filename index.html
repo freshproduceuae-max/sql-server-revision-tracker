@@ -507,12 +507,11 @@ const BA_XP=10;
    like DV_GROUPS rather than a runtime-fetched index.json like BA_INDEX_URL —
    DV already proves that combination (static chapter list + checkpoints)
    works; BA's dynamic-index pattern is for a track with no checkpoints.
-   Phase 1 only: DE01 is the only chapter present. DE02-DE06 are the
-   approved curriculum's remaining scope (see
-   docs/data-engineering-curriculum-proposal.md) but are NOT authorized to
-   build yet — this array is deliberately sized to grow by appending chapter
-   entries, not by any structural change, when a future chapter is
-   authorized. scripts/build-de-lessons.js checks this array against
+   All 6 chapters (DE01-DE06, 36 lessons) of the approved curriculum (see
+   docs/data-engineering-curriculum-proposal.md) are built. This array grows
+   by appending chapter entries, not by any structural change, and did so
+   unchanged across all 6 chapters' separate authorizations.
+   scripts/build-de-lessons.js checks this array against
    sources/data-engineering.json on every build, the same way
    build-projects.js checks DV_GROUPS. */
 const DE_BASE='./data-engineering/';
@@ -1884,7 +1883,7 @@ const TRACKS=[
    planErr:()=>S.projError, planRetry:'retryProjIndex'},
   {id:'dv',    name:'Data Validation',tab:'🧪 Data Validation',col:'#1CB0F6',dark:'#1899D6',projPrefix:'P-DV-',
    planErr:()=>S.projError, planRetry:'retryProjIndex'},
-  // Phase 1 only (6 of the approved 36 lessons; see
+  // All 6 chapters, 36 of 36 approved lessons (see
   // docs/data-engineering-curriculum-proposal.md). Structured like DV: a
   // compiled-in chapter list (DE_CHAPTERS) plus checkpoints (projPrefix),
   // not BA's runtime-fetched-index pattern — see DE_CHAPTERS' own comment
@@ -2271,7 +2270,7 @@ function renderApp(){
     hero=`
     <div class="hero">
       <h1>Data Engineering — PySpark, Python &amp; Cloudera</h1>
-      <p class="hero-sub">Phase 1 of the approved curriculum: Chapter 1 (Python, SQL and Data Engineering Foundations), 6 lessons. Chapters 2–6 (PySpark, enterprise ETL/ELT, Hadoop/CDP, quality &amp; governance, production engineering) are the approved target for later phases — completing Chapter 1 alone is a foundation, not job-readiness for a senior role.</p>
+      <p class="hero-sub">All 6 chapters of the approved curriculum, 36 lessons: Python/SQL/DE foundations, PySpark and distributed processing, enterprise ETL/ELT, the Hadoop ecosystem and Cloudera Data Platform, data quality/governance/security/observability, and production engineering (orchestration, CI/CD, containers, ML data prep, resilience). Scenario-based learning throughout — completing it is a strong foundation, not equivalent to hands-on production/cluster experience or senior-role job-readiness on its own.</p>
       <div class="progress-card">
         <div class="progress-head"><span class="progress-lbl">Chapter 1 progress</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:#00C2A8;"></div></div>
