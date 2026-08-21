@@ -17,7 +17,7 @@ A Duolingo-style learning app with five tracks:
 | 💼 Credit Risk | 47 modules + 7 case studies | GitHub raw, **separate branch** (see below) |
 | 🧪 Data Validation | 236 techniques / 19 groups + 15 exercises | `data-validation-lab/` in this repo |
 | 📐 Business Analysis | 42 lessons / 10 chapters | `business-analysis/` in this repo (**generated**) |
-| ⚙️ Data Engineering | **Chapters 1–2 of 6, 12 of 36 approved lessons** | `data-engineering/` in this repo (**generated**) — see "Data Engineering track" below |
+| ⚙️ Data Engineering | **Chapters 1–3 of 6, 18 of 36 approved lessons** | `data-engineering/` in this repo (**generated**) — see "Data Engineering track" below |
 | 🎯 Quiz Practice | 2,079 questions, 11 banks | `quiz-bank.json` (generated) |
 
 Tracks are **data-driven**: `TRACKS` in `index.html` drives routing, the nav tabs,
@@ -389,7 +389,7 @@ check the progress block for the exact verified state at any given moment.
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
 | 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start. **One unauthorized generation attempt was made and rejected — see "Enterprise Architecture — rejected unauthorized run" below.** |
-| 7 | Data Engineering track — Chapters 3–6 | 24 of 36 approved lessons remaining (Chapters 1–2, 12 lessons, are built — see "Data Engineering track" below) | **Not authorized.** Chapters 1 and 2 were each their own explicit authorization; Chapters 3–6 need the same, one at a time, per the owner's stated chapter-by-chapter approach. |
+| 7 | Data Engineering track — Chapters 4–6 | 18 of 36 approved lessons remaining (Chapters 1–3, 18 lessons, are built — see "Data Engineering track" below) | **Not authorized.** Chapters 1–3 were each their own explicit authorization; Chapters 4–6 need the same, one at a time, per the owner's stated chapter-by-chapter approach. |
 
 **Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
 close.** None of them are blocked by a technical dependency — each is
@@ -468,7 +468,7 @@ documented rationale.
 
 Content-only work (items 1–3, 6, 7) is explicitly **not** gated on any of this.
 
-### Data Engineering track — Chapters 1–2 built (of 6)
+### Data Engineering track — Chapters 1–3 built (of 6)
 
 Same origin story pattern as Enterprise Architecture: the owner pasted a
 real job posting (GSSTech Group, "Sr. Data Engineer - PySpark, Python &
@@ -481,11 +481,45 @@ the SQL/Power BI quiz bank, no real coverage.
 lessons / 6 chapters / 6 checkpoints, independently reviewed by Codex
 (`PASS_WITH_FIXES`, all findings applied and marked inline), approved by
 the owner as the final target. **Built and merged so far: Chapter 1
-(6 lessons, `P-DE-01`) and Chapter 2 (6 lessons, `P-DE-02`) — each its own
-separate, explicit authorization, per the owner's stated chapter-by-chapter
-approach.** Chapters 3–6 and all Teacher MCQs for this track need their own
-separate authorization before any further content is written — see the
-work queue table above (item 7).
+(6 lessons, `P-DE-01`), Chapter 2 (6 lessons, `P-DE-02`) and Chapter 3
+(6 lessons, `P-DE-03`) — each its own separate, explicit authorization,
+per the owner's stated chapter-by-chapter approach.** Chapters 4–6 and all
+Teacher MCQs for this track need their own separate authorization before
+any further content is written — see the work queue table above (item 7).
+
+**Chapter 3 — Enterprise ETL/ELT, Ingestion and Data Modelling.** Batch
+vs. streaming ingestion pattern selection (driven by real event cadence
+and consumer latency requirements, not a platform-wide default),
+idempotent/re-runnable pipeline design (MERGE-on-natural-key and
+`replaceWhere` partition overwrite as two distinct idempotent-write
+patterns, chosen against what happens if a job runs twice for the same
+input), schema evolution and contract management (Avro `aliases` for safe
+renames, Iceberg's column-ID-based tracking for metadata-only schema
+changes), Slowly Changing Dimensions at scale (a distributed SCD2 MERGE
+that explicitly enforces the same non-overlapping/gapless/exactly-one-
+current-row invariants Data Validation G14 validates for, addressing two
+failure modes — out-of-order same-batch concurrent changes, and unpruned
+MERGE scan cost — that a single-node implementation never has to contend
+with), data lake vs. warehouse vs. lakehouse (Iceberg's snapshot-based
+atomic-commit mechanism explained concretely, not as a generic "ACID for
+lakes" claim, plus an explicit statement of when a traditional warehouse
+is still the better choice), and metadata-driven ingestion frameworks
+(a config-driven design that onboards a new source as a reviewed config
+entry rather than a hand-copied script, closing the specific inconsistency
+the chapter's own scenario opens with — four hand-copied scripts already
+disagreeing on missing-source handling). Grounded against fetched, current
+documentation: Apache Iceberg's schema-evolution guarantees (column-ID
+tracking, add/drop/rename as independent, side-effect-free metadata
+operations) and Spark Structured Streaming's exactly-once semantics
+(replayable sources plus idempotent sinks plus checkpointing, jointly —
+not any one of the three alone). Checkpoint `P-DE-03` is one transaction-
+banking scenario (an idempotent SCD2 customer pipeline) exercising all six
+Chapter 3 skills together, doubling as the chapter's practical exercise,
+reusing the exact same `loadDeChaptersFromApp()`/`deLessonIds()`/
+`renderDe()` infrastructure Chapters 1–2 already built — no new build
+tooling was needed for Chapter 3, only additive data (one more
+`DE_CHAPTERS` entry, one more checkpoint definition in `build-projects.js`'s
+`DE` array).
 
 **Chapter 2 — PySpark and Distributed Data Processing.** Lazy evaluation
 and the transformation/action split, DataFrames/Spark SQL and explicit
@@ -544,23 +578,23 @@ definition in `build-projects.js`'s `DE` array).
   incomplete, unlocks and mark-done works when all 6 lessons are complete).
 
 **Explicit, load-bearing scope honesty (per owner instruction):** completing
-Chapters 1–2 is a foundation plus the technical core of distributed
-processing, not job-readiness for the senior PySpark/Cloudera role this
-curriculum was scoped from. The track's own hero copy and Chapter 1's
-final lesson both state this directly, rather than implying twelve
-lessons make someone senior-ready — the Hadoop-ecosystem, enterprise
-ETL/ELT, governance/security, and production-operations skills that
-posting actually needs start in Chapter 3 and continue through Chapter 6,
-none of which are built yet.
+Chapters 1–3 is a foundation, the technical core of distributed
+processing, and enterprise ingestion/pipeline-design discipline, not
+job-readiness for the senior PySpark/Cloudera role this curriculum was
+scoped from. The track's own hero copy and Chapter 1's final lesson both
+state this directly, rather than implying eighteen lessons make someone
+senior-ready — the Hadoop-ecosystem, governance/security, and
+production-operations skills that posting actually needs start in
+Chapter 4 and continue through Chapter 6, none of which are built yet.
 
 **Data Engineering-specific note not covered by the Chapter 1 harness
-bullet above:** Chapter 2's lessons use the identical same-origin
+bullet above:** Chapters 2 and 3's lessons use the identical same-origin
 lesson-loading code path Chapter 1's harness test already exercises
 (`contentUrl()` → `loadLesson()`, unchanged since Phase 1), so no new
-harness spec cases were added for Chapter 2 specifically. The existing
-18-test suite (including DE01-T01's lesson-loading case) was re-run
-against the actual Chapter 2 build and passed — see PR history for this
-chapter's Codex review record rather than treating this note as that
+harness spec cases were added for either chapter specifically. The
+existing 18-test suite (including DE01-T01's lesson-loading case) was
+re-run against the actual Chapter 3 build and passed — see PR history for
+this chapter's Codex review record rather than treating this note as that
 verification itself.
 
 ### Enterprise Architecture track — how this came up
