@@ -571,7 +571,7 @@ const DV = [
 
 // ── Data Engineering checkpoints: one per chapter ─────────────────────────────
 // Not every chapter needs a pair — matches the DV precedent (Checkpoint 3
-// covers G04 alone). DE04-DE06 checkpoints (P-DE-04..06) are NOT authorized
+// covers G04 alone). DE05-DE06 checkpoints (P-DE-05..06) are NOT authorized
 // yet; adding them later is additive to this array, no structural change.
 const DE = [
   {
@@ -641,6 +641,29 @@ const DE = [
       'A concurrency-safe SCD2 merge design referencing G14\'s invariants',
       'An Iceberg-vs-lake justification grounded in the commit/snapshot mechanism',
       'A metadata-driven config sketch covering the next onboarding wave',
+    ],
+  },
+  {
+    n: 4, title: 'Diagnose a Mixed HDFS/Ozone, YARN and Kafka Estate', chapters: ['DE04'],
+    tagline: 'One scenario, all six Chapter 4 skills: HDFS vs Ozone, Hive vs Impala, YARN queues, CDP deployment models, Iceberg-on-CDP, Kafka partitioning',
+    scenario: [
+      'The bank\'s CDP Private Cloud Base cluster is showing four unrelated-looking symptoms in the same week: NameNode memory pressure traced to a specific workload, compliance analysts complaining an ad-hoc lookup takes 20-40 seconds, a fraud-detection streaming job being starved of executors during a batch spike despite supposedly guaranteed resources, and a Kafka consumer group with one wildly lagging instance while three sit idle. A new platform engineer, hired expecting a fully Kubernetes-native CDP, wants to "just re-architect everything onto containers." You are asked to diagnose each symptom on its own technical merits and propose the actual fix for each -- not a platform-wide rewrite.',
+    ],
+    tasks: [
+      "[DE04-T01] Diagnose which specific workload is driving NameNode memory pressure (using file count, not byte volume, as the signal), and decide whether it should move to Apache Ozone or stay on HDFS -- justify why moving the wrong workload would leave the pressure unresolved.",
+      '[DE04-T02] Explain why routing both the analysts\' ad-hoc lookups and the nightly batch rebuild through the same engine produced the analysts\' 20-40 second responses, and redesign which workload runs on Hive versus Impala, referencing each engine\'s actual execution model.',
+      "[DE04-T03] Redesign the YARN capacity scheduler configuration (queues, capacity, maximum-capacity, preemption) so the fraud-detection streaming job's guaranteed resources are an enforced floor, not a soft target -- and explain why a single undifferentiated queue could never have enforced that guarantee.",
+      '[DE04-T04] Correct the new engineer\'s "just re-architect everything onto containers" framing: explain what CDP Private Cloud Base actually is, where CDP genuinely does run containerized services, and where SDX governance fits across both models -- state one concrete risk of a wholesale container migration given what Chapter 4 established about mixed real estates.',
+      "[DE04-T05] Diagnose whether the cluster's HMS partition-tracking slowdown is an inherent Hive cost or an Iceberg-integration misconfiguration, and design a time-travel query for the compliance team's pre-correction lookup requirement without a separate backup table.",
+      '[DE04-T06] Diagnose why the Kafka consumer group\'s lag concentrated on one instance rather than spreading evenly, propose a fix that preserves per-card ordering, and design a replay mechanism for the last 24 hours of events that does not touch the live consumer group\'s state.',
+    ],
+    deliverables: [
+      'A NameNode-pressure diagnosis with a justified HDFS-vs-Ozone workload placement',
+      'A Hive-vs-Impala engine-assignment fix grounded in each engine\'s execution model',
+      'A capacity-scheduler redesign with an enforced guaranteed-resource floor',
+      'A corrected CDP deployment-model explanation with one concrete container-migration risk',
+      'An HMS-bottleneck diagnosis plus a working time-travel query, no backup table',
+      'A Kafka key-skew diagnosis with an ordering-preserving fix and an isolated replay design',
     ],
   },
 ];
