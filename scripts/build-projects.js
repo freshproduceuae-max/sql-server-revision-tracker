@@ -571,8 +571,8 @@ const DV = [
 
 // ── Data Engineering checkpoints: one per chapter ─────────────────────────────
 // Not every chapter needs a pair — matches the DV precedent (Checkpoint 3
-// covers G04 alone). DE05-DE06 checkpoints (P-DE-05..06) are NOT authorized
-// yet; adding them later is additive to this array, no structural change.
+// covers G04 alone). DE06 checkpoint (P-DE-06) is NOT authorized yet;
+// adding it later is additive to this array, no structural change.
 const DE = [
   {
     n: 1, title: 'Reconcile a Transaction-Banking Batch', chapters: ['DE01'],
@@ -664,6 +664,29 @@ const DE = [
       'A corrected CDP deployment-model explanation with one concrete container-migration risk',
       'An HMS-bottleneck diagnosis plus a working time-travel query, no backup table',
       'A Kafka key-skew diagnosis with an ordering-preserving fix and an isolated replay design',
+    ],
+  },
+  {
+    n: 5, title: 'Diagnose and Govern a Late-Discovered Settlement Defect', chapters: ['DE05'],
+    tagline: 'One scenario, all six Chapter 5 skills: DQ gates at scale, Atlas/Ranger governance, auth-vs-authz-vs-encryption-vs-masking, SLA observability, Spark UI debugging, measured cost optimization',
+    scenario: [
+      'A bank\'s nightly settlement pipeline has had a rough month: an upstream defect silently propagated into three downstream tables before anyone noticed, a compliance audit found the platform team could answer neither "where did this PII column come from" nor "who can currently query it," a platform lead\'s "Kerberos means it\'s secure" answer collapsed four distinct controls into one, the SLA was quietly missed twice with no real-time alert, and an on-call engineer\'s habitual blind restart made a skewed stage worse rather than better -- and a well-intentioned "optimization" doubled cluster cost without fixing the actual bottleneck. You are asked to design the fixes for all six problems as one coherent quality/governance/security/observability/cost programme for this one pipeline, using Data Validation\'s existing detection logic (G01-G19) as a foundation rather than re-deriving it, and CDP\'s real components (Atlas, Ranger, Spark UI, AQE) rather than vague claims about "quality," "governed," "secure" or "optimized."',
+    ],
+    tasks: [
+      '[DE05-T01] Design a quarantine-plus-threshold data quality gate for this pipeline, reusing a Data Validation completeness/consistency check\'s DETECTION logic rather than re-deriving it, and justify the specific threshold that decides quarantine-and-continue versus hard-fail for a given day\'s defect rate.',
+      '[DE05-T02] Specify what has to be instrumented in this pipeline so an auditor\'s lineage question ("where did this column\'s data come from") and access question ("who can query it and why") are both answerable going forward, naming Atlas and Ranger\'s distinct roles rather than one undifferentiated "governance" feature.',
+      '[DE05-T03] Rewrite the platform lead\'s "Kerberos, so it\'s secure" answer into four separately verified claims (authentication, authorization, encryption at rest, encryption in transit, masking) with the specific evidence that would confirm or refute each one.',
+      '[DE05-T04] Design the SLA-risk alerting this pipeline needs to detect a late-but-not-crashed run while it is still in progress, and explain why the existing crash-only alert structurally cannot catch this failure mode no matter how it is tuned.',
+      '[DE05-T05] Using Spark UI task-duration-distribution evidence (not a blind restart), diagnose whether a slow stage is caused by skew, insufficient parallelism, or genuinely larger volume, and identify the specific fix each diagnosis implies.',
+      '[DE05-T06] Diagnose, using the physical query plan and Spark UI shuffle metrics, whether this pipeline\'s cost problem is a compute-capacity problem or an unnecessary-data-volume problem, and justify why the correct fix targets the one that measured evidence actually shows.',
+    ],
+    deliverables: [
+      'A quarantine-plus-threshold DQ gate design reusing DV detection logic, with a justified threshold',
+      'An Atlas-lineage/Ranger-access instrumentation plan naming each component\'s distinct role',
+      'A four-part security-claim breakdown (authn/authz/encryption/masking) with verification evidence for each',
+      'An SLA-risk alert design distinct from crash detection, with a stated reason the old alert can\'t cover it',
+      'A Spark-UI-evidence-based skew/parallelism/volume diagnosis with the correct fix identified',
+      'A measured compute-vs-data-volume cost diagnosis with the correct optimization lever justified',
     ],
   },
 ];

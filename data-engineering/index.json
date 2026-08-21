@@ -122,5 +122,36 @@
         "title": "Kafka for Enterprise Event Streaming"
       }
     ]
+  },
+  {
+    "code": "DE05",
+    "name": "Data Quality, Governance, Security, Observability and Spark Optimization",
+    "desc": "Data quality gates at Spark scale (building on Data Validation G01-G19), Atlas/Ranger governance and lineage, authentication vs authorization vs encryption vs masking, SLA-risk observability, Spark UI debugging, and measured cost/performance optimization -- all in enterprise banking scenarios.",
+    "lessons": [
+      {
+        "id": "DE05-T01",
+        "title": "Data Quality Gates in a Spark Pipeline"
+      },
+      {
+        "id": "DE05-T02",
+        "title": "Data Governance and Lineage on CDP"
+      },
+      {
+        "id": "DE05-T03",
+        "title": "Security in Enterprise Data Platforms"
+      },
+      {
+        "id": "DE05-T04",
+        "title": "Pipeline Observability and Monitoring"
+      },
+      {
+        "id": "DE05-T05",
+        "title": "Debugging Failed Spark Jobs"
+      },
+      {
+        "id": "DE05-T06",
+        "title": "Cost and Resource Optimization at Scale"
+      }
+    ]
   }
 ]
