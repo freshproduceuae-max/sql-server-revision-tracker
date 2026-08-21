@@ -569,9 +569,9 @@ const DV = [
   },
 ];
 
-// ── Data Engineering checkpoints: one per chapter (Phase 1: DE01 only) ───────
+// ── Data Engineering checkpoints: one per chapter ─────────────────────────────
 // Not every chapter needs a pair — matches the DV precedent (Checkpoint 3
-// covers G04 alone). DE02-DE06 checkpoints (P-DE-02..06) are NOT authorized
+// covers G04 alone). DE04-DE06 checkpoints (P-DE-04..06) are NOT authorized
 // yet; adding them later is additive to this array, no structural change.
 const DE = [
   {
@@ -618,6 +618,29 @@ const DE = [
       'A join-strategy diagnosis and fix with before/after `.explain()` evidence',
       'A watermarked streaming aggregation design with a stated late-data tolerance',
       'A caching fix with a justified StorageLevel choice',
+    ],
+  },
+  {
+    n: 3, title: 'Build an Idempotent SCD2 Customer Pipeline', chapters: ['DE03'],
+    tagline: 'One scenario, all six Chapter 3 skills: ingestion-pattern choice, idempotent writes, schema evolution, SCD2 at scale, lakehouse format, metadata-driven design',
+    scenario: [
+      'The bank is onboarding its customer-dimension pipeline onto the new lakehouse platform ahead of three more source systems planned for next quarter. The dimension must ingest change-events from an internal CDC feed, apply them as SCD Type 2 history in Iceberg, survive a schema change the source team is planning next month (adding a risk-tier field, renaming a legacy column), and be re-runnable without human intervention if a nightly run fails partway through -- because a hand-run reconciliation after a partial failure is exactly what caused a real double-counted-balance incident on a different pipeline this quarter. You are asked to design and justify the pipeline end to end, in a form that could plausibly onboard the next source with a config change rather than new code.',
+    ],
+    tasks: [
+      "[DE03-T01] Classify the customer CDC feed's ingestion pattern (batch, scheduled batch, or streaming) using the source's real event cadence and the pipeline's actual latency requirement -- not a platform-wide default -- and justify the choice against at least one pattern that would be wrong for this source.",
+      '[DE03-T02] Design the pipeline\'s write step so that re-running it after a partial failure, for any reason, produces the same final table state as running it exactly once -- state which idempotent-write pattern (MERGE-on-natural-key or replaceWhere partition overwrite) fits this source and why the other would be a weaker fit here.',
+      '[DE03-T03] Given the planned schema change (add risk-tier with a default, rename a legacy column), classify each change as safe-as-is or needing an explicit compatibility mechanism, and specify the exact mechanism (Avro alias, Iceberg ID-based rename) each needs before it ships.',
+      "[DE03-T04] Implement the SCD2 merge so that concurrent same-customer change-events in one batch cannot produce two current rows, and explain -- referencing Data Validation G14's gap/overlap/current-row invariants -- which specific invariant a naive distributed MERGE risks violating that a single-node implementation would not.",
+      '[DE03-T05] Justify Iceberg (over a raw data lake) for this table using its actual commit/snapshot mechanism, not a generic "ACID" claim, and state one condition under which a traditional warehouse would still be the better choice for a different table on this platform.',
+      "[DE03-T06] Sketch the config fields a metadata-driven framework would need to onboard this source and the next quarter's three sources without new pipeline code, and name one specific inconsistency (like the scenario's differing missing-source handling) that a shared, config-driven ingestion function prevents versus hand-copied scripts.",
+    ],
+    deliverables: [
+      'An ingestion-pattern classification with a stated rejected alternative',
+      'An idempotent write design with a justified pattern choice',
+      'A schema-change compatibility plan naming the exact mechanism per change',
+      'A concurrency-safe SCD2 merge design referencing G14\'s invariants',
+      'An Iceberg-vs-lake justification grounded in the commit/snapshot mechanism',
+      'A metadata-driven config sketch covering the next onboarding wave',
     ],
   },
 ];

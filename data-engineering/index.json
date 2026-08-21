@@ -60,5 +60,36 @@
         "title": "Spark Performance Tuning: Caching, Serialization and Executor Sizing"
       }
     ]
+  },
+  {
+    "code": "DE03",
+    "name": "Enterprise ETL/ELT, Ingestion and Data Modelling",
+    "desc": "Batch vs. streaming ingestion design, idempotent re-runnable pipelines, schema evolution and contract management, Slowly Changing Dimensions at scale, data lake vs. warehouse vs. lakehouse, and metadata-driven ingestion frameworks -- all in enterprise banking and transaction-banking scenarios.",
+    "lessons": [
+      {
+        "id": "DE03-T01",
+        "title": "Batch vs. Streaming Ingestion Design"
+      },
+      {
+        "id": "DE03-T02",
+        "title": "Idempotent, Re-runnable Pipeline Design"
+      },
+      {
+        "id": "DE03-T03",
+        "title": "Schema Evolution and Contract Management"
+      },
+      {
+        "id": "DE03-T04",
+        "title": "Slowly Changing Dimensions at Scale"
+      },
+      {
+        "id": "DE03-T05",
+        "title": "Data Lake vs. Data Warehouse vs. Lakehouse"
+      },
+      {
+        "id": "DE03-T06",
+        "title": "Designing Metadata-Driven Ingestion Frameworks"
+      }
+    ]
   }
 ]
