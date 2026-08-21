@@ -153,5 +153,36 @@
         "title": "Cost and Resource Optimization at Scale"
       }
     ]
+  },
+  {
+    "code": "DE06",
+    "name": "Production Engineering: Orchestration, CI/CD, Containers, ML Data, Operations",
+    "desc": "Multi-stage Spark orchestration, CI/CD for data pipelines, containerizing DE workloads, Spark-on-Kubernetes, reproducible ML feature preparation, and production resilience/on-call operations -- all in enterprise banking scenarios. Closes the 36-lesson Data Engineering curriculum.",
+    "lessons": [
+      {
+        "id": "DE06-T01",
+        "title": "Orchestrating Multi-Stage Spark Pipelines"
+      },
+      {
+        "id": "DE06-T02",
+        "title": "CI/CD for Data Pipelines"
+      },
+      {
+        "id": "DE06-T03",
+        "title": "Containerizing Data Engineering Workloads"
+      },
+      {
+        "id": "DE06-T04",
+        "title": "Kubernetes for Data Platforms"
+      },
+      {
+        "id": "DE06-T05",
+        "title": "Preparing Datasets for Machine Learning"
+      },
+      {
+        "id": "DE06-T06",
+        "title": "Pipeline Resilience, Recovery and On-Call Production Support"
+      }
+    ]
   }
 ]
