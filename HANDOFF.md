@@ -17,7 +17,7 @@ A Duolingo-style learning app with five tracks:
 | 💼 Credit Risk | 47 modules + 7 case studies | GitHub raw, **separate branch** (see below) |
 | 🧪 Data Validation | 236 techniques / 19 groups + 15 exercises | `data-validation-lab/` in this repo |
 | 📐 Business Analysis | 42 lessons / 10 chapters | `business-analysis/` in this repo (**generated**) |
-| ⚙️ Data Engineering | **Chapters 1–3 of 6, 18 of 36 approved lessons** | `data-engineering/` in this repo (**generated**) — see "Data Engineering track" below |
+| ⚙️ Data Engineering | **Chapters 1–4 of 6, 24 of 36 approved lessons** | `data-engineering/` in this repo (**generated**) — see "Data Engineering track" below |
 | 🎯 Quiz Practice | 2,079 questions, 11 banks | `quiz-bank.json` (generated) |
 
 Tracks are **data-driven**: `TRACKS` in `index.html` drives routing, the nav tabs,
@@ -389,7 +389,7 @@ check the progress block for the exact verified state at any given moment.
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
 | 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start. **One unauthorized generation attempt was made and rejected — see "Enterprise Architecture — rejected unauthorized run" below.** |
-| 7 | Data Engineering track — Chapters 4–6 | 18 of 36 approved lessons remaining (Chapters 1–3, 18 lessons, are built — see "Data Engineering track" below) | **Not authorized.** Chapters 1–3 were each their own explicit authorization; Chapters 4–6 need the same, one at a time, per the owner's stated chapter-by-chapter approach. |
+| 7 | Data Engineering track — Chapters 5–6 | 12 of 36 approved lessons remaining (Chapters 1–4, 24 lessons, are built — see "Data Engineering track" below) | **Not authorized.** Chapters 1–4 were each their own explicit authorization; Chapters 5–6 need the same, one at a time, per the owner's stated chapter-by-chapter approach. |
 
 **Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
 close.** None of them are blocked by a technical dependency — each is
@@ -468,7 +468,7 @@ documented rationale.
 
 Content-only work (items 1–3, 6, 7) is explicitly **not** gated on any of this.
 
-### Data Engineering track — Chapters 1–3 built (of 6)
+### Data Engineering track — Chapters 1–4 built (of 6)
 
 Same origin story pattern as Enterprise Architecture: the owner pasted a
 real job posting (GSSTech Group, "Sr. Data Engineer - PySpark, Python &
@@ -481,11 +481,50 @@ the SQL/Power BI quiz bank, no real coverage.
 lessons / 6 chapters / 6 checkpoints, independently reviewed by Codex
 (`PASS_WITH_FIXES`, all findings applied and marked inline), approved by
 the owner as the final target. **Built and merged so far: Chapter 1
-(6 lessons, `P-DE-01`), Chapter 2 (6 lessons, `P-DE-02`) and Chapter 3
-(6 lessons, `P-DE-03`) — each its own separate, explicit authorization,
-per the owner's stated chapter-by-chapter approach.** Chapters 4–6 and all
-Teacher MCQs for this track need their own separate authorization before
-any further content is written — see the work queue table above (item 7).
+(6 lessons, `P-DE-01`), Chapter 2 (6 lessons, `P-DE-02`), Chapter 3
+(6 lessons, `P-DE-03`) and Chapter 4 (6 lessons, `P-DE-04`) — each its own
+separate, explicit authorization, per the owner's stated chapter-by-chapter
+approach.** Chapters 5–6 and all Teacher MCQs for this track need their own
+separate authorization before any further content is written — see the
+work queue table above (item 7).
+
+**Chapter 4 — Hadoop Ecosystem and Cloudera Data Platform.** HDFS vs.
+Apache Ozone (diagnosed by which specific resource — NameNode metadata
+memory, scaling with file count not byte volume — a workload actually
+strains, not a blanket "move everything to the newer store" framing),
+Hive vs. Impala (engine choice driven by each engine's real execution
+model — Hive's job-oriented batch model vs. Impala's always-on MPP
+daemons — not a "one engine is simpler to operate" default), YARN
+capacity-scheduler queue design (guaranteed floors via matched
+capacity/maximum-capacity, explicit preemption, as the actual enforcement
+mechanism a single undifferentiated queue cannot provide), CDP
+architecture (explicitly distinguishing CDP Private Cloud Base's
+Cloudera-Manager-centric classic operations, still a real, current model
+many enterprise estates run, from CDP Private Cloud's OpenShift/Kubernetes-based containerized
+services — deliberately correcting an overstated "CDP is Kubernetes-
+native" framing rather than presenting either model as having replaced
+the other), Apache Iceberg on CDP (HMS partition-tracking pressure
+diagnosed as an Iceberg-HiveCatalog-integration artifact, not an
+inherent Hive cost, plus snapshot-based time travel needing no separate
+backup table), and Kafka (partition key-skew diagnosed as the cause of
+lopsided consumer lag — not a topic-wide load-balancing failure — and
+replay via a second consumer group's independently-tracked offsets,
+touching nothing in the live group's state). Grounded against fetched,
+current documentation: Cloudera's selection of Red Hat OpenShift as CDP
+Private Cloud's container platform, Apache Ozone's architecture as a
+distributed key-value/object store versus HDFS's single-NameNode-
+namespace model, Iceberg's HiveCatalog default and its effect on HMS
+partition-metadata pressure in Cloudera Data Warehouse, and YARN's
+capacity-scheduler queue/preemption mechanism versus Kubernetes-style
+per-pod resource requests/limits. Checkpoint `P-DE-04` is one
+transaction-banking-adjacent scenario (a mixed HDFS/Ozone, YARN and Kafka
+estate showing four simultaneous, unrelated-looking symptoms) exercising
+all six Chapter 4 skills together, doubling as the chapter's practical
+exercise, reusing the exact same `loadDeChaptersFromApp()`/
+`deLessonIds()`/`renderDe()` infrastructure Chapters 1–3 already built —
+no new build tooling was needed for Chapter 4, only additive data (one
+more `DE_CHAPTERS` entry, one more checkpoint definition in
+`build-projects.js`'s `DE` array).
 
 **Chapter 3 — Enterprise ETL/ELT, Ingestion and Data Modelling.** Batch
 vs. streaming ingestion pattern selection (driven by real event cadence
@@ -578,22 +617,23 @@ definition in `build-projects.js`'s `DE` array).
   incomplete, unlocks and mark-done works when all 6 lessons are complete).
 
 **Explicit, load-bearing scope honesty (per owner instruction):** completing
-Chapters 1–3 is a foundation, the technical core of distributed
-processing, and enterprise ingestion/pipeline-design discipline, not
-job-readiness for the senior PySpark/Cloudera role this curriculum was
-scoped from. The track's own hero copy and Chapter 1's final lesson both
-state this directly, rather than implying eighteen lessons make someone
-senior-ready — the Hadoop-ecosystem, governance/security, and
-production-operations skills that posting actually needs start in
-Chapter 4 and continue through Chapter 6, none of which are built yet.
+Chapters 1–4 is a foundation, the technical core of distributed
+processing, enterprise ingestion/pipeline-design discipline, and Hadoop-
+ecosystem/CDP platform literacy, not job-readiness for the senior
+PySpark/Cloudera role this curriculum was scoped from. The track's own
+hero copy and Chapter 1's final lesson both state this directly, rather
+than implying twenty-four lessons make someone senior-ready — the data
+quality/governance/security/observability and production-operations
+skills that posting actually needs start in Chapter 5 and continue
+through Chapter 6, none of which are built yet.
 
 **Data Engineering-specific note not covered by the Chapter 1 harness
-bullet above:** Chapters 2 and 3's lessons use the identical same-origin
-lesson-loading code path Chapter 1's harness test already exercises
-(`contentUrl()` → `loadLesson()`, unchanged since Phase 1), so no new
-harness spec cases were added for either chapter specifically. The
+bullet above:** Chapters 2, 3 and 4's lessons use the identical
+same-origin lesson-loading code path Chapter 1's harness test already
+exercises (`contentUrl()` → `loadLesson()`, unchanged since Phase 1), so
+no new harness spec cases were added for any of them specifically. The
 existing 18-test suite (including DE01-T01's lesson-loading case) was
-re-run against the actual Chapter 3 build and passed — see PR history for
+re-run against the actual Chapter 4 build and passed — see PR history for
 this chapter's Codex review record rather than treating this note as that
 verification itself.
 

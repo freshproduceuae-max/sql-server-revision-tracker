@@ -91,5 +91,36 @@
         "title": "Designing Metadata-Driven Ingestion Frameworks"
       }
     ]
+  },
+  {
+    "code": "DE04",
+    "name": "Hadoop Ecosystem and Cloudera Data Platform",
+    "desc": "HDFS and Apache Ozone, Hive and Impala, YARN resource management, CDP architecture (SDX, Cloudera Manager, Private Cloud Base vs Private Cloud), Apache Iceberg on CDP, and Kafka for enterprise event streaming -- all in enterprise banking and transaction-banking scenarios.",
+    "lessons": [
+      {
+        "id": "DE04-T01",
+        "title": "HDFS and Apache Ozone"
+      },
+      {
+        "id": "DE04-T02",
+        "title": "Hive and Impala"
+      },
+      {
+        "id": "DE04-T03",
+        "title": "YARN and Cluster Resource Management"
+      },
+      {
+        "id": "DE04-T04",
+        "title": "Cloudera Data Platform Architecture"
+      },
+      {
+        "id": "DE04-T05",
+        "title": "Apache Iceberg and the Lakehouse on CDP"
+      },
+      {
+        "id": "DE04-T06",
+        "title": "Kafka for Enterprise Event Streaming"
+      }
+    ]
   }
 ]
