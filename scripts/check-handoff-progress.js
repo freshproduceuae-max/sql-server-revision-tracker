@@ -93,8 +93,14 @@ function deriveActual() {
     completedThroughGroup = completedGroupIds[completedGroupIds.length - 1];
   }
 
-  const completedLessons = builtIds.length;
-  const completedQuestions = builtIds.reduce((sum, id) => sum + built.lessons[id].questions.length, 0);
+  // This progress block tracks Data Validation's G01-G19 Teacher MCQ rollout
+  // specifically (see the file header) -- teacher-mcq.json now also holds
+  // other tracks' lesson ids (e.g. Data Engineering's DE0x-T0x), which must
+  // not be counted here or the totalTechniques/remainingTechniques arithmetic
+  // below (a G01-G19-only figure) breaks. Scope to G-prefixed ids only.
+  const dvBuiltIds = builtIds.filter(id => /^G\d{2}-T\d{2}$/.test(id));
+  const completedLessons = dvBuiltIds.length;
+  const completedQuestions = dvBuiltIds.reduce((sum, id) => sum + built.lessons[id].questions.length, 0);
 
   const remainingGroupIds = allGroupIds.filter(g => !completedGroupIds.includes(g));
   const remainingTechniques = remainingGroupIds.reduce((sum, g) => sum + groupTechniqueCount[g], 0);

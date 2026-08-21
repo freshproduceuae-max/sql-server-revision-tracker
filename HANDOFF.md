@@ -276,8 +276,8 @@ entry 19.
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
   "contentThroughPR": 56,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:29e6cd6ed802c01f75e227352e8d2ae536375ddb4b4d7cbe21fb104cc1bc9a12",
-  "lastVerified": "2026-08-20T07:14:21.190Z"
+  "sourcesTeacherMcqHash": "sha256:6de469ae15394098cc5e6bfdb8dea241830db9b508b179644a61f4a1d2c5712a",
+  "lastVerified": "2026-08-21T21:09:02.663Z"
 }
 ```
 
@@ -409,7 +409,7 @@ check the progress block for the exact verified state at any given moment.
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
 | 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start. **One unauthorized generation attempt was made and rejected — see "Enterprise Architecture — rejected unauthorized run" below.** |
-| 7 | Data Engineering track — Teacher MCQs, final whole-track acceptance, deployment | 0 of 36 approved lessons remaining — the full 36-lesson/6-chapter curriculum is built (see "Data Engineering track" below) | **Not authorized.** Completing Chapter 6 completed the 36-lesson AUTHORING phase only, per the owner's explicit instruction — it does not itself authorize Teacher MCQs or final whole-track acceptance, each of which needs its own separate authorization. **Production deployment is not a separate action to authorize here — see "Deploying" above: every one of the six chapters' merges already auto-deployed to production via Vercel's git integration, with no manual deploy command run.** |
+| 7 | Data Engineering track — Teacher MCQs (Batches 2-3, Chapters 4-6), final whole-track acceptance, deployment | Batch 1 (Chapters 1-3, DE01-DE03, 18 lessons, 70 questions) built — see "Data Engineering Teacher MCQs" below. Batches 2-3 (Chapters 4-6, 18 lessons remaining) and final whole-track acceptance **not authorized.** | Each batch and final acceptance needs its own separate authorization, per the owner's stated pattern. **Production deployment is not a separate action to authorize here — see "Deploying" above: every merge to the default branch already auto-deploys to production via Vercel's git integration, with no manual deploy command run.** |
 
 **Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
 close.** None of them are blocked by a technical dependency — each is
@@ -758,6 +758,40 @@ existing 18-test suite (including DE01-T01's lesson-loading case) was
 re-run against the actual Chapter 6 build and passed — see PR history for
 this chapter's Codex review record rather than treating this note as that
 verification itself.
+
+### Data Engineering Teacher MCQs — Batch 1 (Chapters 1-3) built
+
+18 lessons (DE01-T01 through DE03-T06), 70 questions (3-5 per lesson,
+scaled to complexity), merged into `sources/teacher-mcq.json` alongside
+the existing 236 Data Validation lessons — 254 lessons / 778 questions
+total in that file now. Every question tests reasoning, debugging,
+architecture trade-offs, operational consequences or a specific
+misconception the source lesson calls out — not wording recall — and
+every correct answer and distractor is grounded in that lesson's actual
+`explanation`/`scenario` text in `sources/data-engineering.json`,
+independently blind-Codex-reviewed against those source lessons.
+
+**No new integration code was needed.** The Teacher panel
+(`renderTeacherPanel()`, `teacherMcqEntry()`) already looks up
+`S.teacherMcq.lessons[lessonId]` generically for whatever lesson is open —
+it was built this way for Data Validation and never assumed a specific
+track, so Data Engineering's MCQs work through the exact same code path
+with zero `index.html` changes. This is additive content only.
+
+**A real, narrow pre-existing bug surfaced and was fixed as part of this
+batch:** `scripts/check-handoff-progress.js`'s `completedLessons` counted
+every id in `teacher-mcq.json` with no track filter, which happened to
+equal "every DV technique with an MCQ" only because the file had never
+held a second track's ids before. Adding DE01-DE03's 18 ids broke that
+coincidence and the script's own internal arithmetic self-check correctly
+failed loudly. Fixed by scoping `completedLessons`/`completedQuestions` to
+`G\d{2}-T\d{2}`-matching ids specifically, since this progress block
+tracks Data Validation's G01-G19 rollout, not the union of every track's
+Teacher MCQ content sharing the same file. See LESSONS-LEARNED entry 35.
+
+**Not authorized, not built:** Teacher MCQs for DE04-DE06 (Batches 2-3),
+or final whole-track acceptance for the Teacher MCQ layer — see the work
+queue table above (item 7).
 
 ### Enterprise Architecture track — how this came up
 
