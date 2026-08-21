@@ -9913,6 +9913,954 @@
         }
       ],
       "close": "Orchestration turns individually useful checks into a governed process — the audit trail, explicit threshold policy, and run-all execution strategy together are what make the pipeline's output trustworthy evidence rather than just another ad hoc query result."
+    },
+    "DE01-T01": {
+      "open": "Hey -- DE01-T01, Python for Data Engineers. This one's about the reconciliation script that failed silently twice. Let's see what actually stuck.",
+      "questions": [
+        {
+          "q": "The original 300-line function used a bare `except:` around the whole thing. What's the specific problem with that, beyond 'it's bad style'?",
+          "choices": [
+            "It catches a genuine bug (like a typo in a variable name) the same way it catches a malformed input row -- both disappear silently, indistinguishable from each other",
+            "It's slower at runtime than a specific exception class",
+            "Python doesn't allow bare except clauses in production code",
+            "It only catches exceptions raised in the first ten lines of the function"
+          ],
+          "correct": 0,
+          "right": "Exactly -- a bare except: can't tell you WHAT went wrong, so a coding bug and a bad input row look identical from the outside. That's the actual cost.",
+          "wrong": "Not quite -- it's not about speed or a language restriction. The real problem is that a bare except: swallows a genuine bug (a typo, say) and a malformed input row the same way -- both vanish silently, and you can't tell which one happened."
+        },
+        {
+          "q": "The lesson has the refactored function collect ALL parse failures instead of stopping at the first bad row. Why is that the right call specifically for a reconciliation job?",
+          "choices": [
+            "Because Python is faster when it doesn't raise exceptions early",
+            "Because the operator needs to know the SCOPE of the problem (3 bad rows vs. 300) before deciding whether to fix-and-rerun or escalate",
+            "Because stopping early would violate PEP 8",
+            "Because collecting failures uses less memory than raising them"
+          ],
+          "correct": 1,
+          "right": "Right -- 3 bad rows and 300 bad rows call for completely different responses, and you only know which one you're dealing with if you keep going and count.",
+          "wrong": "Think about what the operator actually needs to decide next: is this a quick fix-and-rerun, or an escalation? You can't tell the difference between 3 bad rows and 300 unless you keep processing and collect every failure, not just the first one."
+        },
+        {
+          "q": "Why does the lesson insist on `Decimal` instead of `float` for money, given that `0.1 + 0.2` isn't obviously a huge error?",
+          "choices": [
+            "Decimal is required by Python's type system for any financial variable",
+            "float is deprecated in modern Python",
+            "Summing thousands of float amounts produces a total that's CLOSE to correct but not exact -- exactly the kind of tiny discrepancy that triggers a false reconciliation break",
+            "Decimal runs faster than float for arithmetic"
+          ],
+          "correct": 2,
+          "right": "Exactly -- it's not a huge, obvious bug. It's a small, silent one that looks like a real discrepancy and sends someone chasing a bug that was never in the data.",
+          "wrong": "It's not about speed or deprecation. The real issue: IEEE 754 float arithmetic accumulates tiny rounding errors, so a sum of thousands of transaction amounts ends up CLOSE to correct but not exact -- which is exactly the kind of discrepancy that trips a reconciliation alert for no real reason."
+        },
+        {
+          "q": "The lesson's readiness note says completing this lesson is NOT, on its own, evidence of what?",
+          "choices": [
+            "Understanding what a function is",
+            "Production PySpark / distributed-processing experience -- that starts in Chapter 2",
+            "Knowing what a bug is",
+            "Being able to write a for loop"
+          ],
+          "correct": 1,
+          "right": "Right -- typed, disciplined Python is the foundation, but distributed-systems experience is a distinct skill that starts with Chapter 2's Spark content.",
+          "wrong": "The lesson is explicit about this: solid Python discipline here doesn't itself demonstrate production PySpark or distributed-processing skill -- that's Chapter 2's territory, built on top of this foundation."
+        }
+      ],
+      "close": "Solid -- typed functions, specific exceptions, collect-don't-stop, and Decimal for money. Four real habits that would've caught all three of the original script's failures. Ready for SQL for Data Engineers next?"
+    },
+    "DE01-T02": {
+      "open": "DE01-T02 -- SQL for Data Engineers. This lesson assumes you already know Data Validation's NULL/duplicate/integrity checks and adds one more layer: making them fast at scale. Let's check.",
+      "questions": [
+        {
+          "q": "This lesson explicitly does NOT re-teach something. What is it, and why not?",
+          "choices": [
+            "It doesn't re-teach JOIN syntax, because SQL syntax is assumed knowledge",
+            "It doesn't re-teach NULL checks, duplicate detection, or referential integrity -- Data Validation's G01-G19 already covers that in depth",
+            "It doesn't re-teach SELECT statements, because they're considered too basic",
+            "It doesn't re-teach how to connect to a database"
+          ],
+          "correct": 1,
+          "right": "Right -- this lesson deliberately builds on G01-G19's validation-query knowledge rather than repeating it, and adds query-plan-aware performance on top.",
+          "wrong": "Look at what the lesson says it's building on: Data Validation's G01-G19 already teaches NULL checks, duplicate detection, and referential integrity in depth -- this lesson assumes that and focuses on making those kinds of queries perform at production scale."
+        },
+        {
+          "q": "A query wraps an indexed column in a function, like `WHERE YEAR(TransactionDate) = 2026`. What does this actually do to the query's ability to use an index?",
+          "choices": [
+            "Nothing -- SQL Server automatically rewrites the query to use the index anyway",
+            "It forces the engine to compute YEAR() for every single row before checking the condition, defeating the index and falling back to a full scan",
+            "It makes the query faster because YEAR() is a cheap operation",
+            "It only affects queries with more than one WHERE clause"
+          ],
+          "correct": 1,
+          "right": "Exactly -- wrapping the column in a function makes the predicate non-sargable, so the engine can't seek the index; it has to scan and compute the function on every row.",
+          "wrong": "The problem is sargability: wrapping the indexed column in a function (YEAR(), LEFT(), ISNULL()) forces SQL Server to evaluate that function against every row before it can check the condition -- which defeats the index and forces a full table scan."
+        },
+        {
+          "q": "How does the lesson say you should actually confirm a query rewrite improved performance -- not just assume it did?",
+          "choices": [
+            "By timing the query with a stopwatch once",
+            "By asking a colleague if it 'feels' faster",
+            "By checking SET STATISTICS IO -- comparing logical reads before and after as a concrete, comparable number",
+            "By checking the query's character count"
+          ],
+          "correct": 2,
+          "right": "Right -- 'feels faster' isn't evidence. Logical reads via SET STATISTICS IO is a concrete before/after number you can actually compare.",
+          "wrong": "A query 'looking' faster or an intuition that a rewrite helped isn't proof. The lesson calls for SET STATISTICS IO specifically -- comparing logical reads before and after as real, comparable evidence."
+        },
+        {
+          "q": "The lesson says this same tuning principle 'recurs at Spark scale in Chapter 2.' What's the underlying principle that carries over?",
+          "choices": [
+            "Always use SELECT *",
+            "Help the engine avoid reading data it doesn't need -- the same idea shows up as predicate pushdown and partition pruning in Spark",
+            "Spark queries never need optimization",
+            "SQL and Spark use identical index structures"
+          ],
+          "correct": 1,
+          "right": "Exactly -- sargability at SQL Server scale and predicate pushdown/partition pruning at Spark scale are the same underlying idea: don't make the engine read what it doesn't have to.",
+          "wrong": "The underlying principle is 'help the engine avoid reading data it doesn't need' -- sargable SQL Server predicates and Spark's predicate pushdown/partition pruning (Chapter 2) are the same idea applied to two different execution engines."
+        }
+      ],
+      "close": "Nice -- sargability, STATISTICS IO as real evidence, and the link forward to Spark's optimizer. That query-plan mindset is exactly what carries into everything after this."
+    },
+    "DE01-T03": {
+      "open": "DE01-T03, Data Modelling for Analytics. Star schemas, denormalization as a deliberate trade -- let's see what landed.",
+      "questions": [
+        {
+          "q": "A star schema's DimAccount table duplicates BranchName, which also exists in a separate Branches table upstream. In a strictly normalized design this would be redundant. Why is it correct here?",
+          "choices": [
+            "It's a mistake that should be fixed with a foreign key",
+            "It removes a join from every single report query, at the cost of needing an explicit reload if a branch is renamed -- an acceptable trade since renames are rare and reports run constantly",
+            "Denormalization is required by all data warehouses regardless of trade-offs",
+            "It has no effect on query performance either way"
+          ],
+          "correct": 1,
+          "right": "Right -- it's a deliberate trade: fewer joins on every report run, in exchange for needing a reload on the rare event of a branch rename.",
+          "wrong": "This isn't an error to fix -- it's a deliberate design trade. Duplicating BranchName removes a join from every report query; the cost is an explicit reload if a branch is ever renamed, which is rare enough to be worth it given how often reports actually run."
+        },
+        {
+          "q": "Why does the lesson use an integer DateKey (YYYYMMDD) instead of a native DATE type for the date dimension?",
+          "choices": [
+            "Because DATE types don't exist in most databases",
+            "It joins faster than DATE in some engines, sorts correctly as a number, and lets DimDate carry pre-computed attributes like MonthName or fiscal-year fields",
+            "Because integers take up more storage than DATE types",
+            "It's required by SQL standards for star schemas"
+          ],
+          "correct": 1,
+          "right": "Exactly -- a real, common star-schema convention: fast joins, correct numeric sorting, and a place to pre-compute attributes so every query doesn't have to recalculate them.",
+          "wrong": "It's a genuine, common convention: an integer DateKey joins faster in some engines, sorts correctly as a number, and lets DimDate hold pre-computed fields (MonthName, fiscal quarter) that would otherwise need recalculating in every query."
+        },
+        {
+          "q": "What does the lesson say honestly gets HARDER with a star schema, compared to querying the operational tables directly?",
+          "choices": [
+            "Nothing gets harder -- star schemas are strictly better in every way",
+            "The star schema is a second copy of the data that must be kept in sync via an explicit load process, and will always lag the operational system by however long that load takes",
+            "Star schemas can't represent numeric data",
+            "Star schemas require more storage than is physically possible"
+          ],
+          "correct": 1,
+          "right": "Right -- honestly stated: it's a second, synced copy of the data, always somewhat stale relative to the live system. A use case needing truly live data is the wrong fit for a star schema.",
+          "wrong": "The lesson is explicit about the real cost: the star schema becomes a second copy of the data that needs an explicit load process to stay in sync, and it will always lag the operational system by however long that load takes to run."
+        },
+        {
+          "q": "This lesson says it builds directly on Data Validation G14. What does G14 already cover that this lesson assumes?",
+          "choices": [
+            "How to write Python type hints",
+            "Dimensional-model VALIDATION mechanics -- surrogate keys, grain violations, fact-to-dimension resolution -- this lesson is where the design comes from that G14 later validates",
+            "REST API pagination",
+            "Kafka consumer group semantics"
+          ],
+          "correct": 1,
+          "right": "Exactly -- G14 already teaches how to validate a dimensional model (surrogate keys, grain, fact-to-dim resolution); this lesson is where that design actually comes from in the first place.",
+          "wrong": "G14 (Data Warehouse & SCD-Specific techniques) already covers dimensional-model validation -- surrogate keys, grain violations, fact-to-dimension resolution. This lesson assumes that and teaches where the design those checks validate actually comes from."
+        }
+      ],
+      "close": "Good session -- denormalization as a trade, DateKey's real purpose, and being honest about what gets harder. That's the star-schema mental model in full."
+    },
+    "DE01-T04": {
+      "open": "DE01-T04, REST APIs and Data Integration Patterns. The FX-rate ingestion that dies on page 40 of 60. Let's dig in.",
+      "questions": [
+        {
+          "q": "The resilient ingestion function retries only specific status codes (429, 503) and fails immediately on others. Why not just retry everything?",
+          "choices": [
+            "Retrying everything would use less code",
+            "A 401 or 404 will never succeed no matter how many times it's retried -- retrying those anyway just delays the failure and buries the real error in noisy logs",
+            "HTTP status codes above 400 are always transient",
+            "The API provider requires retrying every status code"
+          ],
+          "correct": 1,
+          "right": "Right -- 401/404 are permanent failures. Retrying them just wastes time and makes the eventual, unavoidable error harder to find in the logs.",
+          "wrong": "The key distinction is permanent vs. transient failure. A 401 (bad credentials) or 404 (wrong URL) will never succeed no matter how many retries -- retrying those just delays an inevitable failure and clutters the logs. Only 429/503-style transient failures are worth retrying."
+        },
+        {
+          "q": "Why exponential backoff (`2 ** attempt`) specifically, rather than a fixed short delay, when retrying a rate-limited API?",
+          "choices": [
+            "Exponential backoff is faster overall than a fixed delay",
+            "A fixed short delay against a rate-limited API just gets rate-limited again immediately; backing off gives the provider's system time to recover",
+            "It's required by the HTTP specification",
+            "It reduces the number of lines of code needed"
+          ],
+          "correct": 1,
+          "right": "Exactly -- a short fixed delay just walks straight back into the same rate limit. Backing off exponentially actually gives the provider room to recover.",
+          "wrong": "A fixed, short retry delay against a rate limit just gets rate-limited again almost immediately. Exponential backoff gives the provider's system real time to recover, and is the pattern most API providers explicitly expect and document."
+        },
+        {
+          "q": "What specifically makes the ingestion job RESUMABLE (not just retriable) after the page-40 failure?",
+          "choices": [
+            "Using a faster programming language",
+            "Persisting FetchState after every page, not just at the end -- a job that only checkpoints at completion still restarts from zero on any mid-run failure",
+            "Increasing the rate limit",
+            "Catching all exceptions with a bare except"
+          ],
+          "correct": 1,
+          "right": "Right -- checkpointing after every page (not just at the end) is exactly what lets a restart pick up from page 40, instead of starting over from page 1.",
+          "wrong": "The key is persisting FetchState after EVERY page, not just at completion. A job that only checkpoints at the end still has to restart from zero on any mid-run failure -- exactly the page-40 problem in the scenario."
+        }
+      ],
+      "close": "Good -- retry the right codes, back off exponentially, checkpoint per-page so a restart resumes instead of restarting. That's resilient ingestion, not just retry-everything."
+    },
+    "DE01-T05": {
+      "open": "DE01-T05 -- Git and CI-Aware Workflow. The overwritten currency-rounding fix. Let's see what actually stops that from happening again.",
+      "questions": [
+        {
+          "q": "The lesson says the core mechanism that would have caught the overwritten fix is 'the diff, not version control in the abstract.' What does that mean?",
+          "choices": [
+            "Git alone, without required PRs and review, would still let someone push a full-file overwrite directly with no review -- the same failure could still happen",
+            "Diffs are only useful for very large files",
+            "Version control makes code run faster",
+            "Any use of Git automatically prevents overwritten changes"
+          ],
+          "correct": 0,
+          "right": "Exactly -- just having Git doesn't stop a direct overwrite. It's specifically requiring a reviewable diff PLUS a human approving it that catches a regression like this.",
+          "wrong": "The point is that Git by itself doesn't prevent this: without required PRs and review, someone could still push a full-file overwrite straight to the default branch. It's the COMBINATION of a reviewable diff plus a required human approval that actually catches a silent regression."
+        },
+        {
+          "q": "Why does the lesson say branch protection matters, beyond just 'having a PR process'?",
+          "choices": [
+            "Branch protection makes commits smaller",
+            "A team that only INTENDS to always use PRs but has no protection will eventually skip it under deadline pressure -- the same pressure that caused the original bad habit",
+            "It's a legal requirement for financial software",
+            "It automatically fixes bugs in pull requests"
+          ],
+          "correct": 1,
+          "right": "Right -- intention alone isn't enough. Without enforced protection, exactly the deadline pressure that caused the original direct-editing habit will cause the team to skip the process again.",
+          "wrong": "Branch protection is what makes the process actually ENFORCED rather than just intended. A team that means to always use PRs will eventually skip it under a deadline -- the same pressure that caused the original direct-server-editing habit in the first place."
+        },
+        {
+          "q": "The lesson's title includes 'CI-aware' even though full CI/CD isn't built yet (that's Chapter 6). Why does that matter now?",
+          "choices": [
+            "CI/CD tools require a Git workflow to already be in place, so there's nothing to prepare for",
+            "A PR-required workflow is what CI/CD later HOOKS INTO -- tests and checks become required status checks gating the merge, the same way human review does now",
+            "It doesn't matter -- the phrase is purely aspirational",
+            "CI-aware means the code must already pass automated tests"
+          ],
+          "correct": 1,
+          "right": "Exactly -- establishing PR discipline now is what makes adding automated CI checks later a small addition, not a process overhaul, since CI checks slot into the same gate human review already uses.",
+          "wrong": "The PR/branch-protection discipline established now is exactly what CI/CD later plugs into: automated tests and lint checks become required status checks on the same PR gate, alongside human review. Establishing the discipline first is what makes adding CI later easy rather than a whole new process."
+        }
+      ],
+      "close": "Good -- the diff-plus-review combination, why protection has to be enforced not just intended, and how this sets up CI/CD later without overhauling anything."
+    },
+    "DE01-T06": {
+      "open": "DE01-T06 -- The Enterprise Data Engineer Role. The engineer who built great PySpark code for a source system that was already being decommissioned. Let's check what you took from it.",
+      "questions": [
+        {
+          "q": "What was actually wrong with the new hire's two weeks of work in the scenario?",
+          "choices": [
+            "The PySpark code itself had bugs",
+            "Nothing was technically wrong with the code -- the engineer had simply never checked in with the Business Analyst, who already knew the source system was being decommissioned",
+            "The engineer used the wrong programming language",
+            "The pipeline didn't have enough test coverage"
+          ],
+          "correct": 1,
+          "right": "Right -- the code was technically excellent. The failure was never asking who else already knew something relevant before starting the build.",
+          "wrong": "The code itself wasn't the problem -- it was technically excellent. The actual failure was never checking in with the Business Analyst, who had already flagged three weeks earlier that the source system was being decommissioned."
+        },
+        {
+          "q": "The lesson says it deliberately does NOT teach Agile/Scrum ceremonies as a checklist. Why not?",
+          "choices": [
+            "Because Agile ceremonies are considered outdated",
+            "A ceremony attended without understanding WHAT SPECIFIC RISK it's meant to catch provides none of its actual value -- sitting silently in a stand-up isn't the point",
+            "Because this track doesn't cover project management at all",
+            "Because ceremonies are only relevant for non-technical staff"
+          ],
+          "correct": 1,
+          "right": "Exactly -- the point isn't attending the ceremony, it's understanding the specific risk each stakeholder relationship is meant to catch. Attendance without that understanding is empty.",
+          "wrong": "The lesson's point is that a ceremony performed as a checklist item (sitting in a stand-up without engaging) provides none of its real value. What matters is understanding the SPECIFIC RISK each stakeholder check-in is meant to catch -- which is what would have caught the decommissioning news."
+        },
+        {
+          "q": "What does this lesson's readiness note say Chapter 1 alone does NOT constitute?",
+          "choices": [
+            "Job-readiness for the 8-10 years of enterprise experience a senior PySpark/Cloudera role actually requires -- that's built across Chapters 2-6",
+            "A complete understanding of what a stakeholder is",
+            "Sufficient knowledge to write a for loop",
+            "Proof that Python type hints exist"
+          ],
+          "correct": 0,
+          "right": "Right -- explicitly stated: Chapter 1 is the foundation, not a substitute for the distributed-systems, Hadoop, and production-operations skills built in the chapters that follow.",
+          "wrong": "The lesson is explicit and load-bearing here: completing these six Chapter 1 lessons is a real foundation, but it does NOT on its own constitute the 8-10 years of enterprise experience a senior PySpark/Cloudera role requires -- that's what Chapters 2 through 6 are for."
+        }
+      ],
+      "close": "Good close to Chapter 1 -- stakeholder awareness isn't a ceremony to perform, it's specific risks to catch. And the honesty about what this chapter does and doesn't make you ready for. Onto Chapter 2."
+    },
+    "DE02-T01": {
+      "open": "DE02-T01, Spark Architecture and Lazy Evaluation -- probably the single most important mental-model shift in this whole track. Let's check it landed.",
+      "questions": [
+        {
+          "q": "Why did the engineer's print() statement appear instantly, regardless of the DataFrame's actual size?",
+          "choices": [
+            "Spark always executes print statements before anything else",
+            "Every line before it was a TRANSFORMATION, which doesn't touch data at all -- it only builds a logical plan. Nothing had actually run yet, at any data size",
+            "The DataFrame was cached automatically",
+            "print() runs on a separate thread from the main computation"
+          ],
+          "correct": 1,
+          "right": "Exactly -- transformations (.filter(), .withColumn(), etc.) just build a logical plan. Nothing executes until an action, so the print really did run before any real work happened.",
+          "wrong": "The reason is lazy evaluation: .filter(), .withColumn(), and similar calls are TRANSFORMATIONS -- they build a logical plan but touch zero data. So the print() genuinely ran before any of the ten transformations had executed, at any data size."
+        },
+        {
+          "q": "The job appeared to 'hang' at the write step in production. What was actually happening?",
+          "choices": [
+            "The write operation itself is inherently slow in Spark",
+            "The write was the first ACTION in the chain, so it was the first point where all ten accumulated transformations actually executed at once against the full dataset",
+            "A network outage occurred exactly at the write step",
+            "The DataFrame was being re-downloaded from storage"
+          ],
+          "correct": 1,
+          "right": "Right -- it wasn't 'hanging,' it was finally doing all the deferred work at once. The write (an action) triggered execution of the entire accumulated plan.",
+          "wrong": "It wasn't a hang -- the write() call was the first ACTION in the whole chain. Since transformations don't execute until an action triggers them, the write was the first point where reading 200 million rows and applying all ten transformations actually happened, all at once."
+        },
+        {
+          "q": "Why does timing each individual .filter() call tell you almost nothing about which step in a chain is actually slow?",
+          "choices": [
+            "Because transformations don't execute individually -- each one returns instantly regardless of what it will eventually cost, since none of them touch data yet",
+            "Because Python's timing functions are inaccurate",
+            "Because Spark randomizes the order transformations run in",
+            "Because .filter() calls are always fast no matter what"
+          ],
+          "correct": 0,
+          "right": "Exactly -- since transformations don't execute until an action, timing them individually just measures 'time to add a plan node,' which is trivial. The real diagnostic is the physical plan (.explain()) or the Spark UI, not per-line timers.",
+          "wrong": "Since transformations are lazy, each individual .filter() call returns near-instantly regardless of how expensive it will eventually be to execute -- timing it measures nothing useful. The actual diagnostic tool is reading the physical plan (.explain(mode='formatted')) or the Spark UI after an action has run."
+        },
+        {
+          "q": "What's the driver/executor split, and why does calling .collect() on a 200-million-row DataFrame (instead of .count() or .write()) cause a different, common problem?",
+          "choices": [
+            "The driver runs the SparkSession and builds the logical plan (single JVM process); .collect() pulls ALL resulting data back to that single driver, which can exhaust its memory",
+            "Executors and drivers are interchangeable terms for the same thing",
+            ".collect() is always faster than .count() regardless of data size",
+            "The driver only exists during testing, not in production"
+          ],
+          "correct": 0,
+          "right": "Right -- the driver is one JVM process, not distributed. .collect() pulls the ENTIRE result back to it, which is a fast way to exhaust the driver's memory on a large DataFrame -- a different, common Spark surprise from the lazy-evaluation one.",
+          "wrong": "The driver runs the SparkSession and the single-process logical plan; executors do the actual distributed work. .collect() specifically pulls ALL the resulting data back to that one driver process -- calling it on a 200-million-row DataFrame is a common way to exhaust the driver's memory, separate from the lazy-evaluation surprise."
+        }
+      ],
+      "close": "That's the core mental model: transformations build a plan, actions execute it, and the driver/executor split explains where things can actually go wrong. Everything else in this chapter builds on this."
+    },
+    "DE02-T02": {
+      "open": "DE02-T02 -- DataFrames, Spark SQL, and Schema Enforcement. The AccountID column that quietly changed type. Let's see what you caught.",
+      "questions": [
+        {
+          "q": "Why didn't the ingestion job FAIL when the source data started mixing numeric and alphanumeric AccountID values?",
+          "choices": [
+            "Spark always raises an error on mixed-type columns",
+            "inferSchema=True re-infers the schema from a data sample on every run, so it silently inferred StringType that day instead of failing -- a moving target, not a fixed contract",
+            "The job had exception handling that specifically caught this case",
+            "The CSV file format doesn't support type checking at all"
+          ],
+          "correct": 1,
+          "right": "Right -- inferSchema re-infers from a sample every run, so the column's TYPE silently changed from LongType to StringType. It's not a wrong inference once, it's a moving target between runs.",
+          "wrong": "inferSchema=True re-infers the schema from a data sample EVERY run -- it's not a fixed contract, it's a moving target. When the source data changed, it silently inferred StringType instead of LongType that day, with no error at all."
+        },
+        {
+          "q": "Why does a join between a LongType column and a StringType column produce ZERO matches with no error, instead of failing loudly?",
+          "choices": [
+            "Spark converts types automatically before joining, so it should have matched",
+            "LongType(882130).equals(StringType('882130')) is simply false under Spark's type semantics -- the join executes successfully, just against no matching rows that share both value AND type",
+            "The join only fails if both sides are completely empty",
+            "Zero-match joins always throw an exception in Spark"
+          ],
+          "correct": 1,
+          "right": "Exactly -- it's one of the quietest failure modes precisely because it ISN'T an error. The join runs fine; it just structurally can't match values of different types, so it returns nothing.",
+          "wrong": "Under Spark's type semantics, comparing a LongType value to a StringType value is simply false -- not an error, just a non-match. The join runs successfully and returns zero or drastically fewer rows, with nothing raising an exception anywhere."
+        },
+        {
+          "q": "What fix turns this silent contract violation into a loud one, at the earliest possible point?",
+          "choices": [
+            "Switching from CSV to JSON format",
+            "An explicit schema (StructType) plus a FAILFAST/quarantine mode -- fail at the boundary where bad data enters, not several transformations later",
+            "Adding more unit tests to the downstream join logic",
+            "Increasing the Spark cluster's memory allocation"
+          ],
+          "correct": 1,
+          "right": "Right -- an explicit schema plus FAILFAST catches the type mismatch right at ingestion, the same 'fail at the boundary' principle DE01-T01's typed Python and DE01-T04's API validation both use.",
+          "wrong": "The fix is an explicit StructType schema combined with a FAILFAST or quarantine mode -- this fails loudly right where bad data enters the pipeline, rather than several transformations downstream where the failure is disconnected from its actual cause."
+        },
+        {
+          "q": "The lesson says the DataFrame API and Spark SQL 'are not two different systems.' What does that mean in practice?",
+          "choices": [
+            "They compile to the identical Catalyst-optimized query plan -- choosing between them is a readability preference, not a performance trade-off",
+            "Spark SQL is always faster than the DataFrame API",
+            "The DataFrame API is deprecated in favor of Spark SQL",
+            "They require separate SparkSession configurations"
+          ],
+          "correct": 0,
+          "right": "Exactly -- .filter().select() and the equivalent SQL WHERE/SELECT compile to the same physical plan. The choice is about readability, not performance.",
+          "wrong": "Both the DataFrame API and Spark SQL compile down to the identical Catalyst-optimized plan -- there's no performance difference. Choosing between `.filter().select()` and `SELECT...WHERE` is purely a readability preference for a given transformation."
+        }
+      ],
+      "close": "Good -- inferSchema as a moving target, why a type-mismatch join fails silently rather than loudly, and the explicit-schema fix. That silent-zero-match pattern is one of the sneakiest Spark bugs there is."
+    },
+    "DE02-T03": {
+      "open": "DE02-T03 -- Partitioning, Shuffle and Data Skew. One task running 4 hours while 199 finish in seconds. Classic. Let's check the diagnosis.",
+      "questions": [
+        {
+          "q": "What is a shuffle, and why is it one of the most expensive operations in Spark?",
+          "choices": [
+            "A shuffle is Spark restarting the whole job from scratch",
+            "A shuffle is Spark physically moving data across the network so rows sharing a key land on the same executor/partition -- it involves real disk I/O, network I/O and serialization, unlike a narrow transformation",
+            "A shuffle only happens when using the DataFrame API, never in Spark SQL",
+            "A shuffle is a caching mechanism that speeds up repeated queries"
+          ],
+          "correct": 1,
+          "right": "Right -- required for any wide transformation (groupBy, join, distinct), a shuffle actually moves data over the network, unlike a narrow transformation Spark can run within each partition with no data movement.",
+          "wrong": "A shuffle is Spark physically moving data across the network -- required whenever rows sharing a key need to land together (groupBy, join, distinct, repartition). It's expensive specifically because of real disk I/O, network I/O, and serialization, unlike a narrow transformation like filter or select."
+        },
+        {
+          "q": "Why can't Spark's parallelism (many tasks running concurrently) fix the skew problem in this scenario?",
+          "choices": [
+            "Parallelism is disabled during aggregation stages",
+            "A shuffle's whole mechanism is 'same key, same destination partition' -- if one key has 100x the rows, that destination partition inherits 100x the work, and there's nothing left to parallelize once all of one key's rows have already landed together",
+            "The cluster simply doesn't have enough executors",
+            "Skew only affects the first stage of a job, never the aggregation stage"
+          ],
+          "correct": 1,
+          "right": "Exactly -- once all of a skewed key's rows land on one partition, that ONE task has to process all of them alone. Parallelism across many tasks can't help a single oversized task.",
+          "wrong": "The shuffle mechanism itself is the constraint: rows sharing a key must land on the same destination partition. If one key genuinely has far more rows than others, that partition (and the single task processing it) inherits all that work -- parallelism across the OTHER tasks doesn't help the one oversized task."
+        },
+        {
+          "q": "The lesson teaches BOTH salting and AQE's skew-join handling. Why not just pick one?",
+          "choices": [
+            "They solve the same problem via genuinely different mechanisms -- salting is a data transformation you write explicitly and works for any wide operation (including this scenario's plain groupBy); AQE's skew-join handling is automatic, runtime, and join-specific",
+            "Salting is always better and AQE should never be used",
+            "AQE is deprecated in favor of salting",
+            "They must always be used together to work at all"
+          ],
+          "correct": 0,
+          "right": "Right -- knowing which one actually applies matters. This scenario is a groupBy aggregation, not a join, so AQE's join-specific handling wouldn't help here -- salting is what actually applies.",
+          "wrong": "Salting is a data transformation the engineer writes explicitly, and it works for ANY wide operation including a plain groupBy (this scenario). AQE's skew-join handling is automatic but JOIN-specific -- it wouldn't help a groupBy aggregation at all. Knowing which applies to which operation is the actual skill."
+        },
+        {
+          "q": "What's the difference between `repartition(n)` and `coalesce(n)`?",
+          "choices": [
+            "They're identical functions with different names",
+            "repartition(n) always triggers a full shuffle to redistribute into exactly n partitions (can fix uneven distribution or increase count); coalesce(n) avoids a full shuffle by only merging existing partitions (cheaper, but can only reduce count)",
+            "coalesce always increases partition count, repartition always decreases it",
+            "repartition only works on RDDs, coalesce only works on DataFrames"
+          ],
+          "correct": 1,
+          "right": "Exactly -- repartition can fix skew or increase parallelism via a full shuffle; coalesce is cheaper but can only reduce partition count, not redistribute unevenly-sized ones.",
+          "wrong": "repartition(n) does a full shuffle to redistribute into exactly n partitions -- more expensive, but can fix skew or increase partition count. coalesce(n) avoids the full shuffle by merging existing partitions, which is cheaper but can only REDUCE partition count, never fix an uneven distribution."
+        }
+      ],
+      "close": "That's skew diagnosis in full -- reading the Spark UI's task-time distribution to confirm it, then choosing salting vs. AQE based on the actual operation type. One of the most commonly tested real-world Spark skills."
+    },
+    "DE02-T04": {
+      "open": "DE02-T04 -- Join Strategies at Scale. An 800M-row join that takes as long as if BOTH sides were huge, even though one side is tiny. Let's see why.",
+      "questions": [
+        {
+          "q": "What's the fundamental cost difference between a broadcast hash join and a sort-merge join?",
+          "choices": [
+            "Sort-merge shuffles and sorts BOTH sides on the join key (correct at any scale, but pays a real cost proportional to total data moved); broadcast sends one copy of the SMALLER side to every executor once, then joins locally with zero shuffle of the larger side",
+            "They produce different, incompatible join results",
+            "Broadcast join only works with INNER JOINs",
+            "Sort-merge join is always faster regardless of table sizes"
+          ],
+          "correct": 0,
+          "right": "Right -- sort-merge is correct at any size but pays for shuffling both sides; broadcast is dramatically cheaper but only viable when the smaller side fits comfortably in executor memory.",
+          "wrong": "Sort-merge join shuffles and sorts BOTH sides on the join key -- correct for any size combination but with a real network/disk cost. Broadcast hash join instead sends one copy of the smaller side to every executor once, avoiding any shuffle of the larger side -- much cheaper, but only viable when the smaller side is small enough to fit in memory."
+        },
+        {
+          "q": "Why did Spark choose sort-merge for a join against a 40,000-row table, when broadcast should obviously be cheaper?",
+          "choices": [
+            "Spark's optimizer decides based on ESTIMATED SIZE IN BYTES from table statistics, not row count -- a CSV read via inferSchema often has no reliable size stats the way Parquet's footer metadata does, so Spark defaults to the always-safe sort-merge strategy",
+            "40,000 rows is actually considered a large table by Spark's default threshold",
+            "Broadcast joins are disabled by default in all Spark clusters",
+            "Spark always picks sort-merge for any table read from CSV format"
+          ],
+          "correct": 0,
+          "right": "Exactly -- it's about estimated BYTES, not row count, and a CSV read via inferSchema often lacks reliable size statistics, so Spark can't confidently know it's safe to broadcast and falls back to the safe default.",
+          "wrong": "Spark's cost-based optimizer decides using an ESTIMATED SIZE IN BYTES derived from table statistics -- not row count directly. A CSV read via inferSchema often has no reliable size stats (unlike Parquet's footer metadata), so Spark can't confidently confirm the table is small enough to broadcast, and defaults to the always-safe sort-merge strategy."
+        },
+        {
+          "q": "How does Adaptive Query Execution (AQE) change this story, and what's the limitation on relying on it alone?",
+          "choices": [
+            "AQE re-optimizes at shuffle stage boundaries using ACTUAL runtime statistics, and can sometimes switch a sort-merge join to broadcast mid-query -- but this isn't guaranteed for every plan shape",
+            "AQE always forces every join to use broadcast strategy",
+            "AQE only works with joins that use the DataFrame API, not Spark SQL",
+            "AQE eliminates the need to ever think about join strategy again"
+          ],
+          "correct": 0,
+          "right": "Right -- AQE can sometimes detect at runtime that a side turned out to be small and switch strategies, but it's not guaranteed for every plan, which is why explicitly hinting with F.broadcast() for a known-small table removes that dependency.",
+          "wrong": "AQE re-optimizes at shuffle stage boundaries using actual (not estimated) runtime statistics, and can sometimes switch a sort-merge join to broadcast mid-query. But this isn't guaranteed for every plan shape -- which is why explicitly hinting F.broadcast() on a known-small reference table is still worth doing."
+        },
+        {
+          "q": "The lesson warns to always verify a broadcast hint with .explain(), never assume it 'worked.' Why?",
+          "choices": [
+            ".explain() is only needed for debugging syntax errors",
+            "A broadcast hint on a table that exceeds Spark's broadcast size limit is silently IGNORED, falling back to sort-merge with no error and no obvious symptom except staying just as slow",
+            "Broadcast hints always throw a visible error if they fail",
+            ".explain() changes the actual execution plan when called"
+          ],
+          "correct": 1,
+          "right": "Exactly -- a broadcast hint on a too-large table is silently ignored, not rejected with an error. The only symptom is the join staying slow, so .explain() is the only way to confirm the hint actually took effect.",
+          "wrong": "A broadcast() hint on a table that turns out to exceed Spark's broadcast size limit is silently ignored -- no error, no warning, just the join staying exactly as slow as before. .explain() is the only way to confirm the plan actually changed, matching this app's own standing rule: verify, don't assume."
+        },
+        {
+          "q": "What is Spark's default `spark.sql.autoBroadcastJoinThreshold`?",
+          "choices": [
+            "10 MiB",
+            "1 GB",
+            "There is no default threshold -- it must always be set manually",
+            "100 MB"
+          ],
+          "correct": 0,
+          "right": "Right -- 10 MiB is Spark's default threshold for automatically choosing to broadcast the smaller side of a join.",
+          "wrong": "The lesson states Spark's default autoBroadcastJoinThreshold is 10 MiB -- the size below which Spark will automatically choose a broadcast join, when it has reliable size statistics to compare against that threshold."
+        }
+      ],
+      "close": "That's join-strategy diagnosis: broadcast vs. sort-merge cost profiles, why Spark's optimizer needs real byte-size stats (not row counts) to choose broadcast safely, and why .explain() is the only real proof a hint worked."
+    },
+    "DE02-T05": {
+      "open": "DE02-T05 -- Structured Streaming Fundamentals. A fraud-monitoring team asking how 'real-time' Spark streaming actually is. Let's check.",
+      "questions": [
+        {
+          "q": "What is Structured Streaming's core execution model, and what does that mean for how 'real-time' it actually is?",
+          "choices": [
+            "Micro-batch, not continuous per-event processing -- Spark repeatedly runs the same batch query against new data on a fixed trigger interval, so it's 'as real-time as your trigger interval,' not unqualified instant",
+            "Fully continuous, event-by-event processing with zero latency",
+            "It processes events in a completely random order",
+            "It requires a human to manually trigger each batch"
+          ],
+          "correct": 0,
+          "right": "Right -- micro-batch is the default and standard model. 'Real-time' here genuinely means 'as fast as your configured trigger interval,' not instantaneous.",
+          "wrong": "Structured Streaming's core model is micro-batch: Spark repeatedly runs the same batch query (built from the same DataFrame/SQL API) against whatever new data arrived since the last run, on a fixed trigger interval. That's why 'how real-time is this' has the honest answer 'as real-time as your trigger interval,' not instant."
+        },
+        {
+          "q": "Why is a watermark necessary for a windowed streaming aggregation -- what problem does it solve?",
+          "choices": [
+            "Without a watermark, Spark would have to retain state for every window ever opened, forever -- an unbounded memory leak in a job meant to run continuously for weeks",
+            "A watermark makes the job run faster",
+            "A watermark is required syntax with no functional effect",
+            "A watermark prevents any late data from ever being processed at all"
+          ],
+          "correct": 0,
+          "right": "Exactly -- without a watermark, Spark has no way to know when it's safe to stop waiting for more events for an old window, so state grows unbounded. The watermark is an explicit business decision about how much lateness to tolerate.",
+          "wrong": "Without a watermark, Spark can never know when it's safe to discard state for an old window -- it would retain state for every window ever opened, forever, which exhausts memory in a long-running job. withWatermark is an explicit decision ('we accept up to X minutes of lateness') that lets Spark safely discard old state."
+        },
+        {
+          "q": "Why does the windowed aggregation key on EventTime rather than the time Spark actually processes the message?",
+          "choices": [
+            "So a late-arriving transaction (delayed 20 minutes by a network outage) is still correctly attributed to the window it ACTUALLY belongs to, not the window Spark happened to be processing when it finally arrived",
+            "EventTime and processing time are always identical in practice",
+            "Keying on EventTime makes the job run without a watermark",
+            "It's a Spark syntax requirement with no practical effect"
+          ],
+          "correct": 0,
+          "right": "Right -- EventTime is when the transaction actually happened; keying on it (within the watermark's tolerance) correctly attributes a late event to its real window, not whatever window Spark happens to be on when it arrives.",
+          "wrong": "EventTime is when the transaction actually occurred at the point of sale, which can differ significantly from when Spark receives the message (e.g. a 20-minute network delay). Keying the window on EventTime is what lets a late-arriving event still be correctly attributed to the window it actually belongs to, within the watermark's tolerance."
+        },
+        {
+          "q": "The lesson distinguishes watermarking from exactly-once semantics. What does each one actually guarantee?",
+          "choices": [
+            "Watermarking bounds STATE SIZE for late data; checkpointing (a separate mechanism) provides fault-tolerant, exactly-once EXECUTION -- a production job needs both, for different reasons",
+            "They're two names for the exact same guarantee",
+            "Watermarking guarantees exactly-once processing; checkpointing only affects memory usage",
+            "Neither mechanism is needed if the trigger interval is short enough"
+          ],
+          "correct": 0,
+          "right": "Exactly -- watermarking is about bounding state for late data; checkpointing (via checkpointLocation) is what provides exactly-once processing across restarts. Both are needed, for genuinely different reasons.",
+          "wrong": "These are two separate guarantees: watermarking bounds how much STATE is kept for late-arriving data (preventing unbounded memory growth). Checkpointing (a checkpointLocation option) is what actually provides exactly-once processing -- surviving a restart without dropping or double-processing data. A production job needs both."
+        }
+      ],
+      "close": "Good -- micro-batch as the real execution model, watermarking as a bounded-state decision, EventTime for correct late-data attribution, and why exactly-once needs checkpointing on top of watermarking, not instead of it."
+    },
+    "DE02-T06": {
+      "open": "DE02-T06 -- Spark Performance Tuning: Caching, Serialization, Executor Sizing. Three summaries, 45 minutes, and the data scientist blaming Spark itself. Let's see.",
+      "questions": [
+        {
+          "q": "Why did the same cleansing work get repeated three times in the notebook, tripling the total runtime?",
+          "choices": [
+            "Spark has no automatic memoization -- without an explicit .cache()/.persist(), each of the three actions against the same unmaterialized DataFrame is an independent request to run the full plan from scratch",
+            "The notebook had a bug that duplicated the source data three times",
+            "Spark always re-reads data three times regardless of caching",
+            "The data scientist used the wrong file format"
+          ],
+          "correct": 0,
+          "right": "Right -- a direct consequence of lazy evaluation: Spark has no memory of a plan it already ran unless told to keep the result. Three actions against the same uncached DataFrame really are three full re-executions.",
+          "wrong": "This follows directly from lazy evaluation: Spark has no automatic memoization the way pandas or a spreadsheet might implicitly hold results in memory. Without an explicit .cache()/.persist(), each of the three actions against the same DataFrame triggers an independent full re-execution of the entire cleansing chain."
+        },
+        {
+          "q": "What's the actual relationship between .cache() and .persist(), and when does caching actually take effect?",
+          "choices": [
+            ".cache() is shorthand for .persist(StorageLevel.MEMORY_AND_DISK_DESER) -- the DataFrame default since Spark 3.0. Neither does anything until the FIRST action after the call actually executes and materializes the result",
+            ".cache() and .persist() are unrelated, incompatible methods",
+            "Caching takes effect immediately when .cache() is called, before any action runs",
+            ".persist() only works on RDDs, never on DataFrames"
+          ],
+          "correct": 0,
+          "right": "Exactly -- .cache() IS .persist() at a specific default storage level. And critically, nothing is actually cached until the first subsequent action triggers execution -- calling .cache() alone doesn't do the work.",
+          "wrong": ".cache() is literally shorthand for .persist(StorageLevel.MEMORY_AND_DISK_DESER), the DataFrame default since Spark 3.0. Neither call does anything by itself -- caching only takes effect once the FIRST action after the call actually executes the plan and materializes the result."
+        },
+        {
+          "q": "What's the documented difference between a DataFrame's .cache() default and an RDD's .cache() default?",
+          "choices": [
+            "DataFrame .cache() defaults to MEMORY_AND_DISK_DESER; RDD .cache() defaults to MEMORY_ONLY -- a real, documented difference worth knowing rather than assuming they match",
+            "They are always identical defaults across both APIs",
+            "RDDs don't support caching at all",
+            "DataFrame caching always uses disk only, never memory"
+          ],
+          "correct": 0,
+          "right": "Right -- a real, easy-to-miss difference: DataFrame's default (MEMORY_AND_DISK_DESER) differs from an RDD's default (MEMORY_ONLY). Worth knowing explicitly rather than assuming the two APIs behave identically.",
+          "wrong": "This is a genuine, documented difference: a DataFrame's .cache() defaults to MEMORY_AND_DISK_DESER (since Spark 3.0), while an RDD's .cache() defaults to MEMORY_ONLY. The lesson calls this out specifically because it's easy to wrongly assume the two APIs always match."
+        },
+        {
+          "q": "What's the trade-off between MEMORY_AND_DISK_DESER and MEMORY_AND_DISK_SER storage levels?",
+          "choices": [
+            "DESER stores deserialized JVM objects (fast to read, more memory per row); SER explicitly serializes data before storing (smaller memory footprint, CPU cost to deserialize on every read)",
+            "SER is always faster and uses less memory with no downside",
+            "DESER only works with numeric data types",
+            "The two storage levels are functionally identical"
+          ],
+          "correct": 0,
+          "right": "Exactly -- it's a real trade-off: DESER is faster to read but costs more memory per row; SER is more memory-efficient but costs CPU time to deserialize on every subsequent read.",
+          "wrong": "This is a genuine trade-off. MEMORY_AND_DISK_DESER (the DataFrame default) stores deserialized JVM objects -- fast to read, but each row costs more memory. MEMORY_AND_DISK_SER serializes before storing -- smaller memory footprint, but costs CPU time to deserialize on every subsequent read."
+        }
+      ],
+      "close": "That closes out Chapter 2's whole performance arc -- lazy evaluation, schema/shuffle cost, join strategy, and now caching/serialization all feeding into one question: where's the real cost, and what lever actually reduces it."
+    },
+    "DE03-T01": {
+      "open": "DE03-T01, Batch vs. Streaming Ingestion Design. Three sources, one engineer's 'streaming everywhere' proposal, three real problems. Let's check.",
+      "questions": [
+        {
+          "q": "What was the core mistake in the rejected 'stream everything' design?",
+          "choices": [
+            "Treating 'streaming' as a technology choice made once for the whole platform, rather than a per-source decision driven by how often data actually changes and what latency the consumer genuinely needs",
+            "Using Kafka instead of a different message broker",
+            "Not using enough parallelism in the streaming job",
+            "Choosing Python instead of Scala for the ingestion code"
+          ],
+          "correct": 0,
+          "right": "Right -- the mistake was applying one platform-wide preference instead of asking, per source, how often the data changes and what latency is actually required.",
+          "wrong": "The mistake was treating 'streaming' as a single, platform-wide technology decision, instead of a per-source choice driven by two real questions: how often does the data actually change, and what latency does the downstream consumer genuinely require?"
+        },
+        {
+          "q": "Why is batch correct for the nightly ledger extract, even though a streaming job COULD technically poll it more often?",
+          "choices": [
+            "The extract has a natural once-a-day cadence baked into the source system -- streaming against it just re-reads the same unchanged bytes repeatedly at real infrastructure cost, with no freshness benefit",
+            "Streaming is always technically impossible against a file-based source",
+            "The ledger data is too large for any streaming framework to handle",
+            "Batch processing is required by regulation for financial ledgers"
+          ],
+          "correct": 0,
+          "right": "Exactly -- no ingestion pattern can make data fresher than the producer's own update frequency. Streaming here just wastes cluster time and S3 GETs re-reading unchanged data.",
+          "wrong": "The ledger only changes once a day at the source -- no consumer-side ingestion pattern can make it 'fresher' than that. Streaming against it just re-reads identical bytes repeatedly, at real infrastructure cost, for zero freshness or correctness benefit."
+        },
+        {
+          "q": "The FX provider has no event stream, only a REST endpoint, yet 10-second polling was wrong. What's the actual fix, and why is it still architecturally 'batch'?",
+          "choices": [
+            "A scheduled batch job at a cadence matched to the source's real update frequency (every few minutes) -- still 'batch' because it's triggered on a schedule, not reacting to a continuous event stream",
+            "Switching the FX provider to a Kafka-based API",
+            "Increasing the poll frequency to once per second instead of once per 10 seconds",
+            "Caching the FX rates permanently and never re-fetching"
+          ],
+          "correct": 0,
+          "right": "Right -- matching the poll cadence to the source's real update frequency (minutes, not seconds) avoids the 429s. It's still 'batch' because it's schedule-triggered, not stream-reactive.",
+          "wrong": "The fix is a scheduled batch job at a cadence matched to how often the FX rates actually change (every few minutes) -- this is still architecturally 'batch,' even running frequently, because it's triggered on a schedule rather than reacting to a continuous event stream, and it avoids the 429 rate-limit errors the aggressive polling caused."
+        },
+        {
+          "q": "What's the general rule the lesson gives for choosing an ingestion pattern per source?",
+          "choices": [
+            "Ask: does the source emit discrete events or expose a queryable snapshot; how often does the data actually change; what latency does the specific consumer require -- then match the pattern to THAT source's answer",
+            "Always default to streaming unless there's a specific reason not to",
+            "Always default to batch unless the source explicitly requires otherwise",
+            "Pick whichever pattern the engineering team is most comfortable with"
+          ],
+          "correct": 0,
+          "right": "Exactly -- three concrete questions per source, not a platform-wide default either way.",
+          "wrong": "The rule is: ask (1) does the source emit events or expose a snapshot, (2) how often does the data actually change, (3) what latency does the specific downstream consumer need -- then match the pattern to that source's actual answer, not to a blanket platform preference."
+        }
+      ],
+      "close": "Good -- ingestion pattern is a per-source decision, not a platform-wide one. That framework is exactly what the rest of this chapter assumes you already have."
+    },
+    "DE03-T02": {
+      "open": "DE03-T02 -- Idempotent, Re-runnable Pipeline Design. The doubled settlement rows from a re-run gone wrong. Let's check the diagnosis.",
+      "questions": [
+        {
+          "q": "What was the actual root cause of the doubled rows -- was it that the job failed?",
+          "choices": [
+            "No -- failures are normal and expected. The root cause was that the write step's semantics (blind append) were not SAFE TO REPEAT",
+            "Yes -- the job should never be allowed to fail under any circumstances",
+            "The root cause was a bug in the notification service that caused the original failure",
+            "The root cause was using Iceberg instead of a traditional relational database"
+          ],
+          "correct": 0,
+          "right": "Right -- the failure itself was normal. The real problem was that append mode has no way to know it already wrote this data, so re-running it just adds a second copy on top.",
+          "wrong": "The job failing is not itself the problem -- failures happen. The actual root cause was that append mode has no concept of 'have I already written this data' -- no natural key, no dedup, no memory of prior runs -- so a re-run after a partial failure just adds rows on top of what's already there."
+        },
+        {
+          "q": "How does MERGE-based idempotency actually fix this, specifically?",
+          "choices": [
+            "Matching on (transaction_id, business_date) means if a row already exists, it's updated (to the same values) rather than duplicated -- run the job once or ten times for the same date, and the final table state is identical",
+            "MERGE is simply a faster version of append with no behavioral difference",
+            "MERGE prevents the job from ever failing in the first place",
+            "MERGE only works if the pipeline never re-runs"
+          ],
+          "correct": 0,
+          "right": "Exactly -- matching on a natural key makes the write's outcome depend on the DATA, not on how many times the job has run. That's the actual definition of idempotent here.",
+          "wrong": "MERGE matches incoming rows against existing ones by (transaction_id, business_date) -- if a match exists, it updates (to the same, unchanged values for a settled historical date) instead of inserting a duplicate. Run the job once or ten times for the same date, and the final table state is identical -- that's what makes it idempotent."
+        },
+        {
+          "q": "What's the `replaceWhere` partition-overwrite pattern, and when does the lesson say it's a better fit than MERGE?",
+          "choices": [
+            "It atomically replaces an entire partition (e.g. all of business_date X) every run -- simpler than MERGE when the source is a complete, self-consistent extract for that date, and it avoids MERGE's assumption that a re-run's source is complete for the matched keys",
+            "It's a way to permanently delete old data from the table",
+            "It only works for streaming pipelines, never batch ones",
+            "It's functionally identical to MERGE with a different name"
+          ],
+          "correct": 0,
+          "right": "Right -- replaceWhere is simpler when the day's extract is a complete, self-consistent snapshot, and it sidesteps the ambiguity of MERGE assuming the source is complete for whatever keys it's matching.",
+          "wrong": "replaceWhere atomically replaces an ENTIRE partition (e.g. one business_date) on every run, rather than matching row by row. It's a better fit when the source data for that date is a complete, self-consistent extract -- and it avoids a subtlety MERGE has, where a partial re-export as the source could leave stale rows behind that MERGE wouldn't remove."
+        },
+        {
+          "q": "Why does checkpointing on the streaming side NOT, by itself, guarantee exactly-once behavior?",
+          "choices": [
+            "A checkpoint alone is not sufficient without an idempotent SINK -- checkpointing tells you which offsets were processed, but the write itself still needs to be safe to repeat if reprocessing occurs",
+            "Checkpointing is only relevant to batch jobs, never streaming ones",
+            "Exactly-once semantics don't exist in Structured Streaming at all",
+            "A checkpoint guarantees exactly-once entirely on its own, with no other requirement"
+          ],
+          "correct": 0,
+          "right": "Exactly -- checkpointing (tracking offsets) and idempotent writes are two separate pieces that jointly provide the exactly-once guarantee; neither one alone is sufficient.",
+          "wrong": "Checkpointing tracks which offset range has already been processed, so a restart resumes from the correct point -- but the write itself still needs to be idempotent (safe to repeat) for the end-to-end guarantee to hold. Idempotent sinks plus checkpointed offsets jointly give exactly-once behavior; the checkpoint alone isn't sufficient."
+        }
+      ],
+      "close": "That's idempotency in full -- MERGE and replaceWhere as two valid patterns, and the general test: what happens if this exact job runs twice for the same input? If the answer is duplicate data, the write isn't safe to retry."
+    },
+    "DE03-T03": {
+      "open": "DE03-T03 -- Schema Evolution and Contract Management. Two changes shipped together, one broke everything. Let's see which one, and why.",
+      "questions": [
+        {
+          "q": "Two changes shipped in the same deploy: adding risk_score with a default, and renaming merchant to merchant_name. Which one actually broke consumers?",
+          "choices": [
+            "The rename -- adding a field WITH a default is backward-compatible, but the rename was an unaliased field-name change, which Avro's resolution treats as removing one field and adding an unrelated new one",
+            "The addition broke everything, and the rename was safe",
+            "Both changes were equally safe and something else caused the failure",
+            "Neither change was related to the actual failure -- it was a network issue"
+          ],
+          "correct": 0,
+          "right": "Right -- if risk_score had shipped alone, nothing would have broken. It was specifically the unaliased rename that Avro's resolution treated as drop-old-field-add-new-field.",
+          "wrong": "The addition (risk_score with a default) was genuinely safe -- Avro's schema resolution handles that fine. The RENAME is what broke everything: without an alias, Avro resolves fields by name, so merchant_name looks like an unrelated new field while merchant appears to have been removed entirely."
+        },
+        {
+          "q": "Why is adding a field WITH an explicit default backward-compatible, but the same addition without a default would NOT be?",
+          "choices": [
+            "An old reader encountering data written with the new schema simply never asks for the new field, and a new reader encountering old data falls back to the declared default -- neither side errors",
+            "Defaults are only relevant for numeric field types",
+            "Adding any field is always backward-compatible regardless of a default",
+            "A default value changes how the field is stored on disk"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the default is what lets a new reader fill in a value for old data that never had the field, and an old reader simply ignores a new field it doesn't know about. Both directions are safe.",
+          "wrong": "With an explicit default: an old reader encountering new-schema data just never asks for the new field (ignored safely), and a new reader encountering OLD data (which lacks the field entirely) falls back to the declared default instead of erroring. Without a default, that fallback for old data wouldn't exist."
+        },
+        {
+          "q": "What's the Avro-supported, compatible way to rename a field during a migration window?",
+          "choices": [
+            "The `aliases` mechanism -- it tells the schema-resolution process that a reader still asking for the old field name should be satisfied by the renamed field",
+            "There is no compatible way to rename a field in Avro -- it must always be shipped as a raw edit",
+            "Renaming a field always requires taking the whole system offline",
+            "Adding a comment in the schema file explaining the rename"
+          ],
+          "correct": 0,
+          "right": "Right -- aliases is exactly the mechanism for this. It lets old-schema readers still resolve the renamed field correctly during the transition.",
+          "wrong": "Avro's `aliases` field is the supported mechanism: it tells schema resolution that a reader still asking for the OLD field name should be satisfied by the newly-renamed field. This is the compatible way to rename during a migration window, as opposed to a bare field-name edit."
+        },
+        {
+          "q": "Why is Iceberg's `ALTER TABLE ... RENAME COLUMN` safe as a pure metadata edit, with no data rewrite needed?",
+          "choices": [
+            "Iceberg tracks every column by a permanent integer ID assigned at creation, not by name -- a rename only changes which name maps to which ID, and every existing data file still resolves correctly by ID",
+            "Iceberg automatically rewrites every data file in the background whenever a column is renamed",
+            "Iceberg doesn't actually support renaming columns at all",
+            "Column renames in Iceberg require re-ingesting all historical data"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the column's real identity is its permanent ID, not its display name. A rename just updates the ID-to-name mapping in metadata; every existing file, written under the old name, still resolves correctly because the ID never changed.",
+          "wrong": "Iceberg assigns every column a permanent integer ID at creation and resolves all reads by that ID internally, with the name being only a display-layer mapping. A rename only changes which name maps to which ID in the metadata -- existing data files, written under the old name, continue to resolve correctly because the underlying ID never changed."
+        }
+      ],
+      "close": "Good -- the rename, not the addition, was the actual problem, and both Avro aliases and Iceberg's ID-based tracking are the specific mechanisms for handling that class of change safely. Every schema change needs classifying against each layer's own compatibility rules."
+    },
+    "DE03-T04": {
+      "open": "DE03-T04 -- Slowly Changing Dimensions at Scale. The same SCD2 idea from DV G14, but now two NEW problems show up only at distributed scale. Let's see why.",
+      "questions": [
+        {
+          "q": "Two problems appeared only at 40M-row distributed scale, never on the single-node SQL Server version. Did the definition of 'correct SCD2 history' change to fix them?",
+          "choices": [
+            "No -- the same three invariants from G14 (non-overlapping, gapless, exactly-one-current-row) still define correctness. Both fixes exist purely to make the distributed implementation actually deliver that same correctness",
+            "Yes -- distributed scale requires a fundamentally different, looser definition of SCD2 correctness",
+            "Yes -- at 40M rows, gaps and overlaps become acceptable trade-offs",
+            "The invariants only apply to SQL Server, not to distributed systems"
+          ],
+          "correct": 0,
+          "right": "Right -- the invariants don't move. The fixes exist because distributed execution doesn't give you certain guarantees (ordering, index-seek pruning) for free the way single-node execution does.",
+          "wrong": "The invariants (non-overlapping, gapless, exactly-one-current-row) are unchanged from G14. Neither fix redefines correctness -- both exist purely to make the distributed pipeline actually deliver the SAME correctness under conditions the single-node system never had to deal with."
+        },
+        {
+          "q": "Why can two change-events for the same customer in the same micro-batch produce TWO current rows, when a single-node SQL Server session never has this problem?",
+          "choices": [
+            "A single-node session processes rows one at a time in some order, but a Spark job splits the batch across concurrent, independent tasks with no implicit ordering guarantee -- a naive MERGE has no guarantee which event 'wins' the current-row slot",
+            "Spark always processes events in a random, unpredictable order regardless of design",
+            "SQL Server has a special feature that Spark structurally cannot replicate",
+            "The problem only occurs when using Iceberg specifically, not other table formats"
+          ],
+          "correct": 0,
+          "right": "Exactly -- distributed execution has no implicit ordering guarantee the way one single-threaded process does. Two concurrent tasks can both treat their event as a valid change against a target row that was only current for a moment.",
+          "wrong": "A single-node session processes one row at a time, in whatever order, but that's still ONE process making ONE pass. A Spark job splits the same batch across concurrent, independent tasks -- with no guarantee about which of two same-customer events lands first, a naive MERGE can't determine which one should win the current-row slot."
+        },
+        {
+          "q": "How does the fix for problem 1 (duplicate current rows) actually work, without changing what correct SCD2 means?",
+          "choices": [
+            "row_number() ordered by event time collapses multiple same-batch changes to one NET change per customer before the MERGE runs -- explicitly enforcing the same 'exactly one current row' invariant that distributed processing doesn't provide implicitly",
+            "Switching to a single-threaded Spark job that processes one row at a time",
+            "Disabling MERGE entirely and using only INSERT statements",
+            "Increasing the number of executors to reduce contention"
+          ],
+          "correct": 0,
+          "right": "Right -- this enforces the exactly-one-current-row invariant explicitly (via ordering by event time and collapsing), rather than assuming distributed execution gives it to you for free.",
+          "wrong": "The fix uses row_number() ordered by event time to collapse multiple same-customer changes in one batch down to a single net change before the MERGE ever runs. This explicitly enforces the same 'exactly one current row' invariant a single-threaded system gets implicitly -- it doesn't change what correctness means, just enforces it deliberately."
+        },
+        {
+          "q": "Why does the MERGE's whenMatchedUpdate step become the single most expensive stage at 40M-row scale, and what fixes it?",
+          "choices": [
+            "Unlike SQL Server's index seek, Spark's MERGE against an unpartitioned-by-key Iceberg table has to plan a scan touching potentially every data file -- bucketing the table by a hash of customer_id and including that bucket in the MERGE's ON clause lets the planner prune to only relevant partitions",
+            "The MERGE is slow because Iceberg doesn't support MERGE statements at all",
+            "The fix is simply adding more memory to each executor",
+            "The problem is unrelated to partitioning and is caused entirely by network latency"
+          ],
+          "correct": 0,
+          "right": "Exactly -- there's no index-seek equivalent without deliberate partitioning. Bucketing by customer_id hash and including that bucket in the MERGE's ON clause turns an O(table size) scan into something closer to O(batch size).",
+          "wrong": "SQL Server can seek directly via an index; Spark's MERGE has no equivalent unless the table's physical layout gives the planner something to prune on. Bucketing the table by a hash of customer_id and including that bucket as an explicit predicate in the MERGE's ON clause lets the planner skip entire partitions with no relevant customers -- this is what turns a ~38-minute scan into ~90 seconds."
+        }
+      ],
+      "close": "Right -- G14's invariants don't move, but distributed execution needs them enforced explicitly (ordering) and needs partition pruning designed in deliberately (bucketing) -- neither is automatic the way single-node execution made them feel."
+    },
+    "DE03-T05": {
+      "open": "DE03-T05 -- Data Lake vs. Data Warehouse vs. Lakehouse. Someone said Iceberg is 'the best of both' but couldn't explain the actual mechanism. Let's fix that.",
+      "questions": [
+        {
+          "q": "What does a raw data lake actually lack, mechanically -- not as a vague 'no ACID' claim?",
+          "choices": [
+            "Object storage has no concept of a multi-file transaction -- if a job writing 200 files fails after 120, those files simply exist with nothing recording that the write was incomplete; a concurrent reader has no way to know it's seeing a partial result",
+            "Data lakes cannot physically store more than a fixed number of files",
+            "Data lakes require a special license to enable transactional writes",
+            "Data lakes only support a single file format at a time"
+          ],
+          "correct": 0,
+          "right": "Right -- it's the literal absence of a transaction boundary. Object storage has no built-in way to mark a partial multi-file write as invalid or incomplete.",
+          "wrong": "The concrete mechanism is the absence of a multi-file transaction boundary: if a job fails partway through writing 200 files, those already-written files just sit there with nothing recording that the write is incomplete -- a concurrent reader querying that prefix has no way to know it's seeing a partial, inconsistent result."
+        },
+        {
+          "q": "What does Iceberg's table format add, mechanically, to solve this?",
+          "choices": [
+            "Every write produces a new immutable SNAPSHOT; the catalog's 'current snapshot' pointer only advances after every file in it is written successfully -- a crash mid-write means the pointer never advances, so readers keep seeing the last complete snapshot",
+            "Iceberg encrypts every file to prevent partial reads",
+            "Iceberg locks the entire table during any write, blocking all readers",
+            "Iceberg stores all data in a single file to avoid multi-file issues"
+          ],
+          "correct": 0,
+          "right": "Exactly -- an all-or-nothing pointer swap to a fully-written snapshot. That's the concrete mechanism behind 'atomic commit' here, not a database-style row lock.",
+          "wrong": "Every Iceberg write (append, MERGE, overwrite) produces a new snapshot -- an immutable record of exactly which files make up the table's state. The 'current snapshot' pointer only advances once every file in the new snapshot has committed successfully. A crash mid-write means that pointer never advances, so readers keep seeing the last snapshot that DID complete."
+        },
+        {
+          "q": "How does the same snapshot mechanism enable time travel (VERSION AS OF / TIMESTAMP AS OF) essentially for free?",
+          "choices": [
+            "Old snapshots aren't deleted immediately, so querying 'the table as it looked yesterday' is just pointing a read at an older, still-intact snapshot -- not a bespoke feature bolted on separately",
+            "Time travel requires a completely separate backup system unrelated to snapshots",
+            "Iceberg re-computes historical states on demand using transaction logs",
+            "Time travel only works for tables smaller than 1GB"
+          ],
+          "correct": 0,
+          "right": "Right -- time travel and atomic commits are two consequences of the exact same design: retained, versioned snapshot history.",
+          "wrong": "Because old snapshots aren't immediately deleted, 'the table as it looked yesterday' is just a read pointed at an older, still-intact snapshot -- the same mechanism that makes writes atomic also makes time travel essentially free, rather than being a separate feature built on top."
+        },
+        {
+          "q": "When does the lesson say a straightforward data warehouse is STILL the better choice, despite Iceberg being available?",
+          "choices": [
+            "A team with a few hundred GB of clean, strictly-tabular data, needing interactive dashboard-speed queries, with no requirement to retain raw/semi-structured formats for future reprocessing is often still better served by a traditional warehouse",
+            "A data warehouse is always strictly worse than a lakehouse in every scenario",
+            "Warehouses should only be used for data smaller than 1MB",
+            "Iceberg has fully replaced warehouses in every real-world scenario"
+          ],
+          "correct": 0,
+          "right": "Exactly -- lakehouse complexity earns its keep at scale and format-diversity; a smaller, clean, strictly-tabular dataset needing fast interactive queries is often genuinely better served by a warehouse's simpler, mature optimizer.",
+          "wrong": "The lesson is explicit: a team with clean, strictly-tabular data at moderate scale, needing sub-second interactive dashboard queries, with no need to retain raw/semi-structured formats for future reprocessing, is often still better served by a traditional warehouse. The lakehouse pattern earns its complexity at genuine scale and format diversity, not universally."
+        }
+      ],
+      "close": "That's the concrete mechanism behind Iceberg's 'best of both' -- snapshot-based atomic commits and the time travel they enable for free, plus an honest read on when a plain warehouse still wins."
+    },
+    "DE03-T06": {
+      "open": "DE03-T06 -- Designing Metadata-Driven Ingestion Frameworks. Four hand-copied scripts already disagreeing on missing-source handling. Let's see the fix.",
+      "questions": [
+        {
+          "q": "What's the core design idea for a metadata-driven ingestion framework?",
+          "choices": [
+            "Move what VARIES between sources (path, format, target table, write semantics, failure policy) into declarative config, while what should NOT vary (how a write mode actually executes, how a missing source is handled once the policy is chosen) stays in one shared code path",
+            "Give every source its own completely independent script with no shared code at all",
+            "Use a single hardcoded configuration that applies identically to every source with no per-source variation",
+            "Eliminate all configuration and hardcode every value directly in the pipeline code"
+          ],
+          "correct": 0,
+          "right": "Right -- what varies goes into config; what must stay consistent (the actual execution logic) stays in one shared implementation.",
+          "wrong": "The core idea is separating what genuinely VARIES between sources (path, format, target table, write mode, failure policy -- these go into config) from what must NOT vary (how a given write mode actually executes, how a missing source is handled -- this stays in one shared code path, implemented once)."
+        },
+        {
+          "q": "Why is 'metadata-driven' NOT automatically a fix for inconsistency -- what's the real risk?",
+          "choices": [
+            "A framework built too generically just moves the same inconsistency risk from Python files into config files -- four config entries could still specify four different missing-source behaviors just as easily as four scripts could",
+            "Metadata-driven frameworks are always slower than hand-copied scripts",
+            "There is no risk at all -- metadata-driven design automatically guarantees consistency",
+            "Config files cannot express failure-handling policies at all"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the risk is real: a framework flexible enough to express any behavior in config just relocates the same drift problem into a different file type.",
+          "wrong": "The risk is that a framework built too generically just moves the SAME inconsistency risk into config -- four config entries could still specify four different, inconsistent missing-source behaviors just as easily as four hand-copied scripts could. Genericity alone doesn't guarantee consistency."
+        },
+        {
+          "q": "What's the specific discipline that actually prevents config-level inconsistency, according to the lesson?",
+          "choices": [
+            "Config fields must be a closed, reviewed set of choices (not free-text), AND the code path each choice maps to must be implemented once and shared across every source",
+            "Allowing each source's config to define arbitrary, unreviewed custom behavior",
+            "Requiring every source to use identical write semantics regardless of its actual data shape",
+            "Removing configuration entirely and hardcoding every source's logic separately"
+          ],
+          "correct": 0,
+          "right": "Right -- a closed set of named policies (not free text) plus one shared implementation per policy is what actually stops a fifth, undocumented failure behavior from silently appearing.",
+          "wrong": "Two things together: config fields must be a CLOSED, reviewed set of choices (e.g. on_missing_source is exactly one of two named policies, never free text), and the code path each choice maps to is implemented ONCE and shared across every source -- so a new source has to pick from real, understood options, not invent a new behavior."
+        },
+        {
+          "q": "What's the honestly-stated LIMIT of this metadata-driven pattern?",
+          "choices": [
+            "It only reduces inconsistency for the dimensions it has actually parameterized -- a source with a genuinely novel requirement the config schema has no field for either needs the schema extended (reviewed) or a real separate pipeline",
+            "The pattern has no limits and can handle any future requirement automatically",
+            "It only works for exactly 15 sources, never more or fewer",
+            "It eliminates the need for any future schema changes ever"
+          ],
+          "correct": 0,
+          "right": "Exactly -- honestly stated: a novel requirement with no matching config field either needs a deliberate, reviewed schema extension, or a genuinely separate pipeline. Forcing it into an ill-fitting existing field just reintroduces inconsistency elsewhere.",
+          "wrong": "The lesson is explicit: the framework only reduces inconsistency along the dimensions it has actually parameterized. A source needing something genuinely novel (say, a bespoke dedup rule) either needs the config schema deliberately extended, or a real separate pipeline -- forcing it into an ill-fitting existing field just relocates the inconsistency problem again."
+        }
+      ],
+      "close": "That closes Chapter 3 -- every prior lesson's decision framework (ingestion pattern, idempotent writes, schema compatibility, Iceberg mechanisms) expressed as reusable, parameterized logic instead of one-off code. That's the discipline Chapters 4 and beyond assume is already in place."
     }
   }
 }

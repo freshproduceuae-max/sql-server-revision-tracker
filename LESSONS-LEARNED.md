@@ -1488,3 +1488,47 @@ lesson actually said.
 pilot pattern documented in `docs/teacher-mcq-role-swap-experiment.md` — this
 is the first data point in that series where the reviewer caught the
 *current* author's own content rather than an inherited lesson defect.
+
+## 35. `check-handoff-progress.js` assumed `teacher-mcq.json` only ever held G01-G19 ids -- a second track's Teacher MCQs broke that silently
+
+**Looked like:** authoring the first Data Engineering Teacher MCQ batch
+(DE01-T01..DE03-T06, 18 lessons merged into `sources/teacher-mcq.json`
+alongside the existing 236 Data Validation lessons) and running the standard
+validation suite produced `FAIL: Internal arithmetic inconsistency deriving
+technique counts -- this is a bug in the checker itself, not the data.` --
+a scary-sounding, self-diagnosing failure with no obvious connection to the
+DE content just added.
+
+**Actually was:** `check-handoff-progress.js`'s `completedLessons` was
+computed as `Object.keys(builtMcq.lessons).length` -- every id in the file,
+with no track filter -- because until this point, `teacher-mcq.json` had
+only ever contained `G0x-T0x` Data Validation ids, so "every id in the file"
+and "every DV technique with an MCQ" were the same number by coincidence,
+not by design. The script's own internal arithmetic check
+(`totalTechniques === completedLessons + remainingTechniques`) compares
+against `totalTechniques`, which IS correctly scoped to G01-G19 (derived
+from `data-validation-lab/methods/` folder counts) -- so the moment
+`completedLessons` included 18 non-G-prefixed DE ids, the two sides of that
+equation diverged (236 vs. 254) and the self-check correctly caught it.
+
+**The fix:** scope `completedLessons`/`completedQuestions` to
+`/^G\d{2}-T\d{2}$/`-matching ids only, since this entire progress block
+(per the file's own header comment) tracks Data Validation's G01-G19 Teacher
+MCQ rollout specifically -- not the union of every track's Teacher MCQ
+content that happens to live in the same JSON file.
+
+**Rule to carry forward:** a script that derives "everything in this shared
+file" as a proxy for "everything in one specific track's scope" will break
+silently (or, if you're lucky, loudly like this) the moment a second track's
+content lands in that same file. `teacher-mcq.json`'s `lessons` object is
+now genuinely multi-track (DV + DE, and likely BA/Credit Risk/EA MCQs
+later) -- any future script reading it needs an explicit id-prefix filter
+for the track it actually cares about, not an assumption that the file's
+contents are homogeneous.
+
+**Family:** related to entry 16 (a second copy of an id space drifting) and
+entry 13 (a missing `builds` entry silently serving the wrong content) --
+all three are the same shape: code written when one assumption happened to
+hold (one track's ids, one file, one asset kind) breaks silently once a
+second track/case is added, unless the assumption is made explicit and
+checked.
