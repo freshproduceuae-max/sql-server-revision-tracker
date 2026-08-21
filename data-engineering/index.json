@@ -29,5 +29,36 @@
         "title": "The Enterprise Data Engineer Role"
       }
     ]
+  },
+  {
+    "code": "DE02",
+    "name": "PySpark and Distributed Data Processing",
+    "desc": "The technical core of the track: how Spark actually executes work across a cluster -- lazy evaluation, transformations vs actions, partitioning and shuffle, join strategies, skew, caching, serialization and the reasoning behind performance decisions. Grounded against Spark 4.x / PySpark 4.2.0 documented behaviour, not assumed from older versions.",
+    "lessons": [
+      {
+        "id": "DE02-T01",
+        "title": "Spark Architecture and Lazy Evaluation"
+      },
+      {
+        "id": "DE02-T02",
+        "title": "DataFrames, Spark SQL and Schema Enforcement"
+      },
+      {
+        "id": "DE02-T03",
+        "title": "Partitioning, Shuffle and Data Skew"
+      },
+      {
+        "id": "DE02-T04",
+        "title": "Join Strategies at Scale: Broadcast vs Sort-Merge"
+      },
+      {
+        "id": "DE02-T05",
+        "title": "Structured Streaming Fundamentals"
+      },
+      {
+        "id": "DE02-T06",
+        "title": "Spark Performance Tuning: Caching, Serialization and Executor Sizing"
+      }
+    ]
   }
 ]
