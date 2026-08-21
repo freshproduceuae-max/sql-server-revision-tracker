@@ -157,6 +157,26 @@ Do not reintroduce a second copy of that data — that drift is
 
 ## Deploying
 
+**This project auto-deploys to production on every push to the default
+branch (`claude/confident-volta-l3e55f`) via Vercel's GitHub integration —
+confirmed via GitHub's Deployments API (`vercel[bot]` as creator,
+`environment: "Production"`, each deployment created 12–16 seconds after
+its triggering commit, for every one of the Data Engineering track's six
+chapter-merge commits, `b741852` through `290fd62`).** No manual `vercel
+deploy`/`vercel --prod` command causes this — the CLI commands below are
+a *separate*, optional way to trigger a deployment manually; they are not
+the only way production gets updated, and disabling or avoiding them does
+**not** prevent a squash-merge to the default branch from deploying.
+**"Do not deploy" instructions in this repo's history, before this note
+was added, were followed correctly as "do not run a manual deploy
+command" — they did not, and could not have, prevented the automatic
+deployment that happened anyway on each merge.** Any future "hold before
+deploying" instruction must be understood as "hold before merging to the
+default branch," not "hold before running a deploy command," unless this
+auto-deploy behavior is first disabled (a separate, explicitly authorized
+change to the Vercel project's git integration settings — not done as
+part of this note).
+
 ```bash
 npx vercel --prod --yes   # production; aliases credit-risk-academy.vercel.app
 npx vercel --yes          # preview; SSO-protected, sign in to Vercel to view
@@ -389,7 +409,7 @@ check the progress block for the exact verified state at any given moment.
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
 | 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start. **One unauthorized generation attempt was made and rejected — see "Enterprise Architecture — rejected unauthorized run" below.** |
-| 7 | Data Engineering track — Teacher MCQs, final whole-track acceptance, deployment | 0 of 36 approved lessons remaining — the full 36-lesson/6-chapter curriculum is built (see "Data Engineering track" below) | **Not authorized.** Completing Chapter 6 completed the 36-lesson AUTHORING phase only, per the owner's explicit instruction — it does not itself authorize Teacher MCQs, final whole-track acceptance, or production deployment; each needs its own separate authorization. |
+| 7 | Data Engineering track — Teacher MCQs, final whole-track acceptance, deployment | 0 of 36 approved lessons remaining — the full 36-lesson/6-chapter curriculum is built (see "Data Engineering track" below) | **Not authorized.** Completing Chapter 6 completed the 36-lesson AUTHORING phase only, per the owner's explicit instruction — it does not itself authorize Teacher MCQs or final whole-track acceptance, each of which needs its own separate authorization. **Production deployment is not a separate action to authorize here — see "Deploying" above: every one of the six chapters' merges already auto-deployed to production via Vercel's git integration, with no manual deploy command run.** |
 
 **Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
 close.** None of them are blocked by a technical dependency — each is
@@ -487,10 +507,14 @@ Chapter 5 (6 lessons, `P-DE-05`) and Chapter 6 (6 lessons, `P-DE-06`) —
 each its own separate, explicit authorization, per the owner's stated
 chapter-by-chapter approach.** This completes the 36-lesson AUTHORING
 phase only, per the owner's explicit instruction closing Chapter 6 —
-**it does not itself authorize Teacher MCQs for this track, final
-whole-track acceptance, or production deployment.** Each of those needs
-its own separate authorization before any further content or deployment
-work happens — see the work queue table above (item 7).
+**it does not itself authorize Teacher MCQs for this track or final
+whole-track acceptance,** each of which needs its own separate
+authorization before any further content work happens — see the work
+queue table above (item 7). **Production deployment is a distinct case:
+see "Deploying" above — every one of the six chapters' merges already
+auto-deployed to production via Vercel's git integration, confirmed
+against GitHub's Deployments API. No "authorize deployment" step exists
+to withhold; each merge already updated the live site.**
 
 **Chapter 6 — Production Engineering: Orchestration, CI/CD, Containers,
 ML Data, Operations.** Multi-stage Spark orchestration (an Airflow DAG's
@@ -716,10 +740,14 @@ scoped from, and completing it does not itself constitute final
 whole-track acceptance.** The track's own hero copy and Chapter 1's final
 lesson both state the job-readiness caveat directly. Separately, per the
 owner's explicit instruction closing Chapter 6: finishing the 36-lesson
-authoring phase does not authorize Teacher MCQs for this track, does not
-constitute final whole-track acceptance, and does not authorize
-production deployment — each remains its own required, separate
-authorization, tracked in the work queue table above (item 7).
+authoring phase does not authorize Teacher MCQs for this track and does
+not constitute final whole-track acceptance — each remains its own
+required, separate authorization, tracked in the work queue table above
+(item 7). **Production deployment is not part of that list of things to
+separately authorize: see "Deploying" above — every chapter merge already
+auto-deployed to production via Vercel's git integration (confirmed
+against GitHub's Deployments API for all six chapter-merge commits), with
+no manual deploy command ever run.**
 
 **Data Engineering-specific note not covered by the Chapter 1 harness
 bullet above:** Chapters 2 through 6's lessons use the identical
