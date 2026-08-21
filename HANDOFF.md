@@ -499,8 +499,8 @@ capacity-scheduler queue design (guaranteed floors via matched
 capacity/maximum-capacity, explicit preemption, as the actual enforcement
 mechanism a single undifferentiated queue cannot provide), CDP
 architecture (explicitly distinguishing CDP Private Cloud Base's
-Cloudera-Manager-centric classic operations, still a real current primary
-model, from CDP Private Cloud's OpenShift/Kubernetes-based containerized
+Cloudera-Manager-centric classic operations, still a real, current model
+many enterprise estates run, from CDP Private Cloud's OpenShift/Kubernetes-based containerized
 services — deliberately correcting an overstated "CDP is Kubernetes-
 native" framing rather than presenting either model as having replaced
 the other), Apache Iceberg on CDP (HMS partition-tracking pressure
