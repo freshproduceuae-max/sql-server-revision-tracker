@@ -571,8 +571,8 @@ const DV = [
 
 // ── Data Engineering checkpoints: one per chapter ─────────────────────────────
 // Not every chapter needs a pair — matches the DV precedent (Checkpoint 3
-// covers G04 alone). DE06 checkpoint (P-DE-06) is NOT authorized yet;
-// adding it later is additive to this array, no structural change.
+// covers G04 alone). All 6 chapters / 36 lessons are now built (P-DE-01
+// through P-DE-06) — this array is complete for the approved curriculum.
 const DE = [
   {
     n: 1, title: 'Reconcile a Transaction-Banking Batch', chapters: ['DE01'],
@@ -687,6 +687,29 @@ const DE = [
       'An SLA-risk alert design distinct from crash detection, with a stated reason the old alert can\'t cover it',
       'A Spark-UI-evidence-based skew/parallelism/volume diagnosis with the correct fix identified',
       'A measured compute-vs-data-volume cost diagnosis with the correct optimization lever justified',
+    ],
+  },
+  {
+    n: 6, title: 'Build a Production-Ready Settlement Pipeline Runbook', chapters: ['DE06'],
+    tagline: 'One scenario, all six Chapter 6 skills: orchestration vs execution, CI/CD vs data correctness, Docker vs Kubernetes vs Spark, ML feature point-in-time correctness, production resilience',
+    scenario: [
+      'The bank\'s nightly settlement pipeline -- the same one this track has followed since Chapter 3 -- is being finalized for production: it needs a real orchestrated DAG (not one script\'s sequential calls), a CI/CD pipeline that actually gates on data correctness (not just deployment mechanics), a correctly containerized and Kubernetes-scheduled deployment, a point-in-time-correct feature feeding a downstream fraud model, and a written runbook so a 3 AM on-call engineer has pre-decided answers instead of improvising. You are asked to design all six pieces as one coherent production-readiness package, being explicit about which distinct layer or control each piece belongs to -- orchestration is not execution, CI/CD passing is not data correctness, Docker is not Kubernetes is not Spark, and a model\'s feature quality is not a modeling problem.',
+    ],
+    tasks: [
+      '[DE06-T01] Design the settlement pipeline as an Airflow DAG with three independently tracked tasks (extract, summarize, report), and specify exactly which task(s) can be safely re-run alone after a failure, referencing each task\'s own idempotency properties rather than assuming re-run safety.',
+      '[DE06-T02] Design a CI/CD pipeline stage that would have caught a silently-wrong join dropping 8% of rows, explaining precisely why "unit tests + build + deploy all green" does not by itself verify data correctness.',
+      '[DE06-T03] Fix all four distinct container-security findings (unpinned dependencies, a baked-in secret, root execution, no vulnerability scanning) for this pipeline\'s image, justifying why each fix is independent and does not address the other three.',
+      '[DE06-T04] Explain why "containerized" does not mean "ready for Kubernetes," and design the correct spark-submit invocation for running this pipeline\'s Spark jobs on Kubernetes, distinguishing Docker\'s packaging role, Kubernetes\' scheduling role, and Spark\'s own driver/executor execution role.',
+      '[DE06-T05] Redesign a customer-transaction-history feature for the downstream fraud model to be point-in-time correct, explaining the specific leakage mechanism the original "last 30 days relative to today" computation introduced and why it produced good offline accuracy but worse live performance.',
+      '[DE06-T06] Write the production runbook\'s retry-policy table, backfill decision tree, rollback plan (referencing a specific recoverable Iceberg snapshot mechanism) and incident-communication plan for this pipeline, so a 3 AM on-call engineer has pre-decided answers rather than improvising.',
+    ],
+    deliverables: [
+      'An Airflow DAG design with a stage-by-stage re-run-safety justification',
+      'A CI/CD data-correctness gate design distinct from deployment-mechanics checks',
+      'Four independently justified container-security fixes',
+      'A correct Docker/Kubernetes/Spark-execution-layer distinction with a working spark-submit design',
+      'A point-in-time-correct feature redesign with the leakage mechanism explained',
+      'A complete production runbook: retry policy, backfill scoping, rollback plan, incident communication',
     ],
   },
 ];
