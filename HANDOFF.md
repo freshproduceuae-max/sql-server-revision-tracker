@@ -17,7 +17,7 @@ A Duolingo-style learning app with five tracks:
 | 💼 Credit Risk | 47 modules + 7 case studies | GitHub raw, **separate branch** (see below) |
 | 🧪 Data Validation | 236 techniques / 19 groups + 15 exercises | `data-validation-lab/` in this repo |
 | 📐 Business Analysis | 42 lessons / 10 chapters | `business-analysis/` in this repo (**generated**) |
-| ⚙️ Data Engineering | **Chapters 1–4 of 6, 24 of 36 approved lessons** | `data-engineering/` in this repo (**generated**) — see "Data Engineering track" below |
+| ⚙️ Data Engineering | **Chapters 1–5 of 6, 30 of 36 approved lessons** | `data-engineering/` in this repo (**generated**) — see "Data Engineering track" below |
 | 🎯 Quiz Practice | 2,079 questions, 11 banks | `quiz-bank.json` (generated) |
 
 Tracks are **data-driven**: `TRACKS` in `index.html` drives routing, the nav tabs,
@@ -389,7 +389,7 @@ check the progress block for the exact verified state at any given moment.
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
 | 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start. **One unauthorized generation attempt was made and rejected — see "Enterprise Architecture — rejected unauthorized run" below.** |
-| 7 | Data Engineering track — Chapters 5–6 | 12 of 36 approved lessons remaining (Chapters 1–4, 24 lessons, are built — see "Data Engineering track" below) | **Not authorized.** Chapters 1–4 were each their own explicit authorization; Chapters 5–6 need the same, one at a time, per the owner's stated chapter-by-chapter approach. |
+| 7 | Data Engineering track — Chapter 6 | 6 of 36 approved lessons remaining (Chapters 1–5, 30 lessons, are built — see "Data Engineering track" below) | **Not authorized.** Chapters 1–5 were each their own explicit authorization; Chapter 6 needs the same, per the owner's stated chapter-by-chapter approach. |
 
 **Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
 close.** None of them are blocked by a technical dependency — each is
@@ -468,7 +468,7 @@ documented rationale.
 
 Content-only work (items 1–3, 6, 7) is explicitly **not** gated on any of this.
 
-### Data Engineering track — Chapters 1–4 built (of 6)
+### Data Engineering track — Chapters 1–5 built (of 6)
 
 Same origin story pattern as Enterprise Architecture: the owner pasted a
 real job posting (GSSTech Group, "Sr. Data Engineer - PySpark, Python &
@@ -482,11 +482,55 @@ lessons / 6 chapters / 6 checkpoints, independently reviewed by Codex
 (`PASS_WITH_FIXES`, all findings applied and marked inline), approved by
 the owner as the final target. **Built and merged so far: Chapter 1
 (6 lessons, `P-DE-01`), Chapter 2 (6 lessons, `P-DE-02`), Chapter 3
-(6 lessons, `P-DE-03`) and Chapter 4 (6 lessons, `P-DE-04`) — each its own
-separate, explicit authorization, per the owner's stated chapter-by-chapter
-approach.** Chapters 5–6 and all Teacher MCQs for this track need their own
-separate authorization before any further content is written — see the
-work queue table above (item 7).
+(6 lessons, `P-DE-03`), Chapter 4 (6 lessons, `P-DE-04`) and Chapter 5
+(6 lessons, `P-DE-05`) — each its own separate, explicit authorization,
+per the owner's stated chapter-by-chapter approach.** Chapter 6 and all
+Teacher MCQs for this track need their own separate authorization before
+any further content is written — see the work queue table above (item 7).
+
+**Chapter 5 — Data Quality, Governance, Security, Observability and Spark
+Optimization.** Data quality gates at Spark scale (quarantine-plus-
+threshold enforcement, built explicitly on Data Validation's existing
+completeness-check detection logic from G01 rather than re-deriving it —
+the lesson brief states directly which DV group's logic it reuses and
+what a distributed pipeline needs beyond it: an enforcement point, a
+quarantine destination, a measured-threshold fail/continue decision),
+data governance and lineage on CDP (Apache Atlas and Apache Ranger
+treated as two distinct components — Atlas for lineage/classification
+captured from real pipeline execution via a Spark hook, Ranger for
+tag-driven access-policy enforcement — rather than one undifferentiated
+"SDX governance" feature), security (authentication via Kerberos,
+authorization via Ranger, encryption at rest, encryption in transit, and
+column masking treated as five separately verified controls, specifically
+correcting a "Kerberos, so it's secure" category error), pipeline
+observability (an SLA-risk alert, driven by stage-duration baselines and
+projected completion time, explicitly distinguished from a crash-only
+alert that structurally cannot detect a late-but-successful run),
+debugging failed Spark jobs (Spark UI task-duration-distribution evidence
+used to distinguish skew, insufficient parallelism, and genuinely larger
+data volume as three different causes with three different fixes, versus
+a blind restart that cannot fix any of them), and cost/performance
+optimization (a measured predicate-pushdown and shuffle-volume diagnosis,
+using the physical query plan and Spark UI shuffle metrics, distinguishing
+a compute-capacity problem from an unnecessary-data-volume problem rather
+than assuming "add executors" is always the right lever). Every claim in
+this chapter is tied to a specific, checkable piece of evidence (a Spark
+UI metric, a physical-plan entry, a measured defect-rate percentage, a
+named control) rather than a bare "optimized"/"secure"/"governed" adjective
+— per the owner's explicit guardrail for this chapter. Grounded against
+fetched, current documentation: Spark UI's Stages/Tasks views and
+task-duration-distribution skew diagnosis; Cloudera SDX's Ranger
+(authorization, including tag-driven policies keyed to Atlas
+classifications) and Atlas (lineage, metadata, classification) as
+distinct components, plus TLS-by-default among SDX cluster-internal
+services. Checkpoint `P-DE-05` is one transaction-banking-adjacent
+scenario (a settlement pipeline with all six of the chapter's problems
+occurring together) exercising all six Chapter 5 skills, doubling as the
+chapter's practical exercise, reusing the exact same
+`loadDeChaptersFromApp()`/`deLessonIds()`/`renderDe()` infrastructure
+Chapters 1–4 already built — no new build tooling was needed for Chapter 5,
+only additive data (one more `DE_CHAPTERS` entry, one more checkpoint
+definition in `build-projects.js`'s `DE` array).
 
 **Chapter 4 — Hadoop Ecosystem and Cloudera Data Platform.** HDFS vs.
 Apache Ozone (diagnosed by which specific resource — NameNode metadata
@@ -617,23 +661,24 @@ definition in `build-projects.js`'s `DE` array).
   incomplete, unlocks and mark-done works when all 6 lessons are complete).
 
 **Explicit, load-bearing scope honesty (per owner instruction):** completing
-Chapters 1–4 is a foundation, the technical core of distributed
-processing, enterprise ingestion/pipeline-design discipline, and Hadoop-
-ecosystem/CDP platform literacy, not job-readiness for the senior
-PySpark/Cloudera role this curriculum was scoped from. The track's own
-hero copy and Chapter 1's final lesson both state this directly, rather
-than implying twenty-four lessons make someone senior-ready — the data
-quality/governance/security/observability and production-operations
-skills that posting actually needs start in Chapter 5 and continue
-through Chapter 6, none of which are built yet.
+Chapters 1–5 is a foundation, the technical core of distributed
+processing, enterprise ingestion/pipeline-design discipline, Hadoop-
+ecosystem/CDP platform literacy, and quality/governance/security/
+observability/cost-optimization discipline, not job-readiness for the
+senior PySpark/Cloudera role this curriculum was scoped from. The track's
+own hero copy and Chapter 1's final lesson both state this directly,
+rather than implying thirty lessons make someone senior-ready — the
+production-orchestration, CI/CD, containerization, and ML-data-prep
+skills that posting actually needs start in Chapter 6, which is not built
+yet.
 
 **Data Engineering-specific note not covered by the Chapter 1 harness
-bullet above:** Chapters 2, 3 and 4's lessons use the identical
+bullet above:** Chapters 2 through 5's lessons use the identical
 same-origin lesson-loading code path Chapter 1's harness test already
 exercises (`contentUrl()` → `loadLesson()`, unchanged since Phase 1), so
 no new harness spec cases were added for any of them specifically. The
 existing 18-test suite (including DE01-T01's lesson-loading case) was
-re-run against the actual Chapter 4 build and passed — see PR history for
+re-run against the actual Chapter 5 build and passed — see PR history for
 this chapter's Codex review record rather than treating this note as that
 verification itself.
 
