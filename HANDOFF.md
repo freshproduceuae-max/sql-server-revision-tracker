@@ -276,8 +276,8 @@ entry 19.
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
   "contentThroughPR": 72,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:3002a8c6c5978ab253f7f982e9313b7913aa8368b8a749521512c5679f735c2a",
-  "lastVerified": "2026-08-22T15:49:11.556Z"
+  "sourcesTeacherMcqHash": "sha256:c2524e01bbb66c1249b7e361da910a9326c74c074d922faabbe7bd2acb4128bb",
+  "lastVerified": "2026-08-22T22:27:16.837Z"
 }
 ```
 
@@ -826,12 +826,29 @@ per the built file's own count.
 ### Business Analysis Teacher MCQs — Batch 1 built (lessons 1-21, held for review)
 
 The first 21 of 42 accepted BA lessons (BA01-T01 through BA06-T01, canonical
-curriculum order — Chapters 1 through 6 in full), 63 questions (3 per lesson),
-merged into `sources/teacher-mcq.json` alongside the existing 272 DV+DE
-entries — 293 lessons / 910 questions total in that file now. Batch 2
-(BA06-T02 through BA10-T04, the remaining 21 lessons) is explicitly deferred
-to a separate authorization; no overlap or omission was found between the
-two halves of the 42-lesson set.
+curriculum order — Chapters 1 through 6 in full), merged into
+`sources/teacher-mcq.json` alongside the existing 272 DV+DE entries — **293
+lessons / 918 questions total** in that file now, per the built file's own
+count. Batch 2 (BA06-T02 through BA10-T04, the remaining 21 lessons) is
+explicitly deferred to a separate authorization; no overlap or omission was
+found between the two halves of the 42-lesson set.
+
+**Question count is complexity-scaled, not a flat 3 per lesson.** An initial
+pass gave every lesson exactly 3 questions; a focused adequacy review (fresh
+blind Codex pass, not told the current count) found this had become an
+unintended minimum-as-quota rather than a genuine per-lesson judgement. The
+review counted each lesson's distinct testable angles from the source content
+alone and flagged 8 of the 21 lessons where a specific, named angle (an
+Approach step or Deliverable) went untested at 3 questions. A 4th question
+was added to each of those 8 — BA02-T03, BA03-T01, BA03-T04, BA03-T05,
+BA04-T02, BA04-T03, BA05-T03, BA06-T01 — each grounded in the exact
+previously-uncovered angle identified by the review. The remaining 13 lessons
+stayed at 3, confirmed adequate by the same review. BA02-T03 was assessed for
+a possible 5th question (it scored 5 distinct angles in the initial adequacy
+pass); a dedicated follow-up Codex read found no genuine fifth angle distinct
+from the four already tested, so a 5th was deliberately not added. Final
+distribution: 13 lessons at 3 questions, 8 lessons at 4 questions = 71
+questions for this batch (63 original + 8 added).
 
 Every question tests applied analysis specifically named by the owner —
 requirements judgement, stakeholder reasoning, process interpretation,

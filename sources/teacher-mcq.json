@@ -12004,6 +12004,18 @@
           "correct": 1,
           "right": "Right — the lesson is explicit that the answer is impact assessment and change control, deliberately contrasted with 'heroics'.",
           "wrong": "The lesson explicitly rules out both a full timeline rebuild and outright exclusion. The intended answer is a disciplined impact assessment through change control, not a heroic scramble."
+        },
+        {
+          "q": "The lesson's approach also says to classify each stakeholder by influence and interest. What is that classification actually for?",
+          "choices": [
+            "So that engagement effort is proportionate — it decides how much time and attention each group gets, not just whether they're on the list",
+            "So that stakeholders can be ranked for annual performance reviews",
+            "So that only high-influence stakeholders need to be included in the register at all",
+            "So that the org chart can be redrawn to reflect actual influence"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson ties the influence/interest grid directly to engagement effort: it's not about who makes the list, but how much engagement each group warrants once they're on it.",
+          "wrong": "It's not about performance reviews, excluding low-influence stakeholders, or redrawing the org chart. The classification exists to make engagement effort proportionate to each stakeholder's actual influence and interest."
         }
       ],
       "close": "Trace the process, not the org chart, and audit roles need explicit inclusion. Chapter 3 next — planning and monitoring."
@@ -12046,6 +12058,18 @@
           "correct": 1,
           "right": "Right — the lesson explicitly says the strong answer refuses the framing itself and instead explains the drivers (complexity, regulatory exposure, cost of being wrong).",
           "wrong": "Picking a side or dodging the question misses the lesson's point. The strong answer rejects the false binary and explains the actual factors that should drive the choice."
+        },
+        {
+          "q": "The approach's final step is to document the rationale for the chosen analysis approach. Why does that step matter to a governance board that wants consistency across projects?",
+          "choices": [
+            "It makes the choice defensible rather than stylistic — the board can see it was driven by complexity, regulation and cost of error, not personal preference",
+            "It satisfies a legal requirement that all analysis approaches be filed with the board in writing",
+            "It allows the board to retroactively change which approach was used",
+            "It removes the need for the board to review the project at all"
+          ],
+          "correct": 0,
+          "right": "Exactly — documenting the rationale is what lets the board see the difference is driven by real criteria, not stylistic preference, which is what makes an inconsistent-looking choice actually defensible.",
+          "wrong": "It isn't a filing mandate, a retroactive-change mechanism, or a way to avoid board review. The point is that a documented rationale converts what looks like inconsistency into a defensible, criteria-driven decision."
         }
       ],
       "close": "Predictive vs. adaptive isn't a style preference — it's driven by complexity, regulation and the cost of getting it wrong. Next: planning stakeholder engagement."
@@ -12172,6 +12196,18 @@
           "correct": 1,
           "right": "Right — the lesson explicitly draws this parallel and suggests naming it directly if you have a data background: same reasoning as defining a golden source.",
           "wrong": "The stated parallel is specifically to data governance and the golden-source concept, not to testing, scheduling or marketing practices."
+        },
+        {
+          "q": "Beyond naming one authoritative location per artefact, the approach also says to define naming and versioning. What specific problem does that step solve?",
+          "choices": [
+            "It lets a reader tell current from superseded material, which a single authoritative location alone does not guarantee",
+            "It reduces the total storage space the information management plan requires",
+            "It replaces the need for an access and retention rule set",
+            "It is required only for artefacts stored in Confluence, not SharePoint"
+          ],
+          "correct": 0,
+          "right": "Right — naming and versioning is a distinct step from designating an authoritative source: even within the right location, a reader still needs to tell which version is current versus stale.",
+          "wrong": "It's not about storage space, replacing retention rules, or being tool-specific. Naming and versioning solves a separate problem: distinguishing current from superseded material even within the authoritative location."
         }
       ],
       "close": "One authoritative source per artefact, stated explicitly — the same logic as a data golden source. Next: measuring BA performance."
@@ -12214,6 +12250,18 @@
           "correct": 1,
           "right": "Right — the lesson's final approach step is explicit: review the measures for gaming risk before adopting them.",
           "wrong": "The stated check isn't about automation, competitor benchmarking, or presentation format — it's specifically about whether the measure could be gamed or change behaviour in the wrong direction."
+        },
+        {
+          "q": "Besides outcome-based metrics like defect rates and post-approval change, the lesson's approach also includes stakeholder-reported measures. Why include those specifically?",
+          "choices": [
+            "Because analysis quality is partly perceived, and outcome metrics alone don't capture that perception",
+            "Because stakeholder-reported measures are easier to automate in a dashboard than defect rates",
+            "Because regulators require a stakeholder survey before any metric can be adopted",
+            "Because stakeholder-reported measures replace the need to check for gaming risk"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson includes stakeholder-reported measures precisely because analysis quality has a perceived dimension that defect-rate and rework metrics alone can't surface.",
+          "wrong": "It's not about automation ease, a regulatory survey mandate, or replacing the gaming-risk check. Stakeholder-reported measures are included because quality is partly perceived, which outcome metrics alone miss."
         }
       ],
       "close": "Measure outcomes, not documents, and check every measure for gaming risk before adopting it. Chapter 4 next — elicitation and collaboration."
@@ -12298,6 +12346,18 @@
           "correct": 0,
           "right": "Right — the lesson's fourth approach step is to replay understanding back in concrete cases specifically to test whether the stated rule holds up.",
           "wrong": "The lesson doesn't rely on formal legal notice, waiting for audits, or single verbal confirmation — it calls for testing the rule against concrete replayed cases."
+        },
+        {
+          "q": "The approach also calls for using document analysis alongside interviews and observation. What specific job does document analysis do that observation doesn't?",
+          "choices": [
+            "It finds where the stated rule originated and whether it still applies, rather than just confirming what people actually do today",
+            "It replaces the need to observe underwriters at all once a policy document exists",
+            "It is only useful for rules that have never been written down anywhere",
+            "It confirms the rule is correct by counting how many people believe it"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson assigns document analysis its own distinct job: tracing a stated rule back to its origin and checking whether it's still valid, separate from what observation shows is actually happening.",
+          "wrong": "Document analysis doesn't replace observation, isn't limited to undocumented rules, and isn't a popularity check. Its specific job is tracing a rule's origin and current validity."
         }
       ],
       "close": "Interviews find the stated process; observation finds the real one, and it lives in the exceptions. Next: confirming what you actually heard."
@@ -12340,6 +12400,18 @@
           "correct": 0,
           "right": "Right — the lesson's pitfall is stated precisely: silence usually just means the message wasn't read, and the real disagreement shows up later, more expensively.",
           "wrong": "It's not a legal-bindingness argument or a claim that silence always signals disagreement — the lesson's point is that silence typically means the message went unread, deferring a costlier surprise."
+        },
+        {
+          "q": "Beyond replaying understanding back to one stakeholder, the approach also says to cross-check statements from different stakeholders against each other. What does that step surface that in-session replay alone would not?",
+          "choices": [
+            "Conflicts between what different stakeholders each believe, which a single person's confirmation can't reveal on its own",
+            "Whether the stakeholder's job title is accurate",
+            "Whether the session ran within its allotted time",
+            "Whether the notes were formatted correctly for circulation"
+          ],
+          "correct": 0,
+          "right": "Right — cross-checking is a distinct step from replaying understanding to one person: it's specifically how conflicts between different stakeholders' accounts get surfaced explicitly.",
+          "wrong": "It's not about job titles, timing, or formatting. Cross-checking across stakeholders is what exposes disagreement between their accounts — something a single stakeholder's confirmation can never reveal."
         }
       ],
       "close": "Confirm within the session, use a model over prose, and timebox — silence is not agreement. Next: communicating to three different audiences from one source."
@@ -12550,6 +12622,18 @@
           "correct": 0,
           "right": "Right — the lesson's fourth approach step is explicit: taking the ranking through governance makes it a defensible organisational decision, not just the analyst's personal judgement.",
           "wrong": "Confidentiality, shielding accountability, and bypassing dependencies aren't the stated purpose. Governance is what converts the ranking into an organisational decision rather than one person's opinion."
+        },
+        {
+          "q": "The approach also says to make dependencies explicit, so that an item is not deliverable ahead of what it depends on regardless of priority. Why does this matter even after items have been force-ranked?",
+          "choices": [
+            "Because a dependency is a hard sequencing constraint — a highly ranked item still can't ship before the lower-ranked item it depends on",
+            "Because dependencies are only relevant to regulatory items, not customer-facing ones",
+            "Because dependency mapping replaces the need for forced ranking entirely",
+            "Because dependencies only matter if the backlog has fewer than 40 items"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson treats dependency as a constraint that overrides rank order: no matter how high an item ranks, it can't be delivered ahead of something it depends on.",
+          "wrong": "Dependency isn't limited to regulatory items, doesn't replace ranking, and isn't a function of backlog size. It's a hard sequencing constraint that applies regardless of where an item ranks."
         }
       ],
       "close": "Rank, don't rate, on a shared basis, and take it through governance. Next: assessing a change that arrives late and sounds small."
@@ -12676,6 +12760,18 @@
           "correct": 0,
           "right": "Right — the lesson states this directly: without a baseline, no improvement claim can ever be substantiated, so the business case can't be falsified or verified either way.",
           "wrong": "Skipping the baseline doesn't determine the analysis approach, doesn't make current-state capabilities irrelevant, and doesn't remove stakeholders' rights. The named consequence is an unfalsifiable business case with no substantiated benefit claim."
+        },
+        {
+          "q": "Beyond mapping the process and quantifying a baseline, the approach also says to capture current-state capabilities. Why does the lesson call this out as its own step?",
+          "choices": [
+            "Because the change will build on or replace those capabilities, so they need to be understood before the future state can be designed",
+            "Because capabilities are only relevant for regulatory audits, not process redesign",
+            "Because capturing capabilities is a substitute for quantifying the baseline",
+            "Because capabilities never change once documented, unlike the process itself"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson calls this out separately because the future design has to either build on or replace what currently exists, which means the current-state capabilities need to be understood in their own right, not folded into the process map or baseline.",
+          "wrong": "It's not an audit-only concern, a substitute for the baseline, or a claim that capabilities are static. The reason is that future design decisions depend on knowing what capabilities already exist to build on or replace."
         }
       ],
       "close": "Baseline first, mapped from actual practice — without it, no benefit claim can be substantiated. That closes Batch 1: Chapters 1 through 6, lesson BA06-T01."
