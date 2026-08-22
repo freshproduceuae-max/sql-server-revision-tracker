@@ -276,8 +276,8 @@ entry 19.
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
   "contentThroughPR": 70,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:86acdcf8d9e4d84b86f5fbb04f5fda9d1b8c5914ff55cebdaab62b041522e092",
-  "lastVerified": "2026-08-22T14:56:21.484Z"
+  "sourcesTeacherMcqHash": "sha256:3002a8c6c5978ab253f7f982e9313b7913aa8368b8a749521512c5679f735c2a",
+  "lastVerified": "2026-08-22T15:45:40.588Z"
 }
 ```
 
@@ -822,6 +822,35 @@ and 139 questions are accepted and live**, alongside the 236 accepted
 Data Validation entries — `sources/teacher-mcq.json` (and the built
 `teacher-mcq.json`) hold **272 lesson entries and 847 questions total**,
 per the built file's own count.
+
+### Business Analysis Teacher MCQs — Batch 1 built (lessons 1-21, held for review)
+
+The first 21 of 42 accepted BA lessons (BA01-T01 through BA06-T01, canonical
+curriculum order — Chapters 1 through 6 in full), 63 questions (3 per lesson),
+merged into `sources/teacher-mcq.json` alongside the existing 272 DV+DE
+entries — 293 lessons / 910 questions total in that file now. Batch 2
+(BA06-T02 through BA10-T04, the remaining 21 lessons) is explicitly deferred
+to a separate authorization; no overlap or omission was found between the
+two halves of the 42-lesson set.
+
+Every question tests applied analysis specifically named by the owner —
+requirements judgement, stakeholder reasoning, process interpretation,
+prioritization, acceptance criteria, ambiguity, traceability and delivery
+consequences — grounded strictly in each lesson's actual `Live Scenario`,
+`The Question`, `Approach`, `Common Pitfall` and `Interview Angle` sections
+in `business-analysis/BA0X-T0X.md`, not terminology recall. No accepted
+lesson content was altered to fit a question.
+
+**No new integration code was needed**, matching the DE precedent: the
+Teacher panel's generic `S.teacherMcq.lessons[lessonId]` lookup works
+unmodified for BA's `BA0X-T0X` ids with zero `index.html` changes. This is
+additive content only — `git diff` on `sources/teacher-mcq.json` shows zero
+changed lines inside any existing `G\d{2}-T\d{2}` or `DE0\d-T\d{2}` entry.
+
+`scripts/check-handoff-progress.js`'s DV-specific `completedLessons`/
+`completedQuestions` counts (scoped to `G\d{2}-T\d{2}`) were confirmed
+unaffected by the new BA ids, as expected — `BA0X-TXX` doesn't match that
+regex either, so no further scoping fix was needed.
 
 The review (fresh, independent, blind Codex session against the whole
 36-lesson DE set — not a re-run of either batch's individual review)
