@@ -369,13 +369,28 @@ Before calling a group done:
   seem to disagree.
 - **A content PR (one that itself changes `sources/teacher-mcq.json` or
   `teacher-mcq.json`) is different from the docs/process PRs above — it
-  genuinely should become the new `contentThroughPR`, and should do so in
-  itself, not in a follow-up.** GitHub assigns a PR's number at creation, so
-  once the PR exists, its own number is knowable before merge. Before asking
-  for final merge approval on any Teacher-content PR, run
-  `node scripts/check-handoff-progress.js --fix` one more time and confirm
-  `contentThroughPR` already equals that PR's own number — this is what PR
-  #68 (Data Engineering Teacher MCQ Batch 1) skipped, requiring a separate
-  post-merge metadata PR (#69) purely to catch HANDOFF.md up. Doing this
-  inside the content PR itself avoids that extra round trip every time.
+  genuinely should become the new `contentThroughPR`, and the checker can
+  now set that number on the content PR's own branch, before merge, not
+  only after.** `check-handoff-progress.js` resolves `contentThroughPR` in
+  two stages: first it looks for an OPEN pull request whose head is the
+  branch currently checked out (`gh pr view <branch>`), and — only if
+  GitHub's own PR metadata confirms that PR's file list actually includes
+  `sources/teacher-mcq.json` or `teacher-mcq.json` — uses that PR's own
+  number. Nothing is ever trusted from a supplied argument or guessed; the
+  number always comes from GitHub, verified. If no such open PR exists for
+  the current branch (this is always true on the default branch itself,
+  since a PR's head is never the branch it merges into), it falls back to
+  the prior behavior: the latest MERGED PR whose files touched those same
+  paths. Before asking for final merge approval on any Teacher-content PR,
+  run `node scripts/check-handoff-progress.js --fix` **on that PR's own
+  branch** and confirm `contentThroughPR` already equals that PR's own
+  number — the checker resolves it automatically now; there is nothing to
+  compute by hand. Because the number set this way already equals what the
+  merged-PR lookup will independently derive once this PR actually merges,
+  no post-merge edit is needed and the checker validates cleanly on the
+  default branch immediately after merge, with zero follow-up commit. This
+  is what PR #68 (Data Engineering Teacher MCQ Batch 1) had no mechanism to
+  do, requiring a separate post-merge metadata PR (#69) purely to catch
+  HANDOFF.md up — PR #70 (Batch 2) is what implemented this fix, closing
+  that gap for every future Teacher-content PR.
 
