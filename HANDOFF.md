@@ -509,8 +509,10 @@ chapter-by-chapter approach.** This completes the 36-lesson AUTHORING
 phase only, per the owner's explicit instruction closing Chapter 6 —
 **it does not itself authorize Teacher MCQs for this track or final
 whole-track acceptance,** each of which needs its own separate
-authorization before any further content work happens — see the work
-queue table above (item 7). **Production deployment is a distinct case:
+authorization before any further content work happens (**both were
+subsequently authorized, built, and accepted — see "Final MCQ-set
+acceptance review" below and the work queue table above, item 7, which
+now reads CLOSED**). **Production deployment is a distinct case:
 see "Deploying" above — every one of the six chapters' merges already
 auto-deployed to production via Vercel's git integration, confirmed
 against GitHub's Deployments API. No "authorize deployment" step exists
@@ -741,9 +743,11 @@ whole-track acceptance.** The track's own hero copy and Chapter 1's final
 lesson both state the job-readiness caveat directly. Separately, per the
 owner's explicit instruction closing Chapter 6: finishing the 36-lesson
 authoring phase does not authorize Teacher MCQs for this track and does
-not constitute final whole-track acceptance — each remains its own
-required, separate authorization, tracked in the work queue table above
-(item 7). **Production deployment is not part of that list of things to
+not constitute final whole-track acceptance — each remained its own
+required, separate authorization at the time (**both were subsequently
+authorized, built, and accepted — see "Final MCQ-set acceptance review"
+below; the work queue table above, item 7, now reads CLOSED**).
+**Production deployment is not part of that list of things to
 separately authorize: see "Deploying" above — every chapter merge already
 auto-deployed to production via Vercel's git integration (confirmed
 against GitHub's Deployments API for all six chapter-merge commits), with
