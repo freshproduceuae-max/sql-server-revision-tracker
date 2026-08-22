@@ -367,4 +367,15 @@ Before calling a group done:
   `sources/teacher-mcq.json`) is the more reliable signal of which content
   state was actually verified — prefer it over any PR number when the two
   seem to disagree.
+- **A content PR (one that itself changes `sources/teacher-mcq.json` or
+  `teacher-mcq.json`) is different from the docs/process PRs above — it
+  genuinely should become the new `contentThroughPR`, and should do so in
+  itself, not in a follow-up.** GitHub assigns a PR's number at creation, so
+  once the PR exists, its own number is knowable before merge. Before asking
+  for final merge approval on any Teacher-content PR, run
+  `node scripts/check-handoff-progress.js --fix` one more time and confirm
+  `contentThroughPR` already equals that PR's own number — this is what PR
+  #68 (Data Engineering Teacher MCQ Batch 1) skipped, requiring a separate
+  post-merge metadata PR (#69) purely to catch HANDOFF.md up. Doing this
+  inside the content PR itself avoids that extra round trip every time.
 
