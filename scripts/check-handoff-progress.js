@@ -205,7 +205,7 @@ function buildBlockText(actual, contentThroughPR, prCheckStatus) {
 // CONTENT_FILES (sources/teacher-mcq.json or the built teacher-mcq.json).
 // Docs-only, process-only, deploy-only, and checker-maintenance PRs are
 // invisible to this check by construction — they never touch those files.
-function tryGetLatestContentPR() {
+function tryGetLatestMergedContentPR() {
   try {
     const { execSync } = require('child_process');
     const out = execSync('gh pr list --state merged --limit 100 --json number,mergedAt,files', {
@@ -232,6 +232,70 @@ function tryGetLatestContentPR() {
   } catch (e) {
     return { number: null, status: 'skipped: gh CLI unavailable or unauthenticated' };
   }
+}
+
+// --- A pending (still-open) content PR on the CURRENT branch --------------
+//
+// A Teacher-content PR's own number is knowable the moment the PR exists —
+// GitHub assigns it at creation, before merge. Without this check,
+// contentThroughPR could only ever be regenerated to a NEW content PR's
+// number after that PR merges, which meant every content PR needed a
+// separate, follow-up metadata PR purely to catch HANDOFF.md up (see PR #69,
+// filed solely to move contentThroughPR 56->68 after PR #68 merged without
+// self-updating it). This function closes that gap: if the branch currently
+// checked out has an OPEN pull request whose file list genuinely includes
+// sources/teacher-mcq.json or teacher-mcq.json (verified via GitHub's own
+// PR metadata, never trusted from an argument or guessed), that PR's own
+// number is what contentThroughPR should read on THIS branch, ahead of
+// merge — because it is the number that fact will resolve to once this
+// branch's PR merges, and no other content PR can merge in the meantime
+// without first being based on (and therefore aware of) this branch's tip.
+//
+// On the default branch itself there is normally no open PR whose head is
+// the default branch, so this returns "skipped" there by construction, and
+// resolveContentThroughPR() below falls back to the merged-PR-derived value
+// — which is exactly the desired default-branch behavior.
+function tryGetPendingBranchContentPR() {
+  try {
+    const { execSync } = require('child_process');
+    const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+      cwd: ROOT,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).toString().trim();
+    if (!branch || branch === 'HEAD') {
+      return { number: null, status: 'skipped: detached HEAD, no branch to look up a pending PR for' };
+    }
+    const out = execSync(`gh pr view ${JSON.stringify(branch)} --json number,state,files`, {
+      cwd: ROOT,
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 20000,
+    }).toString();
+    const pr = JSON.parse(out);
+    if (!pr || pr.state !== 'OPEN') {
+      return { number: null, status: `skipped: no open PR for branch "${branch}"` };
+    }
+    const touchesContent = Array.isArray(pr.files) && pr.files.some(f => CONTENT_FILES.has(f.path));
+    if (!touchesContent) {
+      return { number: null, status: `skipped: open PR #${pr.number} for branch "${branch}" does not touch teacher-mcq.json` };
+    }
+    return { number: pr.number, status: 'verified-pending' };
+  } catch (e) {
+    return { number: null, status: 'skipped: no open PR found for the current branch, or gh unavailable' };
+  }
+}
+
+// A pending, still-open, verified-via-GitHub-metadata content PR on the
+// current branch takes precedence over the latest MERGED content PR — it is
+// what contentThroughPR will correctly equal the moment this branch's PR
+// merges, so setting it now means merging requires no follow-up edit at all.
+// Everywhere else (the default branch; any branch with no eligible open PR)
+// this transparently falls back to the merged-PR-derived value, unchanged.
+function resolveContentThroughPR() {
+  const pending = tryGetPendingBranchContentPR();
+  if (pending.status === 'verified-pending') {
+    return { number: pending.number, status: 'verified' };
+  }
+  return tryGetLatestMergedContentPR();
 }
 
 // --- Main -----------------------------------------------------------------
@@ -276,7 +340,7 @@ function main() {
     fail('Internal arithmetic inconsistency computing remainingItemsTotal — this is a bug in the checker itself, not the data.');
   }
 
-  const prResult = tryGetLatestContentPR();
+  const prResult = resolveContentThroughPR();
   if (prResult.status !== 'verified') {
     console.log(`(content-PR check SKIPPED: ${prResult.status} — repository-derived checks above still ran and are authoritative on their own)`);
   }

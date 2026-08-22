@@ -274,10 +274,10 @@ entry 19.
   "remainingItemsTotal": 15,
   "fullTrackTotalItems": 251,
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
-  "contentThroughPR": 68,
+  "contentThroughPR": 70,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:6de469ae15394098cc5e6bfdb8dea241830db9b508b179644a61f4a1d2c5712a",
-  "lastVerified": "2026-08-22T06:31:28.787Z"
+  "sourcesTeacherMcqHash": "sha256:86acdcf8d9e4d84b86f5fbb04f5fda9d1b8c5914ff55cebdaab62b041522e092",
+  "lastVerified": "2026-08-22T14:56:21.484Z"
 }
 ```
 
@@ -409,7 +409,7 @@ check the progress block for the exact verified state at any given moment.
 | 4 | Teacher Phase B — log live-chat overflow | Upstash Redis (free tier, Vercel Marketplace) | security scoping — see below |
 | 5 | Teacher Phase C — mining job | Vercel Cron drafting candidate MCQs for review | Phase B |
 | 6 | Enterprise Architecture track | 6 chapters × 3 lessons + quiz bank | nothing technical — **parked**, plan remains valid, not authorized to start. **One unauthorized generation attempt was made and rejected — see "Enterprise Architecture — rejected unauthorized run" below.** |
-| 7 | Data Engineering track — Teacher MCQ Batch 2 (Chapters 4-6), final MCQ-set acceptance review, deployment | Batch 1 (Chapters 1-3, DE01-DE03, 18 lessons, 70 questions) built — see "Data Engineering Teacher MCQs" below. Batch 2 (Chapters 4-6, 18 lessons remaining) and the final MCQ-set acceptance review **not authorized.** The 36-lesson track's own lesson/UI acceptance is already complete and is not reopened by this item. | Batch 2 and the final MCQ-set acceptance review each need their own separate authorization, per the owner's stated pattern. **Production deployment is not a separate action to authorize here — see "Deploying" above: every merge to the default branch already auto-deploys to production via Vercel's git integration, with no manual deploy command run.** |
+| 7 | Data Engineering track — final MCQ-set acceptance review, deployment | Batch 1 (Chapters 1-3, 18 lessons, 70 questions) and Batch 2 (Chapters 4-6, 18 lessons, 69 questions) both built — 36/36 DE lessons now have Teacher MCQs, 272 total lesson entries (236 DV + 36 DE) in `sources/teacher-mcq.json` — see "Data Engineering Teacher MCQs" below. The final MCQ-set acceptance review **not authorized.** The 36-lesson track's own lesson/UI acceptance is already complete and is not reopened by this item. | The final MCQ-set acceptance review needs its own separate authorization, per the owner's stated pattern. **Production deployment is not a separate action to authorize here — see "Deploying" above: every merge to the default branch already auto-deploys to production via Vercel's git integration, with no manual deploy command run.** |
 
 **Items 1, 2, 3 and 6 are explicitly parked as of the G18–G19 programme
 close.** None of them are blocked by a technical dependency — each is
@@ -759,7 +759,7 @@ re-run against the actual Chapter 6 build and passed — see PR history for
 this chapter's Codex review record rather than treating this note as that
 verification itself.
 
-### Data Engineering Teacher MCQs — Batch 1 (Chapters 1-3) built
+### Data Engineering Teacher MCQs — Batches 1 and 2 built (all 36 lessons)
 
 18 lessons (DE01-T01 through DE03-T06), 70 questions (3-5 per lesson,
 scaled to complexity), merged into `sources/teacher-mcq.json` alongside
@@ -789,22 +789,38 @@ failed loudly. Fixed by scoping `completedLessons`/`completedQuestions` to
 tracks Data Validation's G01-G19 rollout, not the union of every track's
 Teacher MCQ content sharing the same file. See LESSONS-LEARNED entry 35.
 
-**Not authorized, not built:** Teacher MCQs for DE04-DE06 (Batch 2), or
-the final acceptance review for the complete Data Engineering Teacher
-MCQ set — see the work queue table above (item 7). **This is a review of
-the 36-lesson track's Teacher MCQ content specifically, not a second
-lesson-track acceptance** — the 36-lesson track's own lesson/UI
-acceptance is already complete (see "all 6 chapters built, 36/36 lessons"
-above) and is not reopened by this or by Batch 2. Once Batch 2 lands, the
-shared Teacher file (`sources/teacher-mcq.json`) will contain 272 lesson
-entries total — 236 Data Validation + 36 Data Engineering. **Report the
-eventual combined question total from the built file at that time
-(`node scripts/build-teacher-mcq.js`'s own count), not as an estimate
-here.** Full-file schema/regression validation (build script, id-set
-checks, Playwright suite) will still run across the whole file at that
-point, but accepted Data Validation MCQ content is not reopened for
-substantive review — only Data Engineering's own new content needs
-Codex's blind review.
+### Batch 2 (Chapters 4-6) built
+
+18 lessons (DE04-T01 through DE06-T06), 69 questions (3-5 per lesson,
+scaled to complexity, extra scrutiny given to CDP deployment models,
+YARN, Iceberg, Kafka, Ranger/Atlas, Spark optimization, orchestration,
+CI/CD, containers, Kubernetes, ML-data leakage and operational recovery
+per the owner's specific authorization). Same grounding discipline as
+Batch 1: every correct answer, distractor and feedback statement is
+grounded in that lesson's actual `explanation`/`scenario` text, and
+independently blind-Codex-reviewed against those source lessons. No
+accepted lesson content was altered to fit a question — see "Residual
+risks" in the Batch 2 PR if a lesson defect was ever suspected during
+authoring (none was).
+
+**With Batch 2 merged, `sources/teacher-mcq.json` now contains 272 lesson
+entries (236 Data Validation + 36 Data Engineering, all 6 chapters) and
+847 questions (708 DV + 139 DE), per the built file's own count — not an
+estimate.** No DV content was reopened or modified merging this batch;
+the diff to `sources/teacher-mcq.json` is purely additive (verified via
+`git diff` showing zero changed lines inside any `G\d{2}-T\d{2}` entry).
+
+**Not authorized, not built:** the final acceptance review for the
+complete Data Engineering Teacher MCQ set — see the work queue table
+above (item 7). **This is a review of the 36-lesson track's Teacher MCQ
+content specifically, not a second lesson-track acceptance** — the
+36-lesson track's own lesson/UI acceptance is already complete (see "all
+6 chapters built, 36/36 lessons" above) and is not reopened by this.
+Full-file schema/regression validation (build script, id-set checks,
+Playwright suite) will still run across the whole file at that point, but
+accepted Data Validation MCQ content is not reopened for substantive
+review — only Data Engineering's content (now complete, all 36 lessons)
+needs to be covered by that eventual review.
 
 ### Enterprise Architecture track — how this came up
 
