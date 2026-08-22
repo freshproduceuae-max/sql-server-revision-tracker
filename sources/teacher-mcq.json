@@ -10861,6 +10861,942 @@
         }
       ],
       "close": "That closes Chapter 3 -- every prior lesson's decision framework (ingestion pattern, idempotent writes, schema compatibility, Iceberg mechanisms) expressed as reusable, parameterized logic instead of one-off code. That's the discipline Chapters 4 and beyond assume is already in place."
+    },
+    "DE04-T01": {
+      "open": "DE04-T01 -- HDFS and Apache Ozone. NameNode pressure from millions of tiny risk-model files, not the huge ledger extracts. Let's check the diagnosis.",
+      "questions": [
+        {
+          "q": "Why did millions of small risk-model files cause NameNode memory pressure while the handful of enormous ledger extracts were essentially free from the NameNode's point of view?",
+          "choices": [
+            "The NameNode's memory footprint scales with the NUMBER of files and blocks, almost independent of size -- a 500GB file split into a few large blocks costs roughly constant metadata, while a million small files cost a million times that overhead",
+            "Small files are stored with extra replication compared to large files",
+            "The NameNode only tracks files larger than 1MB",
+            "Large files are automatically compressed, reducing their metadata footprint"
+          ],
+          "correct": 0,
+          "right": "Exactly -- HDFS keeps its entire namespace resident in the active NameNode's memory, and that cost scales with file/block COUNT, not byte volume.",
+          "wrong": "The NameNode keeps every file's metadata, every directory, every block-to-datanode mapping resident in memory -- and that footprint scales with the NUMBER of files and blocks, almost independent of their size. A 500GB file in a few large blocks costs roughly constant metadata; a million small files cost a million times that overhead, for a tiny fraction of the actual bytes."
+        },
+        {
+          "q": "Architecturally, what makes Ozone specifically suited to a very high object count, not just 'newer than HDFS'?",
+          "choices": [
+            "It uses a distributed key-value/object-store design -- Ozone Managers track key-to-container metadata in RocksDB, with actual data in Storage Container Manager-managed containers, rather than one process's in-memory namespace tree",
+            "Ozone simply runs on more powerful hardware than HDFS by default",
+            "Ozone deletes small files automatically to save space",
+            "Ozone is identical to HDFS but with a different name"
+          ],
+          "correct": 0,
+          "right": "Right -- Ozone was designed from the ground up so metadata volume scales independently of any single node's memory, which is exactly the axis HDFS's single-NameNode architecture doesn't scale well on.",
+          "wrong": "Ozone doesn't use a single NameNode-style namespace holder at all -- it's a distributed key-value/object store, with Ozone Managers tracking key-to-container metadata in RocksDB and data living in separately-managed containers. This is the concrete mechanism behind its high-object-count suitability, not just being a newer product."
+        },
+        {
+          "q": "Why was migrating ONLY the small-file workload -- not the whole cluster -- the correct scope, and what would have gone wrong if the large ledger extracts had been moved to Ozone instead?",
+          "choices": [
+            "HDFS's block-oriented design still fits large sequential files well, so moving them adds migration risk for no benefit; and moving the large files instead of the small ones would leave the true cause (millions of small-file inodes in NameNode memory) completely untouched, so the pressure would continue exactly as before",
+            "Moving the large files to Ozone would have immediately crashed the cluster",
+            "HDFS cannot store files larger than 100GB, so the ledger extracts had no choice but to stay",
+            "Ozone doesn't support Spark batch jobs at all"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the diagnostic principle is to identify the specific resource being exhausted and the specific workload driving it, then move only that workload. Moving the wrong workload leaves the real cause untouched.",
+          "wrong": "HDFS remains a good fit for large, sequentially-accessed files -- nothing about the ledger extracts' access pattern benefits from Ozone's object-store semantics, so moving them adds real migration risk for a workload that was never the problem. And if the large files had been moved instead of the small ones, the true cause -- millions of small-file inodes still resident in NameNode memory -- would have remained untouched, so the pressure would have continued exactly as before."
+        },
+        {
+          "q": "What general diagnostic principle does this lesson establish for choosing a storage-layer migration?",
+          "choices": [
+            "Always migrate the entire cluster to the newest available storage technology",
+            "Identify the specific resource being exhausted and the specific workload driving it, then move only that workload to the architecture that addresses that specific bottleneck -- not a blanket platform-wide migration",
+            "Migrate whichever workload uses the most total storage space",
+            "Never migrate storage workloads once they are established"
+          ],
+          "correct": 1,
+          "right": "Right -- diagnose the specific resource and the specific driver, then scope the fix to exactly that workload, rather than treating a migration as a uniform upgrade.",
+          "wrong": "The principle is: identify the specific resource being exhausted (here, NameNode metadata memory, scaling with file count) and the specific workload driving it (the small-file writer) -- then move only that workload to the architecture that fixes that bottleneck, rather than treating a platform-level migration as a blanket upgrade applied uniformly."
+        }
+      ],
+      "close": "Good -- file-count-driven NameNode pressure, Ozone's distributed metadata architecture, and scoping the fix to exactly the workload causing it. That storage-layer foundation carries through the rest of this chapter."
+    },
+    "DE04-T02": {
+      "open": "DE04-T02 -- Hive and Impala. Routing both a 40-minute batch report and sub-5-second analyst lookups through the same engine. Let's see why that broke.",
+      "questions": [
+        {
+          "q": "Why does Hive fit the nightly 40-minute compliance rebuild well, even though every query pays real job-startup and coordination overhead?",
+          "choices": [
+            "Hive's execution model is built around orchestrating large, multi-stage jobs with a cost-based optimizer for complex plans over huge volumes -- the per-query overhead is small relative to a 40-minute job, which is exactly what a throughput-oriented batch engine is designed to amortize",
+            "Hive has no execution overhead at all for any query size",
+            "Hive is only usable for queries that touch a single table",
+            "Hive automatically converts every query into an Impala query internally"
+          ],
+          "correct": 0,
+          "right": "Right -- Hive's throughput-oriented, job-per-query model amortizes real per-query overhead well when the job itself is large and long-running.",
+          "wrong": "Hive's execution model (historically MapReduce, now typically Tez or Spark underneath HiveQL) is built for orchestrating large, multi-stage jobs. The per-query planning/launch overhead is real but small relative to a 40-minute job scanning years of data -- exactly what a throughput-oriented batch engine amortizes, not eliminates."
+        },
+        {
+          "q": "Why did the SAME per-query overhead that Hive amortizes well on the batch job cause 20-40 second responses for a single-customer, single-week lookup?",
+          "choices": [
+            "The query still pays the same job-startup and coordination overhead every Hive job pays, and for a query touching a tiny amount of data, that FIXED overhead dominates the total response time -- the bottleneck was never the data scanned",
+            "The analyst queries were actually scanning the full 5 years of data every time",
+            "Impala was misconfigured and silently routing queries to Hive anyway",
+            "Hive has a hard-coded minimum query time of 20 seconds"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the query touches a tiny amount of data with correct partitioning, but the FIXED per-query overhead of Hive's job-per-query model dominates when the actual work is this small.",
+          "wrong": "A query for one customer's one week of data touches very little actual data -- with correct partitioning, a fast scan. But routed through Hive, it still pays the same job-startup/coordination overhead every Hive job pays, and for a query this small, that FIXED cost dominates the response time -- the bottleneck was the execution model's overhead, not data volume."
+        },
+        {
+          "q": "What specific architectural mechanism lets Impala avoid the job-startup overhead that hurts small, latency-sensitive queries?",
+          "choices": [
+            "Impala runs its own long-lived MPP daemon on every relevant node, continuously ready to execute queries without the job-submission and coordination steps a Hive-on-Tez/Spark job goes through for every single query",
+            "Impala caches every query result permanently, so repeated queries are instant",
+            "Impala doesn't actually execute queries against real data -- it uses pre-computed summaries only",
+            "Impala compresses all data before every query"
+          ],
+          "correct": 0,
+          "right": "Right -- always-running MPP daemons, not job-submission-per-query, are the direct mechanism behind Impala's interactive-latency positioning.",
+          "wrong": "Impala runs its own long-lived MPP (massively parallel processing) daemon on every relevant node, always ready to execute query fragments immediately -- this is the specific mechanism (not a marketing claim) behind trading Hive's job-per-query overhead for Impala's interactive latency."
+        },
+        {
+          "q": "Why did routing the analyst workload to Impala instead require no data duplication or table redesign?",
+          "choices": [
+            "Both engines, in a CDP deployment, read the SAME underlying Iceberg tables through the same Hive metastore (or Iceberg's own catalog) -- switching engines was purely a change in execution engine, not a data-copying exercise",
+            "Impala automatically converts Iceberg tables into its own proprietary format",
+            "The analyst queries were run against a separate, smaller sample dataset instead of the real table",
+            "Data duplication WAS required, but was considered an acceptable one-time cost"
+          ],
+          "correct": 0,
+          "right": "Exactly -- both engines read the same Iceberg tables through the same metastore/catalog layer, so choosing the right engine per workload is a low-cost fix once correctly diagnosed.",
+          "wrong": "Both engines read the identical underlying Iceberg tables through the same Hive metastore or Iceberg's own catalog layer -- routing the ad-hoc workload to Impala was purely a change in which execution engine a query goes through, not a data-copying or table-restructuring exercise."
+        }
+      ],
+      "close": "Good -- Hive's job-oriented model fits large tolerant batch work, Impala's always-on daemons fit small latency-sensitive lookups, and switching between them costs nothing structurally since both read the same Iceberg tables."
+    },
+    "DE04-T03": {
+      "open": "DE04-T03 -- YARN and Cluster Resource Management. A 'guaranteed' streaming job getting starved because everyone shared one undifferentiated queue. Let's check the fix.",
+      "questions": [
+        {
+          "q": "Why did submitting all three tenants to YARN's single 'default' queue cause the supposedly guaranteed streaming job to be the one that got starved?",
+          "choices": [
+            "A single undifferentiated queue gives YARN no per-tenant signal at all -- from YARN's point of view, the ETL burst and the streaming job's requests were indistinguishable competing demands on the same pool, with no configured basis to protect the streaming job specifically",
+            "YARN always prioritizes batch jobs over streaming jobs by default",
+            "The streaming job had a bug that caused it to request too few executors",
+            "The data-science notebooks were secretly consuming all the streaming job's resources"
+          ],
+          "correct": 0,
+          "right": "Right -- with everyone in one queue, YARN has nothing to enforce beyond first-come-first-served scheduling. No configuration told it the streaming job's resources were non-negotiable.",
+          "wrong": "The root cause was that one undifferentiated queue gives YARN no per-tenant signal -- ETL applications and the streaming job's requests looked identical to YARN, competing for the same pool with no configured basis to protect the streaming job specifically. That's exactly why the 'guaranteed' workload was the one that got starved."
+        },
+        {
+          "q": "In the fix, why does setting the fraud_streaming queue's capacity AND maximum-capacity to the SAME value (30/30) matter specifically?",
+          "choices": [
+            "It makes the guarantee a hard floor rather than a soft target -- the queue can never be allocated less than its capacity when it has pending demand, and is also capped there so it never needs to compete unpredictably for more",
+            "Setting capacity equal to maximum-capacity disables the queue entirely",
+            "It has no functional effect -- it's purely cosmetic configuration",
+            "It only matters for queues running Spark Structured Streaming, not other workload types"
+          ],
+          "correct": 0,
+          "right": "Exactly -- equal capacity and maximum-capacity is what turns a target into a hard floor, giving the streaming job a real, enforced guarantee rather than a soft preference.",
+          "wrong": "Setting capacity == maximum-capacity (30/30) is specifically what makes the guarantee a hard floor, not a soft target: the queue can never be allocated less than 30 when it has pending demand, and it's also capped at 30, so it never needs to compete unpredictably for more."
+        },
+        {
+          "q": "Why does preemption have to be EXPLICITLY enabled for the capacity/maximum-capacity configuration to actually matter under real contention?",
+          "choices": [
+            "Capacity values are enforced going forward for NEW container requests -- if a queue is already below its guaranteed capacity because another queue's containers occupy it, YARN needs the preemption monitor actively running to reclaim those containers back",
+            "Preemption is only relevant for queues running batch ETL, never streaming jobs",
+            "Without preemption, YARN refuses to start any jobs at all",
+            "Preemption automatically increases a queue's capacity value"
+          ],
+          "correct": 0,
+          "right": "Right -- without preemption, a queue's 'guarantee' is only a target the scheduler tries to honor for new allocations, not an enforced floor it will actively restore once violated.",
+          "wrong": "Capacity/maximum-capacity values are enforced for new container requests going forward, but if a queue is ALREADY below its guarantee because another queue's containers occupy that capacity, YARN needs the preemption monitor (yarn.resourcemanager.scheduler.monitor.enable) actively running to reclaim containers back -- without it, the guarantee is only a soft target, not an enforced floor."
+        },
+        {
+          "q": "What's the general resource-isolation principle this lesson draws from the fix?",
+          "choices": [
+            "Shared-cluster resource contention needs to be modeled explicitly, per tenant, as a queue configuration with a real floor, a real ceiling, and an explicit preemption policy -- 'everyone shares one pool and it works itself out' is the absence of a strategy, not a strategy",
+            "The only way to guarantee resources is to give every tenant its own physical cluster",
+            "Preemption should always be disabled to avoid disrupting running jobs",
+            "Resource isolation is unnecessary if the cluster has enough total capacity"
+          ],
+          "correct": 0,
+          "right": "Exactly -- an explicit floor, ceiling, and preemption policy per tenant is what actually enforces resource isolation; sharing one pool with no differentiation is the absence of a strategy.",
+          "wrong": "The principle is that shared-cluster contention needs an EXPLICIT per-tenant queue configuration -- a real floor (capacity), a real ceiling (maximum-capacity), and an explicit preemption policy. 'Everyone shares one pool and it works itself out' is not a resource-isolation strategy, it's the absence of one."
+        }
+      ],
+      "close": "Good -- one undifferentiated queue gives YARN nothing to enforce; capacity==maximum-capacity as a hard floor, plus active preemption, is what turns a stated guarantee into a real one."
+    },
+    "DE04-T04": {
+      "open": "DE04-T04 -- Cloudera Data Platform Architecture. A new hire expecting 'CDP means Kubernetes everywhere' watches a classic Cloudera-Manager incident diagnosis instead. Let's check the correction.",
+      "questions": [
+        {
+          "q": "What is CDP Private Cloud Base actually, architecturally?",
+          "choices": [
+            "Cloudera's on-premises deployment model built around classic Hadoop-ecosystem services (HDFS/Ozone, YARN, Hive, Impala, Kafka) centrally managed through Cloudera Manager -- a current, actively developed model many real enterprise estates still run day to day, not a legacy model being phased out",
+            "A stripped-down, legacy-only deployment mode Cloudera no longer actively develops",
+            "A deployment model that runs exclusively on Kubernetes with no classic Hadoop services",
+            "A testing-only environment never used in real production"
+          ],
+          "correct": 0,
+          "right": "Right -- Private Cloud Base is the classic, Cloudera-Manager-centric model, and it's current and actively run in production, not a phased-out legacy mode.",
+          "wrong": "CDP Private Cloud Base is Cloudera's on-premises deployment model, built around classic Hadoop-ecosystem services (HDFS/Ozone, YARN, Hive, Impala, Kafka) centrally managed through Cloudera Manager. It is current and actively developed -- many real enterprise estates still run it day to day, and the senior engineer's classic-tooling incident diagnosis is exactly what a real workflow on it looks like."
+        },
+        {
+          "q": "Where does CDP genuinely have real, current container-based architecture, and why doesn't that contradict Private Cloud Base being classic and current too?",
+          "choices": [
+            "CDP Private Cloud (a distinct deployment model from Private Cloud Base) runs services in containers via Red Hat OpenShift -- Cloudera specifically selected it as the container platform for services like CDW virtual warehouses or ML workspaces; the two models are two coexisting deployment options, not one replacing the other",
+            "CDP has no real container-based architecture anywhere -- it's purely marketing language",
+            "Kubernetes fully replaced Cloudera Manager in all current CDP deployments",
+            "Container-based architecture only exists in CDP's public cloud offering, never on-premises"
+          ],
+          "correct": 0,
+          "right": "Exactly -- CDP Private Cloud (distinct from Private Cloud Base) genuinely uses OpenShift-based containers for specific services, and a real estate may run either model, or often both, coexisting.",
+          "wrong": "CDP Private Cloud (a distinct deployment model from Private Cloud Base) does run services in containers, with Cloudera specifically selecting Red Hat OpenShift as the container platform for services like CDW virtual warehouses or ML workspaces. This is real and current -- the new hire's mistake wasn't believing it exists, it was assuming it describes the WHOLE platform uniformly, when both models genuinely coexist in real estates."
+        },
+        {
+          "q": "Where does SDX fit relative to the classic Cloudera-Manager-managed layer and the OpenShift-based containerized layer?",
+          "choices": [
+            "SDX is CDP's shared security/governance layer, explicitly designed to apply consistently regardless of which underlying compute/deployment model is running a workload -- both the classic and containerized layers are meant to sit underneath the same SDX-governed policy",
+            "SDX only applies to the classic Cloudera-Manager-managed layer, not to containerized services",
+            "SDX only applies to the OpenShift-based containerized layer, not to classic services",
+            "SDX is a deployment model itself, a third option alongside Private Cloud Base and Private Cloud"
+          ],
+          "correct": 0,
+          "right": "Right -- SDX is the one layer genuinely meant to be uniform across both deployment models, so access control, encryption, and governance policy is defined once and enforced everywhere.",
+          "wrong": "SDX (Shared Data Experience) is CDP's shared security and governance layer, explicitly designed to apply consistently regardless of which underlying deployment model is running a workload -- access control, encryption, auditing, metadata governance is defined once, not redefined per deployment model. Both the classic and containerized layers sit underneath the same SDX-governed policy."
+        }
+      ],
+      "close": "That corrects the mental model -- Private Cloud Base and Private Cloud (OpenShift-based) genuinely coexist as two real, current deployment options, with SDX as the one layer meant to be uniform across both, not 'CDP is just Kubernetes now.'"
+    },
+    "DE04-T05": {
+      "open": "DE04-T05 -- Apache Iceberg and the Lakehouse on CDP. An HMS partition-tracking bottleneck the DBAs assumed was an unavoidable Hive cost, plus a time-travel question the compliance team assumed needed a backup table. Let's check both.",
+      "questions": [
+        {
+          "q": "Is HMS partition-tracking pressure an unavoidable cost of Iceberg-integrated tables, as the DBAs assumed?",
+          "choices": [
+            "No -- Iceberg tables store partition/file metadata in their own manifest lists and files, not primarily inside HMS's relational schema; via Iceberg's HiveCatalog, HMS's role narrows to holding a pointer to the table's current metadata location, specifically relieving HMS of partition-count-driven scaling cost",
+            "Yes -- any Hive-integrated table, Iceberg or not, has identical HMS scaling costs",
+            "No -- Iceberg tables don't use HMS at all under any configuration",
+            "Yes, but only for tables larger than 1TB"
+          ],
+          "correct": 0,
+          "right": "Right -- Iceberg specifically relocates partition/file metadata to its own manifest files, narrowing HMS's role to a pointer. This is what relieves HMS of the classic partition-count scaling cost.",
+          "wrong": "A classic (non-Iceberg) Hive table genuinely does track partition metadata inside HMS's relational database, and that genuinely scales with partition count. But Iceberg tables are architected differently on purpose -- metadata lives in Iceberg's own manifest lists/files, and via HiveCatalog, HMS's role narrows to a pointer to the current metadata location. This specifically relieves HMS of that scaling cost."
+        },
+        {
+          "q": "If HMS calls ARE slowing down specifically during partition pruning on an Iceberg table, what's the correct diagnosis per this lesson?",
+          "choices": [
+            "Something in the query path is not using Iceberg's manifest-based pruning as designed (a misconfigured catalog, or an engine falling back to a classic-Hive-style partition-enumeration path) -- not that HMS itself has hit an unavoidable Iceberg-table scaling limit requiring re-architecture",
+            "This confirms HMS itself needs to be re-architected for more scale, exactly as the DBAs proposed",
+            "Iceberg tables should never be used with Hive or Impala under any circumstances",
+            "The table should be converted back to a classic Hive table to fix the slowdown"
+          ],
+          "correct": 0,
+          "right": "Exactly -- slow HMS calls during pruning on an Iceberg table is a signal the manifest-based pruning path isn't being used as designed, not evidence HMS itself needs re-architecting.",
+          "wrong": "The correct diagnosis is that something in the query path is not using Iceberg's manifest-based pruning as designed -- a misconfigured catalog, or an engine falling back to a classic-Hive-style partition-enumeration path -- not that HMS has hit an unavoidable Iceberg-table scaling limit. The DBAs' proposed fix (re-architecting HMS) was targeting the wrong layer."
+        },
+        {
+          "q": "Why does the compliance team's 'table as it looked before last Tuesday's correction' requirement need no separate backup table at all?",
+          "choices": [
+            "Every write to an Iceberg table produces a new, immutable snapshot recorded in the table's metadata history; prior snapshots remain queryable until an explicit retention policy removes them, so querying an older state is just a direct read against an already-retained snapshot",
+            "Iceberg automatically emails a backup of the table to compliance after every write",
+            "The compliance team's requirement was actually impossible and had to be declined",
+            "HMS itself maintains a separate backup copy of every table version"
+          ],
+          "correct": 0,
+          "right": "Right -- Iceberg's snapshot-based commit model means old states are already retained as part of normal writes. Time travel is a direct read against an already-existing snapshot, not a bespoke backup feature.",
+          "wrong": "Every write to an Iceberg table (insert, MERGE, overwrite, correction) produces a new immutable snapshot recorded in the table's own metadata history. Prior snapshots remain queryable until an explicit retention/expiration policy removes them -- so 'the table before Tuesday's correction' is a direct read against an already-retained snapshot, not a request needing a parallel backup structure."
+        }
+      ],
+      "close": "Good -- Iceberg's manifest-based metadata relieves HMS of partition-count scaling cost, and the same snapshot mechanism gives time travel essentially for free. Both problems traced to the same root cause: not understanding what Iceberg actually relocated away from classic Hive's model."
+    },
+    "DE04-T06": {
+      "open": "DE04-T06 -- Kafka for Enterprise Event Streaming. Lopsided consumer lag during a Black Friday spike, and a replay team worried about disrupting the live consumers. Let's check the mechanisms.",
+      "questions": [
+        {
+          "q": "Why did keying events by card_id produce lopsided consumer lag (3 idle, 1 falling behind) instead of an even 4-way split, even with 12 partitions?",
+          "choices": [
+            "Kafka's ordering guarantee is per-partition, not per-topic -- every event with the same key routes to the same partition deterministically; if a small number of card_ids generate a disproportionate share of events, those events all concentrate on the same one or two partitions regardless of total partition count",
+            "Kafka randomly assigns partitions with no relationship to the message key",
+            "The consumer group had a bug causing 3 instances to stop processing",
+            "12 partitions is simply too few for any Kafka topic under load"
+          ],
+          "correct": 0,
+          "right": "Right -- ordering is per-partition, so same-key events must land together. If a few card_ids dominate volume, their events concentrate on whichever partition(s) they hash to, regardless of total partition count.",
+          "wrong": "Kafka's ordering guarantee is scoped per-partition, not per-topic -- to preserve order for a given key, every event with that key must route to the same partition deterministically (a hash of the key mod partition count). If a small number of card_ids generate disproportionate volume during a spike, their events concentrate on the same partition(s) regardless of how many total partitions exist."
+        },
+        {
+          "q": "Why wouldn't simply adding more partitions have fixed the lopsided lag?",
+          "choices": [
+            "A larger partition count changes the modulus in the hash, but the same skewed keys still concentrate onto whichever subset of the larger partition count they now hash to -- the actual fix needs a different partitioning key (e.g. a composite key with a bounded time-bucket salt)",
+            "Kafka has a hard cap of 12 partitions per topic",
+            "Adding partitions would have fixed it, but was rejected for cost reasons",
+            "More partitions would have made the skew worse, not better"
+          ],
+          "correct": 0,
+          "right": "Exactly -- more partitions just changes which subset the skewed keys hash to; the skew itself doesn't go away unless the partitioning key changes.",
+          "wrong": "Adding partitions changes the modulus in the key-hash calculation, but the same skewed card_ids still concentrate onto whichever subset of the (now larger) partition count they hash to -- the skew persists. The actual fix needs a different partitioning key, like a composite key with a bounded time-bucket salt that distributes high-volume cards' events while still preserving needed ordering within each bucket."
+        },
+        {
+          "q": "What Kafka mechanism lets the replay team read the last 24 hours of events without touching the live fraud-scoring consumer group's state at all?",
+          "choices": [
+            "Consumer offsets are tracked per (topic, partition, consumer GROUP), not once globally per topic -- a second consumer group with its own group id has entirely separate offset state, so seeking it back in time only affects that new group's own bookkeeping",
+            "The replay team needs to pause the live consumer group before reading any historical events",
+            "Kafka automatically creates a read-only copy of the topic for replay purposes",
+            "Reading historical events always deletes them from the topic for other consumers"
+          ],
+          "correct": 0,
+          "right": "Right -- offsets are scoped per (topic, partition, consumer group), so a second, independent consumer group's offset seeking is completely isolated from the live group's committed offsets and processing rate.",
+          "wrong": "Kafka tracks consumer offsets per (topic, partition, consumer GROUP), not once globally per topic. A second consumer group, with its own group id, has entirely separate offset state -- seeking that group's offsets back 24 hours (via offsets_for_times) only affects its own bookkeeping. The live group's committed offsets, partition assignment, and processing rate are completely untouched."
+        },
+        {
+          "q": "What's the general principle this lesson draws from both the skew problem and the replay solution?",
+          "choices": [
+            "Kafka's core guarantees (ordering, offset tracking) are deliberately scoped narrower than 'the topic as a whole' -- ordering is per-partition, offsets are per-group-per-partition -- and treating either as topic-wide is the specific misunderstanding both problems correct",
+            "Kafka guarantees apply uniformly across the whole topic with no finer scoping",
+            "Adding more consumer groups always improves throughput regardless of partitioning",
+            "Partition count and consumer group count must always be equal"
+          ],
+          "correct": 0,
+          "right": "Exactly -- both problems trace back to the same insight: Kafka's guarantees are scoped to the partition (ordering) and the consumer group (offsets), not the topic as a whole.",
+          "wrong": "The general principle: Kafka's core guarantees are scoped narrower than 'the topic as a whole' -- ordering is per-partition, offsets are per-group-per-partition. Assuming '12 partitions means load spreads evenly' or worrying 'another reader might disrupt live consumers' both come from treating a partition- or group-scoped guarantee as if it applied topic-wide."
+        }
+      ],
+      "close": "That closes Chapter 4 -- storage, query engine, resource isolation, platform architecture, table format and now streaming, all extending the same reasoning discipline to a Kafka-fed pipeline."
+    },
+    "DE05-T01": {
+      "open": "DE05-T01 -- Data Quality Gates in a Spark Pipeline. 4,200 bad rows out of 2.1 million, and two engineers arguing opposite blanket policies. Let's check the actual fix.",
+      "questions": [
+        {
+          "q": "Why is 'always hard-fail on any bad row' wrong as a universal policy?",
+          "choices": [
+            "Halting the entire 2.1-million-row pipeline over 4,200 isolated bad rows (0.2%) destroys the value of the 99.8% good data and treats an isolated data-quality issue as if it were a systemic outage, which it demonstrably wasn't",
+            "Hard-failing is always correct and should never be questioned",
+            "Hard-failing is technically impossible to implement in Spark",
+            "Hard-failing only applies to streaming pipelines, never batch ones"
+          ],
+          "correct": 0,
+          "right": "Right -- halting the whole pipeline over an isolated, small-fraction defect destroys the value of the vast majority of genuinely good data for no proportionate reason.",
+          "wrong": "Halting the entire pipeline over 4,200 isolated bad rows out of 2.1 million (0.2%) destroys the value of the 99.8% of data that was perfectly good, delays every downstream consumer by a full day, and treats an isolated defect as if it were a systemic outage -- which the data itself didn't support, since the vast majority of the same feed loaded correctly."
+        },
+        {
+          "q": "Why was 'always load and warn' the actual root cause of the reconciliation break three days later?",
+          "choices": [
+            "Logging a warning and loading the bad rows anyway means the defect propagates into every downstream table with no measured limit and no separation from good data -- exactly what happened, with no visibility until a much later, harder-to-diagnose failure surfaced",
+            "The warning message itself was worded incorrectly",
+            "The pipeline crashed silently instead of actually loading the rows",
+            "Loading bad rows has no real downstream consequence as long as a warning is logged"
+          ],
+          "correct": 0,
+          "right": "Exactly -- '4,200 out of 2.1 million is basically nothing' is true as a fraction but not as a consequence: those rows corrupted three downstream tables with no separation or visibility.",
+          "wrong": "Logging a warning and loading the bad rows anyway means the defect propagates into every downstream table with no measured limit and no separation from good data. '4,200 out of 2.1 million is basically nothing' is true as a fraction, but those rows corrupted three downstream tables and broke a reconciliation report three days later, precisely because nothing separated them from good data or made their existence visible."
+        },
+        {
+          "q": "How does the quarantine-plus-threshold fix use Data Validation G01's completeness-check logic WITHOUT re-deriving it?",
+          "choices": [
+            "The completeness check itself ('is this required column null') is exactly G01's logic, unchanged by running it against a Spark DataFrame instead of a SQL Server table -- what's added is an enforcement point, a quarantine destination, and a measured-threshold fail/continue DECISION, none of which duplicate G01's detection logic",
+            "It completely replaces G01's null-check logic with a new Spark-specific algorithm",
+            "It ignores G01 entirely and invents a new completeness definition for Spark",
+            "It requires rewriting G01's SQL query in PySpark line by line with no other changes"
+          ],
+          "correct": 0,
+          "right": "Right -- the check ITSELF is G01's logic, unmodified. What Spark-scale pipelines add on top is the enforcement point, quarantine mechanism, and threshold-driven decision -- a decision policy layer, not a re-derivation of the detection logic.",
+          "wrong": "The completeness check -- 'is this required column null' -- is exactly G01's logic; running it against a Spark DataFrame instead of a SQL Server table doesn't change what the check IS. What's added beyond G01 is a decision policy: an enforcement point, a quarantine destination, and a measured threshold deciding fail-vs-continue at the volume a distributed pipeline runs at."
+        },
+        {
+          "q": "How does the SAME quarantine-plus-threshold mechanism produce BOTH engineers' desired behavior, depending on the actual defect rate?",
+          "choices": [
+            "At the real 0.2% rate, it quarantines and continues (the second engineer's preference); at a hypothetical 1.7% rate exceeding the agreed threshold, it hard-fails (the first engineer's preference) -- neither policy is applied blindly regardless of the actual numbers",
+            "It always picks whichever engineer proposed the policy first",
+            "It alternates between the two policies randomly to be fair to both engineers",
+            "It only ever implements the first engineer's hard-fail policy, ignoring the second engineer entirely"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the mechanism produces hard-fail behavior when the defect rate is genuinely large (above the agreed threshold) and quarantine-and-continue when it's genuinely small, driven by the measured rate for THIS run, not a blanket rule.",
+          "wrong": "The same mechanism -- quarantine plus a measured threshold -- produces the hard-fail behavior the first engineer wanted when the defect rate is actually large (a hypothetical 1.7% case, above the agreed 1% threshold), and the continue-with-quarantine behavior the second engineer wanted when it's actually small (the real 0.2% case) -- driven by the measured rate for this specific run, not either engineer's blanket policy."
+        }
+      ],
+      "close": "Good -- neither blanket policy was right; a measured threshold applied to a quarantine mechanism gives the correct answer for whatever the actual defect rate turns out to be, using G01's detection logic unmodified."
+    },
+    "DE05-T02": {
+      "open": "DE05-T02 -- Data Governance and Lineage on CDP. An auditor's two questions neither of which the platform team could answer quickly. Let's check Atlas vs. Ranger.",
+      "questions": [
+        {
+          "q": "Why couldn't 'turning on SDX' retroactively answer the audit's lineage question about customer_risk_score?",
+          "choices": [
+            "Atlas's lineage graph is built from real captured events via hooks attached to jobs that actually read/write the data -- it is not a retroactive inference; if no prior job writing that column had Atlas's hook configured, no lineage was ever captured to query now",
+            "SDX doesn't include any lineage-tracking capability at all",
+            "Lineage tracking requires a paid add-on that wasn't purchased",
+            "The column was too recently created for lineage to apply"
+          ],
+          "correct": 0,
+          "right": "Right -- Atlas's lineage graph is built from real, captured pipeline execution events, not derived after the fact. Without a hook configured on the relevant jobs, nothing was ever recorded to query.",
+          "wrong": "Atlas is CDP's metadata/lineage-tracking component, and its lineage graph is built from real captured events (via hooks like a Spark listener) attached to jobs that actually read/write the data -- it's not a retroactive inference from table names or documentation. If no prior job writing customer_risk_score had that hook configured, no lineage was ever captured to query now, regardless of platform capability."
+        },
+        {
+          "q": "What specifically does Apache Ranger do that Atlas does NOT, within CDP's SDX layer?",
+          "choices": [
+            "Ranger is the centralized authorization-policy engine -- it defines and enforces who can access what, evaluated at query time; Atlas answers 'what is this data and where did it come from,' Ranger answers 'who is allowed to touch it'",
+            "Ranger and Atlas are two names for the exact same component with no functional difference",
+            "Ranger only handles data classification, while Atlas handles all access control",
+            "Ranger is used exclusively for encryption, unrelated to access policy"
+          ],
+          "correct": 0,
+          "right": "Exactly -- Atlas and Ranger solve two distinct problems: what the data is and where it came from (Atlas), versus who's allowed to touch it (Ranger).",
+          "wrong": "Ranger is CDP's centralized authorization-policy engine, defining and enforcing who can access what at query time. Atlas answers 'what is this data and where did it come from' (lineage/classification); Ranger answers 'who is allowed to touch it' (access control) -- two distinct components solving two distinct problems, not one governance feature."
+        },
+        {
+          "q": "How does a 'tag-based policy' let Ranger's access rule automatically follow data into a newly derived table?",
+          "choices": [
+            "Tagging a column as PII in Atlas, and defining a Ranger policy keyed on that tag rather than the specific table name, means Atlas's lineage-aware tag propagation carries the classification forward while Ranger's tag-based policy applies wherever that classification now lives",
+            "Ranger automatically re-scans every new table in the cluster daily to find PII",
+            "Tag-based policies only work within the exact same table they were originally defined on",
+            "Tagging a column has no effect on Ranger policy enforcement at all"
+          ],
+          "correct": 0,
+          "right": "Right -- Atlas's tag propagation plus a Ranger policy keyed on the tag (not the table name) is what lets an access rule follow classified data into a new derived table.",
+          "wrong": "Tagging a column as PII in Atlas, combined with a Ranger policy keyed on that TAG rather than a specific table name, means Atlas's lineage-aware tag propagation carries the classification forward if the data flows into a new derived table, and Ranger's tag-based policy applies wherever that classification now lives -- this is a specific design choice (tagging plus a tag-keyed policy), not something automatic just because both components exist."
+        },
+        {
+          "q": "Why was the spreadsheet-and-ad-hoc-bucket-policy approach the real root cause of the audit's access-question failure?",
+          "choices": [
+            "Without Ranger as the actual enforcement point, 'who currently has access' has no single, authoritative, currently-correct source of truth -- a spreadsheet drifts out of date the moment access changes anywhere except through updating it, exactly what an 8-month-stale document demonstrates",
+            "The spreadsheet was simply formatted incorrectly and needed better formatting",
+            "S3 bucket policies are inherently incompatible with any governance framework",
+            "The audit question was unanswerable regardless of what tooling was used"
+          ],
+          "correct": 0,
+          "right": "Exactly -- without Ranger as the enforcement point, access tracking has no single live source of truth; a manually-maintained spreadsheet inevitably drifts stale, which is exactly what an 8-month gap demonstrates.",
+          "wrong": "Without Ranger as the actual enforcement point, 'who currently has access' has no single, authoritative, currently-correct source of truth -- a spreadsheet drifts stale the moment access changes anywhere except through updating that spreadsheet, exactly what an 8-month-stale document shows happened. Moving enforcement to Ranger, driven by Atlas tags, makes access a live, queryable fact instead."
+        }
+      ],
+      "close": "Good -- Atlas and Ranger are two distinct components solving two distinct problems, and both need to be actively wired into pipelines and policies going forward; neither retroactively covers what happened before they were configured."
+    },
+    "DE05-T03": {
+      "open": "DE05-T03 -- Security in Enterprise Data Platforms. 'Kerberos, so it's secure' -- one sentence, three follow-up questions it can't answer. Let's break it down.",
+      "questions": [
+        {
+          "q": "Why can't Kerberos alone answer 'is this authenticated user ALLOWED to query these PII columns'?",
+          "choices": [
+            "Kerberos is purely an authentication protocol -- verifying identity happens BEFORE any question of what that identity is permitted to do; authorization is a separate control (Apache Ranger's job in CDP), evaluated after Kerberos has already done its part",
+            "Kerberos handles both authentication and authorization simultaneously by design",
+            "Kerberos only works for read-only queries, never for access-control decisions",
+            "Authorization is automatically granted to anyone who passes Kerberos authentication"
+          ],
+          "correct": 0,
+          "right": "Right -- Kerberos verifies identity; authorization (what that identity may do) is a genuinely separate control, evaluated by Ranger. A cluster can have correct Kerberos and zero meaningful access control.",
+          "wrong": "Kerberos is an authentication protocol -- its whole job is verifying a user really is who they claim to be, which happens BEFORE any question of what that identity is permitted to do. Authorization (deciding whether an authenticated identity may query specific tables/columns) is a separate control, and in CDP that's Ranger's job. A cluster can have Kerberos correctly enabled and still have zero meaningful access control if no Ranger policy exists."
+        },
+        {
+          "q": "Does Kerberos have anything to do with encryption at rest or in transit?",
+          "choices": [
+            "No -- Kerberos is purely about identity verification; a cluster can have strong Kerberos authentication while having no encryption at rest, no TLS in transit, or both, entirely independently of Kerberos's configuration",
+            "Yes -- Kerberos automatically enables both encryption at rest and in transit",
+            "Yes, but only encryption at rest, never in transit",
+            "Kerberos replaces the need for encryption entirely"
+          ],
+          "correct": 0,
+          "right": "Right -- encryption at rest and in transit are independently configured mechanisms addressing different threat models, both entirely separate from Kerberos's identity-verification role.",
+          "wrong": "Kerberos provides neither -- it is purely about identity verification. Encryption at rest (e.g. HDFS Transparent Data Encryption) and encryption in transit (TLS) are independently configured mechanisms addressing different threat models, and a cluster can have strong Kerberos while lacking either or both, entirely independent of Kerberos's own configuration."
+        },
+        {
+          "q": "If a fraud analyst is authorized to query the customer table, why might they NOT see the customer's raw national ID number?",
+          "choices": [
+            "What value an authorized user actually sees is governed by a separate mechanism -- data masking (via Ranger's column-masking policies) -- so two users with the SAME authorization outcome can see genuinely different results based on their role",
+            "Authorization and seeing the raw value are always the exact same thing -- if authorized, they always see the raw value",
+            "Masking only applies to unauthorized users, never authorized ones",
+            "The analyst would need a separate Kerberos ticket specifically for viewing unmasked values"
+          ],
+          "correct": 0,
+          "right": "Exactly -- masking is its own policy type, separate from authorization, answering 'what transformation applies to the value this authorized user receives.'",
+          "wrong": "Even once Ranger has authorized a user to query a PII column, what value they actually see is governed by a SEPARATE mechanism -- data masking, via Ranger's own column-masking policies evaluated per role. This is what lets a fraud analyst (masked to last-4-digits) and a compliance auditor (potentially unmasked) see different results despite the SAME authorization outcome -- masking is not a side effect of authorization succeeding."
+        },
+        {
+          "q": "What was the actual category error in the platform lead's 'Kerberos, so it's secure' answer?",
+          "choices": [
+            "Naming one real, specific control (authentication) and letting it stand in for 'security' as an undifferentiated whole, when the auditor's three questions each targeted a DIFFERENT control Kerberos doesn't provide",
+            "The answer was factually wrong -- Kerberos doesn't actually provide authentication either",
+            "The platform lead should have named a completely different, unrelated technology instead of Kerberos",
+            "There was no error -- Kerberos genuinely does cover all three of the auditor's concerns"
+          ],
+          "correct": 0,
+          "right": "Right -- the error was conflation: naming one true, specific control and implying it covers guarantees (authorization, encryption, masking) that control doesn't actually provide.",
+          "wrong": "The category error was naming one real, specific control (authentication, which Kerberos genuinely provides) and letting it stand in for 'security' as an undifferentiated whole -- when the auditor's three questions each targeted a DIFFERENT control (authorization, encryption, masking) that Kerberos does not provide on its own."
+        }
+      ],
+      "close": "Good -- authentication, authorization, encryption at rest, encryption in transit, and masking are five genuinely distinct controls. Naming one true thing about a system is not the same as confirming all five."
+    },
+    "DE05-T04": {
+      "open": "DE05-T04 -- Pipeline Observability and Monitoring. Two late-but-not-crashed SLA misses that an existing crash-only alert never caught. Let's check why.",
+      "questions": [
+        {
+          "q": "Why did the existing crash-detection alert never fire for either of the two late-finish incidents?",
+          "choices": [
+            "A crash detector's entire signal is the process's exit code -- it fires when a job dies unexpectedly and has nothing to say about a job that's still running or that finishes with exit code 0, which is exactly what both incidents were",
+            "The crash alert had a configuration bug unrelated to the actual failure mode",
+            "The incidents happened outside the crash alert's monitoring hours",
+            "The crash alert only monitors the extract stage, not the whole pipeline"
+          ],
+          "correct": 0,
+          "right": "Right -- both incidents finished successfully, just late. A crash detector's signal is the exit code; it structurally has nothing to say about a job that completes with exit code 0.",
+          "wrong": "A crash detector's entire signal is the process's exit code -- it fires on unexpected death, and has nothing to say about a job that's still running or finishes with exit code 0. Both real incidents were exactly that: the pipeline didn't crash, it simply took longer than its SLA allowed. No refinement of a crash alert could ever catch this failure mode, since the condition it looks for genuinely didn't occur."
+        },
+        {
+          "q": "Why does the fix need to detect SLA risk WHILE the job is running, rather than relying on Spark's history server after the fact?",
+          "choices": [
+            "The history server's information only becomes visible after the fact, in a UI nobody is actively watching -- the fix compares each stage's elapsed time against its historical baseline and projects completion against the deadline DURING execution, so a human can be paged before the deadline passes",
+            "The history server doesn't actually record which stage ran long",
+            "History-server data is only accurate for jobs that have already crashed",
+            "Detecting SLA risk during execution is technically impossible in Spark"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the fix evaluates stage progress and projected completion DURING execution specifically so someone can be paged before the deadline is actually missed, not after.",
+          "wrong": "Spark's history server shows which stage ran long, but only AFTER the fact, in a UI nobody is watching in real time. The fix compares each stage's real elapsed time against its historical baseline AS the job progresses, and separately projects completion against the deadline using current progress -- both evaluated during execution, so a human can be paged before the SLA is actually breached, not after."
+        },
+        {
+          "q": "Why does the lesson insist the SLA-risk alert does NOT replace the crash alert -- both need to coexist?",
+          "choices": [
+            "The crash alert remains the correct, sufficient signal for its own failure mode (an actual process death); SLA-risk monitoring wouldn't catch a crash any better than the crash alert catches a slow-but-successful run -- these are two genuinely distinct failure modes",
+            "The crash alert is actually more important and should be prioritized over SLA-risk monitoring",
+            "Running both alerts simultaneously is required purely for redundancy, with no functional distinction",
+            "The SLA-risk alert secretly contains crash-detection logic internally"
+          ],
+          "correct": 0,
+          "right": "Right -- crash and SLA-miss are two genuinely distinct failure modes; monitoring built for one provides zero coverage for the other, so both need to exist, not one replacing the other.",
+          "wrong": "The crash alert remains correct and sufficient for its own failure mode (an actual process death) -- nothing about adding SLA-risk monitoring should remove it, since a genuine crash is still a real, different failure. Neither alert covers the other's failure mode, no matter how well-tuned -- effective monitoring requires a specific, measurable signal for each DISTINCT failure mode a pipeline can experience."
+        }
+      ],
+      "close": "Good -- 'did it crash' and 'will it miss its SLA' are genuinely different questions, and this pipeline needed a distinct, real-time signal for the second one -- not a better-tuned version of the first."
+    },
+    "DE05-T05": {
+      "open": "DE05-T05 -- Debugging Failed Spark Jobs. A 3 AM page, a blind restart, and a stage that just got slower the second time. Let's check the actual diagnostic path.",
+      "questions": [
+        {
+          "q": "Why was the on-call engineer's blind restart the wrong first move, regardless of whether the actual cause was skew, insufficient parallelism, or genuinely larger data volume?",
+          "choices": [
+            "A restart changes nothing about any of the three candidate causes -- it discards the one thing the still-running job had: the partially-completed stage's real, in-progress evidence needed to actually diagnose which cause applies",
+            "Restarting a Spark job is always technically impossible mid-stage",
+            "The restart would have worked, but only if done at a different time of night",
+            "Blind restarts are fine as long as they're done more than once"
+          ],
+          "correct": 0,
+          "right": "Right -- none of the three causes are fixed by a restart. It just discards the in-progress diagnostic evidence and forces a second, identical wait.",
+          "wrong": "A restart changes nothing about skew (the same data distribution re-occurs), insufficient parallelism (the identical partitioning re-occurs), or genuinely larger volume (the same amount of real data still needs processing) -- and it discards the one thing the still-running job actually had: real, in-progress task-level evidence needed to diagnose which cause is actually true."
+        },
+        {
+          "q": "What Spark UI evidence specifically shows the 'skew' signature, as distinct from insufficient parallelism or genuinely larger volume?",
+          "choices": [
+            "A small number of dramatic task-duration outliers against an otherwise fast, even distribution (e.g. 199 tasks under a minute, one task at 35+ minutes) -- a data-distribution signature, not a resource or workload-growth signature",
+            "A uniformly slow task-duration distribution across all tasks with no outliers",
+            "A task count of zero for the entire stage",
+            "An error message explicitly labeled 'SKEW DETECTED' in the Spark UI"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the skew signature is a small number of dramatic outliers against an otherwise fast distribution, visible in the task-duration breakdown (min/25th/median/75th/max), not a single average.",
+          "wrong": "Skew shows as a small number of dramatic task-duration outliers against an otherwise fast, even distribution -- e.g. 199 tasks finishing under a minute while one task runs 35+ minutes. This is a data-distribution signature, distinct from insufficient parallelism (low total task count, uniformly slow) or genuinely larger volume (normal distribution, normal task count, but higher total row count against baseline)."
+        },
+        {
+          "q": "In THIS specific incident, what did the Spark UI/data actually confirm as the cause, and what would the correct fix have been?",
+          "choices": [
+            "Skew -- one settlement_batch_id with 340 million rows against a next-largest of 1.2 million; the fix is salting the skewed key or confirming AQE's skew-join handling, not restarting",
+            "Insufficient parallelism -- the fix would have been increasing the number of executors",
+            "Genuinely larger data volume -- the fix would have been simply waiting longer with no code change",
+            "A network outage -- the fix would have been checking the cluster's network configuration"
+          ],
+          "correct": 0,
+          "right": "Right -- one batch_id with 340 million rows against a next-largest of 1.2 million is a clear skew signature, confirmed by the task-duration distribution, not a parallelism or volume issue.",
+          "wrong": "The scenario's Spark UI evidence (199/200 tasks fast, one task running 35+ minutes) plus the row-count check (one settlement_batch_id at 340 million rows against a next-largest of 1.2 million) confirms skew as the cause -- roughly 280x the next-largest batch. The fix targets that specific skewed key (salting, or confirming AQE's skew-join handling), not a blind restart."
+        }
+      ],
+      "close": "Good -- the Spark UI's task-duration distribution, read WHILE the job is still running, is the actual diagnostic evidence. Different causes need different fixes; none of them is 'restart and hope.'"
+    },
+    "DE05-T06": {
+      "open": "DE05-T06 -- Cost and Resource Optimization at Scale. Doubling executors made the job 20% faster and 60% more expensive. Let's check the real diagnosis.",
+      "questions": [
+        {
+          "q": "Why did doubling executor count make the job faster but the monthly bill worse, and why is that not a contradiction?",
+          "choices": [
+            "Executors are parallel compute capacity paid for regardless of efficiency -- doubling them for a job whose actual data volume never shrank means twice as much paid compute processing the same excess work, at low utilization for most of the (shorter) duration",
+            "It IS a contradiction -- the scenario's numbers don't actually make sense together",
+            "The extra executors were faulty and caused billing errors unrelated to actual usage",
+            "Doubling executors always reduces cost in every situation except this one specific case"
+          ],
+          "correct": 0,
+          "right": "Right -- executors are paid capacity regardless of how efficiently they're used. Doubling them for the same excess workload means paying double for that same excess work, at low utilization.",
+          "wrong": "Executors are parallel compute capacity, paid for by the hour regardless of how efficiently each is used. Doubling executor count for a job whose data volume never shrank means twice as much paid compute processing the same excess work -- the job finishes somewhat faster (real, not fake), but cost is dominated by double the executors running most of that shorter duration at low utilization."
+        },
+        {
+          "q": "Was the wrong join-condition placement (filter written 'after' the join in the query) the actual cause of predicate pushdown failing?",
+          "choices": [
+            "No -- Catalyst's PushPredicateThroughJoin rule can push a single-side filter below a join regardless of where it's written; the ACTUAL cause was the date predicate being wrapped in a UDF, which Catalyst cannot reason about or push to a scan regardless of query shape",
+            "Yes -- filter placement in the query text is always the deciding factor for whether pushdown happens",
+            "The cause was unrelated to the query entirely -- it was a hardware failure",
+            "Pushdown never happens in Spark under any circumstances, regardless of query design"
+          ],
+          "correct": 0,
+          "right": "Right -- Catalyst can push a filter below a join regardless of where it's written in the query text; the real cause was a UDF-wrapped predicate Catalyst can't reason about, confirmed by the physical plan lacking a PartitionFilters entry.",
+          "wrong": "Catalyst's PushPredicateThroughJoin rule can push a single-side filter below an inner join regardless of where it's written in the query -- so filter placement alone isn't reliable evidence pushdown failed. The actual cause was the date predicate being wrapped in a UDF, which Catalyst cannot reason about or push to a scan -- confirmed by the physical plan showing no PartitionFilters entry on the scan node."
+        },
+        {
+          "q": "What evidence actually confirmed the fix worked, rather than just assuming a query rewrite helped?",
+          "choices": [
+            "The physical plan showing a PartitionFilters entry after replacing the UDF, and the Spark UI's SQL tab showing a measured, large reduction in shuffle-write bytes -- both specific, checkable numbers, not a bare 'optimized' claim",
+            "The engineer's subjective impression that the query 'felt' faster",
+            "The monthly bill decreasing was the only evidence needed, checked well before the fix was even applied",
+            "No evidence was actually gathered -- the fix was accepted purely on theoretical grounds"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the physical plan's PartitionFilters entry and the Spark UI's measured shuffle-write byte reduction are the concrete, checkable evidence, matching this app's own 'verify, don't assume' discipline.",
+          "wrong": "The evidence was the physical plan showing a PartitionFilters entry appearing on the scan node after replacing the UDF (absent before), and the Spark UI's SQL tab showing a real, measured reduction in shuffle-write bytes. 'Optimized' as a bare adjective asserts an outcome without evidence -- the discipline here requires the specific measurement that lets someone else verify the claim independently."
+        },
+        {
+          "q": "What's the general principle for choosing between 'add more compute' and 'reduce the actual work'?",
+          "choices": [
+            "More executors is correct when a job is genuinely compute-bound (adequate volume, not enough workers); when a job is doing more work than it needs to (unpruned scan, unnecessary shuffle), adding compute makes the unnecessary work complete faster WITHOUT reducing its cost, since cost scales with data volume times compute paid for",
+            "Adding more executors is always the correct first response to any performance or cost complaint",
+            "Reducing data volume is only relevant for jobs processing more than 1 billion rows",
+            "Compute cost and data volume are entirely unrelated factors in Spark job cost"
+          ],
+          "correct": 0,
+          "right": "Right -- more executors fixes genuine compute-boundedness; it doesn't fix a job doing unnecessary work, since cost scales with (data volume processed) × (compute paid for), and executors only address the second factor.",
+          "wrong": "More executors is the correct fix when a job is genuinely compute-bound -- adequate data volume, not enough workers to process it. When a job is instead doing more work than necessary (an unpruned scan, an unneeded shuffle), adding compute makes that unnecessary work complete faster WITHOUT reducing its cost, because cost scales with (data volume processed) × (compute paid for), and executors only address the second factor."
+        }
+      ],
+      "close": "That closes Chapter 5 -- quality, governance, security, observability and now cost, all requiring the same measured-evidence discipline: specific, checkable numbers, not a bare 'it's fine now' claim."
+    },
+    "DE06-T01": {
+      "open": "DE06-T01 -- Orchestrating Multi-Stage Spark Pipelines. One giant script versus a real Airflow DAG, and a re-run that needed one stage's state tracked independently. Let's check.",
+      "questions": [
+        {
+          "q": "The junior engineer's single-script version got the SEQUENCING right (extract before summarize before report). What did it actually lack?",
+          "choices": [
+            "TRACKED, INDEPENDENTLY RE-RUNNABLE STATE per stage -- nothing persisted the fact that extract() completed successfully for a specific date as a fact independent of the whole process's exit status",
+            "The correct order of operations, which was actually wrong in the single-script version",
+            "Any ability to run on a distributed Spark cluster at all",
+            "Basic error handling of any kind"
+          ],
+          "correct": 0,
+          "right": "Right -- the order was correct. What was missing was tracked, independently re-runnable state per stage, which only an orchestrator like Airflow maintains as persistent metadata.",
+          "wrong": "The order was genuinely correct -- extract before summarize before report is the right sequence, and a plain script expresses that fine. What was missing was TRACKED, INDEPENDENTLY RE-RUNNABLE STATE per stage: nothing persisted the fact that extract() succeeded for a specific date as a fact independent of the whole process's overall exit status."
+        },
+        {
+          "q": "What does Airflow's task dependency declaration (extract_task >> summarize_task >> report_task) provide beyond just expressing execution order?",
+          "choices": [
+            "It lets Airflow reason about the DAG's structure as queryable data -- which tasks can be cleared/re-run without necessarily re-running downstream dependents, which are blocked on an upstream failure, which could run in parallel",
+            "It has no functional effect beyond visual documentation of the pipeline",
+            "It forces every task to always run sequentially with no possibility of retries",
+            "It automatically speeds up the underlying Spark jobs' execution"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the dependency declaration is queryable structure Airflow can reason about and act on, not just syntax for expressing order the way a script's sequential calls are.",
+          "wrong": "This declaration lets Airflow reason about the DAG's structure: which tasks can safely be cleared and re-run without necessarily re-running downstream dependents, which are blocked on an upstream failure, which could run in parallel. A sequence of plain function calls carries none of this as queryable structure -- it's just the order the interpreter executes statements in."
+        },
+        {
+          "q": "Why is this lesson explicit that adding Airflow does NOT change what extract(), summarize(), or report() actually do as Spark jobs?",
+          "choices": [
+            "Airflow's job is entirely about WHEN and in what order jobs run, with what retry policy, and whether completion is tracked -- it orchestrates scheduling/dependencies and does not replace, wrap, or reimplement Spark's own execution engine",
+            "Because Airflow actually does make the underlying Spark jobs run faster",
+            "Because Airflow replaces Spark's execution engine entirely with its own",
+            "This claim is false -- Airflow does change how the Spark jobs themselves execute"
+          ],
+          "correct": 0,
+          "right": "Right -- Airflow orchestrates scheduling and dependency tracking; the underlying Spark jobs run on the same execution engine, with the same DataFrame operations, unchanged.",
+          "wrong": "Airflow's job is entirely about WHEN each job runs, in what order, with what retry policy, and whether prior completion is tracked -- it orchestrates the scheduling/dependency layer, and does not replace, wrap, or reimplement Spark's own execution. Expecting an orchestrator to make jobs faster or more correct is a common, costly misunderstanding -- it only manages sequencing and re-run behavior at the task level."
+        }
+      ],
+      "close": "Good -- orchestration and execution are genuinely separate concerns. Airflow gives you tracked, independently re-runnable task state; Spark still does all the actual work, unchanged."
+    },
+    "DE06-T02": {
+      "open": "DE06-T02 -- CI/CD for Data Pipelines. Every check green, and an 8% silent row drop shipped for eleven days anyway. Let's check what CI/CD actually verified.",
+      "questions": [
+        {
+          "q": "What did the three original CI/CD checks (unit tests, container build, deploy) actually verify, and what did they NOT verify?",
+          "choices": [
+            "They verified deployment MECHANICS -- the intended code compiled, shipped, and is running without crashing -- but none of them verified that the DATA the pipeline produces is actually correct",
+            "They verified data correctness completely, which is exactly why the defect was surprising",
+            "They verified nothing at all -- the 'green' status was a display bug unrelated to the checks",
+            "Unit tests alone would have caught this defect if they had been written slightly differently"
+          ],
+          "correct": 0,
+          "right": "Right -- all three checks verify deployment mechanics (code compiled, built, ran without crashing), a real and useful claim, but a genuinely different property from 'this pipeline produces correct data.'",
+          "wrong": "Unit tests verify functions behave as expected against the specific inputs the test author imagined -- not exhaustive against real-world join-key mismatches. A container build verifies the code compiles/packages, with no access to real data. A deploy succeeding verifies the process is alive, not that it's doing the right thing to production data. Together they verify deployment MECHANICS, a genuinely different claim from data correctness."
+        },
+        {
+          "q": "Why did an 8% silent row drop from a wrong join pass all three checks perfectly?",
+          "choices": [
+            "A wrong join condition doesn't crash anything -- Spark executes it, returns fewer rows than it should, and completes successfully with a plausible-looking, non-empty result; every check was satisfied by exactly that outcome",
+            "The checks were misconfigured and skipped the join logic entirely",
+            "The row drop only happened after all the checks had already run, timing-wise",
+            "8% is below some threshold that Spark automatically ignores as noise"
+          ],
+          "correct": 0,
+          "right": "Exactly -- a wrong join doesn't error, it just silently returns fewer rows. The code compiled, built, deployed, and ran without exception -- satisfying every check that existed, none of which measured actual output correctness.",
+          "wrong": "A wrong join condition doesn't crash anything -- Spark executes the join, returns fewer rows than it should, and completes successfully with a plausible-looking, non-empty, non-error result. Every one of the three checks is satisfied by exactly this outcome, because none of them was ever positioned to notice the actual row count silently dropped 8%."
+        },
+        {
+          "q": "What kind of check would have actually caught this defect, and why is it different from 'more/better unit tests'?",
+          "choices": [
+            "A data-contract check running the actual pipeline logic against a realistic staging dataset, measuring the ACTUAL output row count against an expected range -- asking 'did this run against real-shaped data produce output consistent with correct behavior,' not 'does this function behave as expected on a hand-crafted sample'",
+            "Simply adding more unit tests with slightly different hand-crafted sample data",
+            "Increasing the number of code reviewers required before merge",
+            "Running the exact same unit tests twice before deployment"
+          ],
+          "correct": 0,
+          "right": "Right -- a data-contract validation stage against realistic staging data, measuring actual output shape, is a fundamentally different kind of check from unit tests operating on small, hand-crafted samples.",
+          "wrong": "The fix is a data-contract check running the actual pipeline logic against a REALISTIC staging dataset, measuring the ACTUAL output row count against a declared expected range -- asking 'did this produce output consistent with correct behavior against real-shaped data,' not 'does this function behave as expected on a small sample.' An 8% drop against a 98-102% expected range is exactly the measurable signal that would have failed this gate."
+        },
+        {
+          "q": "What's the corrected framing for 'CI/CD is green' versus 'this pipeline is production-ready'?",
+          "choices": [
+            "CI/CD (unit tests, build, deploy) is a genuine, valuable check on deployment mechanics -- but treating that as equivalent to 'produces correct data' or 'production-ready' is a category error without an explicit, separate data-correctness validation stage",
+            "'CI/CD is green' and 'production-ready' are always exactly the same claim with no distinction",
+            "CI/CD passing is sufficient proof of production-readiness as long as the team trusts their engineers",
+            "Data correctness can never be verified by any automated pipeline, only by manual review"
+          ],
+          "correct": 0,
+          "right": "Exactly -- CI/CD passing answers 'did the intended code ship successfully,' a real and valuable claim, but treating that as 'produces correct data' or 'production-ready' without a separate data-correctness stage is the category error that let this defect through.",
+          "wrong": "CI/CD, as commonly implemented, is a genuine and valuable set of checks for deployment mechanics -- it answers 'did the intended code ship successfully.' But it's a category error to treat that as equivalent to 'the pipeline produces correct data' or 'production-ready' without an explicit, separate data-correctness validation stage measuring real output against real expectations."
+        }
+      ],
+      "close": "Good -- deployment mechanics and data correctness are genuinely different claims. A fully green CI/CD pipeline can silently ship wrong data indefinitely without a dedicated data-contract stage."
+    },
+    "DE06-T03": {
+      "open": "DE06-T03 -- Containerizing Data Engineering Workloads. Four security findings on one container, and the team confused why 'four reviewers found four problems.' Let's break down why that's exactly right.",
+      "questions": [
+        {
+          "q": "Why does fixing unpinned dependencies (pinning + hash verification) do NOTHING to address the baked-in secret, root execution, or missing vulnerability scanning?",
+          "choices": [
+            "Pinning fixes reproducibility/provenance -- 'is the build reproducible and its contents knowable' -- which has no bearing on whether a secret is exposed, what user the process runs as, or whether the pinned versions have known vulnerabilities",
+            "Pinning actually does fix all four issues simultaneously, so this premise is false",
+            "Pinning dependencies is unrelated to security in any way and was an unnecessary fix",
+            "Fixing one security issue always automatically fixes the other three in a well-designed container"
+          ],
+          "correct": 0,
+          "right": "Right -- pinning answers a specific, narrow question (is the build reproducible and knowable), entirely orthogonal to secrets, privilege level, or known-CVE visibility.",
+          "wrong": "Unpinned dependencies (pip install with no version constraints) means 'what code is running' is not a knowable, fixed fact -- it can silently change between builds. Pinning with hashes fixes specifically this reproducibility/provenance property. It has no bearing on secret exposure, process privilege, or vulnerability scanning -- those are three genuinely separate concerns."
+        },
+        {
+          "q": "Why is a baked-in ENV secret dangerous even AFTER the real password is rotated in the database?",
+          "choices": [
+            "Image layers get pushed to registries and can be cached/archived indefinitely -- anyone with pull access to ANY old image, at any point in its existence, can extract the plaintext value, because old images with the old secret don't automatically stop existing",
+            "Rotating the database password automatically updates every previously-built image too",
+            "Baked-in secrets are only dangerous while the image is actively running, not afterward",
+            "This is not actually a real risk -- baked-in secrets are equivalent to runtime-injected ones"
+          ],
+          "correct": 0,
+          "right": "Exactly -- old images with the old baked-in secret persist indefinitely in registries; rotation in the live database doesn't retroactively scrub the plaintext from every image layer ever built.",
+          "wrong": "A plaintext password set via ENV becomes part of an image layer -- and image layers get pushed to registries, pulled by any host with access, and potentially cached or archived indefinitely. Anyone with pull access to ANY old image can extract the plaintext value, even after the real database password has been rotated, because old images with the old secret baked in don't automatically stop existing."
+        },
+        {
+          "q": "Why does running as root NOT itself cause a vulnerability, but is still worth fixing?",
+          "choices": [
+            "Root privilege doesn't by itself cause a compromise -- but IF the process IS ever compromised via any vulnerability, root gives that compromise a materially larger blast radius than a non-privileged user would; it limits damage, not the underlying issue",
+            "Running as root is always harmless in every containerized environment with no exceptions",
+            "Root execution directly causes memory corruption bugs in the running process",
+            "Fixing root execution also automatically fixes any known CVEs in the base image"
+          ],
+          "correct": 0,
+          "right": "Right -- running as root doesn't cause a compromise, but it magnifies the damage IF one happens. Least privilege limits blast radius, it doesn't prevent the underlying vulnerability.",
+          "wrong": "Running as root does not, by itself, cause a vulnerability -- but IF the process is ever compromised via any vulnerability (application, dependency, or base OS), root privilege gives that compromise a materially larger blast radius than a non-privileged user would. A non-root USER fixes this specific dimension -- it limits damage IF something goes wrong, it doesn't prevent something going wrong in the first place."
+        },
+        {
+          "q": "Why can't pinning, secrets handling, and non-root execution substitute for a dedicated vulnerability scanning step?",
+          "choices": [
+            "A perfectly reproducible, secret-free, non-root image can still contain a base OS package or Python library with a publicly known, critical CVE -- pinning tells you WHAT is running, but says nothing about whether those exact pinned versions have disclosed vulnerabilities",
+            "Vulnerability scanning is entirely redundant once the other three fixes are applied",
+            "Pinning dependencies automatically triggers a vulnerability scan as a side effect",
+            "Non-root execution eliminates the need to check for known CVEs"
+          ],
+          "correct": 0,
+          "right": "Exactly -- pinning tells you WHAT is running, but nothing about whether the pinned versions have disclosed CVEs. A dedicated scan (e.g. Trivy) is what specifically answers that question.",
+          "wrong": "Pinning dependencies to exact versions tells you WHAT is running, but says nothing about whether those exact, pinned versions have disclosed security vulnerabilities. A perfectly reproducible, secret-free, non-root image can still contain a known-vulnerable package -- none of the other three fixes would surface that. A dedicated scanning step is what specifically answers 'does this image contain known-vulnerable software.'"
+        }
+      ],
+      "close": "Good -- provenance, secrets, least privilege, and vulnerability visibility are four genuinely independent controls. Fixing one leaves the other three exactly as they were."
+    },
+    "DE06-T04": {
+      "open": "DE06-T04 -- Kubernetes for Data Platforms. 'Ready for Kubernetes' after Docker packaging alone -- and a bare kubectl run that had nothing to actually submit to. Let's check the three layers.",
+      "questions": [
+        {
+          "q": "Why did a bare `kubectl run` pointing at a correctly-built Spark image fail immediately, with no driver and no executor pods?",
+          "choices": [
+            "Docker packaging has no concept of a multi-process, coordinated application spanning several containers with defined roles -- the container starts and its entrypoint tries to run spark-submit with no --master pointing at an actual cluster manager, so it has nothing to submit to",
+            "The Docker image itself was built incorrectly and needed to be rebuilt",
+            "Kubernetes automatically converts any container into a Spark driver on startup",
+            "kubectl run is fundamentally incompatible with any Spark workload under any configuration"
+          ],
+          "correct": 0,
+          "right": "Right -- Docker packaging just answers what code is in the container and what happens on start. It has no notion of driver/executor coordination -- that's Spark's own responsibility, triggered via --master.",
+          "wrong": "Docker packaging answers 'what code and dependencies are inside this container, and what happens when it starts' -- it has no concept of a coordinated, multi-container application (a driver creating executors). A bare kubectl run starts exactly one container running its entrypoint; if that entrypoint runs spark-submit with no --master pointing at a real cluster manager, it has nothing to submit to and fails immediately."
+        },
+        {
+          "q": "What does Kubernetes itself provide, and why is it NOT a Spark execution model by itself?",
+          "choices": [
+            "Kubernetes schedules pods onto nodes, restarts failed pods, manages lifecycle/networking -- genuinely useful infrastructure, but it has no built-in notion of 'this pod is a Spark driver that needs to create N executor pods and coordinate distributed execution with them'",
+            "Kubernetes IS a complete Spark execution model requiring no additional configuration",
+            "Kubernetes automatically detects Spark workloads and provisions executors without any configuration",
+            "Kubernetes replaces the need for a Spark driver process entirely"
+          ],
+          "correct": 0,
+          "right": "Right -- Kubernetes provides real, useful pod-scheduling infrastructure, but the driver-creates-executors coordination logic lives entirely in Spark's own code, triggered by telling Spark to use Kubernetes as its cluster manager.",
+          "wrong": "Kubernetes schedules pods onto nodes, restarts failed pods per policy, and manages pod lifecycle/networking -- genuinely useful, but it has no built-in notion of 'this pod is a Spark driver needing to create N executor pods and coordinate distributed execution.' That coordination logic lives entirely in Spark's own code, which is why Spark has to be explicitly told to use Kubernetes as its cluster manager via --master k8s://..."
+        },
+        {
+          "q": "What changes, and what does NOT change, when moving Spark jobs from YARN (Chapter 4) to Kubernetes as the cluster manager?",
+          "choices": [
+            "What changes is purely the MECHANISM of executor acquisition (spark-submit's --master value, spark.kubernetes.* config); the actual Spark execution semantics -- lazy evaluation, transformations vs actions, partitioning, shuffle, AQE -- are cluster-manager-agnostic and unchanged",
+            "Everything changes -- Spark's programming model is completely different on Kubernetes versus YARN",
+            "Nothing changes at all -- YARN and Kubernetes are functionally identical in every respect",
+            "Only the shuffle mechanics change; everything else about Spark's execution model stays the same on YARN specifically"
+          ],
+          "correct": 0,
+          "right": "Right -- Spark's own execution concepts are entirely cluster-manager-agnostic. What changes is only the mechanism the driver uses to acquire executors -- a config detail, not a different programming model.",
+          "wrong": "The actual Spark execution semantics this bank already understands (lazy evaluation, transformations vs. actions, partitioning, shuffle behavior, AQE) are entirely cluster-manager-agnostic -- Spark's own concepts, unaffected by whether the driver got its executors from YARN's ResourceManager or the Kubernetes API. What changes is purely the MECHANISM of executor acquisition -- spark-submit's --master value and a handful of spark.kubernetes.* config options."
+        },
+        {
+          "q": "Why is Kubernetes ServiceAccount-based workload identity a genuinely NEW, fifth control, not a restatement of T03's secrets-externalization fix?",
+          "choices": [
+            "T03's fix still requires SOME secret to exist and be distributed to the runtime; workload identity (binding a ServiceAccount to a cloud IAM role) can eliminate the need for that secret to exist as a distributable value in the first place",
+            "It's exactly the same mechanism as T03's runtime secret injection, just with a different name",
+            "Workload identity is only relevant for non-Kubernetes deployments",
+            "Service accounts are unrelated to authentication or authorization in any way"
+          ],
+          "correct": 0,
+          "right": "Exactly -- T03's fix (inject at runtime) still needs a real secret value to exist and be distributed; workload identity can remove the need for that secret to exist as a distributable value at all.",
+          "wrong": "T03 established 'do not bake a static credential into the image' as its own control -- but T03's fix still requires SOME secret to exist and be distributed to the runtime. Kubernetes workload identity (binding a ServiceAccount to a cloud IAM role) lets the cloud platform itself vouch for the pod's identity based on the ServiceAccount, potentially eliminating the need for that secret to exist as a distributable value at all -- a genuinely distinct mechanism."
+        },
+        {
+          "q": "Why does this lesson deliberately caveat that some Spark-on-Kubernetes tooling details might not stay current?",
+          "choices": [
+            "Spark-on-Kubernetes tooling (operators, batch schedulers) has moved quickly -- newer official tooling exists and may change some of the manual spark-submit flags shown, so a learner should verify current behavior against their actual cluster's versions rather than assume this example's flags are universal",
+            "Because the driver/executor model itself is expected to become obsolete soon",
+            "Because Kubernetes itself is being deprecated as a Spark cluster manager",
+            "There is no such caveat in this lesson -- the flags shown are guaranteed to be permanently correct"
+          ],
+          "correct": 0,
+          "right": "Right -- the underlying Spark execution model is stable, but the specific tooling (operators, schedulers, exact flags) has moved quickly, so version-specific details need verifying against the actual cluster.",
+          "wrong": "The lesson's readiness note explicitly flags that Spark-on-Kubernetes tooling has moved quickly -- newer official Spark Kubernetes Operators and batch schedulers exist and may change some of the specific spark-submit flags shown. A learner applying this to a real cluster should verify current behavior against that cluster's actual versions, not assume the example's exact flags are universally current."
+        }
+      ],
+      "close": "Good -- Docker packaging, Kubernetes scheduling, and Spark's own cluster-manager coordination are three genuinely separate layers. Being containerized doesn't mean being schedulable, and being schedulable doesn't mean Spark knows how to run distributed on it."
+    },
+    "DE06-T05": {
+      "open": "DE06-T05 -- Preparing Datasets for Machine Learning. A 'last 30 days' feature computed relative to today instead of the labeled event, and a model that looked great offline but underperformed live. Let's trace the leak.",
+      "questions": [
+        {
+          "q": "Why is computing 'last 30 days' relative to the TRAINING JOB'S RUN DATE (instead of each labeled event's own timestamp) a leakage bug?",
+          "choices": [
+            "It silently includes transactions that happened AFTER the labeled event the model is being trained to predict -- a real prediction call can never see transactions that haven't happened yet, so training on this teaches the model to rely on information it will never have at real inference time",
+            "It's not actually a bug -- 'last 30 days' should always be computed relative to the current date regardless of context",
+            "The bug only affects the model's training speed, not its accuracy",
+            "This only matters for models trained on data older than one year"
+          ],
+          "correct": 0,
+          "right": "Right -- this is the core leakage mechanism: the feature silently includes future-relative-to-the-label data that could never exist at real prediction time.",
+          "wrong": "Computing 'last 30 days' relative to the training job's run date (long after most labeled events occurred) silently includes transactions that happened AFTER the event being predicted -- data the model could never have access to at real prediction time, since a real fraud-scoring call always evaluates at or near the actual transaction moment. This is exactly what 'leakage' means: information present at training time that won't be present at serving time."
+        },
+        {
+          "q": "Why did this leak produce GOOD offline accuracy but WORSE live catch rate, rather than an obviously broken model?",
+          "choices": [
+            "The leaked feature is genuinely correlated with the label WITHIN the training set (post-event fraud activity patterns) -- so offline metrics look good, but the equivalent feature computed on live traffic can never include that same future-relative-to-the-label information, since at real serving time there IS no 'future' data yet",
+            "The offline evaluation was run using entirely different data than the training set",
+            "The live model was simply using a different, unrelated feature than the one evaluated offline",
+            "Offline accuracy is always unrelated to live performance regardless of feature quality"
+          ],
+          "correct": 0,
+          "right": "Exactly -- the leaked feature isn't random noise, it genuinely correlates with the label within the training set. The gap only appears live, where that future-relative-to-the-label information can never exist yet.",
+          "wrong": "The leaked feature isn't random noise -- it's genuinely correlated with the label within the training set (post-fraud-event activity patterns), so offline metrics look good because the leaked info really does help predict the label THERE. The gap only shows in production, where the equivalent live feature can never include future-relative-to-the-label data, because at real serving time there IS no 'future' data yet."
+        },
+        {
+          "q": "What's the specific fix, and why does the strict `<` (not `<=`) upper boundary matter?",
+          "choices": [
+            "Anchor the window to each row's own event_ts, filtering to [event_ts - 30 days, event_ts) -- the strict < ensures the event's own transaction (if it corresponds to one) can't be counted as its own feature input, a second, subtler leakage path even after fixing the today-vs-event_ts bug",
+            "The fix is switching to a completely different, unrelated feature with no time-window logic at all",
+            "The strict < versus <= makes no practical difference to leakage prevention",
+            "The fix is simply shortening the window from 30 days to 7 days"
+          ],
+          "correct": 0,
+          "right": "Right -- anchoring to event_ts fixes the primary leak, and the strict < specifically prevents the event's own transaction from counting as its own input, a second, subtler leakage path.",
+          "wrong": "The fix anchors the window to each row's OWN event_ts, filtering to [event_ts - 30 days, event_ts) rather than relative to today. The strict < (not <=) on the upper boundary is deliberate: it ensures the event's own transaction (if it corresponds to a transaction record) can't be counted as its own feature input -- a second, subtler leakage path that would remain even after fixing the primary today-vs-event_ts bug."
+        },
+        {
+          "q": "What is this lesson explicitly NOT about, per its own stated scope?",
+          "choices": [
+            "Model selection, hyperparameter tuning, or model-architecture guidance -- the defect, diagnosis, and fix are entirely at the level of how input DATA is prepared, staying strictly within reproducible feature preparation, point-in-time correctness and leakage prevention",
+            "This lesson is actually primarily about choosing the best model architecture for fraud detection",
+            "The lesson covers hyperparameter tuning as its main focus",
+            "The lesson is about deploying models to production infrastructure"
+          ],
+          "correct": 0,
+          "right": "Right -- this lesson deliberately stays at the data-preparation level: reproducible feature engineering, point-in-time correctness, and leakage prevention, not model-building technique.",
+          "wrong": "The lesson is explicit: none of this is model-selection, hyperparameter tuning, or model-architecture guidance -- the defect, diagnosis, and fix are entirely at the level of how input DATA to any model is prepared. This matches the chapter's own guardrail: reproducible feature preparation and leakage prevention, not model-building instruction."
+        }
+      ],
+      "close": "Good -- point-in-time correctness is a data engineering discipline, not a modeling one. Anchoring feature windows to the event's own timestamp, with a strict boundary, is what actually prevents this class of leak."
+    },
+    "DE06-T06": {
+      "open": "DE06-T06 -- Pipeline Resilience, Recovery and On-Call Production Support. A 3 AM page, no runbook, and a wrong guess that made things worse (though not corrupted, thanks to earlier work). Let's check what the runbook actually needed.",
+      "questions": [
+        {
+          "q": "Was the actual incident-time mistake (re-running the WHOLE pipeline instead of just the failed stage) a data-corruption problem?",
+          "choices": [
+            "No -- T02's idempotent MERGE pattern made even the unnecessary re-run of extract_transactions harmless; the real cost was wasted time and cluster resources during an active SLA-risk window, not corrupted data",
+            "Yes -- it caused permanent, unrecoverable data corruption across all three stages",
+            "Yes -- it duplicated every row in every downstream table with no way to detect or fix it",
+            "The mistake had zero cost or consequence of any kind"
+          ],
+          "correct": 0,
+          "right": "Right -- T02's idempotent write pattern prevented corruption. The real cost was wasted time and resources during an active SLA-risk window, which a pre-written retry table would have prevented.",
+          "wrong": "T02's idempotent writes actually did their job here -- the unnecessary re-run of extract_transactions was harmless BECAUSE of that earlier idempotency work, not despite the mistake. The real cost was wasted time and cluster resources during an active SLA-risk incident, which a pre-written, correct retry-policy answer would have avoided."
+        },
+        {
+          "q": "Why does the runbook's backfill decision tree explicitly reuse T01's 'catchup=True is a deliberate choice, not a default' caution?",
+          "choices": [
+            "An incident dragging past the business-day boundary turns 're-run this stage' into 'backfill a specific historical date' -- a backfill must be scoped to exactly the missed date(s), since a broader or vaguer range risks accidentally re-triggering already-correct historical runs, the same risk T01's catchup=False default guards against",
+            "Backfills and catchup settings are entirely unrelated concepts with no connection to each other",
+            "The runbook invents a completely new backfill mechanism unrelated to T01's orchestration design",
+            "Backfill scoping is irrelevant to on-call incident response"
+          ],
+          "correct": 0,
+          "right": "Right -- the same accidental-recompute risk T01 flagged for catchup=True applies directly here: a backfill during incident response must be scoped precisely to the missed date(s).",
+          "wrong": "An incident dragging past the business-day boundary turns 're-run this stage' into 'backfill a specific historical date' -- and the danger T01 flagged applies directly: a backfill must be scoped to exactly the missed date(s), because a broader or vaguer range risks re-triggering already-correct historical runs, exactly the accidental-recompute risk T01's catchup=False default guards against."
+        },
+        {
+          "q": "Why does the rollback plan reference Iceberg's existing snapshot mechanism (from Chapter 3) rather than proposing a new recovery mechanism?",
+          "choices": [
+            "Resilience planning doesn't require inventing new recovery mechanisms -- it requires identifying which ALREADY-EXISTING mechanism applies to a specific recovery need and writing down the exact, testable command that uses it",
+            "Iceberg's snapshot mechanism is being introduced for the first time in this lesson, unrelated to Chapter 3",
+            "The rollback plan actually proposes an entirely new, bespoke recovery system built from scratch",
+            "Rollback is impossible with Iceberg tables, so a workaround was needed"
+          ],
+          "correct": 0,
+          "right": "Exactly -- resilience planning is about identifying which already-existing mechanism (here, Iceberg's snapshot history) applies to a real recovery need, not inventing something new.",
+          "wrong": "Resilience planning does not require inventing new recovery mechanisms from scratch -- it requires identifying which ALREADY-EXISTING mechanism (Iceberg's snapshot history, established for an entirely different purpose in Chapter 3's lakehouse lesson) applies to this pipeline's specific recovery need, and writing down the exact, testable command that would use it."
+        },
+        {
+          "q": "What explicit caveat does the runbook state about what rollback does NOT cover, and why does that matter?",
+          "choices": [
+            "A snapshot rollback fixes the TABLE's state but does not itself un-send anything already distributed downstream (e.g. to a regulator) -- stated explicitly so the runbook doesn't overstate what its own recovery mechanism actually covers",
+            "Rollback covers everything including any downstream distribution, with no limitation stated",
+            "The runbook doesn't address this question at all",
+            "Rollback only works for tables smaller than a certain size, which is the stated limitation"
+          ],
+          "correct": 0,
+          "right": "Right -- the caveat is explicit: rollback fixes the table's state but doesn't retroactively fix anything already sent downstream. This prevents the runbook from implying a guarantee the mechanism doesn't actually provide.",
+          "wrong": "The runbook explicitly states that a snapshot rollback fixes the TABLE's state but does not itself un-send anything already distributed downstream (e.g. a bad report already sent to a regulator) -- that's a separate incident-communication action. This matters because it's the same 'do not imply one control provides a guarantee belonging to another' discipline this whole chapter required for CI/CD, containers, and Kubernetes."
+        },
+        {
+          "q": "What is the general principle this final lesson -- and the whole 36-lesson track -- closes on?",
+          "choices": [
+            "Production resilience is not a single new technical mechanism to add -- it is the discipline of writing down, in advance and while calm, the retry policy, backfill scoping, rollback path and communication triggers that a pipeline's own already-built properties already make possible",
+            "Production resilience requires building an entirely new set of tools unrelated to anything covered earlier in the track",
+            "On-call engineers should always trust their instincts rather than following any pre-written runbook",
+            "Resilience planning is only relevant for pipelines that have never failed before"
+          ],
+          "correct": 0,
+          "right": "Right -- the track closes by tying together every prior chapter's mechanism (idempotency, orchestration tracking, snapshot history, SLA alerting) into one coherent runbook, not introducing something new.",
+          "wrong": "Production resilience is not a single technical mechanism to add -- it's the discipline of writing down, in advance and while calm, the retry policy, backfill scoping, rollback path, and communication triggers that a pipeline's own already-built properties (idempotency, orchestration tracking, snapshot history, SLA alerting) already make possible. This closes the track by applying what the prior 35 lessons already established, not introducing a new 36th technique."
+        }
+      ],
+      "close": "That closes the full 36-lesson Data Engineering curriculum's Teacher MCQs (once merged with Batch 1) -- resilience here is entirely about pre-deciding, calmly, what a pipeline's own existing mechanisms already make possible. Nicely done working through all six chapters."
     }
   }
 }
