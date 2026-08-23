@@ -274,10 +274,10 @@ entry 19.
   "remainingItemsTotal": 15,
   "fullTrackTotalItems": 251,
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
-  "contentThroughPR": 72,
+  "contentThroughPR": 73,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:c2524e01bbb66c1249b7e361da910a9326c74c074d922faabbe7bd2acb4128bb",
-  "lastVerified": "2026-08-22T22:27:16.837Z"
+  "sourcesTeacherMcqHash": "sha256:8d619bfc025a312da47b5663536c0fe2e74975962c434d7d1452fefc893824d5",
+  "lastVerified": "2026-08-23T03:38:50.709Z"
 }
 ```
 
@@ -857,6 +857,39 @@ consequences — grounded strictly in each lesson's actual `Live Scenario`,
 `The Question`, `Approach`, `Common Pitfall` and `Interview Angle` sections
 in `business-analysis/BA0X-T0X.md`, not terminology recall. No accepted
 lesson content was altered to fit a question.
+
+### Business Analysis Teacher MCQs — Batch 2 built (lessons 22-42, held for review)
+
+The remaining 21 BA lessons (BA06-T02 through BA10-T04, canonical curriculum
+order — Chapters 6 through 10) merged into `sources/teacher-mcq.json`
+alongside the existing 293 entries — **314 lessons / 996 questions total** in
+that file now, per the built file's own count. All 42 BA lessons now have
+Teacher MCQ coverage.
+
+**Question count was assigned per-lesson by genuine complexity assessment
+before authoring, not defaulted to a flat number** — the corrective lesson
+from Batch 1's adequacy review. Each lesson's distinct testable angles
+(Approach steps, Common Pitfall, Interview Angle) were mapped from the source
+content first, then 3-5 questions assigned to match. A separate, independent
+blind Codex adequacy review (not told the authored counts) then re-derived
+distinct angles from source alone and found one genuine gap: BA07-T01's
+Approach step 4 (acceptance criteria as the testable definition of "done")
+was untested by the 3 originally-authored questions. A 4th question was
+added closing that gap, re-validated and re-reviewed — this shifted
+BA07-T01 from the 3-question group to the 4-question group. Final
+distribution: 7 lessons at 3 questions, 13 lessons at 4 questions, 1 lesson
+at 5 questions (BA07-T06, Analysing Potential Value — five genuinely
+distinct angles: net value, time-to-benefit discounting, delivery-capacity
+constraint, explicit recommendation conditions, and the pitfall's
+ranking-reversal risk) = 78 questions for this batch, per the built file's
+own count.
+
+Every question tests applied judgement, diagnosis, trade-offs, ambiguity,
+stakeholder consequences and delivery decisions, grounded strictly in each
+lesson's actual source content — not terminology recall. No accepted lesson
+content was altered; no source defect was found during authoring. DV
+(236/708), DE (36/139) and Batch 1 (21/71) confirmed unchanged by direct
+count against the built file.
 
 **No new integration code was needed**, matching the DE precedent: the
 Teacher panel's generic `S.teacherMcq.lessons[lessonId]` lookup works
