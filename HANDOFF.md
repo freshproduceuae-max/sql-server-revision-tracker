@@ -875,22 +875,21 @@ blind Codex adequacy review (not told the authored counts) then re-derived
 distinct angles from source alone and found one genuine gap: BA07-T01's
 Approach step 4 (acceptance criteria as the testable definition of "done")
 was untested by the 3 originally-authored questions. A 4th question was
-added closing that gap, re-validated and re-reviewed. Final distribution: 8
-lessons at 3 questions, 12 lessons at 4 questions, 1 lesson at 5 questions
-(BA07-T06, Analysing Potential Value — five genuinely distinct angles: net
-value, time-to-benefit discounting, delivery-capacity constraint, explicit
-recommendation conditions, and the pitfall's ranking-reversal risk) = 78
-questions for this batch.
+added closing that gap, re-validated and re-reviewed — this shifted
+BA07-T01 from the 3-question group to the 4-question group. Final
+distribution: 7 lessons at 3 questions, 13 lessons at 4 questions, 1 lesson
+at 5 questions (BA07-T06, Analysing Potential Value — five genuinely
+distinct angles: net value, time-to-benefit discounting, delivery-capacity
+constraint, explicit recommendation conditions, and the pitfall's
+ranking-reversal risk) = 78 questions for this batch, per the built file's
+own count.
 
 Every question tests applied judgement, diagnosis, trade-offs, ambiguity,
 stakeholder consequences and delivery decisions, grounded strictly in each
 lesson's actual source content — not terminology recall. No accepted lesson
-content was altered; no source defect was found during authoring.
-
-**No new integration code was needed**, same as Batches 1 and DE — the
-generic Teacher panel lookup handles the new ids with zero `index.html`
-changes. Additive only: DV (236/708), DE (36/139) and Batch 1 (21/71)
-confirmed unchanged by direct count against the built file.
+content was altered; no source defect was found during authoring. DV
+(236/708), DE (36/139) and Batch 1 (21/71) confirmed unchanged by direct
+count against the built file.
 
 **No new integration code was needed**, matching the DE precedent: the
 Teacher panel's generic `S.teacherMcq.lessons[lessonId]` lookup works
