@@ -11797,6 +11797,984 @@
         }
       ],
       "close": "That closes the full 36-lesson Data Engineering curriculum's Teacher MCQs (once merged with Batch 1) -- resilience here is entirely about pre-deciding, calmly, what a pipeline's own existing mechanisms already make possible. Nicely done working through all six chapters."
+    },
+    "BA01-T01": {
+      "open": "BA01-T01 — What Business Analysis Actually Is. The warehouse rollout that ran 40% over budget because nobody wrote down the problem. Let's see what stuck.",
+      "questions": [
+        {
+          "q": "The CEO asks what a BA adds that project managers and developers don't already cover. What's the concrete, non-job-description answer the lesson builds toward?",
+          "choices": [
+            "A BA owns whether the change is the right one at all, distinct from a PM owning on-time, on-budget delivery of whatever change was chosen",
+            "A BA writes the documents that PMs and developers don't have time to write",
+            "A BA reports project status to the CEO more frequently than a PM does",
+            "A BA is a more senior version of a project manager"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson draws the line at the decision itself: is this the right change, not just is it delivered well.",
+          "wrong": "The lesson explicitly rejects documents-as-the-answer and rejects seniority framing. The real distinction is ownership of the decision: PM owns delivering the chosen change; BA owns whether it's the right change."
+        },
+        {
+          "q": "The warehouse project went straight from 'our warehouse is slow' to picking a vendor. What specifically was skipped, according to the lesson's approach?",
+          "choices": [
+            "A vendor comparison spreadsheet",
+            "Needs analysis — nobody separated what problem was being solved from what change would solve it",
+            "A project charter signed by the sponsor",
+            "A Gantt chart for the implementation"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson names three questions that get conflated: what's the problem, what change solves it, and did it work. This team skipped straight to a solution.",
+          "wrong": "It's not about missing project artefacts like charters or timelines. The lesson's point is that the team never separated 'what problem are we solving' from 'what change would solve it' — needs analysis was skipped entirely."
+        },
+        {
+          "q": "Per the lesson's stated pitfall, why is answering the CEO's question with a list of deliverables the wrong move?",
+          "choices": [
+            "Deliverables are confidential and shouldn't be discussed with executives",
+            "Stakeholders want a change that works, not documents — leading with artefacts undersells the actual value delivered",
+            "It takes too long to list every deliverable in a conversation",
+            "The CEO already has access to the deliverables list"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson is explicit that the outcome should lead, with artefacts mentioned only as evidence, because that's what stakeholders actually value.",
+          "wrong": "The issue isn't time or confidentiality. It's that documents aren't the value stakeholders care about — the change working is. Deliverables should support that story as evidence, not lead it."
+        }
+      ],
+      "close": "Needs vs. solutions, and outcome over artefacts. That's the frame the rest of the course builds on. Next: how the BABOK knowledge areas fit together."
+    },
+    "BA01-T02": {
+      "open": "BA01-T02 — How the BABOK Framework Fits Together. One analyst writes 60-page specs, another writes sticky notes, and nobody can tell what 'done' means. Let's check what landed.",
+      "questions": [
+        {
+          "q": "The lesson frames introducing a shared framework to an already-delivering team as a risk of what, specifically?",
+          "choices": [
+            "Slowing releases down permanently",
+            "Imposing bureaucracy that replaces practice the team already has, rather than validating it",
+            "Requiring every analyst to use the same software tool",
+            "Conflicting with the team's existing project management methodology"
+          ],
+          "correct": 1,
+          "right": "Right — the approach is explicitly to map existing practice onto the six knowledge areas first, so the framework validates rather than replaces what's working.",
+          "wrong": "The risk named in the lesson isn't about tooling or methodology conflict — it's about bureaucracy overriding practice that already works. The approach avoids this by mapping current practice onto the framework first."
+        },
+        {
+          "q": "According to the lesson, the six knowledge areas should be treated as what, rather than sequential phases?",
+          "choices": [
+            "Optional add-ons for larger projects only",
+            "Concurrent concerns you revisit as elicitation surfaces new information",
+            "A certification syllabus with no bearing on daily work",
+            "A hierarchy where higher areas override lower ones"
+          ],
+          "correct": 1,
+          "right": "Exactly — the common pitfall named is treating them as phases; they're concurrent, and elicitation findings can send you back to strategy analysis.",
+          "wrong": "The lesson's stated pitfall is exactly this: treating the six areas as sequential phases. They're concurrent — new information from elicitation can require revisiting strategy analysis at any point."
+        },
+        {
+          "q": "Which knowledge area does the lesson identify as the one most teams neglect, and why does that matter for the interview angle?",
+          "choices": [
+            "Elicitation and collaboration, because teams talk to stakeholders too much",
+            "Solution evaluation, because teams stop at go-live rather than confirming the change delivered value",
+            "Requirements life cycle management, because it's considered too administrative",
+            "Planning and monitoring, because it's seen as the PM's job"
+          ],
+          "correct": 1,
+          "right": "Right — solution evaluation is called out as the genuinely missing area since teams typically stop once the thing ships, never confirming it actually worked.",
+          "wrong": "The lesson specifically names solution evaluation as the neglected area, precisely because most teams' engagement ends at go-live rather than confirming the change delivered its intended value."
+        }
+      ],
+      "close": "Six concurrent knowledge areas, not six phases, and solution evaluation is the one teams skip. Chapter 2 next — the six core concepts."
+    },
+    "BA02-T01": {
+      "open": "BA02-T01 — The Six Core Concepts. A bank wants to replace its loan system because it's 'outdated' — but three directors give three different reasons why. Let's dig in.",
+      "questions": [
+        {
+          "q": "In the loan-origination scenario, why is 'the current system is outdated' identified as a context observation rather than a need?",
+          "choices": [
+            "Because it describes the environment, not a gap in value delivered to stakeholders — a need has to be stated in terms of what's missing or costing the business",
+            "Because the system genuinely isn't outdated and the directors are mistaken",
+            "Because only IT can define technical needs, not business stakeholders",
+            "Because 'outdated' is a subjective word that can't appear in any requirement"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's approach forces the room to state an actual need (like lost applications from processing delay), not a description of the current environment.",
+          "wrong": "It's not about subjectivity or who's allowed to state needs. The lesson's point is structural: 'outdated' describes context, not a stated gap in value — a real need names what's actually being lost or costing the business."
+        },
+        {
+          "q": "The lesson's common pitfall is accepting a solution as a need. Using its own example, what's the difference between 'we need a new system' and 'we lose 30% of applications to processing delay'?",
+          "choices": [
+            "There's no real difference — both are equally valid ways to state a requirement",
+            "The second is a need that could be solved multiple ways; the first jumps straight to one solution and forecloses alternatives",
+            "The first is more specific and therefore more useful for developers",
+            "The second requires more stakeholder consultation to write"
+          ],
+          "correct": 1,
+          "right": "Exactly — a stated need like the 30% loss figure leaves the solution space open, while 'we need a new system' has already picked (and hidden) a solution.",
+          "wrong": "The lesson draws this distinction directly: a need like the 30% figure is solvable multiple ways, while 'we need a new system' has smuggled in a solution before the need was even examined."
+        },
+        {
+          "q": "When the three directors give incompatible answers about the loan system's value, what does the lesson's approach say to do before any solution discussion resumes?",
+          "choices": [
+            "Let the most senior director's answer take precedence and move forward",
+            "Walk all six core concepts and force a single articulated need, logging where consensus wasn't reached",
+            "Commission a market analysis of competing loan systems",
+            "Proceed with the replacement since all three agree something should change"
+          ],
+          "correct": 1,
+          "right": "Right — the approach is to walk change, need, solution, stakeholder, value and context explicitly, note where answers diverge, and force one agreed need before solutioning resumes.",
+          "wrong": "Deferring to seniority or proceeding on vague agreement skips the actual diagnostic step. The lesson's approach is to walk the six concepts, surface the divergence explicitly, and force one agreed need first."
+        }
+      ],
+      "close": "Need before solution, and the six concepts as a diagnostic, not a checklist to rubber-stamp. Next: classifying requirements so they stay useful."
+    },
+    "BA02-T02": {
+      "open": "BA02-T02 — Classifying Requirements. One document mixes concurrent-user counts, a call-centre reduction target, and a button colour. Let's see what got sorted out.",
+      "questions": [
+        {
+          "q": "The lesson separates 'we want to reduce call centre volume by 20%' from 'the system shall support 5,000 concurrent users'. What's the classification difference?",
+          "choices": [
+            "The first is a stakeholder requirement and the second is a transition requirement",
+            "The first is a business requirement (organisational outcome) and the second is a solution requirement (non-functional)",
+            "Both are functional requirements at different levels of detail",
+            "The first is negotiable and the second never is"
+          ],
+          "correct": 1,
+          "right": "Right — business requirements describe the outcome the organisation wants; solution requirements (functional/non-functional) describe how the system behaves. The 20% target is the former, concurrency the latter.",
+          "wrong": "They're not both functional, and negotiability isn't the classifying factor here. The 20% figure is a business requirement (organisational outcome); the concurrency figure is a solution requirement, specifically non-functional."
+        },
+        {
+          "q": "Why does the lesson say transition requirements like data migration and training are especially prone to being forgotten?",
+          "choices": [
+            "They're only ever assigned to junior analysts",
+            "They apply only temporarily during the change, so they're invisible in a steady-state specification and then surface at cutover",
+            "They're always more expensive than solution requirements",
+            "Regulators exempt transition activities from documentation"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson's pitfall names this directly: temporary requirements don't appear in a steady-state spec, so they get skipped until they blow up cutover.",
+          "wrong": "Cost and staffing aren't the mechanism described. The lesson says transition requirements are invisible in steady-state documentation because they only apply during the change itself — which is why they get forgotten until cutover."
+        },
+        {
+          "q": "The lesson's traceability step says any lower-level requirement that traces to nothing should be treated how?",
+          "choices": [
+            "Escalated to the steering committee immediately as a compliance breach",
+            "Flagged as a candidate for deletion, since it serves no stated business outcome",
+            "Automatically reclassified as a transition requirement",
+            "Left in place since removing requirements is out of scope for a BA"
+          ],
+          "correct": 1,
+          "right": "Right — the approach explicitly treats untraceable requirements as orphans and candidates for deletion.",
+          "wrong": "The lesson doesn't call for automatic escalation or reclassification. An orphan requirement — one that traces to no business requirement — is flagged as a deletion candidate."
+        }
+      ],
+      "close": "Business, stakeholder, solution and transition — four types, and transition is the one that vanishes until cutover. Next: finding the stakeholders the org chart hides."
+    },
+    "BA02-T03": {
+      "open": "BA02-T03 — Identifying Stakeholders You'd Otherwise Miss. A hospital scheduling system goes live and the medical records team discovers, too late, that it can't produce the audit trail their regulator needs. Let's see why.",
+      "questions": [
+        {
+          "q": "Clinicians and administrators were consulted throughout the hospital rollout, yet the medical records team was missed. What method would the lesson say should have caught this?",
+          "choices": [
+            "Working outward from the process to trace who touches the data, rather than building the stakeholder list from the org chart",
+            "Sending a company-wide survey before the project started",
+            "Adding more clinicians to the consultation sessions",
+            "Waiting until go-live to see who complains"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's pitfall is explicit: the org chart shows reporting lines, not information flows, and process-tracing is what would have surfaced the medical records team.",
+          "wrong": "More clinician input wouldn't have surfaced a different team entirely. The lesson's fix is tracing the process itself — who touches the data before, during and after — rather than building the list from the org chart."
+        },
+        {
+          "q": "Why does the lesson say regulatory and audit roles rarely self-identify as users during stakeholder identification?",
+          "choices": [
+            "Because they are legally barred from participating in system design",
+            "Because they don't log in to the system directly, so a user-centric identification method misses them",
+            "Because regulators only get involved after go-live by policy",
+            "Because they are represented by external consultants, not internal staff"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson notes these roles must be included explicitly since they don't self-identify, precisely because 'user' framing misses people who receive outputs without logging in.",
+          "wrong": "It's not a legal restriction or an external-representation issue. The lesson's point is that audit/regulatory roles often never log in to the system, so a user-focused identification approach misses them unless included deliberately."
+        },
+        {
+          "q": "The lesson says a common interview question is 'how do you handle a stakeholder you discover late?' What does the intended answer involve, per the lesson?",
+          "choices": [
+            "Redesigning the project timeline from scratch to accommodate them",
+            "Impact assessment and change control, not heroics",
+            "Excluding their requirement since the design phase has already closed",
+            "Escalating directly to the regulator for an extension"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson is explicit that the answer is impact assessment and change control, deliberately contrasted with 'heroics'.",
+          "wrong": "The lesson explicitly rules out both a full timeline rebuild and outright exclusion. The intended answer is a disciplined impact assessment through change control, not a heroic scramble."
+        },
+        {
+          "q": "The lesson's approach also says to classify each stakeholder by influence and interest. What is that classification actually for?",
+          "choices": [
+            "So that engagement effort is proportionate — it decides how much time and attention each group gets, not just whether they're on the list",
+            "So that stakeholders can be ranked for annual performance reviews",
+            "So that only high-influence stakeholders need to be included in the register at all",
+            "So that the org chart can be redrawn to reflect actual influence"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson ties the influence/interest grid directly to engagement effort: it's not about who makes the list, but how much engagement each group warrants once they're on it.",
+          "wrong": "It's not about performance reviews, excluding low-influence stakeholders, or redrawing the org chart. The classification exists to make engagement effort proportionate to each stakeholder's actual influence and interest."
+        }
+      ],
+      "close": "Trace the process, not the org chart, and audit roles need explicit inclusion. Chapter 3 next — planning and monitoring."
+    },
+    "BA03-T01": {
+      "open": "BA03-T01 — Choosing a Business Analysis Approach. Same day, two projects: a regulated core banking ledger migration and a six-week mobile feature test. Let's see why they can't share an approach.",
+      "questions": [
+        {
+          "q": "Why does the lesson say the ledger migration and the mobile feature should not use the same analysis approach?",
+          "choices": [
+            "The ledger project has a bigger budget, so it automatically gets more formal treatment",
+            "They differ on change complexity, regulatory exposure and cost of being wrong — the ledger favours predictive analysis, the mobile feature favours adaptive",
+            "Mobile projects never require any formal requirements documentation",
+            "Regulatory projects must always use waterfall by law"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's assessment criteria are complexity, regulatory exposure and cost of error; on those, the ledger calls for predictive (rework is expensive, requirements stable) and the mobile feature for adaptive (learning is cheap, requirements uncertain).",
+          "wrong": "Budget size and blanket legal mandates aren't the stated criteria. The lesson assesses each project on change complexity, regulatory exposure and cost of being wrong, which is what actually drives the predictive-vs-adaptive choice."
+        },
+        {
+          "q": "The lesson warns against letting the organisation's default methodology decide the approach. What consequence does it name for running the ledger migration on two-week discovery cycles?",
+          "choices": [
+            "Faster time to market with no real downside",
+            "An audit finding, not agility",
+            "Lower total project cost",
+            "Improved stakeholder satisfaction scores"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson's own phrase is that this produces 'an audit finding, not agility,' because the ledger's regulatory exposure demands the rigour that predictive analysis provides.",
+          "wrong": "The lesson is explicit that forcing a regulated ledger migration through short adaptive cycles produces an audit finding, not any of these positive outcomes — the regulatory context punishes the mismatch."
+        },
+        {
+          "q": "When asked 'are you agile or waterfall?' in an interview, what does the lesson say the strong answer does?",
+          "choices": [
+            "Picks agile as the universally correct modern answer",
+            "Refuses the binary framing and explains what actually drives the choice of approach",
+            "Picks waterfall to signal seniority and rigour",
+            "Avoids answering and redirects to a different topic"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson explicitly says the strong answer refuses the framing itself and instead explains the drivers (complexity, regulatory exposure, cost of being wrong).",
+          "wrong": "Picking a side or dodging the question misses the lesson's point. The strong answer rejects the false binary and explains the actual factors that should drive the choice."
+        },
+        {
+          "q": "The approach's final step is to document the rationale for the chosen analysis approach. Why does that step matter to a governance board that wants consistency across projects?",
+          "choices": [
+            "It makes the choice defensible rather than stylistic — the board can see it was driven by complexity, regulation and cost of error, not personal preference",
+            "It satisfies a legal requirement that all analysis approaches be filed with the board in writing",
+            "It allows the board to retroactively change which approach was used",
+            "It removes the need for the board to review the project at all"
+          ],
+          "correct": 0,
+          "right": "Exactly — documenting the rationale is what lets the board see the difference is driven by real criteria, not stylistic preference, which is what makes an inconsistent-looking choice actually defensible.",
+          "wrong": "It isn't a filing mandate, a retroactive-change mechanism, or a way to avoid board review. The point is that a documented rationale converts what looks like inconsistency into a defensible, criteria-driven decision."
+        }
+      ],
+      "close": "Predictive vs. adaptive isn't a style preference — it's driven by complexity, regulation and the cost of getting it wrong. Next: planning stakeholder engagement."
+    },
+    "BA03-T02": {
+      "open": "BA03-T02 — Planning Stakeholder Engagement. Forty stakeholders invited to every workshop; attendance collapses to six, and the six least affected people show up. Let's see the fix.",
+      "questions": [
+        {
+          "q": "What was the actual failure in the previous analyst's engagement approach, per the lesson?",
+          "choices": [
+            "Not sending calendar invites far enough in advance",
+            "Inviting all 40 stakeholders to every workshop instead of segmenting by influence and interest and assigning a mode per group",
+            "Using Teams instead of email for scheduling",
+            "Holding workshops too infrequently"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's approach is explicit: segment by influence/interest and assign engagement mode (workshop, interview, written review) per quadrant, rather than blanket-inviting everyone to everything.",
+          "wrong": "The root failure wasn't scheduling logistics or tool choice — it was applying one engagement mode (the workshop) to all 40 stakeholders instead of matching mode to each group's influence and interest."
+        },
+        {
+          "q": "Per the lesson, why should high-influence, low-availability stakeholders get interviews rather than workshops?",
+          "choices": [
+            "Interviews are always cheaper to run than workshops",
+            "Workshops are reserved for those who must co-create, and interviews suit people whose time is scarce but whose input has high influence",
+            "Interviews don't require any preparation from the analyst",
+            "Regulatory policy requires 1:1 sessions for senior stakeholders"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson reserves workshops for co-creation and uses interviews specifically for high-influence, low-availability people, matching mode to both influence and availability.",
+          "wrong": "It isn't about cost or a regulatory mandate. The lesson's logic is that workshops suit co-creation, while interviews fit people who have high influence but limited availability for group sessions."
+        },
+        {
+          "q": "The lesson's common pitfall is confusing consultation with approval. What's the practical risk it names?",
+          "choices": [
+            "Stakeholders who believe they're approving when only consulted will block at the worst moment",
+            "Consulted stakeholders will demand a pay rise for their input",
+            "Approval-only stakeholders will attend too many meetings",
+            "The RACI chart becomes too long to maintain"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this precisely: a stakeholder who thinks they were approving, when they were only consulted, will surface that gap by blocking later, at high cost.",
+          "wrong": "The risk isn't administrative overhead — it's that a stakeholder operating under the wrong assumption about their own decision rights will block the change downstream, at the worst possible time."
+        }
+      ],
+      "close": "Segment by influence and interest, match the mode, and set decision rights explicitly. Next: governance for requirements."
+    },
+    "BA03-T03": {
+      "open": "BA03-T03 — Establishing Governance for Requirements. Three months in, a £200,000 scope addition got 'approved' — everyone remembers discussing it, nobody remembers deciding. Let's fix that.",
+      "questions": [
+        {
+          "q": "What specifically made the £200,000 requirement change untraceable, according to the lesson?",
+          "choices": [
+            "The decision existed only in people's memory of a discussion, not recorded against the requirement itself",
+            "The finance department refused to release the budget records",
+            "The requirement was written in a language nobody on the team could read",
+            "The change was approved verbally over the phone with no witnesses"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's fix requires approvals to be recorded against the requirement itself, not in meeting minutes, which is exactly what was missing here.",
+          "wrong": "The scenario isn't about missing financial records or language barriers. The core gap is that the approval decision was never recorded against the requirement itself — only remembered as 'a discussion'."
+        },
+        {
+          "q": "Why does the lesson insist on approval thresholds rather than routing every change through the same board?",
+          "choices": [
+            "Boards are only legally required for changes above a fixed currency amount",
+            "If a typo fix needs the same board as a scope change, people route around the process entirely",
+            "Thresholds are required by ISO governance standards",
+            "Smaller changes are statistically less likely to fail"
+          ],
+          "correct": 1,
+          "right": "Exactly — this is the lesson's stated pitfall verbatim: treating all changes equally causes people to bypass governance altogether.",
+          "wrong": "The reasoning isn't a legal or statistical one. The lesson's pitfall is behavioural: uniform governance for trivial and material changes alike drives people to route around the process."
+        },
+        {
+          "q": "The lesson distinguishes change control from configuration management. How does it draw that line?",
+          "choices": [
+            "Change control is for hardware; configuration management is for software",
+            "Change control governs decisions; configuration management governs versions",
+            "They are two names for the same governance activity",
+            "Change control is optional; configuration management is mandatory"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson states this distinction directly: decisions vs. versions.",
+          "wrong": "The two aren't interchangeable or split by hardware/software. The lesson's stated distinction is that change control governs the decisions made, while configuration management governs the versions produced."
+        }
+      ],
+      "close": "Approvals need to be recorded against the requirement itself, and thresholds keep governance from being routed around. Next: information management planning."
+    },
+    "BA03-T04": {
+      "open": "BA03-T04 — Planning Business Analysis Information Management. A programme ends; its requirements are scattered across 200 emails, a shared drive, two Confluence spaces and one laptop. Let's see the plan.",
+      "questions": [
+        {
+          "q": "What was the underlying failure that let a programme's rationale become unrecoverable within a month of handover?",
+          "choices": [
+            "The operations team was undertrained on the new system",
+            "No single authoritative location was designated per artefact type, so the requirements' history was scattered with nothing to trust",
+            "The programme ran over its original budget",
+            "The requirements were written in an unfamiliar template"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's approach is to choose one authoritative location per artefact type and make the rest explicitly non-authoritative, which is exactly what was missing.",
+          "wrong": "Training and budget aren't the described cause. The failure is structural: nothing was designated as the authoritative source per artefact type, so the information scattered with no way to tell current from stale."
+        },
+        {
+          "q": "Per the lesson's pitfall, what happens the moment a requirement exists in both Jira and a Word document with no stated precedence?",
+          "choices": [
+            "Jira automatically becomes the source of truth by default",
+            "The two versions diverge and both become untrustworthy",
+            "The Word document is archived automatically after 30 days",
+            "Nothing changes, since both formats store the same information"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson states plainly that two 'authoritative' sources with no stated precedence diverge and become untrustworthy together.",
+          "wrong": "There's no automatic default or archiving behaviour described. The lesson's point is that without stated precedence, both copies drift and neither can be trusted."
+        },
+        {
+          "q": "The lesson draws a parallel between this information management problem and another discipline. Which one, and why?",
+          "choices": [
+            "Software testing, because both require regression suites",
+            "Data governance, because the reasoning is identical to defining a golden source",
+            "Project scheduling, because both require critical-path analysis",
+            "Marketing, because both depend on audience segmentation"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson explicitly draws this parallel and suggests naming it directly if you have a data background: same reasoning as defining a golden source.",
+          "wrong": "The stated parallel is specifically to data governance and the golden-source concept, not to testing, scheduling or marketing practices."
+        },
+        {
+          "q": "Beyond naming one authoritative location per artefact, the approach also says to define naming and versioning. What specific problem does that step solve?",
+          "choices": [
+            "It lets a reader tell current from superseded material, which a single authoritative location alone does not guarantee",
+            "It reduces the total storage space the information management plan requires",
+            "It replaces the need for an access and retention rule set",
+            "It is required only for artefacts stored in Confluence, not SharePoint"
+          ],
+          "correct": 0,
+          "right": "Right — naming and versioning is a distinct step from designating an authoritative source: even within the right location, a reader still needs to tell which version is current versus stale.",
+          "wrong": "It's not about storage space, replacing retention rules, or being tool-specific. Naming and versioning solves a separate problem: distinguishing current from superseded material even within the authoritative location."
+        }
+      ],
+      "close": "One authoritative source per artefact, stated explicitly — the same logic as a data golden source. Next: measuring BA performance."
+    },
+    "BA03-T05": {
+      "open": "BA03-T05 — Measuring Business Analysis Performance. Your manager asks if the analysis function adds value, and the only metric on hand rewards volume over quality. Let's see what replaces it.",
+      "questions": [
+        {
+          "q": "Why does the lesson say 'number of requirements documents produced' is a poor performance metric?",
+          "choices": [
+            "It's too difficult to count accurately across a large team",
+            "It rewards volume over quality and doesn't correlate with whether the resulting change actually worked",
+            "It requires expensive tooling to track",
+            "It was banned by a professional standards body"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's stated problem is precisely this: it rewards volume, not quality, and has no bearing on whether the change worked.",
+          "wrong": "The issue isn't measurement difficulty or tooling cost — the lesson's objection is that document volume rewards the wrong behaviour and has no correlation with the outcome that actually matters."
+        },
+        {
+          "q": "The lesson proposes tracking how many requirements change after approval. What is this meant to be a proxy for?",
+          "choices": [
+            "The stakeholder's satisfaction with meeting scheduling",
+            "Elicitation quality",
+            "How well the developer team estimates story points",
+            "The organisation's overall change appetite"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson states this metric directly as a proxy for elicitation quality: frequent post-approval change suggests something wasn't properly elicited or confirmed upfront.",
+          "wrong": "The metric isn't about scheduling, estimation accuracy, or organisational appetite — the lesson ties post-approval requirement churn specifically to elicitation quality."
+        },
+        {
+          "q": "Before adopting any performance measure, what does the lesson's approach require checking for?",
+          "choices": [
+            "Whether the measure can be automated in a dashboard",
+            "Gaming risk — whether the measure could change behaviour for the worse",
+            "Whether competitors use the same measure",
+            "Whether the measure fits on a single PowerPoint slide"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's final approach step is explicit: review the measures for gaming risk before adopting them.",
+          "wrong": "The stated check isn't about automation, competitor benchmarking, or presentation format — it's specifically about whether the measure could be gamed or change behaviour in the wrong direction."
+        },
+        {
+          "q": "Besides outcome-based metrics like defect rates and post-approval change, the lesson's approach also includes stakeholder-reported measures. Why include those specifically?",
+          "choices": [
+            "Because analysis quality is partly perceived, and outcome metrics alone don't capture that perception",
+            "Because stakeholder-reported measures are easier to automate in a dashboard than defect rates",
+            "Because regulators require a stakeholder survey before any metric can be adopted",
+            "Because stakeholder-reported measures replace the need to check for gaming risk"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson includes stakeholder-reported measures precisely because analysis quality has a perceived dimension that defect-rate and rework metrics alone can't surface.",
+          "wrong": "It's not about automation ease, a regulatory survey mandate, or replacing the gaming-risk check. Stakeholder-reported measures are included because quality is partly perceived, which outcome metrics alone miss."
+        }
+      ],
+      "close": "Measure outcomes, not documents, and check every measure for gaming risk before adopting it. Chapter 4 next — elicitation and collaboration."
+    },
+    "BA04-T01": {
+      "open": "BA04-T01 — Preparing for Elicitation. Two hours booked with the head of claims, no agenda, 'so what do you need?' — and the session produces a wish list and a worried stakeholder. Let's fix the prep.",
+      "questions": [
+        {
+          "q": "What made the open-ended 'tell me what you need' session fail, per the lesson's approach?",
+          "choices": [
+            "The stakeholder wasn't senior enough to answer the question",
+            "No specific decisions or gaps were defined for the session to close before it was booked",
+            "The meeting ran for too long at two hours",
+            "The session should have used a different video conferencing tool"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's first approach step is to define the specific decisions or gaps the session must close before booking it; skipping that is exactly what produced a wish list instead of requirements.",
+          "wrong": "The failure isn't about seniority, duration, or tooling. The lesson's diagnosis is that no decisions were defined in advance, so the session had nothing concrete to close."
+        },
+        {
+          "q": "The lesson matches technique to outcome: interview for depth, workshop for consensus, observation for what?",
+          "choices": [
+            "Budget approval",
+            "Tacit process — the parts of a process people do but don't articulate",
+            "Vendor selection",
+            "Contract negotiation"
+          ],
+          "correct": 1,
+          "right": "Exactly — observation is matched to tacit process, capturing what people actually do rather than what they say they do.",
+          "wrong": "Observation isn't matched to budget, vendor, or contract activities in the lesson — it's specifically the technique for surfacing tacit process that stakeholders wouldn't think to describe."
+        },
+        {
+          "q": "Why does the lesson say pre-reading existing documentation before a session matters?",
+          "choices": [
+            "It's a compliance requirement for all elicitation sessions",
+            "It ensures stakeholder time is spent on what isn't already written down, rather than repeating known material",
+            "It reduces the number of attendees needed",
+            "It shortens the required session length automatically"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's stated purpose is to focus scarce stakeholder time on the genuinely unknown, not to re-cover ground already documented.",
+          "wrong": "It's not a compliance step or a way to cut attendee count. The point is to reserve stakeholder time for what documentation doesn't already answer."
+        }
+      ],
+      "close": "Define the decisions the session must close, and pick the technique — interview, workshop, or observation — to fit. Next: eliciting the rule nobody wrote down."
+    },
+    "BA04-T02": {
+      "open": "BA04-T02 — Conducting Elicitation That Surfaces the Real Rule. Underwriters say they 'always' escalate above £500,000 — observation shows an unwritten construction-sector exception too. Let's see how that surfaced.",
+      "questions": [
+        {
+          "q": "Why did interviews alone fail to surface the construction-sector escalation rule?",
+          "choices": [
+            "The underwriters were being deliberately deceptive",
+            "Interviews capture stated process, while the undocumented rule only showed up in actual observed behaviour",
+            "The interviewer didn't ask enough follow-up questions",
+            "The rule only applied on days the interviewer wasn't present"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's approach is to combine techniques deliberately: interviews for stated process, observation for what's actually done, since the undocumented rule only shows up in the latter.",
+          "wrong": "This isn't about deception or interview technique quality — the lesson's point is structural: stated process (interviews) and actual process (observation) diverge, and undocumented rules live in that gap."
+        },
+        {
+          "q": "The lesson says the rules 'live in the exceptions.' What does that mean for how elicitation questions should be framed?",
+          "choices": [
+            "Exceptions should be excluded from scope to keep requirements simple",
+            "Probing the happy path repeatedly is sufficient to find all the rules",
+            "Elicitation should specifically probe exceptions rather than only the happy path",
+            "Exceptions should always be escalated to legal before documenting"
+          ],
+          "correct": 2,
+          "right": "Exactly — the approach explicitly says to probe exceptions rather than the happy path, since that's where undocumented rules like the construction exception surface.",
+          "wrong": "Excluding exceptions or relying on happy-path questions would have missed the construction rule entirely, which is the point of the lesson. Exceptions need to be probed directly."
+        },
+        {
+          "q": "What technique does the lesson recommend for testing whether an elicited rule actually holds?",
+          "choices": [
+            "Replaying what was heard back against concrete cases",
+            "Sending a formal legal notice to the underwriting team",
+            "Waiting for the next audit cycle to confirm it",
+            "Assuming it holds once one stakeholder confirms it verbally"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's fourth approach step is to replay understanding back in concrete cases specifically to test whether the stated rule holds up.",
+          "wrong": "The lesson doesn't rely on formal legal notice, waiting for audits, or single verbal confirmation — it calls for testing the rule against concrete replayed cases."
+        },
+        {
+          "q": "The approach also calls for using document analysis alongside interviews and observation. What specific job does document analysis do that observation doesn't?",
+          "choices": [
+            "It finds where the stated rule originated and whether it still applies, rather than just confirming what people actually do today",
+            "It replaces the need to observe underwriters at all once a policy document exists",
+            "It is only useful for rules that have never been written down anywhere",
+            "It confirms the rule is correct by counting how many people believe it"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson assigns document analysis its own distinct job: tracing a stated rule back to its origin and checking whether it's still valid, separate from what observation shows is actually happening.",
+          "wrong": "Document analysis doesn't replace observation, isn't limited to undocumented rules, and isn't a popularity check. Its specific job is tracing a rule's origin and current validity."
+        }
+      ],
+      "close": "Interviews find the stated process; observation finds the real one, and it lives in the exceptions. Next: confirming what you actually heard."
+    },
+    "BA04-T03": {
+      "open": "BA04-T03 — Confirming Elicitation Results. Notes go out two weeks after a workshop; the operations lead says half of it is wrong — and the build already started. Let's see what should've happened earlier.",
+      "questions": [
+        {
+          "q": "What was the fundamental timing failure in this scenario, per the lesson?",
+          "choices": [
+            "Confirmation happened two weeks late, after build had already started against the uncorrected version",
+            "The notes were circulated using the wrong software",
+            "Too many stakeholders were copied on the confirmation email",
+            "The workshop itself ran too long"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's whole point is that confirmation needs to happen early enough that a misreading is cheap; two weeks post-workshop, with build already underway, made it expensive instead.",
+          "wrong": "Tooling and meeting length aren't the issue named. The core failure is timing: confirmation arrived so late that a misunderstanding had already become expensive to fix."
+        },
+        {
+          "q": "The lesson recommends confirming understanding using a model or example rather than prose. Why?",
+          "choices": [
+            "Prose is faster to produce than diagrams",
+            "People spot errors in a diagram or worked case more readily than in paragraphs",
+            "Regulators require diagrams for all requirements",
+            "Models eliminate the need for stakeholder review entirely"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson states this directly: errors are easier to spot in a diagram or worked example than buried in prose.",
+          "wrong": "It isn't about production speed, regulation, or removing review — the stated reason is that errors are simply more visible in a model or worked example than in written paragraphs."
+        },
+        {
+          "q": "Why does the lesson warn against treating no response to a confirmation email as agreement?",
+          "choices": [
+            "Because it usually means nobody read it, and disagreement surfaces later at a much higher cost",
+            "Because email is not a legally binding medium",
+            "Because silence always indicates active disagreement, not just non-reading",
+            "Because stakeholders are required to respond within 24 hours by policy"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's pitfall is stated precisely: silence usually just means the message wasn't read, and the real disagreement shows up later, more expensively.",
+          "wrong": "It's not a legal-bindingness argument or a claim that silence always signals disagreement — the lesson's point is that silence typically means the message went unread, deferring a costlier surprise."
+        },
+        {
+          "q": "Beyond replaying understanding back to one stakeholder, the approach also says to cross-check statements from different stakeholders against each other. What does that step surface that in-session replay alone would not?",
+          "choices": [
+            "Conflicts between what different stakeholders each believe, which a single person's confirmation can't reveal on its own",
+            "Whether the stakeholder's job title is accurate",
+            "Whether the session ran within its allotted time",
+            "Whether the notes were formatted correctly for circulation"
+          ],
+          "correct": 0,
+          "right": "Right — cross-checking is a distinct step from replaying understanding to one person: it's specifically how conflicts between different stakeholders' accounts get surfaced explicitly.",
+          "wrong": "It's not about job titles, timing, or formatting. Cross-checking across stakeholders is what exposes disagreement between their accounts — something a single stakeholder's confirmation can never reveal."
+        }
+      ],
+      "close": "Confirm within the session, use a model over prose, and timebox — silence is not agreement. Next: communicating to three different audiences from one source."
+    },
+    "BA04-T04": {
+      "open": "BA04-T04 — Communicating Business Analysis Information. One 80-page spec goes to a steering committee, developers and compliance — and all three fail to get what they need from it. Let's see the fix.",
+      "questions": [
+        {
+          "q": "Why did sending the same 80-page specification to all three audiences fail each of them differently?",
+          "choices": [
+            "The document wasn't properly formatted for printing",
+            "Form wasn't matched to audience — the committee needed a summary, developers needed acceptance criteria, compliance needed rule extracts",
+            "The document was too short to cover all three audiences' needs",
+            "Only one of the three audiences had access permissions to read it"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's approach is explicit: match form to audience (summary/decisions, acceptance criteria, rule extracts), which the single monolithic document failed to do for any of them.",
+          "wrong": "It's not a formatting, length, or access-permission problem — the failure is that one undifferentiated document can't serve a committee, developers and compliance, each of whom need a different form of the same information."
+        },
+        {
+          "q": "The lesson insists on deriving audience-specific views from a single source rather than maintaining separate documents per audience. Why?",
+          "choices": [
+            "Separate documents are more expensive to store",
+            "Parallel documents drift within weeks and you lose the ability to say which one the build actually followed",
+            "Regulators forbid multiple versions of the same requirement",
+            "A single document is always shorter to write"
+          ],
+          "correct": 1,
+          "right": "Exactly — this is the lesson's stated pitfall: parallel per-audience documents diverge quickly, and then nobody can say authoritatively which version the build followed.",
+          "wrong": "Storage cost and regulation aren't the reasoning given. The lesson's concern is drift: maintaining separate documents per audience causes them to diverge until none can be trusted as authoritative."
+        },
+        {
+          "q": "Beyond distributing the right view to the right audience, what does the lesson say communication also requires?",
+          "choices": [
+            "Confirming the message actually landed, rather than assuming distribution equals communication",
+            "Obtaining written sign-off from every recipient regardless of role",
+            "Translating the document into every stakeholder's preferred language",
+            "Publishing the document publicly for full transparency"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's fourth approach step is explicit: confirm the message landed; distribution alone isn't communication.",
+          "wrong": "Universal sign-off, translation, and public publication aren't what the lesson calls for. The missing step it names is confirming the message actually landed with each audience."
+        }
+      ],
+      "close": "One authoritative source, audience-matched views, and confirmation that the message landed. Next: managing a disengaging stakeholder."
+    },
+    "BA04-T05": {
+      "open": "BA04-T05 — Managing Stakeholder Collaboration. A key stakeholder stops attending after three months, and the PM suggests just proceeding without them. Let's see the better move.",
+      "questions": [
+        {
+          "q": "Before escalating a disengaged stakeholder, what does the lesson say to diagnose first?",
+          "choices": [
+            "Whether it's capacity, relevance or trust — the remedy differs entirely for each",
+            "Whether the stakeholder's manager should be informed immediately",
+            "Whether the project should be paused entirely",
+            "Whether the stakeholder should be formally removed from the register"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's first approach step is exactly this: distinguish capacity, relevance or trust as the cause, since each requires a different remedy.",
+          "wrong": "Immediate manager escalation, pausing the project, or removing the stakeholder outright all skip the required diagnosis. The lesson calls for identifying whether the cause is capacity, relevance, or trust first."
+        },
+        {
+          "q": "Why does the lesson warn against simply proceeding without the disengaged stakeholder and calling it decisiveness?",
+          "choices": [
+            "Because it violates the project's code of conduct",
+            "Because if they own the decision, the change will unwind later at far higher cost",
+            "Because it would breach the original project budget",
+            "Because other stakeholders would be offended by the exclusion"
+          ],
+          "correct": 1,
+          "right": "Exactly — the lesson's pitfall states this directly: proceeding without an owning stakeholder risks the change unwinding later, at a much higher cost than the delay would have been.",
+          "wrong": "The objection isn't about conduct codes, budget, or others' feelings — the concrete risk named is that a decision made without its actual owner will unwind downstream, more expensively."
+        },
+        {
+          "q": "The lesson frames the interview question behind this scenario as a behavioural one. What differentiates a strong answer?",
+          "choices": [
+            "Showing diagnosis before escalation, since most candidates jump straight to escalating",
+            "Naming the exact policy clause that governs stakeholder disengagement",
+            "Describing how quickly the candidate would replace the stakeholder",
+            "Emphasizing how the candidate avoided the situation altogether"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this as the differentiator: most candidates jump to escalation, so showing the diagnosis step first stands out.",
+          "wrong": "Citing policy clauses, planning a fast replacement, or avoidance aren't what the lesson identifies as differentiating. The distinguishing move is demonstrating diagnosis before escalating."
+        }
+      ],
+      "close": "Diagnose capacity, relevance or trust before escalating — proceeding without the owner just defers the cost. Chapter 5 next — requirements life cycle management."
+    },
+    "BA05-T01": {
+      "open": "BA05-T01 — Tracing Requirements. A regulator wants to see how a lending control maps to its obligation — and the team can show the code and the test, but not the trace. Let's fix that gap.",
+      "questions": [
+        {
+          "q": "What specifically could the team not demonstrate to the regulator, despite having the code and test in hand?",
+          "choices": [
+            "Which regulatory obligation the control derives from and whether it covers that obligation fully",
+            "The exact date the control was deployed to production",
+            "Which developer originally wrote the control's code",
+            "The performance benchmark of the control under load"
+          ],
+          "correct": 0,
+          "right": "Right — the gap is upward traceability: from the implemented control back to the specific obligation it's meant to satisfy, and coverage of that obligation.",
+          "wrong": "Deployment dates, authorship, and performance aren't the missing link described. What's missing is the trace from the control back to the specific regulatory obligation it derives from, and proof of full coverage."
+        },
+        {
+          "q": "The lesson distinguishes tracing upward from tracing downward. What does each direction demonstrate?",
+          "choices": [
+            "Upward traces the need/obligation the requirement serves; downward traces to design, build and test artefacts to demonstrate coverage",
+            "Upward is for regulated industries only; downward is for all other industries",
+            "Upward traces cost; downward traces schedule",
+            "Both directions trace the same thing, just in reverse order for convenience"
+          ],
+          "correct": 0,
+          "right": "Exactly — upward tracing connects a requirement to the business need/obligation behind it; downward tracing connects it to the build and test artefacts that demonstrate it was actually delivered and covered.",
+          "wrong": "The distinction isn't about industry or cost/schedule tracking. Upward tracing links to the originating need or obligation; downward tracing links to design, build and test evidence."
+        },
+        {
+          "q": "Why does the lesson's pitfall reject a traceability matrix maintained by hand in a spreadsheet?",
+          "choices": [
+            "Spreadsheets can't be shared with external auditors under any circumstances",
+            "It's accurate on the day it's written and misleading thereafter, since it isn't kept live with the actual requirements",
+            "Spreadsheets are incompatible with regulatory software standards",
+            "Hand-maintained matrices are always incomplete on day one"
+          ],
+          "correct": 1,
+          "right": "Right — the lesson's exact objection is that a manual matrix is accurate at the moment of writing and then drifts out of sync as requirements change, becoming misleading rather than merely outdated.",
+          "wrong": "It's not a sharing restriction or a software-compatibility issue, and it's not necessarily incomplete at creation. The problem is that it goes stale relative to the live requirements and becomes actively misleading."
+        }
+      ],
+      "close": "Trace up to the obligation, down to the evidence, and keep it live in the same tool as the requirements. Next: maintaining requirements for reuse."
+    },
+    "BA05-T02": {
+      "open": "BA05-T02 — Maintaining Requirements for Reuse. Three projects each write their own definition of 'active customer' — and two years later, three reports disagree. Let's see the fix.",
+      "questions": [
+        {
+          "q": "What underlying practice caused the three conflicting definitions of 'active customer' to emerge in the first place?",
+          "choices": [
+            "Enduring business rules were written project-specific rather than being maintained centrally and referenced",
+            "The projects used incompatible database systems",
+            "Marketing changed its terminology between projects",
+            "Each project used a different consulting firm for analysis"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's fix is to move enduring rules like this into a maintained catalogue owned outside any single project, which is precisely what didn't happen here.",
+          "wrong": "Database or consultant differences aren't the described cause. The lesson attributes the divergence to enduring rules being written and owned per-project instead of maintained centrally."
+        },
+        {
+          "q": "The lesson's pitfall is copying a rule into a project document instead of referencing a catalogue. What's the immediate consequence it names?",
+          "choices": [
+            "The copy immediately becomes a second source of truth and drifts from the original",
+            "The project document becomes legally binding while the catalogue does not",
+            "Copying rules always violates the organisation's document retention policy",
+            "The catalogue automatically deletes the original rule once copied"
+          ],
+          "correct": 0,
+          "right": "Exactly — the lesson states this precisely: a copy becomes an immediate second source of truth, and it drifts from the original catalogue entry over time.",
+          "wrong": "There's no legal-status or retention-policy claim here, and copying doesn't delete the original. The stated consequence is that the copy becomes a second, drifting source of truth."
+        },
+        {
+          "q": "Why does the lesson insist that a business rule catalogue must have named owners?",
+          "choices": [
+            "Because an unowned catalogue decays into another stale document",
+            "Because ownership is a legal requirement for all shared data assets",
+            "Because named owners are needed to bill the catalogue's maintenance cost internally",
+            "Because unowned catalogues cannot be stored in Confluence"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this directly: without assigned ownership, the catalogue decays into just another stale document, defeating its purpose.",
+          "wrong": "It's not a legal mandate, billing mechanism, or tooling restriction. The lesson's reasoning is that ownership is what prevents the catalogue from decaying into another neglected document."
+        }
+      ],
+      "close": "Enduring rules go in an owned catalogue, referenced not copied — the same discipline as a master data golden source. Next: prioritising under real constraint."
+    },
+    "BA05-T03": {
+      "open": "BA05-T03 — Prioritising Requirements Under Real Constraint. 120 backlog items, every one marked 'high priority', but capacity for only 40 before the regulatory deadline. Let's see how that gets resolved.",
+      "questions": [
+        {
+          "q": "Why does the lesson say replacing individual stakeholder ratings with a shared basis for prioritisation matters here?",
+          "choices": [
+            "Because ratings from different stakeholders aren't comparable to each other without a common basis like value, risk, dependency and obligation",
+            "Because stakeholders are not qualified to rate their own requirements",
+            "Because a shared basis is a mandatory regulatory requirement",
+            "Because individual ratings take longer to collect than a shared basis"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's point is comparability: everyone rating their own item 'high' produces no relative order, so a shared basis (value, risk, dependency, obligation) is needed to make items comparable.",
+          "wrong": "It's not about stakeholder competence, regulation, or collection speed. The issue is that individually-rated items aren't comparable to each other, so a common basis is needed to produce a real order."
+        },
+        {
+          "q": "The lesson distinguishes ranking from rating. Why does it insist on forced ranking specifically?",
+          "choices": [
+            "Because if everything can be rated 'high', nothing is actually prioritised — ranking forces a relative order to be stated",
+            "Because ranking is faster to compute in a spreadsheet",
+            "Because rating requires more stakeholder meetings than ranking",
+            "Because forced ranking is the only method compatible with Jira"
+          ],
+          "correct": 0,
+          "right": "Exactly — the lesson's pitfall states this directly: rating instead of ranking is what let all 120 items become 'high'; forced ranking is what surfaces the real trade-off.",
+          "wrong": "Computation speed, meeting count, and tooling compatibility aren't the reasoning given. The lesson's point is that rating allows everything to be 'high', while forced ranking exposes the actual trade-off."
+        },
+        {
+          "q": "Why does the lesson say the final ranking needs to go through governance rather than stand as the analyst's own call?",
+          "choices": [
+            "So that it becomes an organisational decision rather than the analyst's opinion",
+            "So that the ranking can be kept confidential from stakeholders",
+            "So that the analyst is shielded from any accountability for the outcome",
+            "So that the ranking can bypass the dependency map entirely"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's fourth approach step is explicit: taking the ranking through governance makes it a defensible organisational decision, not just the analyst's personal judgement.",
+          "wrong": "Confidentiality, shielding accountability, and bypassing dependencies aren't the stated purpose. Governance is what converts the ranking into an organisational decision rather than one person's opinion."
+        },
+        {
+          "q": "The approach also says to make dependencies explicit, so that an item is not deliverable ahead of what it depends on regardless of priority. Why does this matter even after items have been force-ranked?",
+          "choices": [
+            "Because a dependency is a hard sequencing constraint — a highly ranked item still can't ship before the lower-ranked item it depends on",
+            "Because dependencies are only relevant to regulatory items, not customer-facing ones",
+            "Because dependency mapping replaces the need for forced ranking entirely",
+            "Because dependencies only matter if the backlog has fewer than 40 items"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson treats dependency as a constraint that overrides rank order: no matter how high an item ranks, it can't be delivered ahead of something it depends on.",
+          "wrong": "Dependency isn't limited to regulatory items, doesn't replace ranking, and isn't a function of backlog size. It's a hard sequencing constraint that applies regardless of where an item ranks."
+        }
+      ],
+      "close": "Rank, don't rate, on a shared basis, and take it through governance. Next: assessing a change that arrives late and sounds small."
+    },
+    "BA05-T04": {
+      "open": "BA05-T04 — Assessing Requirements Changes. Late in build, an extra approval step 'sounds minor' — until it turns out to touch the workflow engine, the audit log, three reports and the training already written. Let's see the real assessment.",
+      "questions": [
+        {
+          "q": "Why is assessing only the build effort for this change insufficient, per the lesson's stated pitfall?",
+          "choices": [
+            "Training, documentation, migration and reporting are where late changes actually cost, and they're usually invisible to the requester",
+            "Build effort estimates are always inaccurate regardless of the change",
+            "The developers assigned to the change lack the necessary skill set",
+            "Build effort can't be measured until after the change is implemented"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's pitfall states this exactly: the real cost of a late change hides in training, documentation, migration and reporting, none of which the requester typically sees.",
+          "wrong": "It isn't about estimate accuracy or skill gaps. The lesson's point is that the true cost of a late change concentrates in the invisible areas — training, docs, migration, reporting — not just the build."
+        },
+        {
+          "q": "The lesson's approach says to check the change against the original business need. What is this check actually testing?",
+          "choices": [
+            "Whether the change still serves the original need, or is scope creep that happens to have a sponsor",
+            "Whether the change request was submitted through the correct Jira ticket type",
+            "Whether the requester has budget authority to approve their own change",
+            "Whether the change can be implemented before the next sprint boundary"
+          ],
+          "correct": 0,
+          "right": "Exactly — the lesson frames this as distinguishing a change that genuinely still serves the need from scope creep that simply has a sponsor behind it.",
+          "wrong": "Ticket type, budget authority, and sprint timing aren't what this check tests. It's specifically about whether the change still serves the original need or is scope creep wearing a sponsor's backing."
+        },
+        {
+          "q": "Instead of a single verdict, what does the lesson say the analyst should present for a late change like this?",
+          "choices": [
+            "Options — accept, defer, or accept with a named trade-off",
+            "A recommendation to reject the change outright without further discussion",
+            "A silent implementation without informing the steering committee",
+            "A request for the requester to withdraw the change voluntarily"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's fourth approach step is explicit: present options (accept, defer, accept with trade-off) rather than a single take-it-or-leave-it verdict.",
+          "wrong": "Outright rejection, silent implementation, and pressuring withdrawal all skip the lesson's actual recommendation, which is to present a set of options with their trade-offs made explicit."
+        }
+      ],
+      "close": "Assess the full footprint — not just build — and present options, not a verdict. Next: making approval unambiguous."
+    },
+    "BA05-T05": {
+      "open": "BA05-T05 — Approving Requirements. A requirement gets 'approved' in a meeting; at UAT, the approver says they approved the concept, not the detailed behaviour — and the behaviour is wrong. Let's fix that ambiguity.",
+      "questions": [
+        {
+          "q": "What was actually ambiguous about the approval that later caused the UAT dispute?",
+          "choices": [
+            "What exactly was in scope of the approval — concept versus detailed behaviour — was never stated",
+            "The approver's identity was not recorded anywhere",
+            "The meeting was held without a formal agenda document",
+            "The requirement was approved by someone outside the project team entirely"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's fix is to state explicitly what is and isn't in scope of an approval, since here the concept/behaviour boundary was never made explicit.",
+          "wrong": "Identity and agenda formality aren't the described gap. The actual ambiguity was scope: nobody stated whether the approval covered the concept only or the detailed behaviour too."
+        },
+        {
+          "q": "Why does the lesson say approval must be recorded against a specific version, not a moving document?",
+          "choices": [
+            "Because otherwise the approval can't be tied to what was actually agreed as the document continues to change",
+            "Because version control software requires it as a technical constraint",
+            "Because moving documents are always larger in file size",
+            "Because regulators only recognise version-tagged files as valid evidence"
+          ],
+          "correct": 0,
+          "right": "Exactly — the lesson's point is that a moving document keeps changing after approval, so tying approval to a specific version is what preserves the link between the decision and what was actually agreed.",
+          "wrong": "This isn't a tooling constraint, file-size issue, or blanket regulatory rule. The reasoning is that a moving document drifts after approval, so version-specific approval is what keeps the decision meaningful."
+        },
+        {
+          "q": "The lesson's pitfall rejects approval recorded only in meeting minutes. Why specifically?",
+          "choices": [
+            "Minutes describe a discussion; they don't tie a decision to a specific version of a specific requirement",
+            "Meeting minutes are not admissible as evidence in any regulatory context",
+            "Minutes take too long to write up after each meeting",
+            "Minutes are always lost within a few months of being written"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's exact wording is that minutes describe a discussion, not a decision tied to a requirement version, which is the structural gap that caused the UAT dispute.",
+          "wrong": "Admissibility, write-up time, and document loss aren't the stated reasoning. Minutes fail specifically because they capture a discussion, not a decision anchored to a requirement's specific version."
+        }
+      ],
+      "close": "Approval needs explicit scope, a specific version, and a record tied to the requirement — not the meeting minutes. Chapter 6 next — strategy analysis."
+    },
+    "BA06-T01": {
+      "open": "BA06-T01 — Analysing the Current State. A manufacturer wants to 'digitise procurement' and target '50% faster' — with no baseline for what 'faster' is measured against. Let's build one.",
+      "questions": [
+        {
+          "q": "Why is the '50% faster' target described as having no basis behind it?",
+          "choices": [
+            "Nobody has quantified the current cycle time, volume, cost or error rate to compare against",
+            "The manufacturer hasn't yet selected a vendor for the digitisation project",
+            "Procurement staff refuse to participate in the current-state assessment",
+            "The target was set by someone outside the procurement department"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's point is that without a quantified baseline (cycle time, volume, cost, error rate), any improvement percentage is unfalsifiable — there's nothing to measure against.",
+          "wrong": "Vendor selection, staff refusal, and departmental ownership aren't the described gap. The core problem is the complete absence of a quantified baseline to compare any improvement claim against."
+        },
+        {
+          "q": "The lesson's approach says to map the process as it is performed, not as policy describes it. Why does that distinction matter for a current-state assessment?",
+          "choices": [
+            "Policy documents are usually written in a different department",
+            "Actual practice often diverges from documented policy, and the real constraints causing the pain live in that gap",
+            "Policy documents take longer to read than process maps",
+            "Mapping actual practice is a purely optional step for well-run processes"
+          ],
+          "correct": 1,
+          "right": "Exactly — this mirrors the elicitation lesson's stated-vs-actual distinction: the real constraints and pain points are found in how the process is actually performed, not how policy claims it works.",
+          "wrong": "It isn't about document length, department ownership, or optionality. As-performed mapping matters because actual practice diverges from policy, and that gap is where the real constraints live."
+        },
+        {
+          "q": "Per the lesson's pitfall, what's the consequence of skipping the baseline because it's hard to measure?",
+          "choices": [
+            "No future benefit claim can be substantiated, making the business case unfalsifiable",
+            "The project automatically defaults to a predictive analysis approach",
+            "The current-state capabilities become irrelevant to the future design",
+            "Stakeholders lose the right to request further process changes"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this directly: without a baseline, no improvement claim can ever be substantiated, so the business case can't be falsified or verified either way.",
+          "wrong": "Skipping the baseline doesn't determine the analysis approach, doesn't make current-state capabilities irrelevant, and doesn't remove stakeholders' rights. The named consequence is an unfalsifiable business case with no substantiated benefit claim."
+        },
+        {
+          "q": "Beyond mapping the process and quantifying a baseline, the approach also says to capture current-state capabilities. Why does the lesson call this out as its own step?",
+          "choices": [
+            "Because the change will build on or replace those capabilities, so they need to be understood before the future state can be designed",
+            "Because capabilities are only relevant for regulatory audits, not process redesign",
+            "Because capturing capabilities is a substitute for quantifying the baseline",
+            "Because capabilities never change once documented, unlike the process itself"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson calls this out separately because the future design has to either build on or replace what currently exists, which means the current-state capabilities need to be understood in their own right, not folded into the process map or baseline.",
+          "wrong": "It's not an audit-only concern, a substitute for the baseline, or a claim that capabilities are static. The reason is that future design decisions depend on knowing what capabilities already exist to build on or replace."
+        }
+      ],
+      "close": "Baseline first, mapped from actual practice — without it, no benefit claim can be substantiated. That closes Batch 1: Chapters 1 through 6, lesson BA06-T01."
     }
   }
 }
