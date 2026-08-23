@@ -276,8 +276,8 @@ entry 19.
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
   "contentThroughPR": 72,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:c2524e01bbb66c1249b7e361da910a9326c74c074d922faabbe7bd2acb4128bb",
-  "lastVerified": "2026-08-22T22:27:16.837Z"
+  "sourcesTeacherMcqHash": "sha256:7557ab39da634e9bcd5701c8716e53190dfe8f6e88ceaa7c0393752ade3d7d0b",
+  "lastVerified": "2026-08-23T03:32:47.576Z"
 }
 ```
 
@@ -857,6 +857,35 @@ consequences — grounded strictly in each lesson's actual `Live Scenario`,
 `The Question`, `Approach`, `Common Pitfall` and `Interview Angle` sections
 in `business-analysis/BA0X-T0X.md`, not terminology recall. No accepted
 lesson content was altered to fit a question.
+
+### Business Analysis Teacher MCQs — Batch 2 built (lessons 22-42, held for review)
+
+The remaining 21 BA lessons (BA06-T02 through BA10-T04, canonical curriculum
+order — Chapters 6 through 10) merged into `sources/teacher-mcq.json`
+alongside the existing 293 entries — **314 lessons / 995 questions total** in
+that file now, per the built file's own count. All 42 BA lessons now have
+Teacher MCQ coverage.
+
+**Question count was assigned per-lesson by genuine complexity assessment
+before authoring, not defaulted to a flat number** — the corrective lesson
+from Batch 1's adequacy review. Each lesson's distinct testable angles
+(Approach steps, Common Pitfall, Interview Angle) were mapped from the source
+content first, then 3-5 questions assigned to match. Final distribution: 8
+lessons at 3 questions, 12 lessons at 4 questions, 1 lesson at 5 questions
+(BA07-T06, Analysing Potential Value — five genuinely distinct angles: net
+value, time-to-benefit discounting, delivery-capacity constraint, explicit
+recommendation conditions, and the pitfall's ranking-reversal risk) = 77
+questions for this batch.
+
+Every question tests applied judgement, diagnosis, trade-offs, ambiguity,
+stakeholder consequences and delivery decisions, grounded strictly in each
+lesson's actual source content — not terminology recall. No accepted lesson
+content was altered; no source defect was found during authoring.
+
+**No new integration code was needed**, same as Batches 1 and DE — the
+generic Teacher panel lookup handles the new ids with zero `index.html`
+changes. Additive only: DV (236/708), DE (36/139) and Batch 1 (21/71)
+confirmed unchanged by direct count against the built file.
 
 **No new integration code was needed**, matching the DE precedent: the
 Teacher panel's generic `S.teacherMcq.lessons[lessonId]` lookup works

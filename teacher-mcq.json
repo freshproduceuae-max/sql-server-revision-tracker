@@ -12775,6 +12775,1056 @@
         }
       ],
       "close": "Baseline first, mapped from actual practice — without it, no benefit claim can be substantiated. That closes Batch 1: Chapters 1 through 6, lesson BA06-T01."
+    },
+    "BA06-T02": {
+      "open": "BA06-T02 — Defining the Future State. Two directors read 'a modern, integrated, customer-centric platform' as two different systems, and both think the board approved theirs. Let's fix the definition.",
+      "questions": [
+        {
+          "q": "Why does the lesson insist the future state be described in terms of capabilities and outcomes rather than products?",
+          "choices": [
+            "Because naming a product presumes a solution before the future state has even been validated against the need",
+            "Because product names are considered confidential during strategy analysis",
+            "Because capabilities are always cheaper to describe than products",
+            "Because vendors require capability language in RFP documents"
+          ],
+          "correct": 0,
+          "right": "Right — this is the core tension the lesson names: specific enough to build, but not so specific it presumes a solution. Naming a product does exactly that.",
+          "wrong": "It isn't about confidentiality, cost, or vendor formatting. Naming a product forecloses the solution question before the future state has even been checked against the actual need."
+        },
+        {
+          "q": "The approach ties measurable targets to the current-state baseline. Why does that linkage matter, rather than just stating a target in isolation?",
+          "choices": [
+            "A target without a baseline can't demonstrate improvement at all — there's nothing to show movement against",
+            "Baselines are a purely administrative requirement with no analytical purpose",
+            "Targets only need a baseline if the project is regulated",
+            "Linking to baseline is required so the target can be kept confidential from the board"
+          ],
+          "correct": 0,
+          "right": "Exactly — this mirrors the current-state lesson's point: without a baseline, a target claim can't be substantiated because there's nothing to measure the change against.",
+          "wrong": "It's not administrative, regulatory-only, or about confidentiality. Without a tied baseline, a target has no reference point to prove any actual improvement occurred."
+        },
+        {
+          "q": "Why does the approach require explicit scope boundaries — stating what the change will NOT address — as part of the future state?",
+          "choices": [
+            "Without stated boundaries, two readers can each assume the change covers what they personally need, exactly as the two directors did",
+            "Scope boundaries are required only for regulated industries",
+            "Explicit boundaries reduce the number of deliverables the team must produce",
+            "Boundaries exist purely to protect the analyst from blame if something is missed"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly the failure in the live scenario: without boundaries, two directors filled the ambiguity with two different assumptions, both believing the board approved theirs.",
+          "wrong": "It's not a regulatory-only requirement, a way to cut deliverables, or a blame-shield. Explicit boundaries prevent exactly the ambiguity that let two directors read the same future state as two different systems."
+        },
+        {
+          "q": "The lesson's pitfall calls out adjectives like 'modern' and 'seamless' as surviving review specifically because they cannot be tested. Why does untestability let them survive rather than get challenged?",
+          "choices": [
+            "Because a claim nobody can disprove also can't be disputed in review, so it passes through unchallenged",
+            "Because reviewers are trained to approve any future state that uses positive language",
+            "Because 'modern' and 'seamless' are industry-standard terms exempt from scrutiny",
+            "Because adjectives are always removed automatically by document templates before review"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's exact point: something that can't be tested also can't be disputed, so it slides through review precisely because nobody can pin down what would make it wrong.",
+          "wrong": "It isn't reviewer training, industry exemption, or template stripping. Untestable language survives because nobody can point to evidence that disproves it, so it never gets challenged."
+        }
+      ],
+      "close": "Capabilities and outcomes, tied to baseline, with explicit scope boundaries — untestable adjectives are the thing to hunt for. Next: assessing risk to the change itself."
+    },
+    "BA06-T03": {
+      "open": "BA06-T03 — Assessing Risks to the Change. A migration business case lists exactly one risk, 'project delay' — then a vendor acquisition, two departures and a regulatory change all hit, none of them foreseen. Let's fix the register.",
+      "questions": [
+        {
+          "q": "Why does the approach assess risk across categories — delivery, operational, regulatory, vendor, people — rather than as a single list?",
+          "choices": [
+            "A single list like 'project delay' misses whole classes of threat that a category-based sweep would force into view, exactly as happened here",
+            "Categories are required purely for regulatory audit formatting",
+            "A single-list register is always shorter and therefore cheaper to maintain",
+            "Categorising risk removes the need to assign owners"
+          ],
+          "correct": 0,
+          "right": "Right — the live scenario's failure is precisely this: one item on a list missed the vendor, people and regulatory threats a category-based approach would have surfaced.",
+          "wrong": "It's not audit formatting, cost, or a substitute for ownership. Categorising forces the sweep across threat types that a single flat list — like 'project delay' alone — misses entirely."
+        },
+        {
+          "q": "The approach says to state each risk's impact on the value expected from the change, not just on the schedule. Why is schedule impact alone insufficient?",
+          "choices": [
+            "A risk can threaten the change's actual benefit without ever threatening the delivery date, so schedule-only assessment misses it",
+            "Schedule impact is impossible to measure accurately",
+            "Value impact is only relevant for risks rated as regulatory",
+            "Assessing value impact is a legal requirement for all business cases"
+          ],
+          "correct": 0,
+          "right": "Exactly — a risk like the regulatory data-retention change could leave the project on schedule while still eroding or invalidating the value the change was meant to deliver.",
+          "wrong": "It's not about measurement difficulty, regulatory-only scope, or legal mandate. The point is that a risk can hit the expected value while leaving the schedule untouched, so schedule-only tracking misses it."
+        },
+        {
+          "q": "Why does the lesson say an unowned risk is 'an observation'?",
+          "choices": [
+            "Because without an assigned owner, nobody is accountable for monitoring or responding to it, so it's noted but not actually managed",
+            "Because observations are a separate, lower-priority category from risks in this methodology",
+            "Because unowned risks are automatically excluded from the register",
+            "Because only the project sponsor is legally permitted to own a risk"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's exact distinction: assigning an owner is what converts a noted threat into something actually managed, rather than just recorded and forgotten.",
+          "wrong": "It's not a separate category, an exclusion rule, or a sponsor-only requirement. Without an owner, a risk stays a passive observation because nobody is accountable for acting on it."
+        },
+        {
+          "q": "The interview angle draws a distinction between a risk and an issue. What is it, and why do candidates commonly confuse them?",
+          "choices": [
+            "A risk hasn't happened yet; an issue has — candidates confuse them because both get tracked in similar-looking registers",
+            "A risk is always more severe than an issue by definition",
+            "An issue is a risk that has been formally escalated to the board",
+            "A risk applies only to regulated projects; an issue applies to all projects"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this distinction directly: risk is a not-yet-realised threat, issue is a realised one, and the confusion is common precisely because they're tracked in similar formats.",
+          "wrong": "It's not about severity ranking, board escalation, or regulatory scope. The lesson's stated distinction is purely temporal: hasn't happened (risk) versus has happened (issue)."
+        }
+      ],
+      "close": "Category sweep, value impact not just schedule, real ownership, and risk vs. issue kept straight. Next: defining the change strategy itself."
+    },
+    "BA06-T04": {
+      "open": "BA06-T04 — Defining the Change Strategy. A bank must move 400,000 accounts: single cutover, phased by product, or six months running parallel. Let's make the trade-off explicit.",
+      "questions": [
+        {
+          "q": "Why does the approach insist on defining evaluation criteria — risk, cost, customer impact, reversibility — before evaluating the options?",
+          "choices": [
+            "Defining criteria first prevents the evaluation from being reverse-engineered to favour whichever option was already preferred",
+            "Criteria must be defined first purely to satisfy a documentation template",
+            "Pre-defined criteria are required only when more than two options exist",
+            "It allows the analyst to skip assessing options that are clearly inferior"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's second step makes the point explicit: assess each option against all criteria rather than defending a preferred one, which only works if the criteria were fixed before you knew which option they'd favour.",
+          "wrong": "It's not a template formality, an option-count threshold, or a shortcut to skip options. Defining criteria first is what stops the evaluation from being quietly shaped to justify a favourite."
+        },
+        {
+          "q": "Why does the lesson call transition requirements 'often the deciding cost' for a migration strategy like this one?",
+          "choices": [
+            "Because the cost of getting from current state to future state — not the future state itself — is frequently what actually separates the options",
+            "Because transition requirements are always more expensive than the new platform itself",
+            "Because transition requirements are the only cost regulators examine",
+            "Because they replace the need to assess customer impact separately"
+          ],
+          "correct": 0,
+          "right": "Exactly — for a 400,000-account migration, the cost of running parallel systems or phasing by product (the transition itself) is what typically distinguishes the options, more than the destination they share.",
+          "wrong": "It's not a blanket claim that transition always costs more than the platform, a regulatory-only concern, or a substitute for customer-impact assessment. The point is that transition cost is often what actually decides between similarly-destined options."
+        },
+        {
+          "q": "The approach's final step says to recommend one option with the trade-off stated plainly, not buried. What specifically does the lesson warn against instead?",
+          "choices": [
+            "Presenting one option alongside two strawmen the board will recognise as not genuinely competitive",
+            "Recommending more than one option to the board at the same time",
+            "Including cost figures in the recommendation at all",
+            "Letting the board see the criteria used to evaluate the options"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's pitfall is explicit: presenting one real option with two strawmen is recognisable to boards and destroys credibility for every future recommendation, not just this one.",
+          "wrong": "The warning isn't against multiple genuine options, disclosing cost, or showing the criteria. It's specifically against dressing up a single pre-decided option with two non-viable comparators."
+        },
+        {
+          "q": "Why does the interview angle call reversibility an 'underrated criterion' worth mentioning unprompted?",
+          "choices": [
+            "Because naming it signals the candidate has thought through what happens if the chosen option goes wrong, not just whether it succeeds",
+            "Because reversibility is the single most expensive criterion to assess",
+            "Because reversibility is only relevant for phased migrations, not single-cutover ones",
+            "Because mentioning it is required to pass most BA certification exams"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's exact reasoning: raising reversibility shows the candidate has considered the failure case, not just the success case, which most candidates skip.",
+          "wrong": "It's not about assessment cost, being phased-only, or a certification requirement. The value of naming it is demonstrating you've thought about the downside scenario, which most candidates never raise."
+        }
+      ],
+      "close": "Fix the criteria first, price the transition, and put the trade-off in the open — no strawmen. Chapter 7 next — requirements analysis and design definition."
+    },
+    "BA07-T01": {
+      "open": "BA07-T01 — Specifying and Modelling Requirements. 'Handle overdue invoices appropriately' — and three developers ship three different, all-defensible behaviours. Let's pin it down.",
+      "questions": [
+        {
+          "q": "Why does the approach say to replace ambiguous verbs with defined behaviour and explicit conditions, rather than just adding more descriptive prose?",
+          "choices": [
+            "More prose around an ambiguous verb still leaves the actual decision to whoever writes the code — only explicit conditions remove that latitude",
+            "Ambiguous verbs are a documentation style violation that automated linters catch",
+            "Defined behaviour is only necessary for requirements involving financial calculations",
+            "Adding prose is prohibited by the requirements template used in this app"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly the lesson's pitfall: 'appropriately' defers the real decision to the developer regardless of how much surrounding prose there is, which is why three developers each made a different, defensible call.",
+          "wrong": "It's not a linting issue, a finance-only concern, or a template rule. The core problem is that ambiguous verbs defer the actual decision to the implementer no matter how much prose surrounds them."
+        },
+        {
+          "q": "The lesson says to model rather than describe where structure matters, giving a decision table beating a paragraph for branching rules as the example. Why does structure specifically expose what prose hides?",
+          "choices": [
+            "A decision table forces every combination of conditions to be accounted for explicitly, while prose can skip a combination without anyone noticing",
+            "Decision tables are faster to write than paragraphs in every case",
+            "Prose descriptions are not permitted anywhere in a specified requirement",
+            "Models are required only when the requirement involves a regulatory obligation"
+          ],
+          "correct": 0,
+          "right": "Exactly — a table's rows/columns force every condition combination into view, which is precisely what lets a gap (like what happens at exactly 30 days) go unnoticed in a paragraph.",
+          "wrong": "It's not about writing speed, a blanket prose ban, or regulatory-only scope. Structure matters because it forces completeness — every combination has to be accounted for, unlike prose."
+        },
+        {
+          "q": "Why does the approach specifically call for stating boundaries — what happens at exactly 30 days, at zero balance, on a weekend?",
+          "choices": [
+            "Boundary conditions are exactly where 'appropriately'-style ambiguity hides, and three developers picking three different behaviours proves it",
+            "Boundaries are required only when the requirement touches currency amounts",
+            "Stating boundaries removes the need for a decision table",
+            "Boundary conditions are a purely cosmetic addition that doesn't change implementation"
+          ],
+          "correct": 0,
+          "right": "Right — the live scenario's actual failure was exactly at these edges: three defensible-but-different implementations came from the boundaries never being pinned down.",
+          "wrong": "It's not currency-specific, a substitute for a decision table, or cosmetic. Boundaries are precisely where ambiguous requirements diverge into different real implementations, as the scenario shows."
+        }
+      ],
+      "close": "Kill the ambiguous verbs, model the branching, pin the boundaries, and pair it with testable acceptance criteria. Next: verifying the requirement set you just wrote."
+    },
+    "BA07-T02": {
+      "open": "BA07-T02 — Verifying Requirements. A requirements set passes review and reaches build — where the team finds two requirements that contradict each other and one that can't be tested. Let's see what review should have caught.",
+      "questions": [
+        {
+          "q": "The approach checks each requirement against quality characteristics (unambiguous, testable, complete, consistent, feasible) individually, but also checks the set as a whole for contradiction. Why is the whole-set check necessary in addition to the individual one?",
+          "choices": [
+            "A contradiction between two requirements can exist even when each one individually looks perfectly well-formed on its own",
+            "Whole-set checks are faster than reviewing requirements one at a time",
+            "Individual review is only required for requirements marked high priority",
+            "Whole-set review replaces the need to check testability at all"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson makes this explicit: single-requirement review never finds contradiction between two requirements, since each one can read as fine in isolation while conflicting with another.",
+          "wrong": "It's not about review speed, priority-based scoping, or replacing testability checks. The point is that a contradiction only shows up when requirements are compared against each other, not read one at a time."
+        },
+        {
+          "q": "Why does the approach insist every requirement be confirmed atomic, warning that compound requirements 'hide contradictions inside themselves'?",
+          "choices": [
+            "A compound requirement bundles multiple conditions together, so a contradiction between two of those bundled conditions can go unnoticed inside one sentence",
+            "Atomic requirements are always shorter and therefore easier for developers to read",
+            "Compound requirements are prohibited by regulatory standards in every industry",
+            "Atomicity is only relevant for requirements involving user interface behaviour"
+          ],
+          "correct": 0,
+          "right": "Exactly — when a requirement bundles multiple conditions, a conflict between two of them is buried inside a single statement rather than visible across two separate requirements you could compare.",
+          "wrong": "It's not about length, a universal regulatory ban, or UI-only relevance. The risk is that bundling conditions together hides an internal contradiction inside what looks like one clean requirement."
+        },
+        {
+          "q": "Why does the approach specifically call for reviewing with someone who will have to test the requirement, rather than relying on the author's own review?",
+          "choices": [
+            "Testability failures are invisible to the person who wrote the requirement, since they already know what they meant",
+            "Testers are legally required to sign off on every requirement before build",
+            "Author-only review is faster but produces lower-quality documentation",
+            "Testers are the only people permitted to raise requirement defects in Jira"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this directly: testability failures are invisible to authors, because the author already knows the intended meaning and reads past the ambiguity a tester would trip over.",
+          "wrong": "It's not a legal sign-off rule, a speed/quality trade-off claim, or a Jira permissions rule. The reason is that an author's own familiarity with their intent hides testability gaps a tester would immediately hit."
+        },
+        {
+          "q": "The interview angle draws a hard line between verification and validation. What is it?",
+          "choices": [
+            "Verification asks whether the requirement is well written; validation asks whether it's the right requirement — different questions, different failures caught",
+            "Verification is done by developers; validation is done exclusively by business stakeholders",
+            "Verification happens before build; validation happens only after go-live",
+            "Verification and validation are two names for exactly the same review step"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this precisely: verification checks how well the requirement is written, validation checks whether it's the right requirement at all, and each catches failures the other misses.",
+          "wrong": "It's not defined by who performs it, strictly by timing, or a claim they're identical. The lesson's actual distinction is well-written versus right-requirement — two different questions catching two different failure types."
+        }
+      ],
+      "close": "Check the whole set, not just each line; confirm atomicity; get a tester's eyes on it. Verification and validation are different questions. Next: validating against the business need itself."
+    },
+    "BA07-T03": {
+      "open": "BA07-T03 — Validating Requirements Against Business Need. Perfectly specified, fully traceable, delivered on time — and six months after go-live, the process is no faster and the business case benefit never showed up. Let's see why.",
+      "questions": [
+        {
+          "q": "The approach says to trace each requirement to the business objective and ask whether delivering it moves the measure. Why can a requirements set pass every technical check and still fail this test?",
+          "choices": [
+            "A requirement can be technically correct, testable and fully traceable to a business objective, yet still not actually move the objective's measure once delivered",
+            "Technical checks and business-objective checks are performed by the same person, so failures are always caught together",
+            "This test is only relevant for requirements involving financial reporting",
+            "A requirement that passes technical checks always automatically moves the business measure"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly the live scenario: technically correct and traceable, yet the benefit never materialised, which is why the lesson separates 'delivered correctly' from 'actually moved the measure.'",
+          "wrong": "It's not about who performs the checks, financial-only scope, or an automatic guarantee. The scenario proves the opposite: passing every technical check does not guarantee the business measure actually moves."
+        },
+        {
+          "q": "Why does the approach also check for requirements 'nobody asked for that consumed capacity without serving the objective'?",
+          "choices": [
+            "Because delivery capacity spent on requirements that don't serve the objective is capacity not spent on the requirements that would have",
+            "Because unrequested requirements are always technically defective",
+            "Because this check only matters when the project is over budget",
+            "Because such requirements are always the result of scope creep from a single stakeholder"
+          ],
+          "correct": 0,
+          "right": "Exactly — capacity is finite, so requirements that consume it without serving the actual objective are effectively starving the requirements that would have delivered the benefit.",
+          "wrong": "It's not a claim these requirements are defective, budget-conditional, or always traceable to one stakeholder's scope creep. The concern is opportunity cost: capacity spent there is capacity not spent on what actually serves the objective."
+        },
+        {
+          "q": "Why does the lesson's pitfall reject validating with the person who requested the feature?",
+          "choices": [
+            "The requester can confirm it matches what they asked for, which is a different question from whether it's what the business actually needed",
+            "Requesters are statistically more likely to lie about their requirements than benefit owners",
+            "Requesters are never available for validation sessions in practice",
+            "Validating with the requester is prohibited by governance policy in this methodology"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson draws this distinction directly: confirming a requirement matches the request is not the same as confirming the request served the business need, which is why validation needs the benefit owner too.",
+          "wrong": "It's not about dishonesty, availability, or a policy prohibition. The issue is that requester confirmation answers 'did we build what you asked for,' not 'was what you asked for actually right.'"
+        },
+        {
+          "q": "The interview angle frames this as where benefits realisation meets business analysis. What makes 'a project that delivered on spec and failed on value' a credible interview story per the lesson?",
+          "choices": [
+            "It demonstrates the candidate distinguishes delivery success from value success, rather than treating on-time-on-spec delivery as automatically successful",
+            "It shows the candidate has experience specifically with failed IT projects",
+            "It proves the candidate always assigns blame to the original business case",
+            "It is the only type of story interviewers accept for this competency"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's point is that this story shows the candidate evaluates outcomes rather than just delivery, which is exactly the distinction this lesson teaches.",
+          "wrong": "It's not about a track record of failures specifically, assigning blame, or being the only acceptable story type. Its value is demonstrating the candidate separates 'delivered as specified' from 'actually delivered value.'"
+        }
+      ],
+      "close": "Traceability to the objective isn't enough — validate that it actually moves the measure, with the benefit owner, not just the requester. Next: structuring a large requirements set."
+    },
+    "BA07-T04": {
+      "open": "BA07-T04 — Defining Requirements Architecture. 600 requirements, five workstreams, each internally coherent — and nobody can tell if they're consistent with each other or cover the business need. Let's structure it.",
+      "questions": [
+        {
+          "q": "Why does the approach organise requirements to mirror the business structure rather than the project team layout, given the pitfall explicitly warns teams reorganise?",
+          "choices": [
+            "A structure tied to a team layout that will itself change becomes unstable, while the business structure is comparatively durable and keeps coverage assessable over time",
+            "Business structures are always simpler to diagram than project team structures",
+            "Mirroring the business is a purely cosmetic choice with no effect on coverage assessment",
+            "Project team layouts cannot legally be used as a requirements structure"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's pitfall is explicit: since teams reorganise, structuring by team layout undermines the requirements architecture's stability, while the business structure holds and keeps coverage checkable.",
+          "wrong": "It's not about diagram simplicity, a cosmetic-only distinction, or a legal restriction. Team structures change, which is exactly why mirroring the more stable business structure is what keeps coverage assessable over time."
+        },
+        {
+          "q": "Why does the approach say the gaps between workstreams — the interface requirements — are where integration defects concentrate?",
+          "choices": [
+            "Each workstream's own set can be internally coherent while the handoff between two workstreams is never explicitly owned or checked by either",
+            "Interface requirements are always technically harder to implement than internal ones",
+            "Integration defects only occur when more than five workstreams are involved",
+            "Interfaces are the only place regulatory compliance can be checked"
+          ],
+          "correct": 0,
+          "right": "Exactly — this matches the live scenario directly: each workstream's set was coherent on its own, but nobody could tell whether the interfaces between them were consistent, which is exactly where defects hide.",
+          "wrong": "It's not implementation difficulty, a five-workstream threshold, or a regulatory-only claim. The risk is structural: internal coherence per workstream says nothing about whether the handoffs between workstreams were ever actually checked."
+        },
+        {
+          "q": "How does the approach say the architecture should be used to test completeness against the business need?",
+          "choices": [
+            "By checking that every business objective maps to a populated area of the structure, surfacing objectives with no requirements behind them",
+            "By counting the total number of requirements across all five workstreams",
+            "By comparing the requirements architecture against a competitor's published architecture",
+            "By checking that every workstream produced exactly the same number of requirements"
+          ],
+          "correct": 0,
+          "right": "Right — the approach is explicit: use the structure to test coverage, where every business objective should map to a populated area, so a business need with no requirements behind it becomes visible.",
+          "wrong": "It's not a raw requirement count, external benchmarking, or requiring equal output per workstream. The check is whether every business objective actually has requirements populated against it in the structure."
+        }
+      ],
+      "close": "Structure by the business, not the team — and watch the interfaces, since that's where the defects hide. Next: defining genuine solution options."
+    },
+    "BA07-T05": {
+      "open": "BA07-T05 — Defining Solution Options. The steering committee is shown one recommended solution and asks what else was considered — and the honest answer is that nothing else was actually assessed. Let's fix that.",
+      "questions": [
+        {
+          "q": "Why does the approach say to generate options that differ structurally — build, buy, configure, do nothing — rather than variants of one idea?",
+          "choices": [
+            "Variants of one idea don't test whether that idea is even the right category of response, while structurally different options do",
+            "Structurally different options are always cheaper to assess than variants",
+            "Variants of one idea are prohibited from being presented to a steering committee",
+            "This requirement only applies when the business case exceeds a certain budget"
+          ],
+          "correct": 0,
+          "right": "Right — variants of build option A vs build option B never test whether building was the right category of response at all; structurally different options (build/buy/configure/do-nothing) actually test that.",
+          "wrong": "It's not about assessment cost, a formal prohibition, or a budget threshold. Variants of one idea leave the underlying category of response — build vs. buy vs. configure vs. nothing — completely untested."
+        },
+        {
+          "q": "Why does the approach say to include the do-nothing option honestly, describing it as 'the baseline every other option must beat'?",
+          "choices": [
+            "Without do-nothing as a comparator, the cost of change is never actually weighed against the cost of leaving things as they are",
+            "Do-nothing is required by governance policy to be listed even when clearly non-viable",
+            "Do-nothing is always the cheapest option and therefore always recommended",
+            "Including do-nothing removes the need to assess the other options in detail"
+          ],
+          "correct": 0,
+          "right": "Exactly — the pitfall states this directly: omitting do-nothing means the cost of change is never compared against the cost of the status quo, which is the actual baseline any option needs to justify itself against.",
+          "wrong": "It's not a governance formality regardless of viability, an automatic winner, or a shortcut past assessing the others. Its role is being the honest comparator that change has to actually beat."
+        },
+        {
+          "q": "Per the interview angle, why does mentioning the do-nothing baseline unprompted mark a candidate out?",
+          "choices": [
+            "Most candidates never raise it, so doing so signals independently rigorous option-generation rather than following a script",
+            "It is a mandatory phrase that interviewers are trained to listen for verbatim",
+            "It automatically disqualifies weaker candidates who don't mention it",
+            "It shows the candidate has memorised the BABOK glossary"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states plainly that most candidates never raise it, so doing so unprompted signals the candidate genuinely thinks in terms of a complete option set rather than reciting a template.",
+          "wrong": "It's not a scripted keyword, an automatic disqualifier for others, or rote memorisation. Its value is that it's rare and shows the candidate's own rigour, not a checklist item being ticked."
+        }
+      ],
+      "close": "Structurally different options, do-nothing included honestly, assessed against common criteria. Next: analysing value and making the recommendation."
+    },
+    "BA07-T06": {
+      "open": "BA07-T06 — Analysing Potential Value and Recommending a Solution. £2m for £3m benefit versus £600k for £1.2m — the board wants the bigger number, but delivery capacity is already fully booked. Let's frame this properly.",
+      "questions": [
+        {
+          "q": "Why does the approach say to assess value net of cost, risk and the capacity required to deliver it, rather than comparing headline benefit figures directly?",
+          "choices": [
+            "A headline benefit figure ignores what it actually costs — in money, risk and scarce delivery capacity — to realise it, so two options aren't comparable on that figure alone",
+            "Headline figures are always inaccurate and should never be presented to the board",
+            "Net-of-cost assessment is only required for options above £1 million",
+            "This step exists purely to make the smaller option look artificially more attractive"
+          ],
+          "correct": 0,
+          "right": "Right — the pitfall makes this explicit: comparing options on headline benefit alone is exactly what obscures the risk-adjusted, capacity-constrained picture the board actually needs.",
+          "wrong": "It's not that headline figures are inherently inaccurate, a size-threshold rule, or a thumb on the scale for the smaller option. The point is that headline benefit alone omits cost, risk and capacity, which are what actually determine real value."
+        },
+        {
+          "q": "Why does the approach say to account for time-to-benefit, stating that 'delayed value is worth less' than the same value delivered sooner?",
+          "choices": [
+            "Two options with the same total benefit are not equally valuable if one delivers that benefit years later than the other",
+            "Time-to-benefit only matters for options funded through external investors",
+            "Delayed value is worth less purely because of inflation on the stated currency",
+            "This principle applies only to the smaller of the two options in the scenario"
+          ],
+          "correct": 0,
+          "right": "Exactly — the lesson's point is that raw total benefit hides timing: benefit realised sooner is worth more than the same nominal amount realised later, so comparing totals alone is misleading.",
+          "wrong": "It's not investor-specific, purely an inflation argument, or limited to one option in this scenario. The principle is general: delayed value is worth less than the same value sooner, regardless of which option it applies to."
+        },
+        {
+          "q": "The scenario states delivery capacity is fully committed for the next year. Why does the approach say to surface this constraint explicitly rather than let the board pick on return alone?",
+          "choices": [
+            "An option that scores higher on paper but genuinely cannot be resourced is not actually the superior option in practice",
+            "Capacity constraints are confidential information the board is not entitled to see",
+            "Surfacing the constraint is only necessary if the board specifically asks about staffing",
+            "Capacity has no bearing on which option should be recommended"
+          ],
+          "correct": 0,
+          "right": "Right — the approach states this directly: a superior option that cannot be resourced is not superior, which is exactly the tension the fully-committed capacity creates in this scenario.",
+          "wrong": "It's not confidential, conditional on being asked, or irrelevant to the recommendation. An unresourceable 'better' option isn't actually better in any way that matters, which is why the constraint has to be surfaced up front."
+        },
+        {
+          "q": "Why does the approach say to recommend clearly, but state the conditions under which the recommendation would change, rather than presenting a single fixed answer?",
+          "choices": [
+            "Stating the conditions shows the recommendation was reasoned from the current facts, and lets the board know what would legitimately flip it, rather than presenting it as an unconditional truth",
+            "Conditional recommendations are required whenever risk-adjustment is used",
+            "This step exists so the analyst is not held accountable if the recommendation turns out wrong",
+            "It replaces the need to state the recommendation clearly at all"
+          ],
+          "correct": 0,
+          "right": "Right — this connects the recommendation to its actual reasoning: naming the conditions that would change it shows the board it's a reasoned judgement on current facts, not a fixed verdict immune to new information.",
+          "wrong": "It's not a mechanical requirement tied only to risk-adjustment, an accountability shield, or a substitute for a clear recommendation. It's what makes a clear recommendation honest about the facts it actually depends on."
+        },
+        {
+          "q": "The lesson's pitfall says comparing options on headline benefit alone frequently 'reverses the ranking' once adjustments are applied. What does this mean for the £2m/£3m versus £600k/£1.2m comparison specifically?",
+          "choices": [
+            "Once risk, capacity and timing are properly weighed, the smaller option could turn out to be the better choice despite its lower absolute return",
+            "It means the £2m option is always correct regardless of adjustment",
+            "It means both options will always show identical adjusted value once properly analysed",
+            "It means the board's preference for absolute return is always the financially correct one"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly the lesson's warning: risk-adjusted, capacity-constrained, time-discounted analysis can flip which option is actually better, which is precisely the possibility the board's headline-return preference ignores.",
+          "wrong": "The lesson doesn't guarantee either option wins, doesn't claim they'll end up equal, and explicitly warns that headline-return preference can be wrong once properly adjusted — not that it's automatically correct."
+        }
+      ],
+      "close": "Net value, not headline value — cost, risk, capacity and timing can flip the ranking entirely. Next: measuring solution performance after go-live."
+    },
+    "BA08-T01": {
+      "open": "BA08-T01 — Measuring Solution Performance. Six months post-launch: 99.8% uptime, 40 defects closed — and nobody measured whether processing time actually fell. Let's fix what gets measured.",
+      "questions": [
+        {
+          "q": "Why does the approach say performance measures should be derived from the business objectives stated at the outset, not from what is easy to instrument?",
+          "choices": [
+            "Easy-to-instrument measures like uptime answer a technical question, which can look successful while the actual business question — did the process get faster — goes completely unanswered",
+            "Business-objective measures are always cheaper to collect than technical ones",
+            "This distinction only matters for systems handling financial transactions",
+            "Technical measures like uptime are always more accurate than business measures"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly the scenario: 99.8% uptime and 40 closed defects are real, easy-to-instrument numbers that say nothing about whether processing time — the actual business question — improved at all.",
+          "wrong": "It's not about collection cost, financial-systems-only scope, or a claim of superior accuracy. The problem is that easy-to-instrument technical measures can look great while leaving the actual business question completely unanswered."
+        },
+        {
+          "q": "Why does the approach say to agree the measures before go-live rather than defining them afterwards?",
+          "choices": [
+            "Defining measures after the result is known invites selecting whichever measure happens to make that result look good",
+            "Pre-go-live measures are technically impossible to instrument correctly",
+            "Post-go-live measures are prohibited by most governance frameworks",
+            "Agreeing measures early is required only for regulated industries"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this directly: defining measures after the fact invites picking the measure that flatters the outcome, rather than the measure that actually answers the business question.",
+          "wrong": "It's not a technical impossibility, a governance prohibition, or regulatory-only scope. The risk named is selection bias — choosing the measure retroactively to fit whatever result already happened."
+        },
+        {
+          "q": "Why does the approach say to cover both intended benefit and unintended effect, noting 'throughput may rise while quality falls'?",
+          "choices": [
+            "A measure set that only tracks the intended benefit can miss the change causing real harm elsewhere, even while it appears to succeed",
+            "Unintended effects are always more significant than intended benefits",
+            "This principle applies only when the solution touches customer-facing systems",
+            "Tracking unintended effects is a legal requirement for all IT changes"
+          ],
+          "correct": 0,
+          "right": "Exactly — the lesson's own example makes this concrete: throughput rising looks like success on its own measure, while quality quietly falling is a real cost that a benefit-only measure set would never surface.",
+          "wrong": "It's not a claim that unintended effects always outweigh intended ones, customer-facing-only scope, or a legal mandate. The point is that a benefit-only view can hide a real, coincident cost like quality degradation."
+        }
+      ],
+      "close": "Derive measures from the actual business objective, agree them before go-live, and watch for the unintended effect the benefit measure hides. Next: analysing the measures once you have them."
+    },
+    "BA08-T02": {
+      "open": "BA08-T02 — Analysing Performance Measures. Processing time fell 30% overall — one region improved 60%, another got 15% slower. The average erases both stories. Let's dig into it.",
+      "questions": [
+        {
+          "q": "Why does the approach say to disaggregate by dimensions like region, product or user group rather than trust the overall figure?",
+          "choices": [
+            "An overall average can be mathematically consistent with wildly different — even opposite — outcomes happening within it, exactly as the 30% figure conceals a 60% gain and a 15% loss",
+            "Disaggregation is required only when the overall figure is negative",
+            "Regional breakdowns are always more accurate than product breakdowns",
+            "Disaggregating removes the need to check for correlation versus causation"
+          ],
+          "correct": 0,
+          "right": "Right — the scenario is the proof: a 30% overall improvement is entirely consistent with one region improving 60% and another actually getting worse, and only disaggregation reveals that.",
+          "wrong": "It's not conditional on a negative overall result, a claim regional is inherently more accurate than product breakdowns, or a substitute for the correlation-vs-cause check. The core issue is that an average can hide opposite outcomes within it."
+        },
+        {
+          "q": "The approach says to investigate outliers rather than dismiss them, because they 'usually explain the mechanism'. What does that mean in the context of this scenario?",
+          "choices": [
+            "The region that got 15% slower likely reveals something specific — a local condition or a flaw the change didn't account for — that the 60%-improved region doesn't show",
+            "Outliers should always be excluded from the final reported figure",
+            "Outliers are statistically insignificant and can be safely ignored in most cases",
+            "Investigating outliers is only useful once the overall trend is already negative"
+          ],
+          "correct": 0,
+          "right": "Exactly — the worse-performing region is the one likely to reveal why the change didn't work uniformly, which is exactly the kind of mechanism a dismissed outlier would hide.",
+          "wrong": "The lesson doesn't call for excluding outliers, treating them as insignificant, or only investigating when the overall trend is negative. Outliers are treated as evidence pointing to a mechanism worth understanding."
+        },
+        {
+          "q": "Why does the approach require separating correlation from cause before attributing the 30% improvement to the change?",
+          "choices": [
+            "The measured improvement coinciding with the change's rollout doesn't by itself prove the change caused it — something else could explain the timing",
+            "Correlation and cause are legally interchangeable terms in a business case",
+            "This step is only necessary when the improvement figure exceeds 50%",
+            "Separating correlation from cause is a step that can be skipped once disaggregation is complete"
+          ],
+          "correct": 0,
+          "right": "Right — this is the standard evaluation discipline the lesson names: timing alone (the improvement coinciding with the change) is not proof the change caused it, so cause has to be established separately from correlation.",
+          "wrong": "They're not legally interchangeable, this isn't threshold-dependent, and it isn't made redundant by disaggregation — disaggregation shows where the effect concentrates, not whether the change actually caused it."
+        },
+        {
+          "q": "The interview angle draws a parallel to a data validation background — 'profiling before trusting an aggregate.' What's the shared reasoning?",
+          "choices": [
+            "Both disciplines require breaking a summary figure down before trusting it, since a clean aggregate can conceal exactly the problems that matter",
+            "Both disciplines use exactly the same software tools for analysis",
+            "Data validation is only relevant to solution evaluation when the solution involves a database",
+            "Profiling and performance analysis are unrelated skills that happen to share vocabulary"
+          ],
+          "correct": 0,
+          "right": "Right — the shared reasoning is structural: just as data profiling checks what's really inside an aggregate before trusting it, disaggregating a performance figure checks what's really inside a 30% average before trusting it.",
+          "wrong": "It's not about shared tooling, being database-specific, or unrelated vocabulary overlap. The parallel is the underlying discipline: don't trust a summary number until you've looked inside it."
+        }
+      ],
+      "close": "Disaggregate before you trust the average, chase the outliers, and don't confuse timing with cause. Next: telling a real limitation apart from a scope decision."
+    },
+    "BA08-T03": {
+      "open": "BA08-T03 — Assessing Solution Limitations. Users bypass the new system for 20% of cases, using an undocumented, growing spreadsheet instead — even though the system works exactly as specified. Let's find out why.",
+      "questions": [
+        {
+          "q": "Why does the approach say to investigate what the bypassed cases have in common, rather than start with whether the system needs fixing?",
+          "choices": [
+            "Without knowing what's common to the bypassed cases, there's no way to tell whether they're a real gap in the solution or something else entirely",
+            "Bypassed cases are always caused by user error and require no investigation",
+            "This step is only relevant if the bypass rate exceeds 50%",
+            "Investigating common features is a substitute for quantifying the workaround's risk"
+          ],
+          "correct": 0,
+          "right": "Right — the approach starts here specifically because the pattern in the bypassed cases is the evidence needed for the next question — defect, exclusion, or something else entirely.",
+          "wrong": "It's not an assumption of user error, threshold-gated at 50%, or a substitute for the risk quantification step. It's the necessary first evidence-gathering step before any conclusion about the cause can be drawn."
+        },
+        {
+          "q": "The approach distinguishes 'the solution cannot handle them' from 'merely handles them badly.' Why does this distinction matter for what happens next?",
+          "choices": [
+            "The two point to different remedies — one may need re-scoping the solution entirely, the other may just need refinement of existing handling",
+            "The distinction is purely academic and doesn't change any subsequent decision",
+            "Only 'cannot handle' cases are eligible to be logged as defects in Jira",
+            "This distinction exists solely to protect the vendor from liability claims"
+          ],
+          "correct": 0,
+          "right": "Right — a genuine incapability and a poorly-handled-but-possible case call for different responses, which is exactly why the approach separates them before deciding what to do.",
+          "wrong": "It's not purely academic, a Jira-logging eligibility rule, or a vendor-liability mechanism. The distinction matters because it determines whether the fix is a redesign or a refinement."
+        },
+        {
+          "q": "Why does the approach check whether the bypassed case type was in scope originally, distinguishing 'a known exclusion' from 'a defect'?",
+          "choices": [
+            "If the case type was deliberately excluded from scope, treating it as a defect misdiagnoses a scoping decision as a build failure",
+            "Known exclusions can never legitimately be brought back into scope later",
+            "This check only applies to solutions built in-house rather than purchased",
+            "The distinction determines who is legally liable for the workaround"
+          ],
+          "correct": 0,
+          "right": "Exactly — if this case type was never meant to be handled, calling it a defect misattributes the gap; it needs to be recognised as a scoping decision, not a build failure, even though the practical impact (the workaround) is the same.",
+          "wrong": "It's not a permanent exclusion, build-vs-buy-specific, or a liability determination. The point is diagnostic accuracy: distinguishing a deliberate scope decision from an actual build defect."
+        },
+        {
+          "q": "The lesson's pitfall rejects treating a workaround as a training problem. What does the lesson say this framing prevents you from learning?",
+          "choices": [
+            "That the system genuinely does not fit the case — blaming users for the workaround stops you from discovering the real misfit",
+            "That the workaround is illegal under the organisation's IT policy",
+            "That the spreadsheet workaround is technically superior to the intended system",
+            "That the users involved need to be replaced or retrained in a different role"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this directly: treating the workaround as a training issue blames the user and prevents you from discovering that the system genuinely doesn't fit the case, which is usually the real reason people work around it.",
+          "wrong": "It's not about IT policy violations, technical superiority of the spreadsheet, or staff replacement. The specific thing it prevents you learning is that the system itself may genuinely not fit the case."
+        }
+      ],
+      "close": "Investigate the pattern, tell defect from exclusion, and don't blame the workaround on training. Next: limitations that live outside the solution entirely."
+    },
+    "BA08-T04": {
+      "open": "BA08-T04 — Assessing Enterprise Limitations. A new CRM works exactly as designed. Adoption sits at 30% because the sales incentive scheme still rewards the old behaviour, and nobody ever touched it. Let's find the real blocker.",
+      "questions": [
+        {
+          "q": "Why does the approach say to examine the operating model — incentives, roles, policies, culture — for conflict with the intended behaviour, rather than examining the solution itself?",
+          "choices": [
+            "The CRM works exactly as designed, so the cause of low adoption has to be something outside the solution — in the environment it was dropped into",
+            "Operating-model review is a mandatory pre-launch checklist item, unrelated to diagnosing adoption",
+            "Incentive schemes are always the cause of low adoption regardless of context",
+            "This step is only relevant when the solution was custom-built rather than purchased"
+          ],
+          "correct": 0,
+          "right": "Right — since the system itself is functioning exactly as specified, the low adoption has to be explained by something the system doesn't control, which is exactly what the operating-model check is designed to surface.",
+          "wrong": "It's not a routine pre-launch checklist unrelated to this diagnosis, an automatic default cause, or build-vs-buy-specific. The reasoning is elimination: since the CRM works as designed, the cause must be outside it."
+        },
+        {
+          "q": "Why does the approach check whether the change assumed an organisational change that was never scoped or owned?",
+          "choices": [
+            "A system change can implicitly require a behavioural or organisational shift that nobody actually planned for or assigned to anyone",
+            "Organisational change is always scoped automatically as part of any system delivery project",
+            "This check applies only to CRM systems specifically, not other solution types",
+            "Unscoped organisational change is a legal compliance risk rather than an adoption risk"
+          ],
+          "correct": 0,
+          "right": "Exactly — the scenario shows this precisely: the CRM assumed a behaviour change the incentive scheme was actively working against, and that organisational shift was never scoped or given an owner.",
+          "wrong": "It's not automatically scoped by default, CRM-specific, or a compliance framing. The check exists because a system project can silently assume an organisational change that nobody actually planned or owns."
+        },
+        {
+          "q": "Why does the approach say to escalate this as a benefit risk rather than log it as a project defect?",
+          "choices": [
+            "The fix — changing the incentive scheme — is outside the project's control, so treating it as a project defect misdirects the remedy to the wrong owner",
+            "Benefit risks are always more severe than project defects by definition",
+            "Project defects can only be logged before go-live, not afterwards",
+            "Escalating as a benefit risk avoids the need to identify who owns the blocking factor"
+          ],
+          "correct": 0,
+          "right": "Right — the approach's fourth step is explicit: escalate as a benefit risk because the fix is outside project control, so a defect log (which implies the project team can fix it) would misdirect the remedy.",
+          "wrong": "It's not a severity ranking, a timing restriction, or a way to avoid identifying ownership — the prior step specifically requires identifying who owns each blocking factor before this escalation happens."
+        },
+        {
+          "q": "The interview angle says this distinguishes senior from junior answers: juniors fix the system, seniors ask why people aren't using it. What does the lesson's pitfall about incentives beating interfaces explain about that distinction?",
+          "choices": [
+            "A junior response assumes the interface drives behaviour, while the pitfall shows incentives override interface design every time the two conflict",
+            "Junior analysts are less technically capable of fixing interface problems than senior analysts",
+            "The pitfall applies only to sales-related systems, which is why it's framed as a seniority marker",
+            "Senior analysts are expected to redesign the incentive scheme themselves as part of the fix"
+          ],
+          "correct": 0,
+          "right": "Right — the pitfall states directly that incentives beat interfaces every time, so a senior answer looks past the interface to the incentive conflict, while a junior answer stays fixated on the system that's already working as designed.",
+          "wrong": "It's not about relative technical skill, sales-only applicability, or the analyst redesigning the scheme themselves (that's the owning function's job, per the prior step). The seniority marker is looking beyond the interface to the real blocker."
+        }
+      ],
+      "close": "The CRM was never the problem — the incentive scheme was, and that's outside the project's fix authority. Next: recommending action on a solution that's underdelivering."
+    },
+    "BA08-T05": {
+      "open": "BA08-T05 — Recommending Actions to Increase Solution Value. Evaluation shows 60% of expected benefit delivered. Invest more, accept the shortfall, change the process, or retire it — and the room is primed to get defensive. Let's build the recommendation.",
+      "questions": [
+        {
+          "q": "Why does the approach say to present the evidence before the recommendation, rather than lead with the conclusion?",
+          "choices": [
+            "If the audience disagrees with a conclusion presented first, they attack the evidence instead of weighing it, per the lesson's own pitfall",
+            "Presenting evidence first is a formatting convention required by most reporting templates",
+            "Evidence-first presentation is only necessary when the shortfall exceeds 50%",
+            "This ordering removes the need to include a stated confidence level at all"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's pitfall states this precisely: leading with the recommendation invites the audience to attack the evidence if they disagree with the conclusion first, rather than actually weighing it.",
+          "wrong": "It's not a template formatting rule, threshold-gated at 50%, or a substitute for stating confidence level. The specific mechanism is defensive reaction: conclusion-first invites the audience to fight the evidence instead of evaluating it fairly."
+        },
+        {
+          "q": "Why does the approach say to separate what the solution caused from what the environment caused?",
+          "choices": [
+            "The 60%-of-expected-benefit figure could stem from the solution itself, external factors, or both — and the right action depends on knowing which",
+            "This separation is only relevant when the solution's cost exceeded its original budget",
+            "Environmental factors are always the larger contributor to any shortfall",
+            "This step exists to protect the analyst from being blamed for the shortfall"
+          ],
+          "correct": 0,
+          "right": "Right — the options (invest further, accept, change the process, retire) each fit a different diagnosis, so conflating solution-caused and environment-caused shortfall would point toward the wrong action.",
+          "wrong": "It's not budget-conditional, an assumption that environment is always the bigger factor, or purely self-protective. It's a diagnostic necessity: the right recommendation depends on knowing where the shortfall actually originates."
+        },
+        {
+          "q": "Why does the approach say to give options with cost and expected uplift for each — including doing nothing further — rather than a single fix?",
+          "choices": [
+            "A single fix presented alone doesn't let the audience weigh trade-offs, and 'doing nothing further' is itself a legitimate, costed choice given a 60% delivery",
+            "Multiple options are required only when the shortfall is caused by the solution rather than the environment",
+            "Presenting multiple options removes the need to separate cause from environment",
+            "Costed options are only necessary if the original business case included a contingency budget"
+          ],
+          "correct": 0,
+          "right": "Right — offering costed options, doing-nothing-further included, gives the audience an honest trade-off to weigh rather than a single prescribed answer, consistent with the evidence-led, non-defensive approach the lesson is building toward.",
+          "wrong": "It's not conditional on cause type, a substitute for the cause-separation step, or contingent on a specific budget structure. The point is giving genuine, comparable choices rather than a single fix."
+        },
+        {
+          "q": "Why does the approach say to state what you would need to know to be more confident, rather than overclaiming certainty?",
+          "choices": [
+            "Naming the specific information gap is more credible and useful than presenting a shortfall diagnosis as more certain than the evidence actually supports",
+            "Stating information gaps is a compliance requirement for evaluation reports specifically",
+            "This step only applies when the recommendation is to retire the solution",
+            "It replaces the need to present any evidence at all"
+          ],
+          "correct": 0,
+          "right": "Right — this mirrors the lesson's overall stance of evidence-led honesty: naming what's still unknown is more credible than presenting a confident-sounding conclusion that outruns what the evidence actually shows.",
+          "wrong": "It's not a compliance-specific mandate, tied only to a retire recommendation, or a substitute for presenting evidence. It's a credibility move: honesty about uncertainty is more persuasive than false confidence."
+        }
+      ],
+      "close": "Evidence before conclusion, cause separated from environment, real options including doing nothing, and honesty about what's still unknown. Chapter 9 next — underlying competencies."
+    },
+    "BA09-T01": {
+      "open": "BA09-T01 — Analytical Thinking and Problem Solving. Billing complaints jump 300% in a month. The obvious cause is the release three weeks earlier. Fixing the release changes nothing. Let's find the actual root.",
+      "questions": [
+        {
+          "q": "Why does the approach say to test the timing assumption against the data before accepting the release as cause?",
+          "choices": [
+            "Coincident timing between the release and the complaint spike is not, by itself, evidence the release caused the spike",
+            "Timing data is always unreliable and should be discarded in favour of interviews",
+            "This step is only necessary when the release involved a database schema change",
+            "Testing the timing assumption is required by the change control process, not by the investigation itself"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly what the scenario proves: the release and the spike coincided in time, but fixing the release changed nothing, meaning the timing coincidence was never actually causal.",
+          "wrong": "It's not that timing data is unreliable, schema-change-specific, or a change-control formality. The point is precisely that coincident timing is not proof of causation — which the scenario's failed fix confirms."
+        },
+        {
+          "q": "Why does the approach say to generate competing hypotheses and identify what evidence would discriminate between them, rather than pursue the first plausible one?",
+          "choices": [
+            "Without alternative hypotheses and a way to tell them apart, there's no way to know whether the first plausible explanation is actually correct or just convenient",
+            "Generating multiple hypotheses is required only when the first fix attempt fails",
+            "Competing hypotheses are needed purely to satisfy a documentation template",
+            "This step replaces the need to trace to root cause afterwards"
+          ],
+          "correct": 0,
+          "right": "Right — the point of discriminating evidence is that it lets you actually test between explanations rather than settle on whichever one came to mind first, which is exactly the trap the release-as-cause hypothesis fell into.",
+          "wrong": "It's not gated on a prior failed fix, a documentation formality, or a substitute for the root-cause tracing step that follows. It's what makes hypothesis testing rigorous rather than just picking the first plausible story."
+        },
+        {
+          "q": "The lesson's pitfall says anchoring on the first plausible cause costs twice. What are the two costs?",
+          "choices": [
+            "Once to build a fix aimed at the wrong cause, and once again to discover afterwards that the fix did not work",
+            "Once for the investigation and once for the customer complaints handling",
+            "Once in developer time and once in project management overhead",
+            "Once to the sponsor's reputation and once to the analyst's reputation"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this exactly: a fix aimed at the wrong cause costs once to build and again when it's discovered not to have worked, doubling the cost of anchoring on the wrong explanation.",
+          "wrong": "It's not investigation-vs-complaint-handling, developer-vs-PM overhead, or reputational costs specifically. The stated double cost is building the wrong fix, then discovering it failed."
+        },
+        {
+          "q": "The interview angle says candidates who only tell success stories 'read as untested.' What does having a story where your first hypothesis was wrong demonstrate instead?",
+          "choices": [
+            "That the candidate actually practises the discipline of testing and discarding hypotheses, not just landing on the correct answer by luck or intuition",
+            "That the candidate has more overall experience than one who only tells success stories",
+            "That the candidate is more honest than other candidates in general",
+            "That the candidate's investigation process is faster than average"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's point is specifically about demonstrating the discipline of the method: testing a hypothesis and being willing to discard it when wrong is the actual skill, not just arriving at a correct-sounding answer.",
+          "wrong": "It's not simply about years of experience, general honesty, or speed. The specific thing it demonstrates is that the candidate practises hypothesis testing as a discipline, rather than getting lucky with a first guess."
+        }
+      ],
+      "close": "Test the timing assumption, generate real alternatives, and trace all the way to root cause — anchoring costs twice. Next: staying composed when a director says you're wrong in the room."
+    },
+    "BA09-T02": {
+      "open": "BA09-T02 — Behavioural Characteristics Under Pressure. A director tells the steering meeting the analysis is wrong and the requirement was always agreed. You have the documentation showing otherwise. The room is watching. Let's handle it.",
+      "questions": [
+        {
+          "q": "Why does the approach say to separate the factual correction from the interpersonal challenge and address the fact only?",
+          "choices": [
+            "Treating this as a factual correction rather than a personal contest is what lets the decision get fixed without the exchange turning adversarial",
+            "The interpersonal element is legally irrelevant and doesn't need managing at all",
+            "This separation is only necessary when the director outranks the analyst",
+            "Addressing only the fact means the documentation itself doesn't need to be shown"
+          ],
+          "correct": 0,
+          "right": "Right — this is the core move the lesson teaches: keeping the response to the fact itself, not the challenge to your credibility, is what prevents the correction from becoming a personal contest.",
+          "wrong": "It's not that the interpersonal dimension is irrelevant (the lesson's whole point is managing it carefully), rank-conditional, or a reason to withhold the documentation. It's specifically about keeping the response factual rather than personal."
+        },
+        {
+          "q": "Why does the approach say to offer the evidence neutrally rather than as proof of who was right?",
+          "choices": [
+            "Framing evidence as 'proof I was right' turns the exchange into a contest to be won, which the lesson explicitly warns against",
+            "Neutral framing is required because the documentation might later be found inaccurate",
+            "This only applies when the disagreement happens in front of other stakeholders",
+            "Offering evidence neutrally means withholding it until after the meeting"
+          ],
+          "correct": 0,
+          "right": "Right — the pitfall states this directly: winning the exchange in the room can cost the working relationship even while the record gets corrected, so evidence has to be offered as information, not as a win.",
+          "wrong": "It's not about doubting the documentation's accuracy, audience-conditional, or about withholding the evidence — it's about how the evidence is framed when it is offered, in the room."
+        },
+        {
+          "q": "Why does the approach say to follow up in writing after the meeting, 'so the record is corrected regardless of what was said in the room'?",
+          "choices": [
+            "A verbal exchange in a tense meeting can end ambiguously or get remembered differently, so a written follow-up anchors the correction independent of how the room reacted",
+            "Written follow-up is a legal requirement for all steering committee disputes",
+            "This step exists to formally reprimand the director after the meeting",
+            "Written correction is only necessary if the director refuses to back down in the room"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's exact reasoning: whatever happens verbally in the room, a written follow-up is what actually secures the corrected record, independent of how the exchange landed live.",
+          "wrong": "It's not a legal mandate, a reprimand mechanism, or conditional on the director's in-room response. It's about making sure the correction is durable regardless of the meeting's tone or outcome."
+        }
+      ],
+      "close": "Correct the fact, not the person — and put it in writing so the record holds regardless of how the room reacted. Next: explaining a technical constraint in language that lands."
+    },
+    "BA09-T03": {
+      "open": "BA09-T03 — Communication and Interaction Skills. Explaining why a small data change takes eight weeks — and 'schema,' 'referential integrity' and 'migration' have already lost the room twice. Let's fix the explanation.",
+      "questions": [
+        {
+          "q": "Why does the approach say to lead with the business consequence rather than the technical mechanism?",
+          "choices": [
+            "The executive's actual question is what this means for the business, and leading with mechanism (schema, referential integrity) answers a question they didn't ask",
+            "Business consequences are always simpler to state than technical mechanisms",
+            "This ordering is required only when the audience has no technical background at all",
+            "Leading with consequence removes the need to ever explain the mechanism"
+          ],
+          "correct": 0,
+          "right": "Right — the prior attempts failed specifically because they opened with mechanism; leading with consequence answers the question the executive is actually asking, which is what the change means for the business.",
+          "wrong": "It's not simply about relative simplicity, a strict no-technical-background threshold, or eliminating the mechanism entirely — the approach still offers technical detail, just not first (see step 4)."
+        },
+        {
+          "q": "Why does the approach say to check that an analogy holds up under a follow-up question before using it, given the pitfall about analogies that break under scrutiny?",
+          "choices": [
+            "An analogy that collapses when questioned costs more credibility than the jargon it was meant to replace",
+            "Analogies are prohibited in formal business communication",
+            "This check is only necessary for analogies involving financial concepts",
+            "Checking an analogy in advance removes the need to quantify anything in business terms"
+          ],
+          "correct": 0,
+          "right": "Right — the pitfall states this directly: an analogy that breaks under the first intelligent question costs more credibility than the jargon it replaced, which is exactly why it needs to be pressure-tested before use.",
+          "wrong": "It's not a formal prohibition on analogies, finance-specific, or a substitute for quantifying in the audience's own terms (a separate approach step). The risk named is specifically credibility loss from an analogy that doesn't hold up."
+        },
+        {
+          "q": "Why does the approach say to offer technical detail as available rather than deliver it uninvited?",
+          "choices": [
+            "Uninvited technical detail is what lost the room in the earlier attempts — offering it as available respects the executive's actual interest level without forcing it on them",
+            "Technical detail should never be shared with a non-technical executive under any circumstances",
+            "This step is only relevant when the explanation concerns a database migration specifically",
+            "Offering detail as available means the analyst doesn't need to understand it themselves"
+          ],
+          "correct": 0,
+          "right": "Right — this directly addresses the scenario's failure mode: prior attempts pushed technical terms unprompted and lost the room, so offering detail only if wanted respects where the executive's actual interest lies.",
+          "wrong": "It's not a blanket ban on ever sharing technical detail, migration-specific, or a claim the analyst can skip understanding it. It's about sequencing and consent — offered, not imposed."
+        }
+      ],
+      "close": "Consequence first, analogy pressure-tested, detail offered not forced. Next: choosing elicitation techniques for a genuinely difficult stakeholder mix."
+    },
+    "BA10-T01": {
+      "open": "BA10-T01 — Choosing Elicitation Techniques. Four departments, two in another time zone, one openly sceptical of the project. Let's pick techniques that actually fit these constraints.",
+      "questions": [
+        {
+          "q": "Why does the approach say to use interviews specifically where a stakeholder is sceptical, describing a workshop as giving them 'an audience for objection'?",
+          "choices": [
+            "A workshop gives a sceptic a public stage to voice objections and potentially sway the room, while an interview lets their concerns surface and be addressed privately",
+            "Sceptical stakeholders are always more talkative in one-on-one settings regardless of format",
+            "Interviews are required for sceptical stakeholders under this methodology's governance rules",
+            "Workshops are prohibited whenever a sceptical stakeholder is present"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's exact reasoning: a workshop turns a sceptic's objection into a group moment with an audience, while an interview keeps that same concern contained and addressable one-on-one.",
+          "wrong": "It's not about general talkativeness, a governance mandate, or an outright workshop ban. The specific risk named is that a workshop format amplifies a sceptic's objection by giving it an audience."
+        },
+        {
+          "q": "Why does the approach say to use document analysis first, before scheduling stakeholder time?",
+          "choices": [
+            "It avoids spending scarce stakeholder time — especially valuable given the time-zone and scepticism constraints here — on what's already written down",
+            "Document analysis always produces more accurate information than any stakeholder session",
+            "This step is only relevant when no documentation exists at all",
+            "Document analysis is a substitute for combining any other elicitation technique"
+          ],
+          "correct": 0,
+          "right": "Right — with two departments in another time zone and one sceptical stakeholder, session time is especially scarce and costly to arrange, which is exactly why document analysis should absorb what's already documented first.",
+          "wrong": "It's not a claim of superior accuracy, only relevant when nothing is documented, or a substitute for combining techniques (the approach's fourth step explicitly calls for combining them)."
+        },
+        {
+          "q": "The lesson's pitfall calls defaulting to workshops for everything expensive and biased toward 'the confident voice.' Given the four-department, cross-timezone, sceptical mix here, what specifically makes workshops the worst format for the sceptic in particular?",
+          "choices": [
+            "A workshop favours whoever speaks most confidently in the room, which tends to sideline rather than surface a sceptic's actual concerns",
+            "Workshops cannot be conducted across time zones under any circumstances",
+            "Workshops are more expensive to schedule than any other elicitation technique",
+            "The sceptical stakeholder would be formally excluded from any workshop by policy"
+          ],
+          "correct": 0,
+          "right": "Right — the pitfall names this directly: workshops favour the confident voice, which is precisely why they're the worst format for surfacing a sceptic's genuine objection rather than drowning it out.",
+          "wrong": "It's not a hard scheduling impossibility across time zones, purely a cost argument, or an exclusion policy. The specific mechanism is that workshops favour confident voices, which works against a sceptic being heard."
+        }
+      ],
+      "close": "Match the technique to the constraint — interviews for the sceptic, document analysis first, workshops used deliberately, not by default. Next: modelling and prototyping to expose misunderstanding early."
+    },
+    "BA10-T02": {
+      "open": "BA10-T02 — Modelling and Prototyping. A 40-page spec gets signed off. At UAT, stakeholders say the screens aren't what they imagined — even though the build matches the document exactly. Let's fix what should have surfaced this earlier.",
+      "questions": [
+        {
+          "q": "Why does the approach say to model where the risk of misunderstanding is highest — interfaces and complex branching — rather than model everything?",
+          "choices": [
+            "Modelling effort is limited, so it should concentrate where prose is most likely to be misread, not spread evenly across low-risk and high-risk areas alike",
+            "Modelling every part of a specification is technically impossible regardless of tooling",
+            "Interfaces and branching are the only parts of a specification regulators examine",
+            "This targeting rule only applies to specifications longer than 40 pages"
+          ],
+          "correct": 0,
+          "right": "Right — the approach is explicit about targeting: model where misunderstanding risk is highest, since that's where the effort actually pays off, rather than modelling uniformly regardless of risk.",
+          "wrong": "It's not a technical impossibility, regulatory-only scope, or page-count-gated. The reasoning is about concentrating limited modelling effort where the risk of misreading is actually highest."
+        },
+        {
+          "q": "Why does the approach say to prototype at the fidelity that answers the question, giving 'a wireframe tests layout, not colour' as the example?",
+          "choices": [
+            "Using more fidelity than the question requires wastes effort and, per the pitfall, can distract stakeholders from the logic that actually needs testing",
+            "Wireframes are always faster to produce than any other prototype format",
+            "High-fidelity prototypes are prohibited until after the requirements are fully signed off",
+            "Fidelity level has no effect on what feedback a prototype actually generates"
+          ],
+          "correct": 0,
+          "right": "Right — this connects directly to the pitfall: high-fidelity prototypes shown too early get reviewed for styling while the underlying logic goes unchecked, which is the opposite of what fidelity should be matched to answer.",
+          "wrong": "It's not purely about production speed, a sign-off-gated prohibition, or a claim fidelity doesn't affect feedback — the whole point is that fidelity level determines what kind of feedback you actually get."
+        },
+        {
+          "q": "The approach says to be explicit that a prototype is not the build, warning it can otherwise 'become an implied commitment.' What specifically goes wrong if this isn't made explicit?",
+          "choices": [
+            "Stakeholders or executives may treat the prototype as evidence the solution is nearly finished, creating expectations the project never actually committed to",
+            "The prototype will be legally binding on the delivery team if not explicitly disclaimed",
+            "This risk only applies to prototypes built using interactive tools like Axure",
+            "Making this explicit is required only when the prototype is shown to external stakeholders"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's own pitfall example states this directly: executives seeing a high-fidelity prototype can assume it's nearly built, an expectation the project never actually signed up to.",
+          "wrong": "It's not a legal-binding risk, tool-specific to interactive prototypes, or external-audience-only. The specific failure is stakeholders inferring a delivery commitment that was never actually made."
+        }
+      ],
+      "close": "Model the highest-risk areas, match fidelity to the question, and disclaim the prototype before it becomes an implied promise. Next: decision techniques that don't just amplify the loudest voice."
+    },
+    "BA10-T03": {
+      "open": "BA10-T03 — Prioritisation and Decision Techniques. Five options, two stakeholders dominate, one stays silent, and the group converges on whatever the loudest person said first. Let's counteract that.",
+      "questions": [
+        {
+          "q": "Why does the approach say to collect individual positions before group discussion, specifically to 'prevent anchoring'?",
+          "choices": [
+            "Once the group hears the first opinion voiced aloud, it tends to anchor the rest of the discussion around it — collecting positions first avoids that distortion",
+            "Individual collection is faster than group discussion in every case",
+            "This step is only necessary when more than five options are being considered",
+            "Collecting positions individually removes the need for structured scoring afterward"
+          ],
+          "correct": 0,
+          "right": "Right — this is exactly what happened in the scenario: the group converged on whatever the loudest voice raised first, which individual-before-group collection is specifically designed to prevent.",
+          "wrong": "It's not primarily about speed, a five-option threshold, or a substitute for structured scoring (which the approach still calls for as a separate step). The specific purpose is preventing the anchoring the scenario shows happening."
+        },
+        {
+          "q": "Why does the approach say to make criteria and weights explicit and agree them before seeing the options?",
+          "choices": [
+            "Agreeing criteria before the options are visible prevents the criteria from being quietly shaped to favour whichever option the group already leans toward",
+            "Criteria and weights are only relevant for decisions involving a financial trade-off",
+            "This step exists purely to satisfy an audit requirement",
+            "Making criteria explicit removes the need to record any dissent afterward"
+          ],
+          "correct": 0,
+          "right": "Right — this mirrors the change-strategy lesson's same logic: fixing criteria before the options are on the table stops them from being reverse-engineered to favour a pre-existing preference, including the loudest voice's option.",
+          "wrong": "It's not finance-only, a pure audit formality, or a substitute for recording dissent (a distinct, later step). The point is sequencing: criteria set before options prevents them being shaped to fit a favourite."
+        },
+        {
+          "q": "Why does the approach say to record dissent rather than manufacture consensus, so 'a later reversal is not a surprise'?",
+          "choices": [
+            "If disagreement is suppressed to create the appearance of consensus, a later change of direction looks like a broken decision rather than a foreseen possibility",
+            "Recording dissent is a legal requirement for any group decision involving five or more options",
+            "Manufactured consensus always produces a worse decision than genuine consensus",
+            "This step exists to identify which stakeholder to blame if the decision goes wrong"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's reasoning is about honesty of record: if dissent was real but hidden behind manufactured consensus, a later reversal blindsides people who never knew the disagreement existed in the first place.",
+          "wrong": "It's not a legal mandate tied to option count, a claim about decision quality per se, or a blame-assignment mechanism. It's about keeping the record honest so a future reversal doesn't look like a surprise failure."
+        },
+        {
+          "q": "The interview angle says naming anchoring explicitly 'shows you have thought about facilitation, not just attendance.' What's the distinction being drawn?",
+          "choices": [
+            "Simply attending meetings is passive, while recognising and countering a specific group dynamic like anchoring shows active facilitation skill",
+            "Facilitation and attendance are the same skill described with different words",
+            "This distinction only matters for candidates applying to senior facilitator roles",
+            "Naming anchoring proves the candidate has read the full BABOK guide"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson's distinction is between passively being in the room (attendance) and actively managing the dynamics that shape a decision (facilitation), and naming anchoring specifically demonstrates the latter.",
+          "wrong": "They're not presented as the same skill, this isn't restricted to senior-facilitator roles specifically, and it's not framed as proof of reading a specific text. The distinction is passive presence versus active management of group dynamics."
+        }
+      ],
+      "close": "Individual input first, criteria fixed before the options, dissent recorded honestly. Next: evaluating a change when the environment refused to hold still."
+    },
+    "BA10-T04": {
+      "open": "BA10-T04 — Evaluation and Measurement Techniques. The sponsor wants to know if the process change worked — but volumes rose 20% for unrelated commercial reasons in the same window, and the process measure moved too. Let's untangle it.",
+      "questions": [
+        {
+          "q": "Why does the approach say to choose rate and ratio measures rather than absolute counts when volume itself has shifted?",
+          "choices": [
+            "An absolute count will move whenever volume moves, regardless of whether the process itself actually changed — a rate or ratio measure is less sensitive to that confound",
+            "Rate measures are always more accurate than absolute counts under any conditions",
+            "This substitution is only valid when volume has increased, not decreased",
+            "Choosing rate measures removes the need to find a comparison group"
+          ],
+          "correct": 0,
+          "right": "Right — this directly answers the scenario: with volume up 20% for unrelated reasons, an absolute count would move regardless of the process change, while a rate/ratio measure is far less sensitive to that same confound.",
+          "wrong": "It's not a claim of universal superior accuracy, one-directional to increases only, or a substitute for finding a comparison group (a separate, additional step in the approach)."
+        },
+        {
+          "q": "Why does the approach say to compare against the pre-change trend rather than a single pre-change point?",
+          "choices": [
+            "A single point can't distinguish an ongoing trend from a one-off change, so comparing against the trend shows whether the measure moved beyond what was already happening",
+            "Trend comparison is only valid when at least twelve months of prior data exist",
+            "A single pre-change point is always statistically invalid regardless of context",
+            "This step replaces the need to normalise measures for volume"
+          ],
+          "correct": 0,
+          "right": "Right — a single point can't reveal whether the measure was already moving before the change, so comparing to the trend is what lets you see whether the change added something beyond the pre-existing trajectory.",
+          "wrong": "It's not gated on a twelve-month minimum, a blanket invalidity claim about single points, or a substitute for volume normalisation (a separate step). The point is that only a trend, not one point, reveals pre-existing movement."
+        },
+        {
+          "q": "Why does the approach say to state the confounders explicitly rather than claim attribution you cannot support?",
+          "choices": [
+            "Naming the confounder (the 20% volume rise) is honest about what the evaluation can and cannot actually prove, rather than overclaiming the process change alone caused the result",
+            "Stating confounders is a legal requirement whenever a business case exceeds a stated value",
+            "This step is unnecessary once a comparison group has been found",
+            "Naming confounders is only relevant when the confounder is commercial rather than regulatory in nature"
+          ],
+          "correct": 0,
+          "right": "Right — this is the lesson's core discipline: since the commercial volume rise is a genuine confounder in this exact scenario, naming it explicitly is what keeps the evaluation honest about what can and can't be attributed to the change.",
+          "wrong": "It's not a legal-value threshold, made redundant by finding a comparison group (comparison groups aren't always available, per the approach's 'where possible' framing), or confounder-type-specific."
+        },
+        {
+          "q": "The lesson's pitfall warns that claiming attribution from a before-and-after comparison 'will eventually be found out' if anything else changed in the window. What does the interview angle say naming a confounder unprompted signals?",
+          "choices": [
+            "That the candidate distinguishes measurement from proof — noticing the effect is not the same as proving what caused it",
+            "That the candidate has direct experience specifically with commercial volume forecasting",
+            "That the candidate is more cautious than average and therefore more risk-averse in recommendations generally",
+            "That the candidate always requires a comparison group before making any claim"
+          ],
+          "correct": 0,
+          "right": "Right — the lesson states this exactly: naming a confounder unprompted shows the candidate separates measurement (the numbers moved) from proof (the change caused it), which is the core discipline this whole lesson teaches.",
+          "wrong": "It's not about specific forecasting experience, general risk-aversion, or an absolute requirement for a comparison group in every case. The signal is specifically the measurement-versus-proof distinction."
+        }
+      ],
+      "close": "Use rate measures, compare to the trend not a point, and always name the confounder — measurement is not proof. That closes Batch 2: Chapters 6 through 10, lesson BA10-T04. All 42 Business Analysis lessons now have Teacher MCQ coverage."
     }
   }
 }
