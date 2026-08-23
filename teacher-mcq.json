@@ -11836,6 +11836,18 @@
           "correct": 1,
           "right": "Right — the lesson is explicit that the outcome should lead, with artefacts mentioned only as evidence, because that's what stakeholders actually value.",
           "wrong": "The issue isn't time or confidentiality. It's that documents aren't the value stakeholders care about — the change working is. Deliverables should support that story as evidence, not lead it."
+        },
+        {
+          "q": "The approach's final step says to name the cost of the needs-analysis gap in the firm's own numbers -- the 40% overrun. Why does quantifying the cost in the organisation's own figures matter, rather than stating the principle abstractly?",
+          "choices": [
+            "A concrete, firm-specific number makes the cost of skipping needs analysis undeniable to the room, where an abstract principle about needs analysis could be dismissed as textbook theory",
+            "The 40% figure is required by financial reporting regulations whenever a BA is hired",
+            "Quantifying the cost replaces the need to separate the three conflated questions the lesson opens with",
+            "The firm's own numbers are only relevant if the CEO specifically requests a cost breakdown"
+          ],
+          "correct": 0,
+          "right": "Right -- tying the abstract principle (skipping needs analysis is costly) to this firm's own 40% overrun is what makes it land as a real, undeniable cost rather than a general BA-textbook claim the room can wave away.",
+          "wrong": "It's not a regulatory filing requirement, a substitute for the earlier three-questions framing, or conditional on being asked. The point is that a concrete, own-numbers cost is what actually persuades, where an abstract principle would not."
         }
       ],
       "close": "Needs vs. solutions, and outcome over artefacts. That's the frame the rest of the course builds on. Next: how the BABOK knowledge areas fit together."
@@ -12208,6 +12220,18 @@
           "correct": 0,
           "right": "Right — naming and versioning is a distinct step from designating an authoritative source: even within the right location, a reader still needs to tell which version is current versus stale.",
           "wrong": "It's not about storage space, replacing retention rules, or being tool-specific. Naming and versioning solves a separate problem: distinguishing current from superseded material even within the authoritative location."
+        },
+        {
+          "q": "The approach's final step says to set access and retention rules against the organisation's regulatory obligations. Why does this need to be driven by regulatory obligation specifically, rather than by convenience or storage cost?",
+          "choices": [
+            "Retention periods and access restrictions that fall short of what regulation actually requires create compliance exposure, regardless of what would be cheaper or easier to manage day to day",
+            "Regulatory obligations only apply to artefacts stored in SharePoint, not Confluence",
+            "This step is optional once a single authoritative source per artefact has already been designated",
+            "Access and retention rules are set by IT infrastructure teams, not by the information management plan"
+          ],
+          "correct": 0,
+          "right": "Right -- the plan's access and retention rules have to meet the regulatory floor regardless of what's operationally convenient, because falling short of that floor is a compliance exposure, not just an inconvenience.",
+          "wrong": "It's not tool-specific, made optional by the authoritative-source step (a separate, earlier concern), or an IT-only decision. The reason regulation has to drive this is that anything short of the required floor creates real compliance risk."
         }
       ],
       "close": "One authoritative source per artefact, stated explicitly — the same logic as a data golden source. Next: measuring BA performance."
