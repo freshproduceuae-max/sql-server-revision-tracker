@@ -12976,6 +12976,18 @@
           "correct": 0,
           "right": "Right — the live scenario's actual failure was exactly at these edges: three defensible-but-different implementations came from the boundaries never being pinned down.",
           "wrong": "It's not currency-specific, a substitute for a decision table, or cosmetic. Boundaries are precisely where ambiguous requirements diverge into different real implementations, as the scenario shows."
+        },
+        {
+          "q": "The approach's fourth step says to define acceptance criteria alongside the requirement so 'done' is testable. Why is this a distinct step from fixing the ambiguous verb and modelling the branching logic?",
+          "choices": [
+            "A requirement can be precisely worded and fully modelled and still leave no way to confirm the build actually satisfies it -- acceptance criteria is what makes 'done' checkable",
+            "Acceptance criteria exists only to satisfy Jira's workflow requirements, not to add analytical value",
+            "Acceptance criteria replaces the need to state boundary conditions like the exact-30-days case",
+            "Acceptance criteria is only necessary for requirements involving currency amounts"
+          ],
+          "correct": 0,
+          "right": "Right -- precision and modelling remove ambiguity about what the system should do, but acceptance criteria is the separate, distinct step that lets anyone confirm afterward whether the built system actually does it.",
+          "wrong": "It's not a Jira formality, a substitute for boundary conditions (a separate approach step), or currency-specific. Acceptance criteria answers a different question than precision or modelling: how do we test that 'done' was actually achieved."
         }
       ],
       "close": "Kill the ambiguous verbs, model the branching, pin the boundaries, and pair it with testable acceptance criteria. Next: verifying the requirement set you just wrote."

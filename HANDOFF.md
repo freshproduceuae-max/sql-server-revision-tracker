@@ -276,8 +276,8 @@ entry 19.
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
   "contentThroughPR": 73,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:7557ab39da634e9bcd5701c8716e53190dfe8f6e88ceaa7c0393752ade3d7d0b",
-  "lastVerified": "2026-08-23T03:33:50.100Z"
+  "sourcesTeacherMcqHash": "sha256:8d619bfc025a312da47b5663536c0fe2e74975962c434d7d1452fefc893824d5",
+  "lastVerified": "2026-08-23T03:38:50.709Z"
 }
 ```
 
@@ -862,7 +862,7 @@ lesson content was altered to fit a question.
 
 The remaining 21 BA lessons (BA06-T02 through BA10-T04, canonical curriculum
 order — Chapters 6 through 10) merged into `sources/teacher-mcq.json`
-alongside the existing 293 entries — **314 lessons / 995 questions total** in
+alongside the existing 293 entries — **314 lessons / 996 questions total** in
 that file now, per the built file's own count. All 42 BA lessons now have
 Teacher MCQ coverage.
 
@@ -870,11 +870,16 @@ Teacher MCQ coverage.
 before authoring, not defaulted to a flat number** — the corrective lesson
 from Batch 1's adequacy review. Each lesson's distinct testable angles
 (Approach steps, Common Pitfall, Interview Angle) were mapped from the source
-content first, then 3-5 questions assigned to match. Final distribution: 8
+content first, then 3-5 questions assigned to match. A separate, independent
+blind Codex adequacy review (not told the authored counts) then re-derived
+distinct angles from source alone and found one genuine gap: BA07-T01's
+Approach step 4 (acceptance criteria as the testable definition of "done")
+was untested by the 3 originally-authored questions. A 4th question was
+added closing that gap, re-validated and re-reviewed. Final distribution: 8
 lessons at 3 questions, 12 lessons at 4 questions, 1 lesson at 5 questions
 (BA07-T06, Analysing Potential Value — five genuinely distinct angles: net
 value, time-to-benefit discounting, delivery-capacity constraint, explicit
-recommendation conditions, and the pitfall's ranking-reversal risk) = 77
+recommendation conditions, and the pitfall's ranking-reversal risk) = 78
 questions for this batch.
 
 Every question tests applied judgement, diagnosis, trade-offs, ambiguity,
