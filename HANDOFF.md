@@ -276,8 +276,8 @@ entry 19.
   "_note": "0 remaining techniques + 15 remaining exercises = 15 remaining. This is NOT the same number as fullTrackTotalItems (251), which is the whole track's techniques+exercises, done or not.",
   "contentThroughPR": 73,
   "contentThroughPRCheckStatus": "verified",
-  "sourcesTeacherMcqHash": "sha256:8d619bfc025a312da47b5663536c0fe2e74975962c434d7d1452fefc893824d5",
-  "lastVerified": "2026-08-23T03:38:50.709Z"
+  "sourcesTeacherMcqHash": "sha256:2a1b6f0ba9899c6be16a9f08218c226b41a91776caa437cc84d658d1cd8d75a1",
+  "lastVerified": "2026-08-23T10:13:15.356Z"
 }
 ```
 
@@ -896,6 +896,39 @@ Teacher panel's generic `S.teacherMcq.lessons[lessonId]` lookup works
 unmodified for BA's `BA0X-T0X` ids with zero `index.html` changes. This is
 additive content only — `git diff` on `sources/teacher-mcq.json` shows zero
 changed lines inside any existing `G\d{2}-T\d{2}` or `DE0\d-T\d{2}` entry.
+
+### Business Analysis Teacher MCQs — final acceptance review, PASS_WITH_FIXES, corrected and closed
+
+A review-only pass across the complete 42-lesson / 149-question BA set (both
+batches together, as one set for the first time) found no CRITICAL or MAJOR
+issues, zero duplication within BA or against DV/DE, coherent cross-batch
+tone and depth with no seam at the BA06 boundary, and a balanced applied-skill
+distribution. It found exactly two MINOR, specific, named grounding gaps —
+distinct from the batch-level adequacy corrections already made — each
+independently identified by a blind Codex pass that derived testable angles
+from source content alone, then independently re-verified against the actual
+authored questions before any fix was made:
+
+- **BA01-T01**: a 4th question was added testing how the lesson quantifies
+  the cost of skipping needs analysis in the firm's own numbers (the 40%
+  overrun figure), an Approach-step-4 angle none of the original 3 questions
+  tested.
+- **BA03-T04**: a 5th question was added testing how regulatory obligations
+  drive access/retention rules, an Approach-step-4 angle none of the
+  original 4 questions tested.
+
+Both new questions were independently blind-Codex-reviewed against their
+source lessons and against the complete PR diff — PASS, no findings. No
+existing question, lesson, DV entry or DE entry was altered; the diff is
+additive-only (confirmed via line-count check on `sources/teacher-mcq.json`).
+
+**With this correction, `sources/teacher-mcq.json` (and the built
+`teacher-mcq.json`) hold 314 lesson entries and 998 questions total — BA now
+at 42 entries / 151 questions (Batch 1: 21/71, Batch 2: 21/78, correction:
++2) — per the built file's own count. The Business Analysis Teacher MCQ
+programme is now durably closed: all 42 lessons covered, both authoring
+batches complete, the full-set acceptance review's findings applied and
+re-verified.**
 
 `scripts/check-handoff-progress.js`'s DV-specific `completedLessons`/
 `completedQuestions` counts (scoped to `G\d{2}-T\d{2}`) were confirmed
