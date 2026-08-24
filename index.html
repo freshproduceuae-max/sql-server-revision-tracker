@@ -93,8 +93,11 @@ button{font-family:inherit;cursor:pointer;}
 .progress-track{height:14px;border-radius:8px;background:var(--track-bg);overflow:hidden;}
 .progress-fill{height:100%;border-radius:8px;background:#58CC02;transition:width .4s ease;}
 .framework{margin-top:24px;}
-.framework-lbl{font-weight:800;font-size:13px;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
-.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.framework-lbl{font-weight:800;font-size:13px;color:var(--text-lo);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;cursor:pointer;list-style:none;}
+.framework-lbl::-webkit-details-marker{display:none;}
+.framework-lbl::before{content:'▸ ';display:inline-block;transition:transform .15s ease;}
+details[open]>.framework-lbl::before{transform:rotate(90deg);}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 .chip{background:var(--chip-bg);color:var(--chip-fg);font-weight:700;font-size:12.5px;padding:7px 12px;border-radius:20px;}
 
 /* ── Path ── */
@@ -313,6 +316,28 @@ button{font-family:inherit;cursor:pointer;}
 .tl-hint{margin-top:18px;text-align:center;font-size:13px;font-weight:700;color:var(--text-mid);}
 .proj-hero-btn{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:12px 20px;border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text-hi);font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;text-decoration:none;}
 .proj-hero-btn:hover{background:var(--chip-bg);}
+
+/* ── Prominent checkpoint card on the track hero ── */
+.checkpoint-card{display:flex;align-items:center;gap:16px;margin-top:20px;padding:18px 22px;border-radius:18px;border:2px solid var(--border);border-bottom-width:5px;background:var(--surface);text-decoration:none;color:inherit;transition:transform .12s ease;}
+.checkpoint-card:hover{transform:translateY(-1px);}
+.checkpoint-card-icon{flex:0 0 auto;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;}
+.checkpoint-card.locked .checkpoint-card-icon{background:var(--node-locked-bg);box-shadow:0 4px 0 var(--node-locked-sh);color:var(--node-locked-txt);}
+.checkpoint-card.open .checkpoint-card-icon{background:#FF9600;box-shadow:0 4px 0 #E68200;}
+.checkpoint-card.done .checkpoint-card-icon{background:#58CC02;box-shadow:0 4px 0 #46A302;}
+.checkpoint-card-body{flex:1;min-width:0;}
+.checkpoint-card-eyebrow{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lo);}
+.checkpoint-card.open .checkpoint-card-eyebrow{color:#B36A00;}
+.checkpoint-card.done .checkpoint-card-eyebrow{color:#3F8F02;}
+.checkpoint-card-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;color:var(--text-hi);margin-top:2px;text-wrap:pretty;}
+.checkpoint-card-sub{font-size:13px;font-weight:700;color:var(--text-mid);margin-top:4px;}
+.checkpoint-card-arrow{flex:0 0 auto;font-size:20px;color:var(--text-lo);}
+.checkpoint-all-link{display:block;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--text-lo);text-decoration:none;}
+.checkpoint-all-link:hover{color:var(--text-mid);text-decoration:underline;}
+@media(max-width:480px){
+  .checkpoint-card{padding:14px 16px;gap:12px;}
+  .checkpoint-card-icon{width:46px;height:46px;font-size:19px;}
+  .checkpoint-card-title{font-size:15px;}
+}
 .proj-status{margin:22px auto 0;max-width:860px;border:2px solid var(--border);border-radius:16px;padding:16px 20px;font-weight:700;font-size:14px;}
 .proj-status.locked{color:var(--text-mid);}
 .proj-status.open{border-color:#FF9600;color:#B36A00;}
@@ -1180,17 +1205,50 @@ async function loadProjMd(id){
   }catch(e){delete S.projMdLoading[id];S.projMdError[id]=true;render();}
 }
 function retryProjMd(id){delete S.projMdError[id];loadProjMd(id);}
-function projSummary(track){
-  if(!S.projIndex)return '';
-  const list=S.projIndex.filter(p=>p.track===track);
-  if(!list.length)return '';
-  const done=list.filter(p=>S.completed[p.id]).length;
-  const open=list.filter(p=>projState(p)==='open').length;
-  return ` <span style="font-weight:700;color:var(--text-lo);">· ${done}/${list.length} banked${open?` · ${open} ready`:''}</span>`;
-}
 function projState(p){
   if(S.completed[p.id])return 'done';
   return p.covers.every(id=>S.completed[id])?'open':'locked';
+}
+// The prominent checkpoint card shown on a track's own hero (Credit Risk, DV,
+// DE — the only tracks with projPrefix; see meta.hasProjects). Surfaces the
+// next actionable checkpoint (first not-yet-banked one in order) so a learner
+// sees checkpoints without visiting the separate #projects/<track> timeline.
+// Returns '' while the index hasn't loaded yet — the hero still paints
+// immediately and this fills in once loadProjIndex() resolves.
+function renderCheckpointCard(trackId){
+  if(!S.projIndex)return '';
+  const list=S.projIndex.filter(p=>p.track===trackId).sort((a,b)=>a.n-b.n);
+  if(!list.length)return '';
+  const next=list.find(p=>!S.completed[p.id]);
+  let cls,href,icon,eyebrow,title,sub;
+  if(!next){
+    cls='done';href=`#projects/${trackId}`;icon='🏆';
+    eyebrow='All checkpoints banked';title='Every milestone complete';
+    sub=`${list.length} / ${list.length} checkpoints done`;
+  }else{
+    const st=projState(next);
+    const doneCount=next.covers.filter(id=>S.completed[id]).length;
+    href=`#project/${esc(next.id)}`;
+    if(st==='open'){
+      cls='open';icon='▶';eyebrow='Checkpoint ready';
+      title=esc(next.title);
+      sub=`All ${next.covers.length} covered lessons complete — open it`;
+    }else{
+      cls='locked';icon='🔒';eyebrow=`Checkpoint ${next.n} · locked`;
+      title=esc(next.title);
+      sub=`${doneCount} / ${next.covers.length} covered lessons complete`;
+    }
+  }
+  return `<a class="checkpoint-card ${cls}" href="${href}">
+    <div class="checkpoint-card-icon">${icon}</div>
+    <div class="checkpoint-card-body">
+      <div class="checkpoint-card-eyebrow">${eyebrow}</div>
+      <div class="checkpoint-card-title">${title}</div>
+      <div class="checkpoint-card-sub">${esc(sub)}</div>
+    </div>
+    <div class="checkpoint-card-arrow">›</div>
+  </a>
+  <a class="checkpoint-all-link" href="#projects/${trackId}">View all ${list.length} checkpoints →</a>`;
 }
 function toggleProject(id){
   const c={...S.completed};
@@ -2216,10 +2274,10 @@ function renderApp(){
         <div class="progress-head"><span class="progress-lbl">Lessons cleared</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:#FF9600;"></div></div>
       </div>
-      <div class="framework">
-        <div class="framework-lbl">Question banks</div>
+      <details class="framework">
+        <summary class="framework-lbl">Question banks</summary>
         <div class="chips">${S.quizBank.quizzes.map(z=>`<span class="chip">${esc(z.quiz_name)}</span>`).join('')}</div>
-      </div>
+      </details>
     </div>`;
     // Every bank is a peer you can start in any order — autoExpand:false, so
     // nothing opens by default, unlike Credit Risk/DV/BA below.
@@ -2253,10 +2311,10 @@ function renderApp(){
         <div class="progress-head"><span class="progress-lbl">Course progress</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:#CE82FF;"></div></div>
       </div>
-      <div class="framework">
-        <div class="framework-lbl">Every lesson covers all six</div>
+      <details class="framework">
+        <summary class="framework-lbl">Every lesson covers all six</summary>
         <div class="chips">${BA_CHIPS.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>
-      </div>
+      </details>
     </div>`;
     const units=S.baIndex.map((ch,i)=>({kicker:`Chapter ${i+1} of ${S.baIndex.length} · ${ch.desc}`,name:ch.name}));
     return topBar+tabs+hero+renderUnitAccordion('ba','Chapter',units,flat,completed,fi,true);
@@ -2275,11 +2333,11 @@ function renderApp(){
         <div class="progress-head"><span class="progress-lbl">Course progress</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:#00C2A8;"></div></div>
       </div>
-      <div class="framework">
-        <div class="framework-lbl">Every lesson: scenario, code, expected output, explanation</div>
+      <details class="framework">
+        <summary class="framework-lbl">Every lesson: scenario, code, expected output, explanation</summary>
         <div class="chips">${DE_TABLE_CHIPS.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>
-      </div>
-      <a class="proj-hero-btn" href="#projects/de">🏁 Checkpoint projects${projSummary('de')}</a>
+      </details>
+      ${renderCheckpointCard('de')}
     </div>`;
     const units=DE_CHAPTERS.map((c,i)=>({kicker:`Chapter ${i+1} of ${DE_CHAPTERS.length} · ${c.desc}`,name:c.name}));
     path=renderUnitAccordion('de','Chapter',units,flat,completed,fi,true);
@@ -2297,11 +2355,11 @@ function renderApp(){
         <div class="progress-head"><span class="progress-lbl">Lab progress</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:#1CB0F6;"></div></div>
       </div>
-      <div class="framework">
-        <div class="framework-lbl">Six dirty-data reference tables</div>
+      <details class="framework">
+        <summary class="framework-lbl">Six dirty-data reference tables</summary>
         <div class="chips">${DV_TABLE_CHIPS.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>
-      </div>
-      <a class="proj-hero-btn" href="#projects/dv">🏁 Checkpoint projects${projSummary('dv')}</a>
+      </details>
+      ${renderCheckpointCard('dv')}
     </div>`;
     const units=DV_GROUPS.map((g,i)=>({kicker:`Group ${i+1} of ${DV_GROUPS.length} · ${g.desc}`,name:g.name}));
     units.push({kicker:'Hands-on · run in SSMS against the reference tables',name:'Worked Exercises'});
@@ -2320,11 +2378,11 @@ function renderApp(){
         <div class="progress-head"><span class="progress-lbl">Course progress</span><span class="progress-cnt">${done} / ${flat.length}</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
       </div>
-      <div class="framework">
-        <div class="framework-lbl">Every module covers all 15</div>
+      <details class="framework">
+        <summary class="framework-lbl">Every module covers all 15</summary>
         <div class="chips">${FRAMEWORK_CHIPS.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>
-      </div>
-      <a class="proj-hero-btn" href="#projects/credit">🏁 Checkpoint projects${projSummary('credit')}</a>
+      </details>
+      ${renderCheckpointCard('credit')}
     </div>`;
     const units=UNIT_DEFS.map((u,i)=>({kicker:`Part ${i+1} of ${UNIT_DEFS.length}`,name:u.name}));
     path=renderUnitAccordion('credit','Part',units,flat,completed,fi,true);
