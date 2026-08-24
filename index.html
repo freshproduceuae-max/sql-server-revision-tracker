@@ -294,14 +294,34 @@ details[open]>.framework-lbl::before{transform:rotate(90deg);}
 
 /* ── Checkpoint timeline (horizontal scroll, full page — no dialogs) ── */
 .tl-page{max-width:1100px;margin:0 auto;padding:26px 20px 60px;}
-.tl-strip-wrap{overflow-x:auto;padding:30px 4px 18px;-webkit-overflow-scrolling:touch;}
+.tl-next-goal{max-width:520px;margin:12px auto 0;text-align:center;font-size:13.5px;font-weight:700;color:var(--text-mid);}
+.tl-next-goal b{color:var(--text-hi);}
+/* padding-top has to fit the tallest tooltip (see .tl-tip) plus its gap
+   above the dot -- overflow-x:auto implicitly clips overflow-y too (per the
+   CSS Overflow spec, a non-visible x forces y to auto as well), so there is
+   no way to let the tooltip escape this box; the only fix is enough padding
+   inside it that the tooltip never needs to. */
+.tl-strip-wrap{overflow-x:auto;padding:76px 4px 18px;-webkit-overflow-scrolling:touch;}
 .tl-strip{display:flex;align-items:flex-start;gap:0;min-width:max-content;}
-.tl-item{display:flex;flex-direction:column;align-items:center;width:168px;flex-shrink:0;position:relative;text-decoration:none;}
+.tl-item{display:flex;flex-direction:column;align-items:center;width:96px;flex-shrink:0;position:relative;text-decoration:none;outline:none;}
+/* Custom focus ring scoped to the dot, not the browser default rectangle
+   around the whole card (which used to visually bracket the tooltip too --
+   Codex review finding). Still a real, visible keyboard-focus indicator,
+   just shaped to match what it's actually pointing at. */
+.tl-item:focus-visible .tl-dot{outline:3px solid var(--text-hi);outline-offset:3px;}
+/* The current milestone needs room for its persistent title below the dot;
+   everything else is dot-only (title/requirement move into a hover/focus
+   tooltip instead — see .tl-tip) so 13 labels are never on screen at once. */
+.tl-item.tl-current{width:168px;}
 .tl-item::before{content:'';position:absolute;top:29px;left:-50%;width:100%;height:5px;background:var(--track-bg);z-index:0;}
 .tl-item:first-child::before{display:none;}
 .tl-item.done::before{background:#58CC02;}
-.tl-dot{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:19px;color:#fff;z-index:1;transition:transform .12s ease;}
-.tl-item:hover .tl-dot{transform:scale(1.08);}
+/* The segment leading INTO the current milestone fades from done-green to
+   not-done, so the line itself reads as "progress is filling up to here"
+   rather than a hard done/not-done cut. */
+.tl-item.tl-current::before{background:linear-gradient(to right,#58CC02,var(--track-bg));}
+.tl-dot{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:19px;color:#fff;z-index:1;transition:transform .15s ease,opacity .15s ease;}
+.tl-item:hover .tl-dot,.tl-item:focus-visible .tl-dot{transform:scale(1.08);}
 .tl-dot.done{background:#58CC02;box-shadow:0 5px 0 #46A302;}
 .tl-dot.open{background:#FF9600;box-shadow:0 5px 0 #E68200;position:relative;}
 .tl-dot.open::before,.tl-dot.open::after{
@@ -310,10 +330,39 @@ details[open]>.framework-lbl::before{transform:rotate(90deg);}
 }
 .tl-dot.open::after{animation-delay:1.05s;}
 .tl-dot.locked{background:var(--node-locked-bg);box-shadow:0 5px 0 var(--node-locked-sh);color:var(--node-locked-txt);}
+/* Visual hierarchy beyond done/open/locked: WHERE a milestone sits relative
+   to progress. Current is the big highlighted ring; next is only lightly
+   dimmed; everything further out is muted so the strip doesn't compete with
+   the one milestone that actually matters right now. */
+.tl-item.tl-current .tl-dot{width:66px;height:66px;font-size:22px;}
+.tl-item.tl-current .tl-dot.done{box-shadow:0 0 0 4px var(--surface),0 0 0 7px #58CC02,0 5px 0 #46A302;}
+.tl-item.tl-current .tl-dot.open{box-shadow:0 0 0 4px var(--surface),0 0 0 7px #FF9600,0 5px 0 #E68200;}
+.tl-item.tl-current .tl-dot.locked{box-shadow:0 0 0 4px var(--surface),0 0 0 7px var(--node-locked-sh),0 5px 0 var(--node-locked-sh);}
+/* Opacity alone read as too subtle in review (Codex finding) -- a size
+   step down (current 66px > next 62px > future 50px, base is 58px) makes
+   the current→next→future sequence legible at a glance, not just on close
+   inspection, and still respects reduced-motion since size isn't animated. */
+.tl-item.tl-next .tl-dot{width:62px;height:62px;font-size:20px;opacity:.95;}
+.tl-item.tl-future .tl-dot{width:50px;height:50px;font-size:16px;opacity:.55;}
+.tl-item.tl-future .tl-dot.open::before,.tl-item.tl-future .tl-dot.open::after{display:none;} /* no ripple this far out -- visual calm, not urgency */
 .tl-title{margin-top:10px;font-weight:800;font-size:12.5px;color:var(--text-hi);text-align:center;max-width:150px;text-wrap:pretty;line-height:1.3;}
 .tl-sub{margin-top:3px;font-weight:700;font-size:10.5px;color:var(--text-lo);text-align:center;max-width:150px;}
 .tl-item.locked .tl-title{color:var(--caption-locked);}
+/* The current milestone's title stays fully legible even when it's also
+   locked -- it's still the one thing the learner should read clearly, not
+   another muted item in the strip. More specific than the rule above. */
+.tl-item.tl-current.locked .tl-title{color:var(--text-hi);}
 .tl-hint{margin-top:18px;text-align:center;font-size:13px;font-weight:700;color:var(--text-mid);}
+/* Hover/focus tooltip for every non-current milestone -- name + requirement
+   on demand, never all-at-once. The text stays in the DOM at all times (not
+   display:none), so it's part of the link's accessible name for screen
+   reader users regardless of hover state; only the VISUAL reveal is gated
+   on :hover/:focus-visible, which also covers keyboard tabbing. */
+.tl-tip{position:absolute;bottom:calc(100% + 12px);left:50%;width:150px;padding:8px 11px;border-radius:10px;background:var(--text-hi);color:var(--surface);font-size:11px;text-align:center;line-height:1.35;opacity:0;pointer-events:none;transform:translate(-50%,4px);transition:opacity .15s ease,transform .15s ease;z-index:6;}
+.tl-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--text-hi);}
+.tl-tip-title{font-weight:800;}
+.tl-tip-sub{margin-top:2px;font-weight:600;opacity:.8;}
+.tl-item:hover .tl-tip,.tl-item:focus-visible .tl-tip{opacity:1;transform:translate(-50%,0);}
 .proj-hero-btn{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:12px 20px;border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text-hi);font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;text-decoration:none;}
 .proj-hero-btn:hover{background:var(--chip-bg);}
 
@@ -2004,25 +2053,50 @@ function renderProjTimeline(route){
   if(!S.projIndex)return header+(S.projError
     ? `<div class="loading" style="color:var(--text-lo)">Checkpoints unavailable.<button class="proj-complete-btn" onclick="retryProjIndex()">Try again</button></div>`
     : `<div class="loading"><div class="spinner"></div>Loading checkpoints…</div>`);
-  const list=S.projIndex.filter(p=>p.track===route.ptrack);
+  const list=[...S.projIndex.filter(p=>p.track===route.ptrack)].sort((a,b)=>a.n-b.n);
   const done=list.filter(p=>S.completed[p.id]).length;
+  // Position in the journey, not just lock state: the first not-yet-done
+  // checkpoint is "current" (big highlighted ring + persistent title), the
+  // one after it is "next" (lightly dimmed), everything further out is
+  // "future" (muted). Distinct from done/open/locked, which controls the
+  // dot's icon/colour -- this controls how much visual weight it gets.
+  const notDone=list.filter(p=>!S.completed[p.id]);
+  const posClass=(p)=>{
+    const i=notDone.indexOf(p);
+    if(i===-1)return ''; // done
+    return i===0?'tl-current':i===1?'tl-next':'tl-future';
+  };
   const items=list.map(p=>{
     const st=projState(p);
     const dot=st==='done'?'✓':st==='open'?'▶':'🔒';
-    return `<a class="tl-item ${st}" href="#project/${esc(p.id)}">
+    const pos=posClass(p);
+    const reqText=st==='done'?'Done':st==='open'?`All ${p.covers.length} covered lessons complete — ready`:
+      `${p.covers.filter(id=>S.completed[id]).length} / ${p.covers.length} covered lessons complete`;
+    // Only the current milestone gets a persistent, always-visible label --
+    // every other one shows its name + requirement in a hover/focus tooltip
+    // instead, so the strip never shows 13 long labels at once. The tooltip
+    // text still lives in the DOM (not display:none), so it's always part
+    // of this link's accessible name for screen readers.
+    const label=pos==='tl-current'
+      ? `<div class="tl-title">${p.n}. ${esc(p.title)}</div><div class="tl-sub">${esc(coversLabel(p))}</div>`
+      : `<div class="tl-tip"><div class="tl-tip-title">${p.n}. ${esc(p.title)}</div><div class="tl-tip-sub">${esc(reqText)}</div></div>`;
+    return `<a class="tl-item ${st} ${pos}" href="#project/${esc(p.id)}">
       <div class="tl-dot ${st}">${dot}</div>
-      <div class="tl-title">${p.n}. ${esc(p.title)}</div>
-      <div class="tl-sub">${esc(coversLabel(p))}${st==='done'?' · done':st==='open'?' · ready':''}</div>
+      ${label}
     </a>`;
   }).join('');
+  const nextGoal=notDone.length
+    ? `<div class="tl-next-goal">Next up: <b>${esc(notDone[0].title)}</b></div>`
+    : `<div class="tl-next-goal">🎉 All ${list.length} checkpoints banked</div>`;
   return header+`
   <div class="tl-page">
     <div class="progress-card" style="max-width:520px;margin:0 auto;">
       <div class="progress-head"><span class="progress-lbl">Milestones banked</span><span class="progress-cnt">${done} / ${list.length}</span></div>
       <div class="progress-track"><div class="progress-fill" style="width:${list.length?Math.round(done/list.length*100):0}%;background:${meta.col};"></div></div>
     </div>
+    ${nextGoal}
     <div class="tl-strip-wrap"><div class="tl-strip">${items}</div></div>
-    <div class="tl-hint">Scroll → each checkpoint unlocks when every lesson it consolidates is complete. Finish the project work, then mark it done to bank the milestone (+50 XP).</div>
+    <div class="tl-hint">Scroll → tap or hover a milestone for its name and requirement. Each checkpoint unlocks when every lesson it consolidates is complete; finish the project work, then mark it done to bank the milestone (+50 XP).</div>
   </div>`;
 }
 function renderProjectPage(route){
