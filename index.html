@@ -303,7 +303,12 @@ details[open]>.framework-lbl::before{transform:rotate(90deg);}
    inside it that the tooltip never needs to. */
 .tl-strip-wrap{overflow-x:auto;padding:76px 4px 18px;-webkit-overflow-scrolling:touch;}
 .tl-strip{display:flex;align-items:flex-start;gap:0;min-width:max-content;}
-.tl-item{display:flex;flex-direction:column;align-items:center;width:96px;flex-shrink:0;position:relative;text-decoration:none;outline-offset:4px;}
+.tl-item{display:flex;flex-direction:column;align-items:center;width:96px;flex-shrink:0;position:relative;text-decoration:none;outline:none;}
+/* Custom focus ring scoped to the dot, not the browser default rectangle
+   around the whole card (which used to visually bracket the tooltip too --
+   Codex review finding). Still a real, visible keyboard-focus indicator,
+   just shaped to match what it's actually pointing at. */
+.tl-item:focus-visible .tl-dot{outline:3px solid var(--text-hi);outline-offset:3px;}
 /* The current milestone needs room for its persistent title below the dot;
    everything else is dot-only (title/requirement move into a hover/focus
    tooltip instead — see .tl-tip) so 13 labels are never on screen at once. */
@@ -333,8 +338,12 @@ details[open]>.framework-lbl::before{transform:rotate(90deg);}
 .tl-item.tl-current .tl-dot.done{box-shadow:0 0 0 4px var(--surface),0 0 0 7px #58CC02,0 5px 0 #46A302;}
 .tl-item.tl-current .tl-dot.open{box-shadow:0 0 0 4px var(--surface),0 0 0 7px #FF9600,0 5px 0 #E68200;}
 .tl-item.tl-current .tl-dot.locked{box-shadow:0 0 0 4px var(--surface),0 0 0 7px var(--node-locked-sh),0 5px 0 var(--node-locked-sh);}
-.tl-item.tl-next .tl-dot{opacity:.82;}
-.tl-item.tl-future .tl-dot{opacity:.5;}
+/* Opacity alone read as too subtle in review (Codex finding) -- a size
+   step down (current 66px > next 62px > future 50px, base is 58px) makes
+   the current→next→future sequence legible at a glance, not just on close
+   inspection, and still respects reduced-motion since size isn't animated. */
+.tl-item.tl-next .tl-dot{width:62px;height:62px;font-size:20px;opacity:.95;}
+.tl-item.tl-future .tl-dot{width:50px;height:50px;font-size:16px;opacity:.55;}
 .tl-item.tl-future .tl-dot.open::before,.tl-item.tl-future .tl-dot.open::after{display:none;} /* no ripple this far out -- visual calm, not urgency */
 .tl-title{margin-top:10px;font-weight:800;font-size:12.5px;color:var(--text-hi);text-align:center;max-width:150px;text-wrap:pretty;line-height:1.3;}
 .tl-sub{margin-top:3px;font-weight:700;font-size:10.5px;color:var(--text-lo);text-align:center;max-width:150px;}
